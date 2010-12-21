@@ -31,10 +31,14 @@
  * SUCH DAMAGE.
  */
 
+#include "types.hh"
 #include "event.hh"
 #include "utils.hh"
+#include "exception.hh"
+#include "log.hh"
 #include "mxtce.hh"
-#include <stdlib.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #ifndef HAVE_DECL_GETOPT
   #define HAVE_DECL_GETOPT 1
@@ -59,7 +63,7 @@ void usage()
 //extern const char* MxTCEVersionString();
 
 
-int daemon (int nochdir, int noclose)
+int runAsDaemon (int nochdir, int noclose)
 {
   pid_t pid;
 
@@ -143,7 +147,7 @@ int main( int argc, char* argv[])
     //signal_init ();
 
     if (is_daemon)
-        daemon(0, 0);
+        runAsDaemon(0, 0);
 
     // init logging
     char log_file[20];
@@ -158,10 +162,10 @@ int main( int argc, char* argv[])
     // $$$$  Start core MxTCE thread
     MxTCE* mxTCECore = new MxTCE(configfile);
     try {
-        mxTCECore.Start();
+        mxTCECore->Start();
     } catch (TCEException e) {
         cerr << "MxTCE core cannot init ... check mxtce.conf" << endl;
-        LOGF("MxTCE core cannot init ... check mxtce.conf"<<endl);
+        LOG("MxTCE core cannot init ... check mxtce.conf"<<endl);
     }
 
     //coreEventMaster->Run(); //moved into MxTCE core

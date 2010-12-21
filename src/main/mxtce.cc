@@ -37,7 +37,7 @@
 #include "mxtce.hh"
 
 
-MxTCE::MxTCE( const String& configFile) 
+MxTCE::MxTCE( const string& configFile) 
 {
     apiServerPort = 2089;
     apiServerPortName = "MX-TCE_API_SERVER";
@@ -68,13 +68,13 @@ MxTCE::~MxTCE()
 
 void MxTCE::Start()
 {
-    messageRouter.AddPort(this->apiServerPortName);
-    messageRouter.AddPort(this->tedbManPortName);
-    messageRouter.AddPort(this->resvManPortName);
-    messageRouter.AddPort(this->policyManPortName);
-    messageRouter.GetMessagePortList().push_back(loopbackPort);
-    loopbackPort.AttachPipesAsServer();
-    messageRouter.Start();
+    messageRouter->AddPort(this->apiServerPortName);
+    messageRouter->AddPort(this->tedbManPortName);
+    messageRouter->AddPort(this->resvManPortName);
+    messageRouter->AddPort(this->policyManPortName);
+    messageRouter->GetMessagePortList().push_back(loopbackPort);
+    loopbackPort->AttachPipesAsServer();
+    messageRouter->Start();
 
     // $$$$ start binary API server thread 
     // --> attach message router port
@@ -109,7 +109,7 @@ void MxTCE::CheckMessage()
 //  --> event driven handling for requests/replies
 void MxTCEMessageHandler::Run()
 {
-    LOGF("MxTCEMessageHandler::Run() being called"<<endl);
+    LOG("MxTCEMessageHandler::Run() being called"<<endl);
 
     Message* msg = mxTCE->GetLoopbackPort()->GetLocalMessage();
     if (msg)

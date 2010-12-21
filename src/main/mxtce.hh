@@ -35,6 +35,7 @@
 #ifndef __MXTCE_HH__
 #define __MXTCE_HH__
 
+#include "message.hh"
 
 class MxTCE
 {
@@ -50,7 +51,7 @@ private:
     EventMaster* eventMaster;
 
 public:
-	MxTCE( const String& configFile);
+	MxTCE( const string& configFile);
 	~MxTCE();
     MessagePortLoopback* GetLoopbackPort() { return loopbackPort; }
     MessageRouter* GetMessageRouter() { return messageRouter; }

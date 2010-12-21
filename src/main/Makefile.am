@@ -21,7 +21,7 @@ INSTALL_SDATA=@INSTALL@ -m 600
 
 # -- Program Sources
 mxtce_SOURCES = mxtce.hh
-mxtce_SOURCES += mxtce_main.cc
+mxtce_SOURCES += mxtce.cc mxtce_main.cc
 
 # -- No-install Program Sources
 mxtce_test_SOURCES = mxtce_test.cc
