@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-#include "Exception.hh"
+#include "exception.hh"
+#include "thread.hh"
 
 //Class Thread
 
@@ -39,7 +40,7 @@
 void* Thread::ExecRunnable(void* pVoid)
 {   Thread* runnableThread = static_cast<Thread*> (pVoid); 
     assert(runnableThread); 
-    runnableThread->result = runnableThread->runnable->run();
+    runnableThread->result = runnableThread->runnable->Run();
     return runnableThread->result;
 }
 
@@ -66,9 +67,9 @@ void* Thread::Join()
 }
 
 
-void Thread::Start(void* pArg) 
+void Thread::Start(void* arg) 
 { 
-    this->arg = pArg;
+    this->arg = arg;
     int status = pthread_attr_init(&threadAttribute); 
     // initialize attribute object
     if (status != 0) 
@@ -121,7 +122,7 @@ void Thread::Start(void* pArg)
 
 Lock::Lock() 
 { 
-    thread_mutex_init(&mutex, NULL);
+    pthread_mutex_init(&mutex, NULL);
 }
 
 Lock::~Lock() 
@@ -130,7 +131,7 @@ Lock::~Lock()
 }
 
 
-void Lock::Lock() 
+void Lock::DoLock() 
 {
     pthread_mutex_lock(&mutex); 
 }
@@ -173,8 +174,7 @@ void Condition::Notify()
 
 ThreadPortScheduler::ThreadPortScheduler(string pn)
 {
-    eventMaster = EventMaster::GetThreadInstance();
-    assert(eventMaster);
+    eventMaster = NULL;
     msgPort = new MessagePort(pn);
     assert(msgPort);
     msgPort->SetEventMaster(eventMaster);
@@ -183,20 +183,25 @@ ThreadPortScheduler::ThreadPortScheduler(string pn)
 
 ThreadPortScheduler::~ThreadPortScheduler()
 {
-    msgPort.DetachPipes();
+    msgPort->DetachPipes();
     delete msgPort;
 }
 
 
 void* ThreadPortScheduler::Run()
 {
+    // init event manster
+    if (eventMaster == NULL)
+        eventMaster = EventMaster::GetThreadInstance((unsigned long)this->GetId());
+    assert(eventMaster);
+
     void* pReturn = NULL;
     if (!msgPort->IsUp())
     {
         try {
             msgPort->AttachPipesAsClient();
         } catch (MsgIOException& e) {
-            LOGF("ThreadPortScheduler::Run caugh Exception: " + e.what() + " errMsg: " + e.GetMessage());
+            LOG("ThreadPortScheduler::Run caugh Exception: " << e.what() << " errMsg: " << e.GetMessage() << endl);
         }
     }
 
@@ -204,7 +209,7 @@ void* ThreadPortScheduler::Run()
     pReturn = this->DoJob();
 
     // start event loop
-    eventMaster.Run();
+    eventMaster->Run();
     return pReturn;
 }
 

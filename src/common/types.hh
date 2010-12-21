@@ -35,4 +35,22 @@
 #define __TYPES_HH__
 
 
+#include <sys/types.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <assert.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <errno.h>
+//#include <netdb.h>
+#include <assert.h>
+#include <string>
+#include <iostream>
+#include <sstream>
+
+#ifndef NULL
+#define NULL 0
+#endif
+
+
 #endif

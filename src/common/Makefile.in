@@ -47,9 +47,8 @@ LIBRARIES = $(noinst_LIBRARIES)
 ARFLAGS = cru
 libcommon_a_AR = $(AR) $(ARFLAGS)
 libcommon_a_LIBADD =
-am_libcommon_a_OBJECTS = event.$(OBJEXT) msgqueue.$(OBJEXT) \
-	thread.$(OBJEXT) exception.$(OBJEXT) log.$(OBJEXT) \
-	utils.$(OBJEXT)
+am_libcommon_a_OBJECTS = event.$(OBJEXT) message.$(OBJEXT) \
+	thread.$(OBJEXT) log.$(OBJEXT) utils.$(OBJEXT)
 libcommon_a_OBJECTS = $(am_libcommon_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
@@ -189,9 +188,9 @@ INSTALL_SDATA = @INSTALL@ -m 600
 # -- No-install Program Sources
 
 # -- Library Sources
-libcommon_a_SOURCES = event.hh msgqueue.hh thread.hh exception.hh \
-	log.hh types.hh utils.hh event.cc msgqueue.cc thread.cc \
-	exception.cc log.cc utils.cc
+libcommon_a_SOURCES = event.hh message.hh thread.hh exception.hh \
+	log.hh types.hh utils.hh event.cc message.cc thread.cc log.cc \
+	utils.cc
 all: all-am
 
 .SUFFIXES:
@@ -263,9 +262,8 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/event.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exception.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgqueue.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/message.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thread.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Po@am__quote@
 

@@ -36,6 +36,11 @@
 #define __THREAD_HH__
 
 #include <pthread.h>
+#include "types.hh"
+#include "event.hh"
+#include "message.hh"
+#include "exception.hh"
+#include "log.hh"
 
 using namespace std;
 
@@ -68,11 +73,13 @@ private:
 public:
     Thread(auto_ptr<Runnable> runnable_, bool isDetached = false) {
         assert(runnable.get() != NULL);
+        _id = 0;
         arg = NULL;
         result = NULL;
         nameTag = "";
     }
     Thread(bool isDetached = false): runnable(NULL), detached(isDetached){
+        _id = 0;
         arg = NULL;
         result = NULL;
         nameTag = "";
@@ -82,7 +89,7 @@ public:
     pthread_t GetId() { return _id; }
     string& GetNameTag() { return nameTag; }
     void SetNameTag(string& tag) { this->nameTag = tag; }
-    void Start();
+    void Start(void* arg=NULL);
     void* Join();
 };
 
@@ -98,7 +105,7 @@ protected:
 public: 
     Lock();
     virtual ~Lock(); 
-    void Lock(); 
+    void DoLock(); 
     void Unlock();
 };
 

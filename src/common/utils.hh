@@ -35,5 +35,25 @@
 #ifndef __UTILS_HH__
 #define __UTILS_HH__
  
- 
+#include "types.hh"
+
+
+#ifndef RETSIGTYPE
+#define RETSIGTYPE void
+#endif
+
+extern "C"
+{
+    /* Read nbytes from fd and store into ptr. */
+    int readn (int fd, char *ptr, int nbytes);
+    
+    /* Write nbytes from ptr to fd. */
+    int writen(int fd, char *ptr, int nbytes);
+
+    RETSIGTYPE * signal_set (int signo, void (*func)(int));
+    
+    void signal_init ();
+}
+
+
 #endif

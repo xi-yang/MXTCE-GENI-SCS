@@ -21,8 +21,8 @@ INSTALL_SDATA=@INSTALL@ -m 600
 # -- No-install Program Sources
 
 # -- Library Sources
-libcommon_a_SOURCES  = event.hh msgqueue.hh thread.hh exception.hh log.hh types.hh utils.hh
-libcommon_a_SOURCES  += event.cc msgqueue.cc thread.cc exception.cc log.cc utils.cc
+libcommon_a_SOURCES  = event.hh message.hh thread.hh exception.hh log.hh types.hh utils.hh
+libcommon_a_SOURCES  += event.cc message.cc thread.cc log.cc utils.cc
 
 distclean:
 	-rm -rf Makefile Makefile.in

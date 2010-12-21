@@ -35,7 +35,7 @@
 #ifndef __EXCEPTION_HH__
 #define __EXCEPTION_HH__
 
-
+#include <string>
 #include <exception>
 
 using namespace std;
@@ -45,7 +45,7 @@ class TCEException: public exception
 protected:
     string errMessage;
 public:
-    TCEException(string msg): errMessage(msg) throw(){ }
+    TCEException(string msg): errMessage(msg){ }
     virtual ~TCEException()throw(){ }  
     virtual const char* what() const throw() {
         return (const char*)"TCEException";
@@ -59,7 +59,7 @@ public:
 class MsgIOException: public TCEException
 {
 public:
-    MsgIOException(string msg): TCEException(msg) throw(){ }
+    MsgIOException(string msg): TCEException(msg){ }
     virtual ~MsgIOException()throw(){ }  
     virtual const char* what() const throw() {
         return (const char*)"MsgIOException";
@@ -69,7 +69,7 @@ public:
 class ThreadException: public TCEException
 {
 public:
-    ThreadException(string msg): TCEException(msg) throw(){ }
+    ThreadException(string msg): TCEException(msg){ }
     virtual ~ThreadException()throw(){ }  
     virtual const char* what() const throw() {
         return (const char*)"ThreadException";

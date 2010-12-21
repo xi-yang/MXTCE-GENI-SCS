@@ -31,21 +31,18 @@
  * SUCH DAMAGE.
  */
 
-//?
-#include <stdio.h>
-#include <errno.h>
-#include <ctype.h>
-#include <sys/types.h>
+#include <iostream>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <fullduplex.h>
-
+#include "utils.hh"
+#include "log.hh"
+#include "exception.hh"
+#include "mxtce.hh"
 #include "message.hh"
-
 
 Message::~Message()
 {
-    list<TLV*>::iteartor itlv;
+    list<TLV*>::iterator itlv;
     for (itlv = tlvList.begin(); itlv != tlvList.end(); itlv++)
         delete (*itlv);
 }
@@ -57,7 +54,7 @@ void Message::Transmit(int fd)
     memset(buf, 0, MAX_MSG_SIZE);
  
     // Length of message including header
-    MessageHeader* header = buf;
+    MessageHeader* header = (MessageHeader*)buf;
     header->type = type;
     header->length = sizeof(MessageHeader);
     strncpy(header->queue, queueName.c_str(), 64);
@@ -65,12 +62,12 @@ void Message::Transmit(int fd)
     if (flagUrgent)
         header->flags |= MSG_FLAG_URGENT;
 
-    list<TLV*>::iteartor itlv;
+    list<TLV*>::iterator itlv;
     for (itlv = tlvList.begin(); itlv != tlvList.end(); itlv++)
     {
         TLV* tlv = *itlv;
         memcpy(buf, tlv, tlv->length+4);
-        header->length += tlv->length+4);
+        header->length += (tlv->length+4);
     }
 
     int wlen = writen(fd, buf, header->length);
@@ -86,7 +83,7 @@ void Message::Transmit(int fd)
         ssMsg << "Connection closed for MessageWriter(" << fd << ')';
         throw MsgIOException(ssMsg.str());
     }
-    else if (wlen != len)
+    else if (wlen != header->length)
     {
         ssMsg << "MessageWriter(" << fd << ") cannot write the message";
         throw MsgIOException(ssMsg.str());
@@ -98,7 +95,7 @@ void Message::Receive(int fd)
 {
     char buf[MAX_MSG_SIZE];
     memset(buf, 0, MAX_MSG_SIZE);
-    MessageHeader* header = buf;
+    MessageHeader* header = (MessageHeader*)buf;
     int msglen;
     int rlen;
 
@@ -158,7 +155,7 @@ void Message::Receive(int fd)
     int offset = sizeof(MessageHeader);
     while (offset + sizeof(TLV) < msglen)
     {
-        TLV* tlv = buf + offset;
+        TLV* tlv = (TLV*)(buf + offset);
         TLV* newTlv = (TLV*) new char[tlv->length + 4];
         memcpy((char*)newTlv, buf + offset, tlv->length + 4);
         tlvList.push_back(newTlv);
@@ -180,8 +177,8 @@ void MessageReader::Run()
         msg = ReadMessage();
     } catch (MsgIOException& e) {
        // something is wrong with socket read
-        Close();
-        throw;
+       Close();
+       throw;
     }
 
     this->inQueue.push_back(msg);
@@ -190,12 +187,12 @@ void MessageReader::Run()
 
 Message* MessageReader::ReadMessage()
 {
-    Message* msg = new Message();
+    Message* msg = new Message(); //empty message
     assert(this->Socket() >= 0);
     try {
-        msg->Receive(this->Socket();
+        msg->Receive(this->Socket());
     } catch (MsgIOException& e) {
-        LOGF("MessageReader::ReadMessage caught Exception:" e.what() << " ErrMsg: "<< e.GetMesage() << endl);
+        LOG("MessageReader::ReadMessage caught Exception:" << e.what() << " ErrMsg: " << e.GetMessage() << endl);
         delete msg;
         throw;
     }
@@ -221,7 +218,7 @@ void MessageWriter::Run()
     try {
         WriteMessage(msg); //msg is deleted in WriteMessage
     } catch (MsgIOException e) {
-        throw;
+        throw; // ?? comment out ??
     }
 
     if (outQueue.size() > 0)
@@ -238,7 +235,7 @@ void MessageWriter::WriteMessage(Message* msg)
     try {
         msg->Transmit(this->Socket());
     } catch (MsgIOException& e) {
-        LOGF("MessageReader::ReadMessage caught Exception:" e.what() << " ErrMsg: "<< e.GetMesage() << endl);
+        LOG("MessageReader::ReadMessage caught Exception:" << e.what() << " ErrMsg: "<< e.GetMessage() << endl);
         throw;
     }
 }
@@ -246,7 +243,12 @@ void MessageWriter::WriteMessage(Message* msg)
 
 void MessagePort::Run()
 {
-    MessageReader::Run();
+    try {
+        MessageReader::Run();
+    } catch (MsgIOException& e) {
+        eventMaster->Remove(this);
+        eventMaster->Remove(this->GetWriter());
+    }
     msgRouter->Check();    
 }
 
@@ -259,7 +261,7 @@ void MessagePort::AttachPipesAsServer()
     // Create named pipe for reading
     string pipe1 = portName;
     pipe1 += "_pipe_in";
-    ret = mkfifo(pipe1, 0666);
+    ret = mkfifo(pipe1.c_str(), 0666);
     if ((ret == -1) && (errno != EEXIST)) {
         ssMsg << "MessagePort::AttachPipesAsServer failed on  mkfifo(" << pipe1<<", 0666)";
         throw MsgIOException(ssMsg.str());
@@ -267,21 +269,20 @@ void MessagePort::AttachPipesAsServer()
     // Create named pipe for writing
     string pipe2 = portName;
     pipe2 += "_pipe_out";
-    ret = mkfifo(pipe2, 0666);
+    ret = mkfifo(pipe2.c_str(), 0666);
     if ((ret == -1) && (errno != EEXIST)) {
         ssMsg << "MessagePort::AttachPipesAsServer failed on  mkfifo(" << pipe2<<", 0666)";
         throw MsgIOException(ssMsg.str());
-        return -1;
     }
     // Open named pipe for reading
-    rfd = open(pipe1, O_RDONLY);
+    rfd = open(pipe1.c_str(), O_RDONLY);
     if (rfd < 0) 
     {
         ssMsg << "MessagePort::AttachPipesAsServer failed on  open(" << pipe1<<", O_RDONLY)";
         throw MsgIOException(ssMsg.str());
     }
     // Open named pipe for writing
-    wfd = open(pipe2, O_WRONLY);
+    wfd = open(pipe2.c_str(), O_WRONLY);
     if (wfd < 0) 
     {
         ssMsg << "MessagePort::AttachPipesAsServer failed on  open(" << pipe2<<", O_WRONLY)";
@@ -297,12 +298,11 @@ void MessagePort::AttachPipesAsServer()
     this->SetRepeats(FOREVER);
     eventMaster->Schedule(this);
     up = true;
-    return 0;
 }
 
 
 // pipeName == portName
-int MessagePort::AttachPipesAsClient()
+void MessagePort::AttachPipesAsClient()
 {
     int rfd, wfd, ret;
     std::stringstream ssMsg;
@@ -313,14 +313,14 @@ int MessagePort::AttachPipesAsClient()
     string pipe2 = portName;
     pipe2 += "_pipe_out";
     // Open named pipe for writing
-    wfd = open(pipe2, O_WRONLY);
+    wfd = open(pipe2.c_str(), O_WRONLY);
     if (wfd < 0) 
     {
         ssMsg << "MessagePort::AttachPipesAsServer failed on  open(" << pipe2<<", O_RDONLY)";
         throw MsgIOException(ssMsg.str());
     }
     // Open named pipe for reading
-    rfd = open(pipe1, O_RDONLY);
+    rfd = open(pipe1.c_str(), O_RDONLY);
     if (rfd < 0) 
     {
         ssMsg << "MessagePort::AttachPipesAsServer failed on  open(" << pipe1<<", O_WRONLY)";
@@ -337,7 +337,6 @@ int MessagePort::AttachPipesAsClient()
     this->SetRepeats(FOREVER);
     eventMaster->Schedule(this);
     up = true;
-    return 0;
 }
 
 
@@ -346,6 +345,7 @@ void MessagePort::DetachPipes()
 {
     msgWriter.Close();
     this->Close();
+    //@@@@ remove named pipe files ?
     up = false;
 }
 
@@ -372,8 +372,8 @@ void MessagePort::PostMessage (Message *msg)
     else
         msgWriter.outQueue.push_back(msg);
 
-    msgWriter->SetRepeats(0);
-    msgWriter->SetObsolete(false);
+    msgWriter.SetRepeats(0);
+    msgWriter.SetObsolete(false);
     if (msgWriter.outQueue.size() == 1)
         eventMaster->Schedule(&msgWriter);
     //other msgs in the queue will be handled by MessageWriter
@@ -438,13 +438,11 @@ void MessagePortLoopback::PostLocalMessage (Message *msg)
 
 ///////////////////////////////////////////
 
-static MessageRouter MessageRouter::router;
+MessageRouter MessageRouter::router;
 
 MessageRouter::MessageRouter()
 {
     up = false;
-    msgPortList = new list<MessagePort*>;
-    routeList = new list<Route*>;
     eventMaster = NULL;
 }
 
@@ -456,14 +454,12 @@ MessageRouter::~MessageRouter()
         delete msgPortList.front();
         msgPortList.pop_front();
     }
-    delete msgPortList;
 
     while (!routeList.empty())
     {
         delete routeList.front();
         routeList.pop_front();
     }
-    delete routeList;
 }
 
 
@@ -477,7 +473,7 @@ void MessageRouter::Start()
         try {
             msgPort->AttachPipesAsServer();
         } catch (MsgIOException& e) {
-            LOGF("MessageRouter::Start caught" + e.what() + " when attaching port: " << msgPort->GetName() << " ErrMesage:" << e.GetMessage << endl);
+            LOG("MessageRouter::Start caught" << e.what() << " when attaching port: " << msgPort->GetName() << " ErrMesage:" << e.GetMessage() << endl);
             //escalate the exception
             throw;
         }
@@ -515,7 +511,7 @@ void MessageRouter::Run()
                 list<MessagePort*>::iterator itP;
                 if (portNameList.front() == "ALL")
                 {
-                    for (itP =msgPortList.begin(); itP != portNameList.end(); itN++)
+                    for (itP = msgPortList.begin(); itP != msgPortList.end(); itP++)
                     {
                         MessagePort* msgOutPort = *itP;
                         if (msgOutPort&& msgOutPort->IsUp())
@@ -525,18 +521,18 @@ void MessageRouter::Run()
                 else 
                 {
                     list<string>::iterator itN = portNameList.begin();
-                    for (itP =msgPortList.begin(); itN != portNameList.end(); itN++)
+                    for (itN =portNameList.begin(); itN != portNameList.end(); itN++)
                     {
-                        string portName = *it;
+                        string portName = *itN;
                         for (; itP != msgPortList.end(); itP++) 
                         {
                             MessagePort* msgOutPort = *itP;
-                            if (msgOutPort && msgOutPort.IsUp() && msgOutPort->GetName() == portName)                            
+                            if (msgOutPort && msgOutPort->IsUp() && msgOutPort->GetName() == portName)
                                 outPortList.push_back(msgOutPort);
                         }
                     }
                 }
-                for (itP = outPortList.bgin(); itP != outPortList.end(); itP++)
+                for (itP = outPortList.begin(); itP != outPortList.end(); itP++)
                 {
                     MessagePort* msgOutPort = *itP;
                     msgOutPort->PostMessage(msg);
@@ -551,10 +547,10 @@ void MessageRouter::Check()
 {
     // activate the router event and make sure the router event is scheduled
     list<Event*> eventList = eventMaster->GetEventList(EVENT_PRIORITY);
-    list<Event*>::iterator it = eventList.begin();
-    for (; it != eventList.end(); ++)
+    list<Event*>::iterator itE = eventList.begin();
+    for (; itE != eventList.end(); itE++)
     {
-        Event* event = *it;
+        Event* event = *itE;
         if ((MessageRouter*)event == this)
         {
             return;
@@ -568,7 +564,7 @@ void MessageRouter::Check()
 MessagePort* MessageRouter::AddPort(string& portName)
 {
     // new port,
-    MessagePort msgPort = new MessagePort(portName, this);
+    MessagePort* msgPort = new MessagePort(portName, this);
     msgPortList.push_back(msgPort);
     //attach to pipe and scheule if MessageRouter has already started
     if (this->up) 
@@ -576,7 +572,7 @@ MessagePort* MessageRouter::AddPort(string& portName)
         try {
             msgPort->AttachPipesAsServer();
         } catch (MsgIOException& e) {
-            LOGF("MessageRouter::AddPort caught" + e.what() + " when attaching port: " << msgPort->GetName() << " ErrMesage:" << e.GetMessage << endl);
+            LOG("MessageRouter::AddPort caught" << e.what() << " when attaching port: " << msgPort->GetName() << " ErrMesage:" << e.GetMessage() << endl);
             //escalate the exception
             throw;
         }
@@ -585,7 +581,7 @@ MessagePort* MessageRouter::AddPort(string& portName)
 }
 
 
-MessagePort* MessageRouter::LooupPort(string& portName)
+MessagePort* MessageRouter::LookupPort(string& portName)
 {
     list<MessagePort*>::iterator it = msgPortList.begin();
     for (; it != msgPortList.end(); it++)
@@ -598,7 +594,7 @@ MessagePort* MessageRouter::LooupPort(string& portName)
 }
 
 
-void MessageRouter::DeletePort(strubg& portName)
+void MessageRouter::DeletePort(string& portName)
 {
     if (this->up)
     {
@@ -619,7 +615,9 @@ void MessageRouter::DeletePort(strubg& portName)
 
 Route* MessageRouter::AddRoute(string& queueName, string& topicName, string& portName)
 {
-    Route route = new Route(queueName, topicName, portName);
+    Route* route = new Route(queueName, topicName, portName);
+    routeList.push_back(route);
+    return route;
     
 }
 
@@ -630,7 +628,7 @@ Route* MessageRouter::LookupRoute(string& queueName, string& topicName)
     for (; it != routeList.end(); it++)
     {
         Route* route = *it;
-        if (*route->GetQueue() == queueName && *router->GetTopic() == topicName)
+        if (route->GetQueue() == queueName && route->GetTopic() == topicName)
         {
             return route;
         }
@@ -645,7 +643,7 @@ void MessageRouter::DeleteRoute(string& queueName, string& topicName)
     for (; it != routeList.end(); it++)
     {
         Route* route = *it;
-        if (*route->GetQueue() == queueName && *router->GetTopic() == topicName)
+        if (route->GetQueue() == queueName && route->GetTopic() == topicName)
         {
             routeList.erase(it);
             delete route;

@@ -222,7 +222,8 @@ public:
     ~EventMaster();
     static EventMaster* GetInstance();
     static EventMaster* GetThreadInstance();
-    list<Event*>*& GetEventList(EventType type) { return eventLists[(int)type]; }
+    static EventMaster* GetThreadInstance(unsigned long tid);
+    list<Event*>& GetEventList(EventType type) { return eventLists[(int)type]; }
     void Schedule(Event *event);
     void Remove(Event *event);
     struct timeval WaitLimit ();
@@ -233,7 +234,7 @@ public:
     friend class Event;
 };
 
-extern EventMaster& coreEventMaster;
+extern EventMaster* coreEventMaster;
 
 
 #endif

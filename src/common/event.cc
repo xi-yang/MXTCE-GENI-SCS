@@ -50,10 +50,18 @@ EventMaster* EventMaster::GetInstance()
 
 EventMaster* EventMaster::GetThreadInstance()
 {
-    u_int32_t key = (u_int32_t)gettid();
+    unsigned long key = (unsigned long)getpid();
     if (threadMasters[key] == NULL)
         threadMasters[key] = new EventMaster;
     return threadMasters[key];
+}
+
+EventMaster* EventMaster::GetThreadInstance(unsigned long tid)
+{
+    assert(tid != 0);
+    if (threadMasters[tid] == NULL)
+        threadMasters[tid] = new EventMaster;
+    return threadMasters[tid];
 }
 
 EventMaster::~EventMaster()
@@ -354,7 +362,7 @@ void Selector::Close()
         return;
 
     close(fd);
-    eventMaster.Remove(this);
+    //@@@@ eventMaster.Remove(this);
     fd = -1;
 }
 
