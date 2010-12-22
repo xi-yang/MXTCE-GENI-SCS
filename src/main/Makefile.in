@@ -49,11 +49,13 @@ PROGRAMS = $(bin_PROGRAMS)
 am_mxtce_OBJECTS = mxtce.$(OBJEXT) mxtce_main.$(OBJEXT)
 mxtce_OBJECTS = $(am_mxtce_OBJECTS)
 mxtce_LDADD = $(LDADD)
-mxtce_DEPENDENCIES =
+mxtce_DEPENDENCIES = $(top_srcdir)/src/common/libcommon.a \
+	$(top_srcdir)/src/api/libapi.a
 am_mxtce_test_OBJECTS = mxtce_test.$(OBJEXT)
 mxtce_test_OBJECTS = $(am_mxtce_test_OBJECTS)
 mxtce_test_LDADD = $(LDADD)
-mxtce_test_DEPENDENCIES =
+mxtce_test_DEPENDENCIES = $(top_srcdir)/src/common/libcommon.a \
+	$(top_srcdir)/src/api/libapi.a
 DEFAULT_INCLUDES = -I. -I$(top_builddir)@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -172,7 +174,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 
 # -- Libraries and library flags to link the binary programs
-LDADD = $(noinst_LIBRARIES)
+LDADD = $(top_srcdir)/src/common/libcommon.a $(top_srcdir)/src/api/libapi.a
+#LDADD += $(top_srcdir)/src/tedbManager/libtedb.a $(top_srcdir)/src/resvManager/librm.a $(top_srcdir)/src/policyManager/libpm.a
 
 # -- Including headers
 INCLUDES = -I. -I/usr/include -I/usr/local/include \

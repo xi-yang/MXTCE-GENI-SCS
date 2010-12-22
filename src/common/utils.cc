@@ -84,8 +84,16 @@ void sighup (int sig)
     LOG("SIGHUP received"<<endl);
 }
 
-extern void sigint (int sig);
-extern void sigsegv (int sig);
+void sigint (int sig)
+{
+    LOG("Terminating on signal SIGINT" << endl);
+    exit(0);
+}
+void sigsegv (int sig)
+{
+    LOG("Terminating on signal SIGSEGV" << endl);
+    exit(0);
+}
 
 // Signal wrapper.
 RETSIGTYPE * signal_set (int signo, void (*func)(int))
