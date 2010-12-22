@@ -23,7 +23,3 @@ INSTALL_SDATA=@INSTALL@ -m 600
 # -- Library Sources
 libcommon_a_SOURCES  = event.hh message.hh thread.hh exception.hh log.hh types.hh utils.hh
 libcommon_a_SOURCES  += event.cc message.cc thread.cc log.cc utils.cc
-
-distclean:
-	-rm -rf Makefile Makefile.in
-

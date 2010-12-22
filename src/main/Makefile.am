@@ -25,7 +25,3 @@ mxtce_SOURCES += mxtce.cc mxtce_main.cc
 
 # -- No-install Program Sources
 mxtce_test_SOURCES = mxtce_test.cc
-
-distclean:
-	-rm -rf Makefile Makefile.in
-

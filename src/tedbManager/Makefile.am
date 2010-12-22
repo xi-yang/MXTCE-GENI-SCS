@@ -28,7 +28,3 @@ tedbman_test_SOURCES = tedbman_test.cc
 # -- Library Sources
 libtedb_a_SOURCES  = tedb.hh
 libtedb_a_SOURCES  += tedb.cc
-
-distclean:
-	-rm -rf Makefile Makefile.in
-

@@ -10,8 +10,6 @@ bin_PROGRAMS =
 # -- Including headers
 INCLUDES = -I. -I/usr/include -I/usr/local/include -I/usr/include/libxml2 -I/usr/local/include/libxml2
 
-DEFS = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)/\"
-
 INSTALL_SDATA=@INSTALL@ -m 600
 
 # -- Install scripts
@@ -29,6 +27,3 @@ install-sysconfDATA: $(sysconf_DATA)
 	done
 	echo "$(INSTALL) $(RC_SCRIPT) $(DESTDIR)$(bindir)/$(RC_SCRIPT)";
 	@$(INSTALL) $(RC_SCRIPT) $(DESTDIR)$(bindir)/$(RC_SCRIPT);
-
-distclean:
-	-rm -rf Makefile Makefile.in

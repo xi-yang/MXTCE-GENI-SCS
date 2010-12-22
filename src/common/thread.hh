@@ -139,7 +139,7 @@ public:
     ThreadPortScheduler(string portName);
     virtual ~ThreadPortScheduler();
     virtual void* Run();
-    virtual void* DoJob() {}
+    virtual void* DoRun() {}
 };
 
 #endif

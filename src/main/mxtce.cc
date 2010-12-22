@@ -37,15 +37,15 @@
 #include "mxtce.hh"
 
 
+int MxTCE::apiServerPort = 2089;
+string MxTCE::apiServerPortName = "MX-TCE_API_SERVER";
+string MxTCE::tedbManPortName = "MX-TCE_TEDB_MANAGER";
+string MxTCE::resvManPortName = "MX-TCE_RESV_MANAGER";
+string MxTCE::policyManPortName = "MX-TCE_POLICY_MANAGER";
+string MxTCE::loopbackPortName = "MX-TCE_CORE_LOOPBACK";
+
 MxTCE::MxTCE( const string& configFile) 
 {
-    apiServerPort = 2089;
-    apiServerPortName = "MX-TCE_API_SERVER";
-    tedbManPortName = "MX-TCE_TEDB_MANAGER";
-    resvManPortName = "MX-TCE_RESV_MANAGER";
-    policyManPortName = "MX-TCE_POLICY_MANAGER";
-    loopbackPortName = "MX-TCE_CORE_LOOPBACK";
-
     // $$$$ read and parse configure file from configFile path
 
     eventMaster = EventMaster::GetInstance();

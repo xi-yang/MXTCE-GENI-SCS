@@ -29,7 +29,3 @@ policyman_test_SOURCES = policyman_test.cc
 # -- Library Sources
 libpm_a_SOURCES  = policyman.hh
 libpm_a_SOURCES  += policyman.cc
-
-distclean:
-	-rm -rf Makefile Makefile.in
-

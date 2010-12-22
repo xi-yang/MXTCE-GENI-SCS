@@ -40,15 +40,17 @@
 class MxTCE
 {
 private:
-    int apiServerPort;
-    string loopbackPortName;
-    string apiServerPortName;
-    string tedbManPortName;
-    string resvManPortName;
-    string policyManPortName;
     MessagePortLoopback* loopbackPort;
     MessageRouter* messageRouter;
     EventMaster* eventMaster;
+
+public:
+    static int apiServerPort;
+    static string loopbackPortName;
+    static string apiServerPortName;
+    static string tedbManPortName;
+    static string resvManPortName;
+    static string policyManPortName;
 
 public:
 	MxTCE( const string& configFile);

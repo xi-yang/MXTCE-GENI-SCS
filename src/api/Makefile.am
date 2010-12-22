@@ -20,10 +20,6 @@ DEFS = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)/\"
 INSTALL_SDATA=@INSTALL@ -m 600
 
 # -- Libraries Sources
-libapi_a_SOURCES = api.hh
-libapi_a_SOURCES += api.cc
-
-distclean:
-	-rm -rf Makefile Makefile.in
-
+libapi_a_SOURCES = api.hh apiserver.hh
+libapi_a_SOURCES += api.cc apiserver.cc
 

@@ -47,7 +47,7 @@ LIBRARIES = $(noinst_LIBRARIES)
 ARFLAGS = cru
 libapi_a_AR = $(AR) $(ARFLAGS)
 libapi_a_LIBADD =
-am_libapi_a_OBJECTS = api.$(OBJEXT)
+am_libapi_a_OBJECTS = api.$(OBJEXT) apiserver.$(OBJEXT)
 libapi_a_OBJECTS = $(am_libapi_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
@@ -185,7 +185,7 @@ INCLUDES = -I. -I/usr/include -I/usr/local/include \
 INSTALL_SDATA = @INSTALL@ -m 600
 
 # -- Libraries Sources
-libapi_a_SOURCES = api.hh api.cc
+libapi_a_SOURCES = api.hh apiserver.hh api.cc apiserver.cc
 all: all-am
 
 .SUFFIXES:
@@ -257,6 +257,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/api.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/apiserver.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -382,6 +383,9 @@ clean: clean-am
 clean-am: clean-binPROGRAMS clean-generic clean-noinstLIBRARIES \
 	mostlyclean-am
 
+distclean: distclean-am
+	-rm -rf ./$(DEPDIR)
+	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
 
@@ -447,9 +451,6 @@ uninstall-am: uninstall-binPROGRAMS
 	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
 	tags uninstall uninstall-am uninstall-binPROGRAMS
 
-
-distclean:
-	-rm -rf Makefile Makefile.in
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

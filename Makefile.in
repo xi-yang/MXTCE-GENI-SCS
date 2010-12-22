@@ -529,6 +529,9 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean-am: clean-generic mostlyclean-am
 
+distclean: distclean-recursive
+	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
+	-rm -f Makefile
 distclean-am: clean-am distclean-generic distclean-hdr distclean-tags
 
 dvi: dvi-recursive
@@ -600,10 +603,6 @@ uninstall-am:
 
 clean:
 	-rm -rf *.log
-
-distclean: 
-	-rm -rf configure Makefile Makefile.in stamp-h* config.h*
-	-rm -rf aclocal.m4 autom4te.cache config.log config.status 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

@@ -27,7 +27,3 @@ resvman_test_SOURCES = resvman_test.cc
 # -- Library Sources
 librm_a_SOURCES  = resvman.hh
 librm_a_SOURCES  += resvman.cc
-
-distclean:
-	-rm -rf Makefile Makefile.in
-

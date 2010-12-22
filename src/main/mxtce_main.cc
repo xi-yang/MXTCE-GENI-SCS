@@ -54,7 +54,7 @@ struct option longopts[] =
     { 0 }
 };
 
-void usage()
+void showUsage()
 {
     cout<<"MX-TCE Usage:"<<endl;
     cout<<"\t rce [-d] (daemon)  [-c config_file] [-p API port] [-h] (help)" <<endl;
@@ -138,7 +138,7 @@ int main( int argc, char* argv[])
             break;
         case 'h':
         default:
-            usage();
+            showUsage();
             break;
         }
     }
