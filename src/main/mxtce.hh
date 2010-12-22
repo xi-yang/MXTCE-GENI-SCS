@@ -36,14 +36,16 @@
 #define __MXTCE_HH__
 
 #include "message.hh"
+#include "apiserver.hh"
 
 class MxTCE
 {
 private:
     MessagePortLoopback* loopbackPort;
-    MessageRouter* messageRouter;
     EventMaster* eventMaster;
-
+    MessageRouter* messageRouter;
+    APIServerThread* apiServerThread;
+    
 public:
     static int apiServerPort;
     static string loopbackPortName;

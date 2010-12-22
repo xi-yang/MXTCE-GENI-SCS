@@ -50,7 +50,6 @@ public:
     virtual void* Run() = 0; 
     virtual ~Runnable() = 0;
 }; 
-Runnable::~Runnable() {}
 
 class Thread 
 { 

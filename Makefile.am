@@ -3,6 +3,3 @@
 
 #SUBDIRS = src . doc
 SUBDIRS = src
-
-clean:
-	-rm -rf *.log

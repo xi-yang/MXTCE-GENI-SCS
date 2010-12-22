@@ -55,6 +55,8 @@ MxTCE::MxTCE( const string& configFile)
     assert(messageRouter);
 
     loopbackPort = new MessagePortLoopback(loopbackPortName, messageRouter, this);
+
+    apiServerThread = new APIServerThread(MxTCE::apiServerPortName, MxTCE::apiServerPort, eventMaster);
 }
 
 
@@ -68,16 +70,8 @@ MxTCE::~MxTCE()
 
 void MxTCE::Start()
 {
-    messageRouter->AddPort(this->apiServerPortName);
-    messageRouter->AddPort(this->tedbManPortName);
-    messageRouter->AddPort(this->resvManPortName);
-    messageRouter->AddPort(this->policyManPortName);
-    messageRouter->GetMessagePortList().push_back(loopbackPort);
-    loopbackPort->AttachPipesAsServer();
-    messageRouter->Start();
-
-    // $$$$ start binary API server thread 
-    // --> attach message router port
+    // start binary API server thread 
+    apiServerThread->Start(NULL);
     
     // $$$$ start TEDB thread
     // --> attach message router port
@@ -87,8 +81,16 @@ void MxTCE::Start()
     
     // $$$$ start PolicyMan thread
     // --> attach message router port
-    
-    // $$$$ run core eventMaster
+
+    messageRouter->AddPort(MxTCE::apiServerPortName);
+    messageRouter->AddPort(MxTCE::tedbManPortName);
+    messageRouter->AddPort(MxTCE::resvManPortName);
+    messageRouter->AddPort(MxTCE::policyManPortName);
+    messageRouter->GetMessagePortList().push_back(loopbackPort);
+    loopbackPort->AttachPipesAsServer();
+    messageRouter->Start();
+
+    // run core eventMaster
     eventMaster->Run();
 }
 

@@ -313,14 +313,14 @@ void MessagePort::AttachPipesAsClient()
     string pipe2 = portName;
     pipe2 += "_pipe_out";
     // Open named pipe for writing
-    wfd = open(pipe2.c_str(), O_WRONLY);
+    wfd = open(pipe1.c_str(), O_WRONLY);
     if (wfd < 0) 
     {
         ssMsg << "MessagePort::AttachPipesAsServer failed on  open(" << pipe2<<", O_RDONLY)";
         throw MsgIOException(ssMsg.str());
     }
     // Open named pipe for reading
-    rfd = open(pipe1.c_str(), O_RDONLY);
+    rfd = open(pipe2.c_str(), O_RDONLY);
     if (rfd < 0) 
     {
         ssMsg << "MessagePort::AttachPipesAsServer failed on  open(" << pipe1<<", O_WRONLY)";
