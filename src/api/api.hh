@@ -104,7 +104,7 @@ public:
     }
     virtual ~APIServer() {}
     EventMaster* GetEventMaster() { return eventMaster; }
-    int Start();
+    void Start();
     void Exit();
     virtual void Run();
     virtual APIReader* CreateAPIReader(int sock);
@@ -143,7 +143,7 @@ public:
     virtual void Run ();
     APIReader* GetReader() { return api_reader; }    
     void SetReader(APIReader* reader) { api_reader = reader; }
-    int WriteMessage(api_msg *msg);
+    void WriteMessage(api_msg *msg);
     void PostMessage(api_msg *msg, bool urgent = (!URGENT_POST));
 };
 
@@ -162,8 +162,8 @@ public:
     APIClient(char* host, int port);    
     virtual ~APIClient();
     void SetHostPort(char *host, int port);
-    int Connect(char *host, int port);
-    int Connect();
+    void Connect(char *host, int port);
+    void Connect();
     bool IsAlive();
     void SendMessage(api_msg *msg);
 };

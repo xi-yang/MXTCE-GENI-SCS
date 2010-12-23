@@ -34,26 +34,29 @@
  
 #include "types.hh"
 #include "event.hh"
-#include "api.hh"
+#include "exception.hh"
 #include "utils.hh"
 #include "log.hh"
+#include "api.hh"
 
 
 // TODO: Exception handling
 
-int APIServer::Start()
+void APIServer::Start()
 {
     int sock;
     int ret = -1;
     struct sockaddr_in sa_in;
     memset (&sa_in, 0, sizeof (struct sockaddr_in));
 
+    std::stringstream ssMsg;
     //Get a stream socket
     sock = socket (AF_INET, SOCK_STREAM, 0);
     if (sock < 0)
     {
-        LOG("can't make socket sockunion_stream_socket");
-        return ret;
+        LOG("APIServer::Start() can't make socket sockunion_stream_socket"<<endl);
+        ssMsg << "APIServer::Start() can't make socket sockunion_stream_socket";
+        throw APIException(ssMsg.str());
     }
   
     // reuse address and port on the server
@@ -61,15 +64,17 @@ int APIServer::Start()
     ret = setsockopt (sock, SOL_SOCKET, SO_REUSEADDR, (void *) &on, sizeof (on));
     if (ret < 0)
     {
-        LOGF("can't set sockopt SO_REUSEADDR to socket %d", sock);
-        return ret;
+        LOG("APIServer::Start() can't set sockopt SO_REUSEADDR to socket " << sock<<endl);
+        ssMsg << "APIServer::Start() can't set sockopt SO_REUSEADDR to socket " << sock;
+        throw APIException(ssMsg.str());
     }
 #ifdef SO_REUSEPORT
     ret = setsockopt (sock, SOL_SOCKET, SO_REUSEPORT, (void *) &on, sizeof (on));
     if (ret < 0)
     {
-        LOGF("can't set sockopt SO_REUSEPORT to socket %d", sock);
-        return ret;
+        ssMsg << "APIServer::Start() can't set sockopt SO_REUSEPORT to socket " << sock;
+        throw APIException(ssMsg.str());
+
     }
 #endif
 
@@ -83,27 +88,27 @@ int APIServer::Start()
     memcpy(&(sa_in.sin_addr), &addr_u32, sizeof(struct in_addr));
     ret = bind (sock, (sockaddr *)&sa_in, size);
     if (ret < 0)
-   {
-      LOGF("can't bind socket : %s", strerror (errno));
-      close (sock);
-      return ret;
+    {
+        LOG("APIServer::Start() can't bind socket : " << strerror (errno)<<endl);
+        ssMsg << "APIServer::Start() can't bind socket : " << strerror (errno);
+        close (sock);
+        throw APIException(ssMsg.str());
     }
 
     // Listen under queue length 10
     ret = listen (sock, 9);
     if (ret < 0)
     {
-      LOGF ("APIServer::Init()::listen: %s",  strerror (errno));
-      close (sock);
-      return ret;
+        LOG("APIServer::Start()::listen:" << strerror (errno) <<endl);
+        ssMsg << "APIServer::Start()::listen:" << strerror (errno);
+        close (sock);
+        throw APIException(ssMsg.str());
     }
 
     //Sechedule itself
     this->fd = sock;
     this->SetRepeats(FOREVER);
     eventMaster->Schedule(this);
-
-    return ret;
 }
 
 void APIServer::Exit()
@@ -133,8 +138,10 @@ void APIServer::Run()
     int new_sock = accept (fd, (struct sockaddr *)&sa_in, &len);
     if (new_sock < 0)
     {
-        LOGF("APIServer::Run() Cannot accept socket on %d\n", fd);
-        return;
+        std::stringstream ssMsg;
+        LOG("APIServer::Run() Cannot accept socket on " << fd<<endl);
+        ssMsg << "APIServer::Run() Cannot accept socket on " << fd;
+        throw APIException(ssMsg.str());
     }
 
     APIWriter* api_writer = CreateAPIWriter(new_sock);
@@ -165,18 +172,18 @@ void APIReader::Run()
     if (fd < 0)
         return;
 
-    api_msg * msg = ReadMessage();
-
-    //something is wrong with socket read
-    if (!msg)
-    {
+    api_msg * msg = NULL;
+    try {
+        msg = ReadMessage();
+    } catch (APIException& e) {
+        //something is wrong with socket read
         assert(api_writer);
         api_writer->Close();
         Close();
+        //do not escalate
+        //throw;
         return;
     }
-
-    //api_msg_dump(msg);
 
     //Message handling by using APIServer callback
     server->HandleAPIMessage(this, this->api_writer, msg); 
@@ -190,30 +197,36 @@ api_msg * APIReader::ReadMessage ()
     int bodylen;
     int rlen;
 
+    std::stringstream ssMsg;
     /* Read message header */
     rlen = readn (fd, (char *) &header, sizeof (api_msg_header));
 
     if (rlen < 0)
     {
-        LOG("APIReader failed to read from "<<fd<<endl);
-        return NULL;
+        LOG("APIReader::ReadMessage () failed to read from "<<fd<<endl);
+        ssMsg << "APIReader::ReadMessage () failed to read from "<<fd;
+        throw APIException(ssMsg.str());
     }
     else if (rlen == 0)
     {
         close(fd);
-        LOG("Connection closed for APIReader(" << fd <<')' << endl);
-        return NULL;
+        LOG("APIReader::ReadMessage () connection closed for APIReader(" << fd <<')'<<endl);
+        ssMsg << "APIReader::ReadMessage () connection closed for APIReader(" << fd <<')';
+        throw APIException(ssMsg.str());
     }
     else if (rlen != sizeof (struct api_msg_header))
     {
         LOG("APIReader(" << fd << ") cannot read the message header" <<endl);
-        return NULL;
+        ssMsg << "APIReader(" << fd << ") cannot read the message header";
+        throw APIException(ssMsg.str());
     }
 
     if (MSG_CHKSUM(header) != header.chksum)
     {
         LOGF("APIReader(%d) packet corrupt (ucid=0x%x, seqno=0x%x).\n", fd, ntohl(header.ucid), ntohl(header.seqnum));
-        return NULL;
+        ssMsg << "APIReader("<<fd<<") packet corrupt (ucid="<<ntohl(header.ucid) << " seqno=" << ntohl(header.seqnum) << ").";
+        throw APIException(ssMsg.str());
+
     }
 
     // Determine body length. 
@@ -221,7 +234,8 @@ api_msg * APIReader::ReadMessage ()
     if (bodylen > API_MAX_MSG_SIZE)
     {
         LOG("APIReader(" << fd << ") cannot read oversized packet" <<endl);
-        return NULL;
+        ssMsg << "APIReader(" << fd << ") cannot read oversized packet";
+        throw APIException(ssMsg.str());
     }
 
     if (bodylen > 0)
@@ -230,18 +244,21 @@ api_msg * APIReader::ReadMessage ()
         rlen = readn (fd, buf, bodylen);
         if (rlen < 0)
         {
-             LOG("APIReader failed to read from" << fd << endl);
-            return NULL;
+             LOG("APIReader failed to read from " << fd << endl);
+             ssMsg << "APIReader failed to read from " << fd;
+             throw APIException(ssMsg.str());
         }
         else if (rlen == 0)
         {
              LOG("Connection closed for APIReader(" << fd <<')' << endl);
-            return NULL;
+             ssMsg << "Connection closed for APIReader(" << fd <<')' ;
+             throw APIException(ssMsg.str());
         }
         else if (rlen != bodylen)
         {
              LOG("APIReader(" << fd << ") cannot read the message body" <<endl);
-            return NULL;
+             ssMsg << "APIReader(" << fd << ") cannot read the message body";
+             throw APIException(ssMsg.str());
         }
     }
 
@@ -269,17 +286,17 @@ void APIWriter::Run()
     api_msg * msg = msgQueue.front();
     assert (msg);
     msgQueue.pop_front();
-    int ret = WriteMessage(msg); //msg is deleted in WriteMessage
-
-    //something is wrong with socket write
-    if (ret < 0)
-    {
+    try {
+        WriteMessage(msg); //msg is deleted in WriteMessage
+    } catch (APIException& e) {
+        //something is wrong with socket write
         assert(api_reader);
         api_reader->Close();
         Close();
+        //do not escalate
+        //throw;
         return;
     }
-
     if (msgQueue.size() > 0)
     {
         this->SetObsolete(false);
@@ -287,7 +304,7 @@ void APIWriter::Run()
     }
 }
 
-int APIWriter::WriteMessage (api_msg *msg)
+void APIWriter::WriteMessage (api_msg *msg)
 {
     char buf[API_MAX_MSG_SIZE];
 
@@ -301,11 +318,14 @@ int APIWriter::WriteMessage (api_msg *msg)
     if (msg->body && ntohs(msg->header.length) > 0)
         memcpy (buf + sizeof (api_msg_header), msg->body, ntohs (msg->header.length));
 
+    std::stringstream ssMsg;
+
     if (MSG_CHKSUM(msg->header) != msg->header.chksum)
     {
         LOG("APIWriter(" << fd << ") packet corrupt" <<endl);
         api_msg_delete (msg);
-        return -1;
+        ssMsg << "APIWriter(" << fd << ") packet corrupt";
+        throw APIException(ssMsg.str());
     }
 
     api_msg_delete (msg);
@@ -314,20 +334,22 @@ int APIWriter::WriteMessage (api_msg *msg)
     if (wlen < 0)
     {
         LOG("APIWriter failed to write " << fd << endl);
-        return -1;
+        ssMsg << "APIWriter failed to write " << fd;
+        throw APIException(ssMsg.str());
     }
     else if (wlen == 0)
     {
         close(fd);
         LOG("Connection closed for APIWriter(" << fd <<')' << endl);
-        return -1;
+        ssMsg << "Connection closed for APIWriter(" << fd <<')' ;
+        throw APIException(ssMsg.str());
     }
     else if (wlen != len)
     {
         LOG("APIWriter(" << fd << ") cannot write the message" <<endl);
-        return -1;
+        ssMsg << "APIWriter(" << fd << ") cannot write the message";
+        throw APIException(ssMsg.str());
     }
-    return 0;
 }
 
 void APIWriter::PostMessage (api_msg *msg, bool urgent)
@@ -382,50 +404,51 @@ void APIClient::SetHostPort(char *host, int port)
     _port = port;
 }
 
-int APIClient::Connect(char *host, int port)
+void APIClient::Connect(char *host, int port)
 {
-      struct sockaddr_in addr;
-      struct hostent *hp;
-      int ret;
-      int size;
-      int on = 1;
+    struct sockaddr_in addr;
+    struct hostent *hp;
+    int ret;
+    int size;
+    int on = 1;
 
     _host = host;
     _port = port;
   
-      assert (strlen(host) > 0 || port > 0);
-  	
-      hp = gethostbyname (host);
-      if (!hp)
-      {
-          fprintf (stderr, "APIClient::Connect: no such host %s\n", host);
-          return (-1);
-      }
+    assert (strlen(host) > 0 || port > 0);
+
+    std::stringstream ssMsg; 	
+    hp = gethostbyname (host);
+    if (!hp)
+    {
+        ssMsg <<  "APIClient::Connect: no such host " << host;
+        throw APIException(ssMsg.str());
+    }
   
-      fd = socket (AF_INET, SOCK_STREAM, 0);
-      if (fd < 0)
-      {
-  	  LOGF("APIClient::Connect: socket(): %s", strerror (errno));
-  	  return (-1);
-      }
+    fd = socket (AF_INET, SOCK_STREAM, 0);
+    if (fd < 0)
+    {
+        ssMsg << "APIClient::Connect: socket():" <<strerror (errno);
+        throw APIException(ssMsg.str());
+    }
                                                                                  
-      /* Reuse addr and port */
-      ret = setsockopt (fd, SOL_SOCKET,  SO_REUSEADDR, (void *) &on, sizeof (on));
-      if (ret < 0)
-      {
-          fprintf (stderr, "APIClient::Connect: SO_REUSEADDR failed\n");
-          close (fd);
-          return (-1);
-      }
+    /* Reuse addr and port */
+    ret = setsockopt (fd, SOL_SOCKET,  SO_REUSEADDR, (void *) &on, sizeof (on));
+    if (ret < 0)
+    {
+        close (fd);
+        ssMsg << "APIClient::Connect: SO_REUSEADDR failed";
+        throw APIException(ssMsg.str());
+    }
   
-  #ifdef SO_REUSEPORT
+    #ifdef SO_REUSEPORT
     ret = setsockopt (fd, SOL_SOCKET, SO_REUSEPORT,
                       (void *) &on, sizeof (on));
     if (ret < 0)
     {
-        fprintf (stderr, "APIClient::Connect: SO_REUSEPORT failed\n");
         close (fd);
-        return (-1);
+        ssMsg << "APIClient::Connect: SO_REUSEPORT failed";
+        throw APIException(ssMsg.str());
     }
   #endif /* SO_REUSEPORT */
   
@@ -441,22 +464,20 @@ int APIClient::Connect(char *host, int port)
                    sizeof (struct sockaddr_in));
     if (ret < 0)
     {
-        LOGF("APIClient::Connect: connect(): %s", strerror (errno));
         close (fd);
-        return (-1);
+        ssMsg << "APIClient::Connect: connect()" << strerror (errno);
+        throw APIException(ssMsg.str());
     }
 
     assert(api_writer);
     api_writer->SetSocket(fd);
-    return fd;
 }
 
-int APIClient::Connect()
+void APIClient::Connect()
 {
     LOG("API Client connecting ... \n");
 
-    if (_host.size() == 0 || _port == 0)
-        return -1;
+    assert (_host.size() != 0 && _port != 0);
 
     if (fd > 0)
     {
@@ -464,12 +485,7 @@ int APIClient::Connect()
             api_writer->Close();
         Close();
     }
-    if (Connect((char*)(_host.c_str()), _port) < 0)
-    {
-        return -1;
-    }
-
-    return 0;
+    Connect((char*)(_host.c_str()), _port);
 }
 
 bool APIClient::IsAlive()

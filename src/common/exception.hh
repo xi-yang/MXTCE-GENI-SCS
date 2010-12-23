@@ -76,4 +76,14 @@ public:
     }
 };
 
+class APIException: public TCEException
+{
+public:
+    APIException(string msg): TCEException(msg){ }
+    virtual ~APIException()throw(){ }  
+    virtual const char* what() const throw() {
+        return (const char*)"APIException";
+    }
+};
+
 #endif

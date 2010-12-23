@@ -509,6 +509,7 @@ void MessageRouter::Run()
             continue;
         Message* msg;
         Route* route;
+        // TODO: Routing can be faster if using two-level hash map:  {queue, topic} ->portlist
         // TODO: Handle "delivery confirmation" and "resend" in GetMessage()
         // TODO: When passing duplicate messages, watching out for thread-safe operations on passed pointers. Dup pointed data if needed!
         while ((msg = msgPort->GetMessage()) != NULL)
