@@ -139,6 +139,11 @@ AC_CHECK_LIB(resolv, res_init)
 AC_CHECK_LIB(m, main)
 
 dnl ---------------------------------------------------
+dnl Check existance of libpthread
+dnl ---------------------------------------------------
+AC_CHECK_LIB(pthread, pthread_create)
+
+dnl ---------------------------------------------------
 dnl Check existance of libxml2
 dnl ---------------------------------------------------
 AC_CHECK_LIB(xml2, xmlParseFile)
