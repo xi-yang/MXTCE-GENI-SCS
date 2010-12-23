@@ -204,7 +204,7 @@ public:
 class EventMaster
 {
 private:
-    static map<u_int32_t, EventMaster*> threadMasters;
+    static map<unsigned long, EventMaster*> threadMasters;
     fd_set readfd;
     fd_set writefd;
     fd_set exceptfd;

@@ -53,6 +53,7 @@ public:
     static string tedbManPortName;
     static string resvManPortName;
     static string policyManPortName;
+    static string tmpFilesDir;
 
 public:
 	MxTCE( const string& configFile);

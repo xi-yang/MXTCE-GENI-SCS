@@ -259,7 +259,7 @@ void MessagePort::AttachPipesAsServer()
     std::stringstream ssMsg;
 
     // Create named pipe for reading
-    string pipe1 = portName;
+    string pipe1 = MxTCE::tmpFilesDir+portName;
     pipe1 += "_pipe_in";
     ret = mkfifo(pipe1.c_str(), 0666);
     if ((ret == -1) && (errno != EEXIST)) {
@@ -267,7 +267,7 @@ void MessagePort::AttachPipesAsServer()
         throw MsgIOException(ssMsg.str());
     }
     // Create named pipe for writing
-    string pipe2 = portName;
+    string pipe2 = MxTCE::tmpFilesDir+portName;
     pipe2 += "_pipe_out";
     ret = mkfifo(pipe2.c_str(), 0666);
     if ((ret == -1) && (errno != EEXIST)) {
@@ -308,9 +308,9 @@ void MessagePort::AttachPipesAsClient()
     std::stringstream ssMsg;
 
     // Create named pipe for reading
-    string pipe1 = portName;
+    string pipe1 = MxTCE::tmpFilesDir+portName;
     pipe1 += "_pipe_in";
-    string pipe2 = portName;
+    string pipe2 =MxTCE::tmpFilesDir+portName;
     pipe2 += "_pipe_out";
     // Open named pipe for writing
     wfd = open(pipe1.c_str(), O_WRONLY);
@@ -565,6 +565,8 @@ MessagePort* MessageRouter::AddPort(string& portName)
 {
     // new port,
     MessagePort* msgPort = new MessagePort(portName, this);
+    assert(eventMaster);
+    msgPort->SetEventMaster(eventMaster);
     msgPortList.push_back(msgPort);
     //attach to pipe and scheule if MessageRouter has already started
     if (this->up) 

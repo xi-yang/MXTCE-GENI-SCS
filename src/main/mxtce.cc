@@ -43,6 +43,7 @@ string MxTCE::tedbManPortName = "MX-TCE_TEDB_MANAGER";
 string MxTCE::resvManPortName = "MX-TCE_RESV_MANAGER";
 string MxTCE::policyManPortName = "MX-TCE_POLICY_MANAGER";
 string MxTCE::loopbackPortName = "MX-TCE_CORE_LOOPBACK";
+string MxTCE::tmpFilesDir = "/var/tmp/mxtce/pipes/";
 
 MxTCE::MxTCE( const string& configFile) 
 {
@@ -53,8 +54,10 @@ MxTCE::MxTCE( const string& configFile)
 
     messageRouter = MessageRouter::GetInstance();
     assert(messageRouter);
+    messageRouter->SetEventMaster(eventMaster);
 
     loopbackPort = new MessagePortLoopback(loopbackPortName, messageRouter, this);
+    loopbackPort->SetEventMaster(eventMaster);
 
     apiServerThread = new APIServerThread(MxTCE::apiServerPortName, MxTCE::apiServerPort, eventMaster);
 }
@@ -83,9 +86,9 @@ void MxTCE::Start()
     // --> attach message router port
 
     messageRouter->AddPort(MxTCE::apiServerPortName);
-    messageRouter->AddPort(MxTCE::tedbManPortName);
-    messageRouter->AddPort(MxTCE::resvManPortName);
-    messageRouter->AddPort(MxTCE::policyManPortName);
+    //messageRouter->AddPort(MxTCE::tedbManPortName);
+    //messageRouter->AddPort(MxTCE::resvManPortName);
+    //messageRouter->AddPort(MxTCE::policyManPortName);
     messageRouter->GetMessagePortList().push_back(loopbackPort);
     loopbackPort->AttachPipesAsServer();
     messageRouter->Start();

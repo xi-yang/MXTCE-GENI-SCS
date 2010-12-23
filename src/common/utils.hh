@@ -53,6 +53,8 @@ extern "C"
     RETSIGTYPE * signal_set (int signo, void (*func)(int));
     
     void signal_init ();
+
+    int mkpath(const char *path, mode_t mode);
 }
 
 

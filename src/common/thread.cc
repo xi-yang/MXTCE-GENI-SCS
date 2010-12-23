@@ -194,6 +194,7 @@ void* ThreadPortScheduler::Run()
     if (eventMaster == NULL)
         eventMaster = EventMaster::GetThreadInstance((unsigned long)this->GetId());
     assert(eventMaster);
+    msgPort->SetEventMaster(eventMaster);
 
     void* pReturn = NULL;
     if (!msgPort->IsUp())
