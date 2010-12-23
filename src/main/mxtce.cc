@@ -98,6 +98,9 @@ void MxTCE::Start()
 
     // run core eventMaster
     eventMaster->Run();
+
+    // join threads
+    apiServerThread->Join();
 }
 
 
