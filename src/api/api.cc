@@ -179,7 +179,7 @@ void APIReader::Run()
     //api_msg_dump(msg);
 
     //Message handling by using APIServer callback
-    server->HandleMessage(this, this->api_writer, msg); 
+    server->HandleAPIMessage(this, this->api_writer, msg); 
 }
 
 api_msg * APIReader::ReadMessage ()

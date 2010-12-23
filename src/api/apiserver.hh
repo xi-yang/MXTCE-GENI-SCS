@@ -38,6 +38,7 @@
 #include "types.hh"
 #include "event.hh"
 #include "thread.hh"
+#include "thread.hh"
 #include "api.hh"
 
 using namespace std;
@@ -53,7 +54,7 @@ public:
         assert (thread);
     }
     virtual ~MxTCEAPIServer() { } 
-    virtual int HandleMessage (APIReader* apiReader, APIWriter* apiWriter, api_msg* apiMsg);
+    virtual int HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter, api_msg* apiMsg);
 };
 
 class APIServerThread: public ThreadPortScheduler
@@ -65,7 +66,8 @@ public:
     APIServerThread(string name, int port,EventMaster* evm):ThreadPortScheduler(name), apiServer(port,evm, this) { }
     virtual ~APIServerThread() { }
     MessagePort* GetMessagePort() { return msgPort; }
-    virtual void* DoRun();
+    virtual void* hookRun();
+    virtual void hookHandleMessage();
 };
 
 #endif

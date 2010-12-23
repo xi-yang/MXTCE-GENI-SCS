@@ -124,7 +124,7 @@ public:
     void Notify();
 };
 
-
+class MessagePort;
 class ThreadPortScheduler: public Thread
 {
 protected:
@@ -138,7 +138,8 @@ public:
     ThreadPortScheduler(string portName);
     virtual ~ThreadPortScheduler();
     virtual void* Run();
-    virtual void* DoRun() {}
+    virtual void* hookRun() {}
+    virtual void hookHandleMessage() {}
 };
 
 #endif

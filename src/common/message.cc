@@ -161,6 +161,16 @@ void Message::Receive(int fd)
 }
 
 
+void Message::LogDump()
+{
+    LOG_DEBUG("Message Dump [type=" << this->type << " to queue=" << this->queueName << " with topic=" << this->topicName
+        << " urgentFlag=" << (this->flagUrgent?"true":"false") << " TLV count=" << this->tlvList.size() << "]" <<endl);
+}
+
+
+////////////////////////////
+
+
 void MessageReader::Run()
 {
     Reader::Run();
@@ -247,7 +257,10 @@ void MessagePort::Run()
         eventMaster->Remove(this);
         eventMaster->Remove(this->GetWriter());
     }
-    msgRouter->Check();    
+    if (threadScheduler)
+        threadScheduler->hookHandleMessage();
+    if (msgRouter)
+        msgRouter->Check();    
 }
 
 // pipeName == portName
@@ -523,7 +536,7 @@ void MessageRouter::Run()
                     for (itN =portNameList.begin(); itN != portNameList.end(); itN++)
                     {
                         string portName = *itN;
-                        for (; itP != msgPortList.end(); itP++) 
+                        for (itP = msgPortList.begin(); itP != msgPortList.end(); itP++) 
                         {
                             MessagePort* msgOutPort = *itP;
                             if (msgOutPort && msgOutPort->IsUp() && msgOutPort->GetName() == portName)

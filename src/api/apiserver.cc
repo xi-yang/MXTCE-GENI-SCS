@@ -33,9 +33,10 @@
 
 #include "apiserver.hh"
 
+// Handle message from API client
 
 // TODO: Exception handling!
-int MxTCEAPIServer::HandleMessage (APIReader* apiReader, APIWriter* apiWriter, api_msg * apiMsg)
+int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter, api_msg * apiMsg)
 {
     
     if (ntohs(apiMsg->header.type) != API_MSG_REQUEST)
@@ -79,9 +80,23 @@ int MxTCEAPIServer::HandleMessage (APIReader* apiReader, APIWriter* apiWriter, a
 }
 
 
-void* APIServerThread::DoRun()
+// Thread specific logic
+void* APIServerThread::hookRun()
 {
     // eventMaster has been initiated in parent class ThreadPortScheduler::Run() method
+    msgPort->SetThreadScheduler(this);
     apiServer.Start();
     eventMaster->Run();
 }
+
+
+// Handle message from thread message router
+void APIServerThread::hookHandleMessage()
+{
+    Message* msg = NULL;
+    while ((msg = msgPort->GetMessage()) != NULL)
+    {
+        msg->LogDump();
+    }
+}
+

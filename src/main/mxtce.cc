@@ -89,6 +89,11 @@ void MxTCE::Start()
     // --> attach message router port
 
     messageRouter->AddPort(MxTCE::apiServerPortName);
+    string routeQueue = "CORE", routeTopic = "API_REQUEST";
+    messageRouter->AddRoute(routeQueue,routeTopic, MxTCE::loopbackPortName);
+    routeTopic = "API_REPLY";
+    messageRouter->AddRoute(routeQueue,routeTopic, MxTCE::apiServerPortName);
+    
     //messageRouter->AddPort(MxTCE::tedbManPortName);
     //messageRouter->AddPort(MxTCE::resvManPortName);
     //messageRouter->AddPort(MxTCE::policyManPortName);
@@ -125,6 +130,10 @@ void MxTCEMessageHandler::Run()
     Message* msg = mxTCE->GetLoopbackPort()->GetLocalMessage();
     if (msg)
     {
-        // core message handling
+        msg->LogDump();
+        // @@@@ Testing code
+        string topic = "API_REPLY";
+        msg->SetTopic(topic);
+        mxTCE->GetLoopbackPort()->PostLocalMessage(msg);
     }
 }

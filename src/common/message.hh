@@ -37,6 +37,7 @@
 #include<list>
 #include "types.hh"
 #include "event.hh"
+#include "thread.hh"
 
 using namespace std;
 
@@ -90,11 +91,16 @@ public:
         { flagUrgent = false; }
     virtual ~Message();
     u_int16_t GetType() { return type; }
+    void SetType(u_int16_t ty) { this->type = ty; }
     string& GetQueue() { return queueName; }
+    void SetQueue(string& qn) { queueName = qn; }
     string& GetTopic() { return topicName; }
+    void SetTopic(string& tn) { topicName = tn; }
     bool IsUrgent() { return flagUrgent; }
+    void SetUrgent(bool ur) { flagUrgent = ur; }
     void Transmit(int wfd);
     void Receive(int rfd);
+    void LogDump();
 };
 
 
@@ -138,6 +144,7 @@ public:
 
 
 class MessageRouter;
+class ThreadPortScheduler;
 class MessagePort: public MessageReader
 {
 protected:
@@ -147,10 +154,11 @@ protected:
     //this (self) is *the* msgReader
     MessageRouter* msgRouter;
     EventMaster* eventMaster;
+    ThreadPortScheduler* threadScheduler;
 
 public:
-    MessagePort(string& name): MessageReader(0), portName(name), msgWriter(0), msgRouter(NULL), up(false) { }
-    MessagePort(string& name, MessageRouter* router): MessageReader(0), portName(name), msgWriter(0), msgRouter(router), up(false) { }
+    MessagePort(string& name): MessageReader(0), portName(name), msgWriter(0), msgRouter(NULL), threadScheduler(NULL), up(false) { }
+    MessagePort(string& name, MessageRouter* router): MessageReader(0), portName(name), msgWriter(0), msgRouter(router), threadScheduler(NULL), up(false) { }
     virtual ~MessagePort() { }
     string& GetName() { return portName; }
     void SetName(string& name) { portName = name; }
@@ -159,6 +167,8 @@ public:
     MessageWriter* GetWriter() { return &msgWriter; }  
     list<Message*>& GetMsgInQueue() { return inQueue; }
     list<Message*>& GetMsgOutQueue() { return msgWriter.outQueue; }
+    ThreadPortScheduler* GetThreadScheduler() { return threadScheduler; }
+    void SetThreadScheduler(ThreadPortScheduler* scheduler) { threadScheduler = scheduler; }
     virtual void Run ();
     virtual void AttachPipesAsServer();
     virtual void AttachPipesAsClient();

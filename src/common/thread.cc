@@ -207,7 +207,7 @@ void* ThreadPortScheduler::Run()
     }
 
     // call job function
-    pReturn = this->DoRun();
+    pReturn = this->hookRun();
 
     // start event loop
     eventMaster->Run();

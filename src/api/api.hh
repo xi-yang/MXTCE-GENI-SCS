@@ -109,7 +109,7 @@ public:
     virtual void Run();
     virtual APIReader* CreateAPIReader(int sock);
     virtual APIWriter* CreateAPIWriter(int sock);
-    virtual int HandleMessage (APIReader*, APIWriter*, api_msg *) = 0; // pure virtual
+    virtual int HandleAPIMessage (APIReader*, APIWriter*, api_msg *) = 0; // pure virtual
 };
 
 class APIWriter;
