@@ -91,8 +91,8 @@ void Log::Init(u_int32_t options_val, const string &fileName)
     log_file = new ofstream(fileName.c_str(), ios::out |((options_val & LOG_APPEND) ? ios::app : ios::trunc) );
     if (!log_file || log_file->bad()) 
     {
-        LOG_FILE << "Failed to open the log file: " << fileName << endl;
-        LOG_FILE << "Logging to stdout instead." << endl;
+        LOG_CERR << "Failed to open the log file: " << fileName << endl;
+        LOG_CERR << "Logging to stdout instead." << endl;
         log_stderr = &cout;
     }
 }

@@ -2,10 +2,7 @@
 ## MX-TCE: mxtce-sw/src/main/Makefile.am
 
 # -- Programs
-bin_PROGRAMS = mxtce 
-
-# -- No-install Programs
-check_PROGRAMS  = mxtce_test
+bin_PROGRAMS = mxtce mxtce_test
 
 # -- Libraries and library flags to link the binary programs
 LDADD = $(top_srcdir)/src/common/libcommon.a $(top_srcdir)/src/api/libapi.a
@@ -24,5 +21,5 @@ INSTALL_SDATA=@INSTALL@ -m 600
 mxtce_SOURCES = mxtce.hh
 mxtce_SOURCES += mxtce.cc mxtce_main.cc
 
-# -- No-install Program Sources
+# -- Program Sources
 mxtce_test_SOURCES = mxtce_test.cc

@@ -35,16 +35,34 @@
 
 
 // TODO: Exception handling!
-int MxTCEAPIServer::HandleMessage (api_msg * msg)
+int MxTCEAPIServer::HandleMessage (APIReader* apiReader, APIWriter* apiWriter, api_msg * apiMsg)
 {
     
-    if (ntohs(msg->header.type) != API_MSG_REQUEST)
+    if (ntohs(apiMsg->header.type) != API_MSG_REQUEST)
     {
         LOGF("MxTCEAPIServer::HandleMessage:: The impossible happened:  Received a non-API_MSG_REQUEST message type: %d (ucid=0x%x, seqno=0x%x).\n",
-            ntohs(msg->header.type), ntohl(msg->header.ucid), ntohl(msg->header.seqnum));
+            ntohs(apiMsg->header.type), ntohl(apiMsg->header.ucid), ntohl(apiMsg->header.seqnum));
         return -1;
     }
 
+
+    // @@@@ Testing code -- Begin
+
+    apiMsg->header.type = htons(API_MSG_REPLY);
+    apiMsg->header.ucid = htonl(0x0002);
+    apiMsg->header.chksum = MSG_CHKSUM(apiMsg->header);
+    apiWriter->PostMessage(apiMsg);
+
+    // use macro defs for queue and topic names??
+    string queueName="CORE", topicName="API_REQUEST";
+    Message* tMsg = new Message(MSG_REQ, queueName, topicName);
+    // empty msg body!
+    // tMsg->AddTLV();
+    apiThread->GetMessagePort()->PostMessage(tMsg); 
+
+    // @@@@ Testing code -- End
+
+    
     // Extract TLVs --> validate request, translate info and compose message to pass to core
     /*
     switch (ntohs(app_req->type))

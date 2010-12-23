@@ -86,7 +86,7 @@ protected:
 
 public:
     Message(): type(0), queueName(""), topicName("") { }
-    Message(u_int16_t ty, string& qn, string& tn): type(ty), queueName(qn), topicName(tn) 
+    Message(MessageType ty, string& qn, string& tn): type(ty), queueName(qn), topicName(tn) 
         { flagUrgent = false; }
     virtual ~Message();
     u_int16_t GetType() { return type; }

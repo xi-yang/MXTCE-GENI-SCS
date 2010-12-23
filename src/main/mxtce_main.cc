@@ -32,10 +32,10 @@
  */
 
 #include "types.hh"
+#include "log.hh"
 #include "event.hh"
 #include "utils.hh"
 #include "exception.hh"
-#include "log.hh"
 #include "mxtce.hh"
 
 #ifndef HAVE_DECL_GETOPT
@@ -55,7 +55,7 @@ struct option longopts[] =
 void showUsage()
 {
     cout<<"MX-TCE Usage:"<<endl;
-    cout<<"\t rce [-d] (daemon)  [-c config_file] [-p API port] [-h] (help)" <<endl;
+    cout<<"\t mxtce [-d] (daemon)  [-c config_file] [-p API port] [-h] (help)" <<endl;
 }
 
 //extern const char* MxTCEVersionString();
@@ -131,8 +131,7 @@ int main( int argc, char* argv[])
             is_daemon = true;
             break;
         case 'p':
-            // TODO: API Port
-            //SystemConfig::ali_port = atoi(optarg);
+            MxTCE::apiServerPort = atoi(optarg);
             break;
         case 'h':
         default:
@@ -141,11 +140,7 @@ int main( int argc, char* argv[])
         }
     }
 
-    // TODO: 
-    //signal_init ();
-
-    if (is_daemon)
-        runAsDaemon(0, 0);
+    signal_init ();
 
     // init logging
     char log_file[20];
@@ -156,6 +151,10 @@ int main( int argc, char* argv[])
         <<"MxTCE Started..."<<endl
     //    <<MxTCEVersionString()<<endl
         <<"#####################"<<endl<<endl);
+
+    // init daemon mode
+    if (is_daemon)
+        runAsDaemon(0, 0);
 
     // $$$$  Start core MxTCE thread
     MxTCE* mxTCECore = new MxTCE(configfile);

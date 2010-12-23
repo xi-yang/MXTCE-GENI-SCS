@@ -56,7 +56,7 @@ void Message::Transmit(int fd)
     header->type = type;
     header->length = sizeof(MessageHeader);
     strncpy(header->queue, queueName.c_str(), 64);
-    strncpy(header->topic, queueName.c_str(), 64);
+    strncpy(header->topic, topicName.c_str(), 64);
     if (flagUrgent)
         header->flags |= MSG_FLAG_URGENT;
 
@@ -496,7 +496,8 @@ void MessageRouter::Run()
             continue;
         Message* msg;
         Route* route;
-        // $$$$ TODO : Handle "delivery confirmation" and "resend" in GetMessage()
+        // TODO: Handle "delivery confirmation" and "resend" in GetMessage()
+        // TODO: When passing duplicate messages, watching out for thread-safe operations on passed pointers. Dup pointed data if needed!
         while ((msg = msgPort->GetMessage()) != NULL)
         {
             route = LookupRoute(msg->GetQueue(), msg->GetTopic());
@@ -530,11 +531,22 @@ void MessageRouter::Run()
                         }
                     }
                 }
+                if (outPortList.empty())
+                {
+                    LOG("MessageRouter found am empty route for delivering msg (type:" << msg->GetType() 
+                        << ") to queue: " << msg->GetQueue() << " with topic: " << msg->GetTopic() << endl);
+                    continue;
+                }
                 for (itP = outPortList.begin(); itP != outPortList.end(); itP++)
                 {
                     MessagePort* msgOutPort = *itP;
                     msgOutPort->PostMessage(msg);
                 }
+            }
+            else 
+            {
+                LOG("MessageRouter cannot find a route for delivering msg (type:" << msg->GetType() 
+                    << ") to queue: " << msg->GetQueue() << " with topic: " << msg->GetTopic() << endl);
             }
         }
     }

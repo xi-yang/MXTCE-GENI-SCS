@@ -133,7 +133,7 @@ void APIServer::Run()
     int new_sock = accept (fd, (struct sockaddr *)&sa_in, &len);
     if (new_sock < 0)
     {
-        LOGF("APIServer::Run: cannot accept socket on %d\n", fd);
+        LOGF("APIServer::Run() Cannot accept socket on %d\n", fd);
         return;
     }
 
@@ -151,7 +151,7 @@ void APIServer::Run()
     //eventMaster->Schedule(api_writer);
     eventMaster->Schedule(api_reader);
 
-    LOG_DEBUG("Accepted a connection on socket(" <<new_sock <<")" << endl);
+    LOG_DEBUG("APIServer::Run() Accepted an API connection on socket(" <<new_sock <<")" << endl);
 }
 
 
@@ -179,7 +179,7 @@ void APIReader::Run()
     //api_msg_dump(msg);
 
     //Message handling by using APIServer callback
-    server->HandleMessage(msg); 
+    server->HandleMessage(this, this->api_writer, msg); 
 }
 
 api_msg * APIReader::ReadMessage ()

@@ -42,12 +42,18 @@
 
 using namespace std;
 
+class APIServerThread;
 class MxTCEAPIServer: public APIServer
 {
+protected:
+    APIServerThread* apiThread;
+
 public:
-    MxTCEAPIServer(int port,EventMaster* evm): APIServer(port, evm) { }
+    MxTCEAPIServer(int port ,EventMaster* evm, APIServerThread* thread): APIServer(port, evm), apiThread(thread) {
+        assert (thread);
+    }
     virtual ~MxTCEAPIServer() { } 
-    virtual int HandleMessage (api_msg *);
+    virtual int HandleMessage (APIReader* apiReader, APIWriter* apiWriter, api_msg* apiMsg);
 };
 
 class APIServerThread: public ThreadPortScheduler
@@ -56,8 +62,9 @@ protected:
     MxTCEAPIServer apiServer;
 
 public:
-    APIServerThread(string name, int port,EventMaster* evm):ThreadPortScheduler(name), apiServer(port,evm) { }
+    APIServerThread(string name, int port,EventMaster* evm):ThreadPortScheduler(name), apiServer(port,evm, this) { }
     virtual ~APIServerThread() { }
+    MessagePort* GetMessagePort() { return msgPort; }
     virtual void* DoRun();
 };
 
