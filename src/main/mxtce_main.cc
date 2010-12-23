@@ -37,8 +37,6 @@
 #include "exception.hh"
 #include "log.hh"
 #include "mxtce.hh"
-#include <sys/stat.h>
-#include <fcntl.h>
 
 #ifndef HAVE_DECL_GETOPT
   #define HAVE_DECL_GETOPT 1

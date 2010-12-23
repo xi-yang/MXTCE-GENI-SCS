@@ -34,6 +34,7 @@
 #include "log.hh"
 #include "event.hh"
 #include "exception.hh"
+#include "utils.hh"
 #include "mxtce.hh"
 
 
@@ -73,6 +74,8 @@ MxTCE::~MxTCE()
 
 void MxTCE::Start()
 {
+    mkpath((const char*)MxTCE::tmpFilesDir.c_str(), 0777);
+
     // start binary API server thread 
     apiServerThread->Start(NULL);
     

@@ -41,6 +41,8 @@
 #include <assert.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <netdb.h>
 #include <assert.h>

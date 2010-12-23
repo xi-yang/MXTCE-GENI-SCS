@@ -32,8 +32,6 @@
  */
 
 #include <iostream>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include "utils.hh"
 #include "log.hh"
 #include "exception.hh"
