@@ -22,4 +22,5 @@ mxtce_SOURCES = mxtce.hh
 mxtce_SOURCES += mxtce.cc mxtce_main.cc
 
 # -- Program Sources
-mxtce_test_SOURCES = mxtce_test.cc
+mxtce_test_SOURCES = mxtce.hh
+mxtce_test_SOURCES += mxtce.cc mxtce_test.cc

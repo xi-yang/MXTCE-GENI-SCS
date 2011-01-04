@@ -50,7 +50,7 @@ mxtce_OBJECTS = $(am_mxtce_OBJECTS)
 mxtce_LDADD = $(LDADD)
 mxtce_DEPENDENCIES = $(top_srcdir)/src/common/libcommon.a \
 	$(top_srcdir)/src/api/libapi.a
-am_mxtce_test_OBJECTS = mxtce_test.$(OBJEXT)
+am_mxtce_test_OBJECTS = mxtce.$(OBJEXT) mxtce_test.$(OBJEXT)
 mxtce_test_OBJECTS = $(am_mxtce_test_OBJECTS)
 mxtce_test_LDADD = $(LDADD)
 mxtce_test_DEPENDENCIES = $(top_srcdir)/src/common/libcommon.a \
@@ -189,7 +189,7 @@ INSTALL_SDATA = @INSTALL@ -m 600
 mxtce_SOURCES = mxtce.hh mxtce.cc mxtce_main.cc
 
 # -- Program Sources
-mxtce_test_SOURCES = mxtce_test.cc
+mxtce_test_SOURCES = mxtce.hh mxtce.cc mxtce_test.cc
 all: all-am
 
 .SUFFIXES:

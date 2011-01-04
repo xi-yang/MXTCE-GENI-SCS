@@ -36,6 +36,8 @@
 #include <iostream>
 #include <fstream>
 #include "types.hh"
+#include "thread.hh"
+
 using namespace std;
 
 
@@ -53,7 +55,7 @@ typedef enum
 } LogOption;
 
 /////////////Log  (A singleton class)/////////////
-
+class Lock;
 class Log
 {
 private:
@@ -61,22 +63,27 @@ private:
     static bool blDebug;
     static string more_info;
     Log() {}
+
 public:
-    ~Log()
-       {    if (log_file) 
-                {
-                    log_file->flush(); 
-                    delete log_file;
-                } 
-             if (log_stdout) 
-                log_stdout->flush();
-             if (log_stderr)
-                log_stderr->flush();          }
+    ~Log() {
+        if (log_file) 
+        {
+            log_file->flush(); 
+            delete log_file;
+        } 
+        if (log_stdout) 
+            log_stdout->flush();
+        if (log_stderr)
+            log_stderr->flush();
+        if (loggerLock)
+            delete loggerLock;
+    }
 
     static u_int32_t options;
     static ostream* log_file;
     static ostream* log_stdout;
     static ostream* log_stderr;
+    static Lock* loggerLock;
  
     static bool Debug() {return blDebug;}
     static void SetDebug(bool val) {blDebug = val;}
@@ -90,16 +97,19 @@ public:
 };
 
 
-#define LOG_FILE    (*Log::log_file<<Log::Preamble(LOG_LOGFILE))
+#define LOG_FILE   (*Log::log_file<<Log::Preamble(LOG_LOGFILE))
 #define LOG_COUT   (*Log::log_stdout<<Log::Preamble(LOG_STDOUT))
 #define LOG_CERR   (*Log::log_stderr<<Log::Preamble(LOG_STDERR))
-#define LOG(X)    if (Log::options&LOG_LOGFILE && Log::options&LOG_STDOUT) \
-                              { LOG_FILE<<X<<flush; LOG_COUT<<X<<flush; }  \
-                           else if (Log::options&LOG_LOGFILE && Log::options&LOG_STDERR) \
-                              { LOG_FILE<<X<<flush; LOG_CERR<<X<<flush; }  \
-                           else if (Log::options&LOG_LOGFILE) LOG_FILE<<X<<flush; \
-                           else if (Log::options&LOG_STDOUT) LOG_COUT<<X<<flush;  \
-                           else if (Log::options&LOG_STDERR) LOG_CERR<<X<<flush
+#define LOG(X)     Log::loggerLock->DoLock(); \
+                   if (Log::options&LOG_LOGFILE && Log::options&LOG_STDOUT) \
+                      { LOG_FILE<<X<<flush; LOG_COUT<<X<<flush; }  \
+                   else if (Log::options&LOG_LOGFILE && Log::options&LOG_STDERR) \
+                      { LOG_FILE<<X<<flush; LOG_CERR<<X<<flush; }  \
+                   else if (Log::options&LOG_LOGFILE) LOG_FILE<<X<<flush; \
+                   else if (Log::options&LOG_STDOUT) LOG_COUT<<X<<flush;  \
+                   else if (Log::options&LOG_STDERR) LOG_CERR<<X<<flush;  \
+                   Log::loggerLock->Unlock();
+
 #define LOGF Log::Logf
 #define LOG_DEBUG(X) if(Log::Debug()) LOG(X)
 #define LOG_DEBUGF(X) if(Log::Debug()) LOGF(X)

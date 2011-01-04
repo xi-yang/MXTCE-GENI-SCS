@@ -40,6 +40,7 @@ ostream* Log::log_file = (ostream*)NULL;
 u_int32_t Log::options = 0; 
 ostream* Log::log_stdout = &cout;
 ostream* Log::log_stderr = &cerr;
+Lock* Log::loggerLock = NULL;
 bool Log::blDebug = false;
 string Log::more_info = "";
 
@@ -86,6 +87,7 @@ const string Log::Preamble(LogOption option)
 void Log::Init(u_int32_t options_val, const string &fileName)
 {   
     options = options_val;
+    loggerLock = new Lock();
     if (fileName.empty())
         return;
     log_file = new ofstream(fileName.c_str(), ios::out |((options_val & LOG_APPEND) ? ios::app : ios::trunc) );
@@ -101,6 +103,8 @@ int Log::Logf(const char *format, ...)
 {
     static char buf[256];
 
+    loggerLock->DoLock();
+
     buf[0] = 0;
     va_list ap;
     va_start(ap, format);
@@ -110,6 +114,8 @@ int Log::Logf(const char *format, ...)
     if (log_stdout && (options&LOG_STDOUT))
         *log_stdout<<Preamble(LOG_LOGFILE) << buf<<flush;
     va_end(ap);
+
+    loggerLock->Unlock();
     return ret;
 }
 
