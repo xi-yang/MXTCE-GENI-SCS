@@ -2,8 +2,7 @@
 ## MX-TCE: mxtce-sw/src/Makefile.am
 
 # -- Subdirectories
-#SUBDIRS = common api resvManager policyManager tedbManager main
-SUBDIRS = common api main
+SUBDIRS = common api resvManager policyManager tedbManager main
 
 # -- Programs
 bin_PROGRAMS = 

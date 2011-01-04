@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010
+ * Copyright (c) 2010-2011
  * ARCHSTONE Project.
  * University of Southern California/Information Sciences Institute.
  * All rights reserved.
@@ -60,7 +60,10 @@ MxTCE::MxTCE( const string& configFile)
     loopbackPort = new MessagePortLoopback(loopbackPortName, messageRouter, this);
     loopbackPort->SetEventMaster(eventMaster);
 
-    apiServerThread = new APIServerThread(MxTCE::apiServerPortName, MxTCE::apiServerPort, eventMaster);
+    apiServerThread = new APIServerThread(MxTCE::apiServerPortName, MxTCE::apiServerPort);
+    tedbManThread = new TEDBManThread(MxTCE::tedbManPortName);
+    resvManThread = new ResvManThread(MxTCE::resvManPortName);
+    policyManThread = new PolicyManThread(MxTCE::policyManPortName);
 }
 
 
@@ -79,26 +82,41 @@ void MxTCE::Start()
     // start binary API server thread 
     apiServerThread->Start(NULL);
     
-    // $$$$ start TEDB thread
-    // --> attach message router port
+    // start TEDB thread
+    tedbManThread->Start(NULL);
     
-    // $$$$ start ResvMan thread
-    // --> attach message router port
+    // start ResvMan thread
+    resvManThread->Start(NULL);
     
-    // $$$$ start PolicyMan thread
-    // --> attach message router port
+    // start PolicyMan thread
+    policyManThread->Start(NULL);
 
+    // init apiServer port and routes on messge router
     messageRouter->AddPort(MxTCE::apiServerPortName);
-    string routeQueue = "CORE", routeTopic = "API_REQUEST";
-    messageRouter->AddRoute(routeQueue,routeTopic, MxTCE::loopbackPortName);
-    routeTopic = "API_REPLY";
-    messageRouter->AddRoute(routeQueue,routeTopic, MxTCE::apiServerPortName);
     
-    //messageRouter->AddPort(MxTCE::tedbManPortName);
-    //messageRouter->AddPort(MxTCE::resvManPortName);
-    //messageRouter->AddPort(MxTCE::policyManPortName);
+    // init TEDBMan port and routes on messge router
+    messageRouter->AddPort(MxTCE::tedbManPortName);
+
+    // init ResvMan port and routes on messge router
+    messageRouter->AddPort(MxTCE::resvManPortName);
+
+    // init PolicyMan port and routes on messge router
+    messageRouter->AddPort(MxTCE::policyManPortName);
+
+    // init core loopback message port on messge router
     messageRouter->GetMessagePortList().push_back(loopbackPort);
     loopbackPort->AttachPipesAsServer();
+
+    // @@@@ tmp testing message routes
+    string routeQueue = "CORE", routeTopic1 = "API_REQUEST", routeTopic2 = "API_REPLY";
+    messageRouter->AddRoute(routeQueue,routeTopic1, MxTCE::loopbackPortName);
+    messageRouter->AddRoute(routeQueue,routeTopic2, MxTCE::apiServerPortName);
+    // @@@@
+    messageRouter->AddRoute(routeQueue,routeTopic1, MxTCE::tedbManPortName);
+    messageRouter->AddRoute(routeQueue,routeTopic1, MxTCE::resvManPortName);
+    messageRouter->AddRoute(routeQueue,routeTopic1, MxTCE::policyManPortName);
+
+    // start message router
     messageRouter->Start();
 
     // run core eventMaster
@@ -106,6 +124,9 @@ void MxTCE::Start()
 
     // join threads
     apiServerThread->Join();
+    tedbManThread->Join();
+    resvManThread->Join();
+    policyManThread->Join();
 }
 
 

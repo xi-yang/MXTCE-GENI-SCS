@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010
+ * Copyright (c) 2010-2011
  * ARCHSTONE Project.
  * University of Southern California/Information Sciences Institute.
  * All rights reserved.
@@ -37,6 +37,9 @@
 
 #include "message.hh"
 #include "apiserver.hh"
+#include "tedb_man.hh"
+#include "resv_man.hh"
+#include "policy_man.hh"
 
 class MxTCE
 {
@@ -45,6 +48,9 @@ private:
     EventMaster* eventMaster;
     MessageRouter* messageRouter;
     APIServerThread* apiServerThread;
+    TEDBManThread* tedbManThread;
+    ResvManThread* resvManThread;
+    PolicyManThread* policyManThread;
     
 public:
     static int apiServerPort;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010
+ * Copyright (c) 2010-2011
  * ARCHSTONE Project.
  * University of Southern California/Information Sciences Institute.
  * All rights reserved.
@@ -321,20 +321,31 @@ void MessagePort::AttachPipesAsClient()
     // Create named pipe for reading
     string pipe1 = MxTCE::tmpFilesDir+portName;
     pipe1 += "_pipe_in";
+    ret = mkfifo(pipe1.c_str(), 0666);
+    if ((ret == -1) && (errno != EEXIST)) {
+        ssMsg << "MessagePort::AttachPipesAsServer failed on  mkfifo(" << pipe1<<", 0666)";
+        throw MsgIOException(ssMsg.str());
+    }
+    // Create named pipe for writing
     string pipe2 =MxTCE::tmpFilesDir+portName;
     pipe2 += "_pipe_out";
+    ret = mkfifo(pipe2.c_str(), 0666);
+    if ((ret == -1) && (errno != EEXIST)) {
+        ssMsg << "MessagePort::AttachPipesAsServer failed on  mkfifo(" << pipe2<<", 0666)";
+        throw MsgIOException(ssMsg.str());
+    }
     // Open named pipe for writing
     wfd = open(pipe1.c_str(), O_WRONLY);
     if (wfd < 0) 
     {
-        ssMsg << "MessagePort::AttachPipesAsServer failed on  open(" << pipe2<<", O_RDONLY)";
+        ssMsg << "MessagePort::AttachPipesAsClient failed on  open(" << pipe2<<", O_WRONLY)";
         throw MsgIOException(ssMsg.str());
     }
     // Open named pipe for reading
     rfd = open(pipe2.c_str(), O_RDONLY);
     if (rfd < 0) 
     {
-        ssMsg << "MessagePort::AttachPipesAsServer failed on  open(" << pipe1<<", O_WRONLY)";
+        ssMsg << "MessagePort::AttachPipesAsClient failed on  open(" << pipe1<<", O_RDONLY)";
         throw MsgIOException(ssMsg.str());
     }
 
@@ -369,6 +380,8 @@ Message* MessagePort::GetMessage ()
     {
         Message* msg = inQueue.front();
         inQueue.pop_front();
+        if (!msg->GetPort())
+            msg->SetPort(this);
         return msg;
     }
 }
@@ -402,6 +415,8 @@ Message* MessagePortLoopback::GetMessage ()
     {
         Message* msg = inQueue.front();
         inQueue.pop_front();
+        if (!msg->GetPort())
+            msg->SetPort(this);
         return msg;
     }
 }
@@ -429,6 +444,8 @@ Message* MessagePortLoopback::GetLocalMessage ()
     {
         Message* msg = msgWriter.outQueue.front();
         msgWriter.outQueue.pop_front();
+        if (!msg->GetPort())
+            msg->SetPort(this);
         return msg;
     }
 }
@@ -641,10 +658,17 @@ void MessageRouter::DeletePort(string& portName)
 
 Route* MessageRouter::AddRoute(string& queueName, string& topicName, string& portName)
 {
-    Route* route = new Route(queueName, topicName, portName);
-    routeList.push_back(route);
+    Route* route = LookupRoute(queueName, topicName);
+    if (route) 
+    {
+        route->AddPortName(portName);
+    }
+    else
+    {
+        route = new Route(queueName, topicName, portName);
+        routeList.push_back(route);
+    }
     return route;
-    
 }
 
 

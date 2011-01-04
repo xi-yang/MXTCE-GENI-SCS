@@ -5,7 +5,7 @@
 bin_PROGRAMS = 
 
 # -- No-install Programs
-check_PROGRAMS  = resvman_test
+#check_PROGRAMS  = resv_test
 
 # -- No-install Libraries
 noinst_LIBRARIES = librm.a
@@ -22,8 +22,8 @@ DEFS = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)/\"
 INSTALL_SDATA=@INSTALL@ -m 600
 
 # -- No-install Program Sources
-resvman_test_SOURCES = resvman_test.cc
+#resv_test_SOURCES = resv_test.cc
 
 # -- Library Sources
-librm_a_SOURCES  = resvman.hh
-librm_a_SOURCES  += resvman.cc
+librm_a_SOURCES  = resv_man.hh
+librm_a_SOURCES  += resv_man.cc

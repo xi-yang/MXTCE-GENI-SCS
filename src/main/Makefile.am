@@ -6,7 +6,7 @@ bin_PROGRAMS = mxtce mxtce_test
 
 # -- Libraries and library flags to link the binary programs
 LDADD = $(top_srcdir)/src/common/libcommon.a $(top_srcdir)/src/api/libapi.a
-#LDADD += $(top_srcdir)/src/tedbManager/libtedb.a $(top_srcdir)/src/resvManager/librm.a $(top_srcdir)/src/policyManager/libpm.a
+LDADD += $(top_srcdir)/src/tedbManager/libtedb.a $(top_srcdir)/src/resvManager/librm.a $(top_srcdir)/src/policyManager/libpm.a
 
 # -- Including headers
 INCLUDES = -I. -I/usr/include -I/usr/local/include -I/usr/include/libxml2 -I/usr/local/include/libxml2

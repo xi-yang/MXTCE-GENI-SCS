@@ -5,7 +5,7 @@
 bin_PROGRAMS = 
 
 # -- No-install Programs
-check_PROGRAMS  = tedbman_test
+#check_PROGRAMS  = tedb_test
 
 # -- No-install Libraries
 noinst_LIBRARIES = libtedb.a
@@ -23,8 +23,8 @@ DEFS = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)/\"
 INSTALL_SDATA=@INSTALL@ -m 600
 
 # -- No-install Program Sources
-tedbman_test_SOURCES = tedbman_test.cc
+#tedb_test_SOURCES = tedb_test.cc
 
 # -- Library Sources
-libtedb_a_SOURCES  = tedb.hh
-libtedb_a_SOURCES  += tedb.cc
+libtedb_a_SOURCES  = tedb_man.hh
+libtedb_a_SOURCES  += tedb_man.cc

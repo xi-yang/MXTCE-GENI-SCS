@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010
+ * Copyright (c) 2010-2011
  * ARCHSTONE Project.
  * University of Southern California/Information Sciences Institute.
  * All rights reserved.
@@ -165,7 +165,7 @@ int main( int argc, char* argv[])
         LOG("MxTCE core cannot init ... check mxtce.conf"<< "(Exception: " << e.GetMessage() << ")"<<endl);
     }
 
-    //coreEventMaster->Run(); //moved into MxTCE core
+    //coreEventMaster->Run(); //moved to MxTCE core (MxTCE::Run)
     return 0;
 }
 

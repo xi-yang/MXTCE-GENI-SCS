@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010
+ * Copyright (c) 2010-2011
  * ARCHSTONE Project.
  * University of Southern California/Information Sciences Institute.
  * All rights reserved.
@@ -99,11 +99,10 @@ protected:
     APIServer();
 
 public:
-    APIServer(u_int32_t port_val, EventMaster* em):Reader(0), port(port_val), eventMaster(em) {
-        assert(eventMaster);
-    }
+    APIServer(u_int32_t port_val, EventMaster* em):Reader(0), port(port_val), eventMaster(em) { }
     virtual ~APIServer() {}
     EventMaster* GetEventMaster() { return eventMaster; }
+    void SetEventMaster(EventMaster* evm) { eventMaster = evm; }
     void Start();
     void Exit();
     virtual void Run();

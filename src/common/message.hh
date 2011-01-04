@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010
+ * Copyright (c) 2010-2011
  * ARCHSTONE Project.
  * University of Southern California/Information Sciences Institute.
  * All rights reserved.
@@ -76,6 +76,7 @@ typedef struct {
 #define MSG_FLAG_URGENT 0x00000001
 
 // Inter-thread message 
+class MessagePort;
 class Message
 {
 protected:
@@ -84,10 +85,11 @@ protected:
     string topicName;
     bool flagUrgent;
     list<TLV*> tlvList;
+    MessagePort* port;
 
 public:
-    Message(): type(0), queueName(""), topicName("") { }
-    Message(MessageType ty, string& qn, string& tn): type(ty), queueName(qn), topicName(tn) 
+    Message(): type(0), queueName(""), topicName(""), port(NULL) { }
+    Message(MessageType ty, string& qn, string& tn): type(ty), queueName(qn), topicName(tn), port(NULL) 
         { flagUrgent = false; }
     virtual ~Message();
     u_int16_t GetType() { return type; }
@@ -96,6 +98,8 @@ public:
     void SetQueue(string& qn) { queueName = qn; }
     string& GetTopic() { return topicName; }
     void SetTopic(string& tn) { topicName = tn; }
+    MessagePort* GetPort() { return port; }
+    void SetPort(MessagePort* p) { port = p; }
     bool IsUrgent() { return flagUrgent; }
     void SetUrgent(bool ur) { flagUrgent = ur; }
     void Transmit(int wfd);

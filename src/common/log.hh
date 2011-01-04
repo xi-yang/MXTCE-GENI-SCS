@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010
+ * Copyright (c) 2010-2011
  * ARCHSTONE Project.
  * University of Southern California/Information Sciences Institute.
  * All rights reserved.
@@ -75,8 +75,6 @@ public:
             log_stdout->flush();
         if (log_stderr)
             log_stderr->flush();
-        if (loggerLock)
-            delete loggerLock;
     }
 
     static u_int32_t options;

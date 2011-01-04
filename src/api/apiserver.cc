@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010
+ * Copyright (c) 2010-2011
  * ARCHSTONE Project.
  * University of Southern California/Information Sciences Institute.
  * All rights reserved.
@@ -83,8 +83,9 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
 // Thread specific logic
 void* APIServerThread::hookRun()
 {
-    // eventMaster has been initiated in parent class ThreadPortScheduler::Run() method
     msgPort->SetThreadScheduler(this);
+    // eventMaster has been initiated in parent class ThreadPortScheduler::Run() method
+    apiServer.SetEventMaster(eventMaster);
     apiServer.Start();
     eventMaster->Run();
 }

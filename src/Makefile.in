@@ -161,8 +161,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 
 # -- Subdirectories
-#SUBDIRS = common api resvManager policyManager tedbManager main
-SUBDIRS = common api main
+SUBDIRS = common api resvManager policyManager tedbManager main
 
 # -- Including headers
 INCLUDES = -I. -I/usr/include -I/usr/local/include -I/usr/include/libxml2 -I/usr/local/include/libxml2

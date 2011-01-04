@@ -4,7 +4,7 @@
  * University of Southern California/Information Sciences Institute.
  * All rights reserved.
  *
- * Created by Xi Yang 2010
+ * Created by Xi Yang 2011
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,28 +31,28 @@
  * SUCH DAMAGE.
  */
 
-#ifndef __TYPES_HH__
-#define __TYPES_HH__
 
+#ifndef __POLICY_MAN_HH__
+#define __POLICY_MAN_HH__
 
-#include <sys/types.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <assert.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <netdb.h>
-#include <assert.h>
-#include <string>
-#include <iostream>
-#include <sstream>
+#include "types.hh"
+#include "event.hh"
+#include "thread.hh"
+#include "api.hh"
 
-#ifndef NULL
-#define NULL 0
+using namespace std;
+
+class PolicyManThread: public ThreadPortScheduler
+{
+protected:
+    //policy man
+
+public:
+    PolicyManThread(string name):ThreadPortScheduler(name){ }
+    virtual ~PolicyManThread() { }
+    virtual void* hookRun();
+    virtual void hookHandleMessage();
+};
+
 #endif
 
-
-#endif

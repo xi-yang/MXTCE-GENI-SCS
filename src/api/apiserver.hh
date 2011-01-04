@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010
+ * Copyright (c) 2010-2011
  * ARCHSTONE Project.
  * University of Southern California/Information Sciences Institute.
  * All rights reserved.
@@ -38,7 +38,6 @@
 #include "types.hh"
 #include "event.hh"
 #include "thread.hh"
-#include "thread.hh"
 #include "api.hh"
 
 using namespace std;
@@ -50,7 +49,7 @@ protected:
     APIServerThread* apiThread;
 
 public:
-    MxTCEAPIServer(int port ,EventMaster* evm, APIServerThread* thread): APIServer(port, evm), apiThread(thread) {
+    MxTCEAPIServer(int port , APIServerThread* thread): APIServer(port, NULL), apiThread(thread) {
         assert (thread);
     }
     virtual ~MxTCEAPIServer() { } 
@@ -63,7 +62,7 @@ protected:
     MxTCEAPIServer apiServer;
 
 public:
-    APIServerThread(string name, int port,EventMaster* evm):ThreadPortScheduler(name), apiServer(port,evm, this) { }
+    APIServerThread(string name, int port):ThreadPortScheduler(name), apiServer(port, this) { }
     virtual ~APIServerThread() { }
     MessagePort* GetMessagePort() { return msgPort; }
     virtual void* hookRun();

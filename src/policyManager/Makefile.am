@@ -5,7 +5,7 @@
 bin_PROGRAMS = 
 
 # -- No-install Programs
-check_PROGRAMS  = policyman_test
+#check_PROGRAMS  = policy_test
 
 # -- No-install Libraries
 noinst_LIBRARIES = libpm.a
@@ -24,8 +24,8 @@ DEFS = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)/\"
 INSTALL_SDATA=@INSTALL@ -m 600
 
 # -- No-install Program Sources
-policyman_test_SOURCES = policyman_test.cc 
+#policy_test_SOURCES = policy_test.cc 
 
 # -- Library Sources
-libpm_a_SOURCES  = policyman.hh
-libpm_a_SOURCES  += policyman.cc
+libpm_a_SOURCES  = policy_man.hh
+libpm_a_SOURCES  += policy_man.cc

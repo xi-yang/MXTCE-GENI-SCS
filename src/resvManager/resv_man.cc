@@ -4,7 +4,7 @@
  * University of Southern California/Information Sciences Institute.
  * All rights reserved.
  *
- * Created by Xi Yang 2010
+ * Created by Xi Yang 2011
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,28 +31,28 @@
  * SUCH DAMAGE.
  */
 
-#ifndef __TYPES_HH__
-#define __TYPES_HH__
+#include "resv_man.hh"
+
+// Thread specific logic
+void* ResvManThread::hookRun()
+{
+    msgPort->SetThreadScheduler(this);
+
+    // thread specific init
+
+    // start event loop
+    // eventMaster has been initiated in parent class ThreadPortScheduler::Run() method
+    eventMaster->Run();
+}
 
 
-#include <sys/types.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <assert.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <netdb.h>
-#include <assert.h>
-#include <string>
-#include <iostream>
-#include <sstream>
+// Handle message from thread message router
+void ResvManThread::hookHandleMessage()
+{
+    Message* msg = NULL;
+    while ((msg = msgPort->GetMessage()) != NULL)
+    {
+        msg->LogDump();
+    }
+}
 
-#ifndef NULL
-#define NULL 0
-#endif
-
-
-#endif
