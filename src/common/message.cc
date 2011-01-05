@@ -45,6 +45,22 @@ Message::~Message()
         delete (*itlv);
 }
 
+Message* Message::Duplicate()
+{
+    Message* msg = new Message((MessageType)this->type, this->queueName, this->topicName);
+    msg->flagUrgent = this->flagUrgent;
+    bool flagUrgent;
+    msg->port = this->port;
+    list<TLV*>::iterator itlv; 
+    for (itlv = this->tlvList.begin(); itlv != this->tlvList.end(); itlv++)
+    {
+        TLV* tlv = (TLV*)(new char[(*itlv)->length+4]);
+        memcpy(tlv, (char*)(*itlv), (*itlv)->length+4);
+        msg->tlvList.push_back(tlv);
+    }
+    return msg;
+}
+
 
 void Message::Transmit(int fd)
 {
@@ -246,6 +262,7 @@ void MessageWriter::WriteMessage(Message* msg)
         LOG("MessageReader::ReadMessage caught Exception:" << e.what() << " ErrMsg: "<< e.GetMessage() << endl);
         throw;
     }
+    delete msg; //message consumed
 }
 
 
@@ -541,7 +558,7 @@ void MessageRouter::Run()
                 list<MessagePort*>::iterator itP;
                 if (portNameList.front() == "ALL")
                 {
-                    for (itP = msgPortList.begin(); itP != msgPortList.end(); itP++)
+                    for (itP                                                                                                                                                       = msgPortList.begin(); itP != msgPortList.end(); itP++)
                     {
                         MessagePort* msgOutPort = *itP;
                         if (msgOutPort&& msgOutPort->IsUp())
@@ -571,6 +588,8 @@ void MessageRouter::Run()
                 for (itP = outPortList.begin(); itP != outPortList.end(); itP++)
                 {
                     MessagePort* msgOutPort = *itP;
+                    if (itP != outPortList.begin())
+                        msg = msg->Duplicate();
                     msgOutPort->PostMessage(msg);
                 }
             }

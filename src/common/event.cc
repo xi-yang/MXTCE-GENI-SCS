@@ -46,7 +46,7 @@ EventMaster* EventMaster::GetInstance()
     return GetThreadInstance(0);
 }
 
-EventMaster* EventMaster::GetThreadInstance()
+EventMaster* EventMaster::GetProcessInstance()
 {
     unsigned long key = (unsigned long)getpid();
     if (threadMasters[key] == NULL)

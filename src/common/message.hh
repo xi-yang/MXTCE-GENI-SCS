@@ -102,6 +102,7 @@ public:
     void SetPort(MessagePort* p) { port = p; }
     bool IsUrgent() { return flagUrgent; }
     void SetUrgent(bool ur) { flagUrgent = ur; }
+    Message* Duplicate();
     void Transmit(int wfd);
     void Receive(int rfd);
     void LogDump();

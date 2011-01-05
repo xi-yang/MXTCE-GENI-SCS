@@ -54,6 +54,7 @@ void PolicyManThread::hookHandleMessage()
     while ((msg = msgPort->GetMessage()) != NULL)
     {
         msg->LogDump();
+        //delete msg; //msg consumed
     }
 }
 

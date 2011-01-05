@@ -221,7 +221,7 @@ private:
 public:
     ~EventMaster();
     static EventMaster* GetInstance();
-    static EventMaster* GetThreadInstance();
+    static EventMaster* GetProcessInstance();
     static EventMaster* GetThreadInstance(unsigned long tid);
     list<Event*>& GetEventList(EventType type) { return eventLists[(int)type]; }
     void Schedule(Event *event);

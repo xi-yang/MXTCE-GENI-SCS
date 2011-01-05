@@ -1,0 +1,4 @@
+Bugs:
+-- Message free
+-- Map threadMasters return NULL for valid TID
+	--> change map into array of index structs?

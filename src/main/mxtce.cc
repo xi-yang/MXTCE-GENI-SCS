@@ -154,7 +154,9 @@ void MxTCEMessageHandler::Run()
         msg->LogDump();
         // @@@@ Testing code
         string topic = "API_REPLY";
-        msg->SetTopic(topic);
-        mxTCE->GetLoopbackPort()->PostLocalMessage(msg);
+        Message* msg_reply = msg->Duplicate();
+        msg_reply->SetTopic(topic);
+        mxTCE->GetLoopbackPort()->PostLocalMessage(msg_reply);
     }
+    delete msg; //msg consumed
 }
