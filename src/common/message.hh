@@ -132,7 +132,7 @@ class MessageWriter: public Writer
 {
 protected:
     MessagePort* portPtr;
-    list<Message *> outQueue;
+    list<Message*> outQueue;
 
 public:
     MessageWriter(int fd): Writer(fd) { }

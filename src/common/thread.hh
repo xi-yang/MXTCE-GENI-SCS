@@ -137,6 +137,8 @@ protected:
 public:
     ThreadPortScheduler(string portName);
     virtual ~ThreadPortScheduler();
+    EventMaster* GetEventMaster() { return eventMaster; }
+    MessagePort* GeMessagePort() { return msgPort; }
     virtual void* Run();
     virtual void* hookRun() {}
     virtual void hookHandleMessage() {}

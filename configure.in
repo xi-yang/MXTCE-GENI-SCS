@@ -243,6 +243,7 @@ AC_OUTPUT(
 	src/Makefile
 	src/common/Makefile
 	src/api/Makefile
+	src/compute/Makefile
 	src/main/Makefile
 	src/tedbManager/Makefile
 	src/resvManager/Makefile
