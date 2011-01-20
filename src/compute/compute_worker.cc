@@ -33,6 +33,8 @@
 
 #include "compute_worker.hh"
 
+vector<ComputeWorker*> workers;
+int ComputeWorkerFactory::serialNum = 1;
 
 // Thread specific logic
 void* ComputeWorker::hookRun()
@@ -56,6 +58,15 @@ void ComputeWorker::hookHandleMessage()
         msg->LogDump();
         //delete msg; //msg consumed
     }
+}
+
+ComputeWorker* ComputeWorkerFactory::CreateComputeWorker()
+{
+    std::stringstream ssWorkerName;
+    ssWorkerName << "COMPUTING_THREAD_" << (serialNum++);
+    ComputeWorker* worker = new ComputeWorker(ssWorkerName.str());
+    workers.push_back(worker);
+    return worker;
 }
 
 

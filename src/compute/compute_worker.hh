@@ -34,7 +34,7 @@
 
 #ifndef __COMPUTE_WORKER_HH__
 #define __COMPUTE_WORKER_HH__
-
+#include <vector>
 #include "types.hh"
 #include "event.hh"
 #include "thread.hh"
@@ -45,13 +45,29 @@ using namespace std;
 class ComputeWorker: public ThreadPortScheduler
 {
 protected:
-    //workflow man
+    //workflow data
 
 public:
-    ComputeWorker(string name):ThreadPortScheduler(name){ }
+    ComputeWorker(string n):ThreadPortScheduler(n){ }
     virtual ~ComputeWorker() { }
+    string& GetName() { return this->msgPort->GetName();}
     virtual void* hookRun();
     virtual void hookHandleMessage();
+};
+
+
+class ComputeWorkerFactory
+{
+private:
+    static vector<ComputeWorker*> workers;
+    static int serialNum;
+
+public:
+    ComputeWorkerFactory() { }
+    virtual ~ComputeWorkerFactory() { }
+    vector<ComputeWorker*>& GetComputeWorkers() { return workers; }
+    int GetWorkerNum() { return serialNum; }
+    virtual ComputeWorker* CreateComputeWorker();
 };
 
 #endif
