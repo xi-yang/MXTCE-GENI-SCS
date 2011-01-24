@@ -44,7 +44,7 @@ typedef enum {
     _Started = 1,
     _PendingMsg,
     _ReceivedMsg,
-    _PendingChildren,
+    _WaitingChildren,
     _Cancelled,
     _Failed,
     _Finished
@@ -55,23 +55,34 @@ class ComputeWorker;
 class Action: public Event
 {
 protected:
+    string name;
     ActionState state;
     ComputeWorker* worker;
-    list<Action*> children;
     list<Message*> messages;
+    list<Action*> childrenImmediate; // direct call to run from this action (tight dependency)
+    list<Action*> childrenScheduled; // scheduled to run in event queue (allow for concurrent branches)
 
 public:
-    Action(ComputeWorker* w):state(_Idle), worker(w) { assert(w != NULL); }
+    Action(ComputeWorker* w): state(_Idle), worker(w) { assert(w != NULL); }
+    Action(string& n, ComputeWorker* w): name(n), state(_Idle), worker(w) { assert(w != NULL); }
     virtual ~Action() { }
+    string& GetName() { return name; }
+    void SetName(string& n) { name = n; }
     ActionState GetState() { return state; }
     void SetState(ActionState s) { this->state = s; }
     list<Message*>& GetMessages() { return messages; }
+    list<Action*>& GetChildrenImmediate() { return childrenImmediate; } 
+    void AddChildImmediate(Action* child) { childrenImmediate.push_back(child); } 
+    list<Action*>& GetChildrenScehduled() { return childrenScheduled; } 
+    void AddChildScheduled(Action* child) { childrenScheduled.push_back(child); } 
 
     virtual void Run();
     virtual void Process();
-    virtual void Next();
+    virtual void ProcessChildren();
     virtual void Wait();
+    virtual void WaitForChildren();
     virtual void Finish();
+    virtual void CleanUp();
 };
 
 

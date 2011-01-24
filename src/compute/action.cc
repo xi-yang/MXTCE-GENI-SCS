@@ -52,7 +52,7 @@ void Action::Run()
     case _ReceivedMsg:
         Process();
         break;
-    case _PendingChildren:
+    case _WaitingChildren:
         //check children states
         //wait() unless fisnied
         break;
@@ -79,7 +79,7 @@ void Action::Process()
 }
 
 
-void Action::Next()
+void Action::ProcessChildren()
 {
     //loop through all children and schedule them
     //if there is at least one
@@ -96,8 +96,23 @@ void Action::Wait()
 }
 
 
+void Action::WaitForChildren()
+{
+    //check wether all childrenScheduled have finished (or timed out?)
+    //repeats = FOREVER;
+    //worker->GetEventMaster()->Schedule(this);
+}
+
 void Action::Finish()
 {
     state = _Finished;
     repeats = 0;
 }
+
+void Action::CleanUp()
+{
+    //cleanning up before being destroyed
+    //state = _Finished;
+    //repeats = 0;
+}
+

@@ -36,6 +36,7 @@
 #include "exception.hh"
 #include "utils.hh"
 #include "mxtce.hh"
+#include "compute_worker.hh"
 
 
 int MxTCE::apiServerPort = 2089;
@@ -43,6 +44,7 @@ string MxTCE::apiServerPortName = "MX-TCE_API_SERVER";
 string MxTCE::tedbManPortName = "MX-TCE_TEDB_MANAGER";
 string MxTCE::resvManPortName = "MX-TCE_RESV_MANAGER";
 string MxTCE::policyManPortName = "MX-TCE_POLICY_MANAGER";
+string MxTCE::computeThreadPrefix = "MX-TCE_COMPUTE_THREAD_";
 string MxTCE::loopbackPortName = "MX-TCE_CORE_LOOPBACK";
 string MxTCE::tmpFilesDir = "/var/tmp/mxtce/pipes/";
 
@@ -149,14 +151,62 @@ void MxTCEMessageHandler::Run()
     LOG("MxTCEMessageHandler::Run() being called"<<endl);
 
     Message* msg = mxTCE->GetLoopbackPort()->GetLocalMessage();
+
     if (msg)
     {
         msg->LogDump();
-        // @@@@ Testing code
-        string topic = "API_REPLY";
-        Message* msg_reply = msg->Duplicate();
-        msg_reply->SetTopic(topic);
-        mxTCE->GetLoopbackPort()->PostLocalMessage(msg_reply);
+        if (msg->GetType() == MSG_REQ && msg->GetTopic() == "API_REQUEST") {
+            //$$$$ lookup computeWorker thread before creating?
+
+            string computeWorkerType = "exampleComputeWorker";
+            ComputeWorker* computingThread = ComputeWorkerFactory::CreateComputeWorker(computeWorkerType); 
+
+            // init computing thread port and routes on messge router and start thread
+            string computeThreadPortName = MxTCE::computeThreadPrefix + computingThread->GetName();
+            mxTCE->GetMessageRouter()->AddPort(computeThreadPortName);
+            string routeQueue = computeThreadPortName, routeTopic1 = "COMPUTE_REQUEST", routeTopic2 = "COMPUTE_REPLY",
+                routeTopic3 = "TEDB_REQUEST", routeTopic4 = "TEDB_REPLY", routeTopic5 = "RESV_REQUEST", 
+                routeTopic6 = "RESV_REPLY", routeTopic7 = "POLICY_REQUEST", routeTopic8 = "POLICY_REPLY";
+            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic1, computeThreadPortName);
+            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic2, MxTCE::loopbackPortName);
+            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic3, MxTCE::tedbManPortName);
+            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic4, computeThreadPortName);
+            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic5, MxTCE::resvManPortName);
+            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic6, computeThreadPortName);
+            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic7, MxTCE::policyManPortName);
+            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic8, computeThreadPortName);
+            computingThread->Start(NULL);
+
+            //$$$$ preserve the computingThread
+
+            // pass the workflow init message with request details to computingThread
+            //@@@@ Prototype Testing code
+            Message* msg_compute_request = msg->Duplicate();
+            msg_compute_request->SetQueue(routeQueue);
+            msg_compute_request->SetTopic(routeTopic1);
+            mxTCE->GetLoopbackPort()->PostLocalMessage(msg_compute_request);
+
+        } 
+        else if (msg->GetType() == MSG_REPLY && msg->GetTopic() == "COMPUTE_REPLY") 
+        {
+            //$$$$ handle the message 
+            //@@@@ Prototype Testing code
+            string topic = "API_REPLY";
+            Message* msg_reply = msg->Duplicate();
+            msg_reply->SetType(MSG_REPLY);
+            msg_reply->SetTopic(topic);
+            mxTCE->GetLoopbackPort()->PostLocalMessage(msg_reply);
+
+            // find and join the computeWorker thread ? 
+            ComputeWorker* computingThread = ComputeWorkerFactory::LookupComputeWorker(msg->GetPort()->GetName());
+            if (computingThread == NULL)
+            {
+                std::stringstream ssMsg;
+                ssMsg << "Unknown computeWorkerThread: " << msg->GetPort()->GetName();
+                throw TCEException(ssMsg.str());
+            }
+        }
     }
+
     delete msg; //msg consumed
 }

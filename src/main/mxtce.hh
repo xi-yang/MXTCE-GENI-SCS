@@ -59,6 +59,7 @@ public:
     static string tedbManPortName;
     static string resvManPortName;
     static string policyManPortName;
+    static string computeThreadPrefix;
     static string tmpFilesDir;
 
 public:

@@ -34,18 +34,18 @@
 
 #ifndef __COMPUTE_WORKER_HH__
 #define __COMPUTE_WORKER_HH__
-#include <vector>
+#include <list>
 #include "types.hh"
 #include "event.hh"
 #include "thread.hh"
 #include "api.hh"
-
+ 
 using namespace std;
 
 class ComputeWorker: public ThreadPortScheduler
 {
 protected:
-    //workflow data
+    //workflow-actions
 
 public:
     ComputeWorker(string n):ThreadPortScheduler(n){ }
@@ -59,15 +59,15 @@ public:
 class ComputeWorkerFactory
 {
 private:
-    static vector<ComputeWorker*> workers;
+    static list<ComputeWorker*> workers;
     static int serialNum;
+    static int NewWorkerNum() { return ++serialNum; }
 
 public:
-    ComputeWorkerFactory() { }
-    virtual ~ComputeWorkerFactory() { }
-    vector<ComputeWorker*>& GetComputeWorkers() { return workers; }
-    int GetWorkerNum() { return serialNum; }
-    virtual ComputeWorker* CreateComputeWorker();
+    static int GetWorkerNum() { return serialNum; }
+    static list<ComputeWorker*>& GetComputeWorkers() { return workers; }
+    static ComputeWorker* LookupComputeWorker(string name);
+    static ComputeWorker* CreateComputeWorker(string type);
 };
 
 #endif

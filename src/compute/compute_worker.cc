@@ -33,8 +33,8 @@
 
 #include "compute_worker.hh"
 
-vector<ComputeWorker*> workers;
-int ComputeWorkerFactory::serialNum = 1;
+list<ComputeWorker*> ComputeWorkerFactory::workers;
+int ComputeWorkerFactory::serialNum = 0;
 
 // Thread specific logic
 void* ComputeWorker::hookRun()
@@ -60,13 +60,26 @@ void ComputeWorker::hookHandleMessage()
     }
 }
 
-ComputeWorker* ComputeWorkerFactory::CreateComputeWorker()
+
+ComputeWorker* ComputeWorkerFactory::CreateComputeWorker(string type)
 {
+    //TOOD: create compute worker based on type
     std::stringstream ssWorkerName;
-    ssWorkerName << "COMPUTING_THREAD_" << (serialNum++);
+    ssWorkerName << type << NewWorkerNum();
     ComputeWorker* worker = new ComputeWorker(ssWorkerName.str());
     workers.push_back(worker);
     return worker;
 }
 
+
+ComputeWorker* ComputeWorkerFactory::LookupComputeWorker(string name)
+{
+    list<ComputeWorker*>::iterator it;
+    for (it = workers.begin(); it != workers.end(); it++)
+    {
+        if ((*it)->GetName() == name)
+            return (*it);
+    }
+    return NULL;
+}
 

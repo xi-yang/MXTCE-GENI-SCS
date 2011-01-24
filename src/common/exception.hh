@@ -66,6 +66,17 @@ public:
     }
 };
 
+class APIException: public TCEException
+{
+public:
+    APIException(string msg): TCEException(msg){ }
+    virtual ~APIException()throw(){ }  
+    virtual const char* what() const throw() {
+        return (const char*)"APIException";
+    }
+};
+
+
 class ThreadException: public TCEException
 {
 public:
@@ -76,13 +87,14 @@ public:
     }
 };
 
-class APIException: public TCEException
+
+class ComputeThreadException: public ThreadException
 {
 public:
-    APIException(string msg): TCEException(msg){ }
-    virtual ~APIException()throw(){ }  
+    ComputeThreadException(string msg): ThreadException(msg){ }
+    virtual ~ComputeThreadException()throw(){ }  
     virtual const char* what() const throw() {
-        return (const char*)"APIException";
+        return (const char*)"ComputeThreadException";
     }
 };
 
