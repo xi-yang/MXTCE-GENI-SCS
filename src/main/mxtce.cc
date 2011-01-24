@@ -44,8 +44,8 @@ string MxTCE::apiServerPortName = "MX-TCE_API_SERVER";
 string MxTCE::tedbManPortName = "MX-TCE_TEDB_MANAGER";
 string MxTCE::resvManPortName = "MX-TCE_RESV_MANAGER";
 string MxTCE::policyManPortName = "MX-TCE_POLICY_MANAGER";
-string MxTCE::computeThreadPrefix = "MX-TCE_COMPUTE_THREAD_";
 string MxTCE::loopbackPortName = "MX-TCE_CORE_LOOPBACK";
+string MxTCE::computeThreadPrefix = "COMPUTE_THREAD_";
 string MxTCE::tmpFilesDir = "/var/tmp/mxtce/pipes/";
 
 MxTCE::MxTCE( const string& configFile) 
@@ -156,33 +156,34 @@ void MxTCEMessageHandler::Run()
     {
         msg->LogDump();
         if (msg->GetType() == MSG_REQ && msg->GetTopic() == "API_REQUEST") {
-            //$$$$ lookup computeWorker thread before creating?
-
+            // creating computeWorkerThread
+            //$$$$ lookup to avoid duplicate before creating ?
             string computeWorkerType = "exampleComputeWorker";
             ComputeWorker* computingThread = ComputeWorkerFactory::CreateComputeWorker(computeWorkerType); 
+            computingThread->Start(NULL);
 
             // init computing thread port and routes on messge router and start thread
-            string computeThreadPortName = MxTCE::computeThreadPrefix + computingThread->GetName();
+            string computeThreadPortName = computingThread->GetName();
             mxTCE->GetMessageRouter()->AddPort(computeThreadPortName);
-            string routeQueue = computeThreadPortName, routeTopic1 = "COMPUTE_REQUEST", routeTopic2 = "COMPUTE_REPLY",
+            string computeThreadQueueName = MxTCE::computeThreadPrefix + computingThread->GetName();
+            string routeTopic1 = "COMPUTE_REQUEST", routeTopic2 = "COMPUTE_REPLY",
                 routeTopic3 = "TEDB_REQUEST", routeTopic4 = "TEDB_REPLY", routeTopic5 = "RESV_REQUEST", 
                 routeTopic6 = "RESV_REPLY", routeTopic7 = "POLICY_REQUEST", routeTopic8 = "POLICY_REPLY";
-            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic1, computeThreadPortName);
-            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic2, MxTCE::loopbackPortName);
-            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic3, MxTCE::tedbManPortName);
-            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic4, computeThreadPortName);
-            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic5, MxTCE::resvManPortName);
-            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic6, computeThreadPortName);
-            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic7, MxTCE::policyManPortName);
-            mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic8, computeThreadPortName);
-            computingThread->Start(NULL);
+            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic1, computeThreadPortName);
+            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic2, MxTCE::loopbackPortName);
+            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic3, MxTCE::tedbManPortName);
+            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic4, computeThreadPortName);
+            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic5, MxTCE::resvManPortName);
+            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic6, computeThreadPortName);
+            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic7, MxTCE::policyManPortName);
+            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic8, computeThreadPortName);
 
             //$$$$ preserve the computingThread
 
             // pass the workflow init message with request details to computingThread
             //@@@@ Prototype Testing code
             Message* msg_compute_request = msg->Duplicate();
-            msg_compute_request->SetQueue(routeQueue);
+            msg_compute_request->SetQueue(computeThreadQueueName);
             msg_compute_request->SetTopic(routeTopic1);
             mxTCE->GetLoopbackPort()->PostLocalMessage(msg_compute_request);
 

@@ -62,7 +62,7 @@ ComputeWorker* ComputeWorkerFactory::CreateComputeWorker(string type)
 {
     //TOOD: create compute worker based on type
     std::stringstream ssWorkerName;
-    ssWorkerName << type << NewWorkerNum();
+    ssWorkerName << type << "(" << NewWorkerNum() << ")";
     ComputeWorker* worker;
     if (type =="exampleComputeWorker") 
         worker = new ExampleComputeWorker(ssWorkerName.str());
