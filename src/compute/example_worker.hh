@@ -31,60 +31,28 @@
  * SUCH DAMAGE.
  */
 
+
+#ifndef __EXAMPLE_WORKER_HH__
+#define __EXAMPLE_WORKER_HH__
+
+#include "types.hh"
+#include "event.hh"
+#include "thread.hh"
+#include "api.hh"
 #include "compute_worker.hh"
-#include "example_worker.hh"
 
-list<ComputeWorker*> ComputeWorkerFactory::workers;
-int ComputeWorkerFactory::serialNum = 0;
+using namespace std;
 
-// Thread specific logic
-void* ComputeWorker::hookRun()
+class ExampleComputeWorker: public ComputeWorker
 {
-    //$$$  thread specific init
+protected:
+    //workflow-actions
 
-    // eventMaster->Run() will been initiated in parent class ThreadPortScheduler::Run() method
-}
+public:
+    ExampleComputeWorker(string n):ComputeWorker(n){ }
+    virtual ~ExampleComputeWorker() { }
+    virtual void* hookRun();
+    virtual void hookHandleMessage();
+};
 
-
-// Handle message from thread message router
-void ComputeWorker::hookHandleMessage()
-{
-    Message* msg = NULL;
-    while ((msg = msgPort->GetMessage()) != NULL)
-    {
-        msg->LogDump();
-        //delete msg; //msg consumed
-    }
-}
-
-
-ComputeWorker* ComputeWorkerFactory::CreateComputeWorker(string type)
-{
-    //TOOD: create compute worker based on type
-    std::stringstream ssWorkerName;
-    ssWorkerName << type << NewWorkerNum();
-    ComputeWorker* worker;
-    if (type =="exampleComputeWorker") 
-        worker = new ExampleComputeWorker(ssWorkerName.str());
-    else 
-    {    
-        std::stringstream ssMsg;
-        ssMsg << "Unknown computeWorkerThread type: " << type;
-        throw TCEException(ssMsg.str());
-    }
-    workers.push_back(worker);
-    return worker;
-}
-
-
-ComputeWorker* ComputeWorkerFactory::LookupComputeWorker(string name)
-{
-    list<ComputeWorker*>::iterator it;
-    for (it = workers.begin(); it != workers.end(); it++)
-    {
-        if ((*it)->GetName() == name)
-            return (*it);
-    }
-    return NULL;
-}
-
+#endif
