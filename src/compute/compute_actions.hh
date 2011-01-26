@@ -43,7 +43,7 @@ class Action_ProcessRequestTopology: public Action
     
     public:
         Action_ProcessRequestTopology(): Action(){ }
-        Action_ProcessRequestTopology(ComputeWorker* w): Action(w) { }
+        Action_ProcessRequestTopology(string& n, ComputeWorker* w): Action(n, w) { }
         virtual ~Action_ProcessRequestTopology() { }
     
         virtual void Process();
@@ -60,7 +60,7 @@ protected:
 
 public:
     Action_CreateTEWG(): Action(){ }
-    Action_CreateTEWG(ComputeWorker* w): Action(w) { }
+    Action_CreateTEWG(string& n, ComputeWorker* w): Action(n, w) { }
     virtual ~Action_CreateTEWG() { }
 
     //virtual void Run();
@@ -79,7 +79,7 @@ class Action_ComputeKSP: public Action
     
     public:
         Action_ComputeKSP(): Action(){ }
-        Action_ComputeKSP(ComputeWorker* w): Action(w) { }
+        Action_ComputeKSP(string& n, ComputeWorker* w): Action(n, w) { }
         virtual ~Action_ComputeKSP() { }
     
         virtual void Process();
@@ -96,7 +96,7 @@ class Action_FinalizeServiceTopology: public Action
     
     public:
         Action_FinalizeServiceTopology(): Action(){ }
-        Action_FinalizeServiceTopology(ComputeWorker* w): Action(w) { }
+        Action_FinalizeServiceTopology(string& n, ComputeWorker* w): Action(n, w) { }
         virtual ~Action_FinalizeServiceTopology() { }
     
         virtual void Process();

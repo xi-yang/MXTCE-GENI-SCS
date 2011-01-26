@@ -40,18 +40,20 @@
 #include "exception.hh"
 #include "thread.hh"
 #include "api.hh"
- 
+#include "action.hh"
+
 using namespace std;
 
 class ComputeWorker: public ThreadPortScheduler
 {
 protected:
-    //workflow-actions
+    list<Action*> actions;//workflow-actions
 
 public:
     ComputeWorker(string n):ThreadPortScheduler(n){ }
     virtual ~ComputeWorker() { }
     string& GetName() { return this->msgPort->GetName();}
+    list<Action*>& GetActions() { return actions; }
     virtual void* hookRun();
     virtual void hookHandleMessage();
 };

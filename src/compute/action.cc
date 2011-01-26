@@ -41,19 +41,20 @@
 
 void Action::Run()
 {
+    std::stringstream ssMsg;
+
     switch (state)
     {
     case _Idle:
         state = _Started;
 
         try {
-            //$$$$ may send out messages and add to expected topic list
+            //immediate execution of current action logic
             Process(); 
-
-            //$$$$ schedule children
-
-            //$$$$ call immediate children
-
+            //schedule children actions
+            list<Action*>::iterator ita;
+            for (ita = children.begin(); ita != children.end(); ita++)
+                worker->GetEventMaster()->Schedule(*ita);
         } catch (ComputeThreadException e) {
             LOG("Action::Run caught Exception:" << e.what() << " ErrMsg: " << e.GetMessage() << endl);
             state = _Failed;
@@ -62,7 +63,7 @@ void Action::Run()
 
         if (expectMesssageTopics.size() == 0) 
         {
-            if (childrenScheduled.size() == 0)
+            if (children.size() == 0)
                 state = _Finished;
             else
                 state = _WaitingChildren;
@@ -80,6 +81,8 @@ void Action::Run()
             if (!ProcessMessages() || expectMesssageTopics.size()>0) // true -> all messages received, other wise false
             {
                 state = _WaitingMessages;
+                Wait();
+                break;
             }
         } catch (ComputeThreadException e) {
             LOG("Action::Run caught Exception:" << e.what() << " ErrMsg: " << e.GetMessage() << endl);
@@ -87,13 +90,14 @@ void Action::Run()
             CleanUp();
         }
 
-        // vvv fall through --> no break here by design vvv
+        //## vvv Fall through to next case --> no break here by design vvv
     case _WaitingChildren:
         try {
             if (!ProcessChildren())
             {
                 state = _WaitingChildren;
                 Wait();
+                break;
             }
         } catch (ComputeThreadException e) {
             LOG("Action::Run caught Exception:" << e.what() << " ErrMsg: " << e.GetMessage() << endl);
@@ -101,23 +105,25 @@ void Action::Run()
             CleanUp();
         }
         
-        //if all children are finished, we are done here.
+        //if all children are finished, we are done with the current action.
         state = _Finished;
-        Wait();
-        break;
 
-    case _Failed:
-    case _Cancelled:
-        CleanUp();
-        break;
-
+        //## vvv Fall through to next case --> no break here by design vvv
     case _Finished:
         CleanUp();
         Finish();
         break;
-    default:
-        //unknown state -->throw exception?
-        ;
+
+    case _Cancelled:
+    case _Failed:
+        CleanUp();
+        break;
+
+    default:        
+        ssMsg << "Action::Run() gets into unknown state: "<<state;
+        LOG(ssMsg.str()<<endl);
+        CleanUp();
+        throw ComputeThreadException(ssMsg.str());
     }
 }
 
@@ -132,8 +138,8 @@ void Action::Wait()
 void Action::Process()
 {
     //$$$$ run current action main logic
-    //$$$$ send out messages if needed
-    //$$$$ change states if needed ?
+
+    //$$$$ send out messages if needed and add to expectMessageTopics
 }
 
 
@@ -141,6 +147,7 @@ void Action::Process()
 bool Action::ProcessChildren()
 {
     //$$$$ loop through all children to look for states
+
     //$$$$ return true if all children have finished
     //$$$$ otherwise false
 }

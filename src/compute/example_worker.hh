@@ -46,7 +46,7 @@ using namespace std;
 class ExampleComputeWorker: public ComputeWorker
 {
 protected:
-    //workflow-actions
+    //workflow specific additional data
 
 public:
     ExampleComputeWorker(string n):ComputeWorker(n){ }

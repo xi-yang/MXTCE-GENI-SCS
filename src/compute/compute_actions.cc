@@ -31,6 +31,9 @@
  * SUCH DAMAGE.
  */
 
+#include "log.hh"
+#include "event.hh"
+#include "exception.hh"
 #include "compute_actions.hh"
 
 
@@ -38,34 +41,39 @@
 
 void Action_ProcessRequestTopology::Process()
 {
+    LOG(name<<"Process() called"<<endl);
     //$$$$ run current action main logic
-    //$$$$ send out messages if needed
 
-    //$$$$ change states into _waitingMesages  if messages are send out 
-    //$$$$ TODO add messageSend function that keep records of ...
+    //$$$$ send out messages if needed and add to expectMessageTopics
 }
 
 
 bool Action_ProcessRequestTopology::ProcessChildren()
 {
+    LOG(name<<"ProcessChildren() called"<<endl);
     //$$$$ loop through all children to look for states
+
     //$$$$ return true if all children have finished
     //$$$$ otherwise false
+    return false;
 }
 
 
 bool Action_ProcessRequestTopology::ProcessMessages()
 {
+    LOG(name<<"ProcessMessages() called"<<endl);
     //$$$$ process messages if received
     //$$$$ run current action logic based on received messages 
 
     //$$$$ return true if all messages received and processed
     //$$$$ otherwise false
+    return false;
 }
 
 
 void Action_ProcessRequestTopology::CleanUp()
 {
+    LOG(name<<"CleanUp() called"<<endl);
     Action::CleanUp();
 
     //$$$$ cleanup logic for current action
@@ -74,7 +82,8 @@ void Action_ProcessRequestTopology::CleanUp()
 
 void Action_ProcessRequestTopology::Finish()
 {
-    Action::CleanUp();
+    LOG(name<<"Finish() called"<<endl);
+    Action::Finish();
 
     //$$$$ finish logic for current action
 }
@@ -85,34 +94,38 @@ void Action_ProcessRequestTopology::Finish()
 
 void Action_CreateTEWG::Process()
 {
+    LOG(name<<"Process() called"<<endl);
     //$$$$ run current action main logic
-    //$$$$ send out messages if needed
-
-    //$$$$ change states into _waitingMesages  if messages are send out 
-    //$$$$ TODO add messageSend function that keep records of ...
+    
+    //$$$$ send out messages if needed and add to expectMessageTopics
 }
 
 
 bool Action_CreateTEWG::ProcessChildren()
 {
+    LOG(name<<"ProcessChildren() called"<<endl);
     //$$$$ loop through all children to look for states
     //$$$$ return true if all children have finished
     //$$$$ otherwise false
+    return false;
 }
 
 
 bool Action_CreateTEWG::ProcessMessages()
 {
+    LOG(name<<"ProcessMessages() called"<<endl);
     //$$$$ process messages if received
     //$$$$ run current action logic based on received messages 
 
     //$$$$ return true if all messages received and processed
     //$$$$ otherwise false
+    return false;
 }
 
 
 void Action_CreateTEWG::CleanUp()
 {
+    LOG(name<<"CleanUp() called"<<endl);
     Action::CleanUp();
 
     //$$$$ cleanup logic for current action
@@ -121,6 +134,7 @@ void Action_CreateTEWG::CleanUp()
 
 void Action_CreateTEWG::Finish()
 {
+    LOG(name<<"Finish() called"<<endl);
     Action::CleanUp();
 
     //$$$$ finish logic for current action
@@ -132,34 +146,38 @@ void Action_CreateTEWG::Finish()
 
 void Action_ComputeKSP::Process()
 {
+    LOG(name<<"Process() called"<<endl);
     //$$$$ run current action main logic
-    //$$$$ send out messages if needed
+    //$$$$ send out messages if needed and add to expectMessageTopics
 
-    //$$$$ change states into _waitingMesages  if messages are send out 
-    //$$$$ TODO add messageSend function that keep records of ...
 }
 
 
 bool Action_ComputeKSP::ProcessChildren()
 {
+    LOG(name<<"ProcessChildren() called"<<endl);
     //$$$$ loop through all children to look for states
     //$$$$ return true if all children have finished
     //$$$$ otherwise false
+    return false;
 }
 
 
 bool Action_ComputeKSP::ProcessMessages()
 {
+    LOG(name<<"ProcessMessages() called"<<endl);
     //$$$$ process messages if received
     //$$$$ run current action logic based on received messages 
 
     //$$$$ return true if all messages received and processed
     //$$$$ otherwise false
+    return false;
 }
 
 
 void Action_ComputeKSP::CleanUp()
 {
+    LOG(name<<"CleanUp() called"<<endl);
     Action::CleanUp();
 
     //$$$$ cleanup logic for current action
@@ -168,6 +186,7 @@ void Action_ComputeKSP::CleanUp()
 
 void Action_ComputeKSP::Finish()
 {
+    LOG(name<<"Finish() called"<<endl);
     Action::CleanUp();
 
     //$$$$ finish logic for current action
@@ -179,34 +198,37 @@ void Action_ComputeKSP::Finish()
 
 void Action_FinalizeServiceTopology::Process()
 {
+    LOG(name<<"Process() called"<<endl);
     //$$$$ run current action main logic
-    //$$$$ send out messages if needed
-
-    //$$$$ change states into _waitingMesages  if messages are send out 
-    //$$$$ TODO add messageSend function that keep records of ...
+    //$$$$ send out messages if needed and add to expectMessageTopics
 }
 
 
 bool Action_FinalizeServiceTopology::ProcessChildren()
 {
+    LOG(name<<"ProcessChildren() called"<<endl);
     //$$$$ loop through all children to look for states
     //$$$$ return true if all children have finished
     //$$$$ otherwise false
+    return false;
 }
 
 
 bool Action_FinalizeServiceTopology::ProcessMessages()
 {
+    LOG(name<<"ProcessMessages() called"<<endl);
     //$$$$ process messages if received
     //$$$$ run current action logic based on received messages 
 
     //$$$$ return true if all messages received and processed
     //$$$$ otherwise false
+    return false;
 }
 
 
 void Action_FinalizeServiceTopology::CleanUp()
 {
+    LOG(name<<"CleanUp() called"<<endl);
     Action::CleanUp();
 
     //$$$$ cleanup logic for current action
@@ -215,6 +237,7 @@ void Action_FinalizeServiceTopology::CleanUp()
 
 void Action_FinalizeServiceTopology::Finish()
 {
+    LOG(name<<"Finish() called"<<endl);
     Action::CleanUp();
 
     //$$$$ finish logic for current action

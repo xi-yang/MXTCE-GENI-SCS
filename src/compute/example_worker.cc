@@ -31,14 +31,39 @@
  * SUCH DAMAGE.
  */
 
+#include "compute_actions.hh"
 #include "example_worker.hh"
 
 // Thread specific logic
 void* ExampleComputeWorker::hookRun()
 {
-    //$$$  specific workflow init
+    // create workflow with action list (construct relationships)
+    string actionName = "Example_Action_Process_RT";
+    Action* actionRoot = new Action_ProcessRequestTopology(actionName, this);
+    actions.push_back(actionRoot);
+   
+    actionName = "Example_Action_Create_TEWG";
+    Action* actionNext = new Action_CreateTEWG(actionName, this);
+    actions.push_back(actionNext);
+    actionRoot->AddChild(actionNext);
+    actionNext->SetParent(actionRoot);
 
-    // eventMaster->Run() will be initiated in parent class ThreadPortScheduler::Run() method
+    actionName = "Example_Action_Compute_KSP";
+    Action* actionNext2 = new Action_ComputeKSP(actionName, this);
+    actions.push_back(actionNext2);
+    actionNext->AddChild(actionNext2);
+    actionNext2->SetParent(actionNext);
+
+    actionName = "Example_Action_Finalize_ST";
+    Action* actionNext3 = new Action_FinalizeServiceTopology(actionName, this);
+    actions.push_back(actionNext3);
+    actionNext2->AddChild(actionNext3);
+    actionNext3->SetParent(actionNext2);
+
+    // schedule the top level action(s)
+    eventMaster->Schedule(actionRoot);
+
+    //## eventMaster->Run() will be called by parent Run() 
 }
 
 // Handle message from thread message router
@@ -48,8 +73,25 @@ void ExampleComputeWorker::hookHandleMessage()
     while ((msg = msgPort->GetMessage()) != NULL)
     {
         msg->LogDump();
-        //delete msg; //msg consumed
+
+        // loop through action list to match expectMessageTopics and deliver the message to action object
+        list<Action*>::iterator ita;
+        Action* action;
+        for (ita = actions.begin(); ita != actions.end(); ita++) 
+        {
+            action = *ita;
+            list<string>::iterator its = action->GetExpectMessageTopics().begin();
+            for (; its != action->GetExpectMessageTopics().end(); its++)
+            {
+                if ((*its) == msg->GetTopic())
+                {
+                    action->GetMessages().push_back(msg->Duplicate());
+                }
+            }
+        }
     }
+
+    delete msg;
 }
 
 

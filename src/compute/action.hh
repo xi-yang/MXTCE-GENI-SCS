@@ -57,15 +57,15 @@ protected:
     string name;
     ActionState state;
     ComputeWorker* worker;
-    list<Action*> childrenImmediate; // direct call to run from this action (tight dependency)
-    list<Action*> childrenScheduled; // scheduled to run in event queue (allow for concurrent branches)
+    Action* parent;
+    list<Action*> children; // scheduled to run in event queue (allow for concurrent branches)
     list<Message*> messages;
     list<string> expectMesssageTopics;
 
 public:
-    Action(): state(_Idle), worker(NULL) { }
-    Action(ComputeWorker* w): state(_Idle), worker(w) { assert(w != NULL); }
-    Action(string& n, ComputeWorker* w): name(n), state(_Idle), worker(w) { assert(w != NULL); }
+    Action(): state(_Idle), worker(NULL), parent(NULL) { }
+    Action(ComputeWorker* w): state(_Idle), worker(w), parent(NULL) { assert(w != NULL); }
+    Action(string& n, ComputeWorker* w): name(n), state(_Idle), worker(w), parent(NULL) { assert(w != NULL); }
     virtual ~Action() { }
     string& GetName() { return name; }
     void SetName(string& n) { name = n; }
@@ -75,10 +75,10 @@ public:
     void SetComputeWorker(ComputeWorker* w) { worker = w; }
     list<Message*>& GetMessages() { return messages; }
     list<string>& GetExpectMessageTopics() { return expectMesssageTopics; }
-    list<Action*>& GetChildrenImmediate() { return childrenImmediate; } 
-    void AddChildImmediate(Action* child) { child->SetComputeWorker(worker); childrenImmediate.push_back(child); } 
-    list<Action*>& GetChildrenScehduled() { return childrenScheduled; } 
-    void AddChildScheduled(Action* child) { child->SetComputeWorker(worker); childrenScheduled.push_back(child); } 
+    Action* GetParent() { return parent; } 
+    void SetParent(Action* p) { parent = p; }
+    list<Action*>& GetChildren() { return children; } 
+    void AddChild(Action* child) { child->SetComputeWorker(worker); children.push_back(child); } 
 
     virtual void Run();
     virtual void Wait();
