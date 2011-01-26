@@ -31,57 +31,40 @@
  * SUCH DAMAGE.
  */
  
-#ifndef __ACTION_HH__
-#define __ACTION_HH__
-#include <list>
-#include "types.hh"
-#include "event.hh"
+#ifndef __COMPUTE_ACTIONS_HH__
+#define __COMPUTE_ACTIONS_HH__
 
-using namespace std;
+#include "action.hh"
 
-typedef enum {
-    _Idle = 0,
-    _Started = 1,
-    _WaitingMessages,
-    _WaitingChildren,
-    _Cancelled,
-    _Failed,
-    _Finished
-} ActionState;
 
-class Message;
-class ComputeWorker;
-class Action: public Event
+class Action_ProcessRequestTopology: public Action
+{
+    protected:
+    
+    public:
+        Action_ProcessRequestTopology(): Action(){ }
+        Action_ProcessRequestTopology(ComputeWorker* w): Action(w) { }
+        virtual ~Action_ProcessRequestTopology() { }
+    
+        virtual void Process();
+        virtual bool ProcessChildren();
+        virtual bool ProcessMessages();
+        virtual void Finish();
+        virtual void CleanUp();
+};
+
+
+class Action_CreateTEWG: public Action
 {
 protected:
-    string name;
-    ActionState state;
-    ComputeWorker* worker;
-    list<Action*> childrenImmediate; // direct call to run from this action (tight dependency)
-    list<Action*> childrenScheduled; // scheduled to run in event queue (allow for concurrent branches)
-    list<Message*> messages;
-    list<string> expectMesssageTopics;
 
 public:
-    Action(): state(_Idle), worker(NULL) { }
-    Action(ComputeWorker* w): state(_Idle), worker(w) { assert(w != NULL); }
-    Action(string& n, ComputeWorker* w): name(n), state(_Idle), worker(w) { assert(w != NULL); }
-    virtual ~Action() { }
-    string& GetName() { return name; }
-    void SetName(string& n) { name = n; }
-    ActionState GetState() { return state; }
-    void SetState(ActionState s) { this->state = s; }
-    ComputeWorker* GetComputeWorker() { return worker; }
-    void SetComputeWorker(ComputeWorker* w) { worker = w; }
-    list<Message*>& GetMessages() { return messages; }
-    list<string>& GetExpectMessageTopics() { return expectMesssageTopics; }
-    list<Action*>& GetChildrenImmediate() { return childrenImmediate; } 
-    void AddChildImmediate(Action* child) { child->SetComputeWorker(worker); childrenImmediate.push_back(child); } 
-    list<Action*>& GetChildrenScehduled() { return childrenScheduled; } 
-    void AddChildScheduled(Action* child) { child->SetComputeWorker(worker); childrenScheduled.push_back(child); } 
+    Action_CreateTEWG(): Action(){ }
+    Action_CreateTEWG(ComputeWorker* w): Action(w) { }
+    virtual ~Action_CreateTEWG() { }
 
-    virtual void Run();
-    virtual void Wait();
+    //virtual void Run();
+    //virtual void Wait();
     virtual void Process();
     virtual bool ProcessChildren();
     virtual bool ProcessMessages();
@@ -89,5 +72,38 @@ public:
     virtual void CleanUp();
 };
 
+
+class Action_ComputeKSP: public Action
+{
+    protected:
+    
+    public:
+        Action_ComputeKSP(): Action(){ }
+        Action_ComputeKSP(ComputeWorker* w): Action(w) { }
+        virtual ~Action_ComputeKSP() { }
+    
+        virtual void Process();
+        virtual bool ProcessChildren();
+        virtual bool ProcessMessages();
+        virtual void Finish();
+        virtual void CleanUp();
+};
+
+
+class Action_FinalizeServiceTopology: public Action
+{
+    protected:
+    
+    public:
+        Action_FinalizeServiceTopology(): Action(){ }
+        Action_FinalizeServiceTopology(ComputeWorker* w): Action(w) { }
+        virtual ~Action_FinalizeServiceTopology() { }
+    
+        virtual void Process();
+        virtual bool ProcessChildren();
+        virtual bool ProcessMessages();
+        virtual void Finish();
+        virtual void CleanUp();
+};
 
 #endif

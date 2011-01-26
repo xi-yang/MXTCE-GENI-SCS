@@ -36,9 +36,9 @@
 // Thread specific logic
 void* ExampleComputeWorker::hookRun()
 {
-    //$$$  thread specific init
+    //$$$  specific workflow init
 
-    // eventMaster->Run() will been initiated in parent class ThreadPortScheduler::Run() method
+    // eventMaster->Run() will be initiated in parent class ThreadPortScheduler::Run() method
 }
 
 // Handle message from thread message router

@@ -40,9 +40,9 @@ int ComputeWorkerFactory::serialNum = 0;
 // Thread specific logic
 void* ComputeWorker::hookRun()
 {
-    //$$$  thread specific init
+    //$$$  specific workflow init
 
-    // eventMaster->Run() will been initiated in parent class ThreadPortScheduler::Run() method
+    // eventMaster->Run() will be initiated in parent class ThreadPortScheduler::Run() method
 }
 
 

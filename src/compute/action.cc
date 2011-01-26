@@ -45,47 +45,80 @@ void Action::Run()
     {
     case _Idle:
         state = _Started;
-        break;
-    case _PendingMsg:
+
+        try {
+            //$$$$ may send out messages and add to expected topic list
+            Process(); 
+
+            //$$$$ schedule children
+
+            //$$$$ call immediate children
+
+        } catch (ComputeThreadException e) {
+            LOG("Action::Run caught Exception:" << e.what() << " ErrMsg: " << e.GetMessage() << endl);
+            state = _Failed;
+            CleanUp();
+        }
+
+        if (expectMesssageTopics.size() == 0) 
+        {
+            if (childrenScheduled.size() == 0)
+                state = _Finished;
+            else
+                state = _WaitingChildren;
+        }
+        else 
+        {
+            state = _WaitingMessages;
+        }
+
         Wait();
         break;
-    case _ReceivedMsg:
-        Process();
-        break;
+
+    case _WaitingMessages:
+        try {
+            if (!ProcessMessages() || expectMesssageTopics.size()>0) // true -> all messages received, other wise false
+            {
+                state = _WaitingMessages;
+            }
+        } catch (ComputeThreadException e) {
+            LOG("Action::Run caught Exception:" << e.what() << " ErrMsg: " << e.GetMessage() << endl);
+            state = _Failed;
+            CleanUp();
+        }
+
+        // vvv fall through --> no break here by design vvv
     case _WaitingChildren:
-        //check children states
-        //wait() unless fisnied
+        try {
+            if (!ProcessChildren())
+            {
+                state = _WaitingChildren;
+                Wait();
+            }
+        } catch (ComputeThreadException e) {
+            LOG("Action::Run caught Exception:" << e.what() << " ErrMsg: " << e.GetMessage() << endl);
+            state = _Failed;
+            CleanUp();
+        }
+        
+        //if all children are finished, we are done here.
+        state = _Finished;
+        Wait();
         break;
-    case _Cancelled:
-        //?
-        break;
+
     case _Failed:
-        //?
+    case _Cancelled:
+        CleanUp();
         break;
+
     case _Finished:
-        //?
+        CleanUp();
+        Finish();
         break;
     default:
         //unknown state -->throw exception?
         ;
     }
-}
-
-
-void Action::Process()
-{
-    //process messages 
-    //change states if needed, then --> Run()
-}
-
-
-void Action::ProcessChildren()
-{
-    //loop through all children and schedule them
-    //if there is at least one
-        // Wait()
-    //otherwise
-        //Finish()
 }
 
 
@@ -96,23 +129,50 @@ void Action::Wait()
 }
 
 
-void Action::WaitForChildren()
+void Action::Process()
 {
-    //check wether all childrenScheduled have finished (or timed out?)
-    //repeats = FOREVER;
-    //worker->GetEventMaster()->Schedule(this);
+    //$$$$ run current action main logic
+    //$$$$ send out messages if needed
+    //$$$$ change states if needed ?
 }
 
-void Action::Finish()
+
+//return true if all children finished otherwise false
+bool Action::ProcessChildren()
 {
-    state = _Finished;
-    repeats = 0;
+    //$$$$ loop through all children to look for states
+    //$$$$ return true if all children have finished
+    //$$$$ otherwise false
 }
+
+
+//return true if all expected messages received otherwise false
+bool Action::ProcessMessages()
+{
+    //$$$$ process messages if received
+    //$$$$ run current action logic based on received messages 
+
+    //$$$$ return true if all messages received and processed
+    //$$$$ otherwise false
+}
+
+
 
 void Action::CleanUp()
 {
-    //cleanning up before being destroyed
-    //state = _Finished;
-    //repeats = 0;
+    //$$$$ cancel all children actions
+
+    //cleanning up data before being destroyed
+    SetRepeats(0);
+    SetObsolete(true);
+    //?? doulbe check to remove from event loop?
+}
+
+
+void Action::Finish()
+{
+    //cleanning up data before being destroyed
+    SetRepeats(0);
+    SetObsolete(true);
 }
 

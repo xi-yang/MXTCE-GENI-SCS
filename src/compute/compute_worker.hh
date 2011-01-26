@@ -37,6 +37,7 @@
 #include <list>
 #include "types.hh"
 #include "event.hh"
+#include "exception.hh"
 #include "thread.hh"
 #include "api.hh"
  
