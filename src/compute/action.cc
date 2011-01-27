@@ -127,10 +127,11 @@ void Action::Run()
     }
 }
 
-
+//TODO: Remove before schedule! 
 void Action::Wait()
 {
     repeats = FOREVER;
+    worker->GetEventMaster()->Remove(this);
     worker->GetEventMaster()->Schedule(this);
 }
 
@@ -146,40 +147,54 @@ void Action::Process()
 //return true if all children finished otherwise false
 bool Action::ProcessChildren()
 {
-    //$$$$ loop through all children to look for states
+    // loop through all children to look for states
+    list<Action*>::iterator ita;
+    Action* action;
+    for (ita = children.begin(); ita != children.end(); ita++)
+    {
+        action = *ita;
+        if (action->GetState() != _Finished && action->GetState() != _Cancelled && action->GetState() != _Failed)
+        {
+            return false;
+        }
+    }
 
-    //$$$$ return true if all children have finished
-    //$$$$ otherwise false
+    return true;
 }
 
 
 //return true if all expected messages received otherwise false
 bool Action::ProcessMessages()
 {
-    //$$$$ process messages if received
-    //$$$$ run current action logic based on received messages 
-
-    //$$$$ return true if all messages received and processed
-    //$$$$ otherwise false
+    return (expectMesssageTopics.size() == 0);
 }
 
 
 
 void Action::CleanUp()
 {
-    //$$$$ cancel all children actions
+    // loop through all children to cleanup
+    list<Action*>::iterator ita;
+    Action* action;
+    for (ita = children.begin(); ita != children.end(); ita++)
+    {
+        action = *ita;
+        if (action->GetState() != _Finished && action->GetState() != _Failed)
+        {
+            action->SetState(_Cancelled);
+            action->CleanUp();
+        }
+    }
 
     //cleanning up data before being destroyed
     SetRepeats(0);
     SetObsolete(true);
-    //?? doulbe check to remove from event loop?
 }
 
 
 void Action::Finish()
 {
-    //cleanning up data before being destroyed
-    SetRepeats(0);
-    SetObsolete(true);
+    //delete data before being destroyed
+    worker->GetEventMaster()->Remove(this);
 }
 

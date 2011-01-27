@@ -53,9 +53,8 @@ bool Action_ProcessRequestTopology::ProcessChildren()
     LOG(name<<"ProcessChildren() called"<<endl);
     //$$$$ loop through all children to look for states
 
-    //$$$$ return true if all children have finished
-    //$$$$ otherwise false
-    return false;
+    // return true if all children have finished; otherwise false
+    return Action::ProcessChildren();
 }
 
 
@@ -65,27 +64,28 @@ bool Action_ProcessRequestTopology::ProcessMessages()
     //$$$$ process messages if received
     //$$$$ run current action logic based on received messages 
 
-    //$$$$ return true if all messages received and processed
-    //$$$$ otherwise false
-    return false;
+    //return true if all messages received and processed; otherwise false
+    return Action::ProcessMessages();
 }
 
 
 void Action_ProcessRequestTopology::CleanUp()
 {
     LOG(name<<"CleanUp() called"<<endl);
-    Action::CleanUp();
-
     //$$$$ cleanup logic for current action
+
+    // cancel and cleanup children
+    Action::CleanUp();
 }
 
 
 void Action_ProcessRequestTopology::Finish()
 {
     LOG(name<<"Finish() called"<<endl);
-    Action::Finish();
-
     //$$$$ finish logic for current action
+
+    // stop out from event loop
+    Action::Finish();
 }
 
 
@@ -105,9 +105,9 @@ bool Action_CreateTEWG::ProcessChildren()
 {
     LOG(name<<"ProcessChildren() called"<<endl);
     //$$$$ loop through all children to look for states
-    //$$$$ return true if all children have finished
-    //$$$$ otherwise false
-    return false;
+
+    // return true if all children have finished; otherwise false
+    return Action::ProcessChildren();
 }
 
 
@@ -117,27 +117,29 @@ bool Action_CreateTEWG::ProcessMessages()
     //$$$$ process messages if received
     //$$$$ run current action logic based on received messages 
 
-    //$$$$ return true if all messages received and processed
-    //$$$$ otherwise false
-    return false;
+    //return true if all messages received and processed; otherwise false
+    return Action::ProcessMessages();
 }
 
 
 void Action_CreateTEWG::CleanUp()
 {
     LOG(name<<"CleanUp() called"<<endl);
+    //$$$$ cleanup logic for current action
+
+    // cancel and cleanup children
     Action::CleanUp();
 
-    //$$$$ cleanup logic for current action
 }
 
 
 void Action_CreateTEWG::Finish()
 {
     LOG(name<<"Finish() called"<<endl);
-    Action::CleanUp();
-
     //$$$$ finish logic for current action
+
+    // stop out from event loop
+    Action::Finish();
 }
 
 
@@ -157,9 +159,9 @@ bool Action_ComputeKSP::ProcessChildren()
 {
     LOG(name<<"ProcessChildren() called"<<endl);
     //$$$$ loop through all children to look for states
-    //$$$$ return true if all children have finished
-    //$$$$ otherwise false
-    return false;
+
+    // return true if all children have finished; otherwise false
+    return Action::ProcessChildren();
 }
 
 
@@ -169,27 +171,28 @@ bool Action_ComputeKSP::ProcessMessages()
     //$$$$ process messages if received
     //$$$$ run current action logic based on received messages 
 
-    //$$$$ return true if all messages received and processed
-    //$$$$ otherwise false
-    return false;
+    //return true if all messages received and processed; otherwise false
+    return Action::ProcessMessages();
 }
 
 
 void Action_ComputeKSP::CleanUp()
 {
     LOG(name<<"CleanUp() called"<<endl);
-    Action::CleanUp();
-
     //$$$$ cleanup logic for current action
+
+    // cancel and cleanup children
+    Action::CleanUp();
 }
 
 
 void Action_ComputeKSP::Finish()
 {
     LOG(name<<"Finish() called"<<endl);
-    Action::CleanUp();
-
     //$$$$ finish logic for current action
+
+    // stop out from event loop
+    Action::Finish();
 }
 
 
@@ -208,9 +211,9 @@ bool Action_FinalizeServiceTopology::ProcessChildren()
 {
     LOG(name<<"ProcessChildren() called"<<endl);
     //$$$$ loop through all children to look for states
-    //$$$$ return true if all children have finished
-    //$$$$ otherwise false
-    return false;
+
+    // return true if all children have finished; otherwise false
+    return Action::ProcessChildren();
 }
 
 
@@ -220,27 +223,27 @@ bool Action_FinalizeServiceTopology::ProcessMessages()
     //$$$$ process messages if received
     //$$$$ run current action logic based on received messages 
 
-    //$$$$ return true if all messages received and processed
-    //$$$$ otherwise false
-    return false;
+    //return true if all messages received and processed; otherwise false
+    return Action::ProcessMessages();
 }
 
 
 void Action_FinalizeServiceTopology::CleanUp()
 {
     LOG(name<<"CleanUp() called"<<endl);
-    Action::CleanUp();
-
     //$$$$ cleanup logic for current action
+
+    // cancel and cleanup children
+    Action::CleanUp();
 }
 
 
 void Action_FinalizeServiceTopology::Finish()
 {
     LOG(name<<"Finish() called"<<endl);
-    Action::CleanUp();
-
     //$$$$ finish logic for current action
-}
 
+    // stop out from event loop
+    Action::Finish();
+}
 
