@@ -273,6 +273,8 @@ void MessagePort::Run()
     } catch (MsgIOException& e) {
         eventMaster->Remove(this);
         eventMaster->Remove(this->GetWriter());
+        //$$$ disable port when IO exception raised ? 
+        //up = false;
     }
     if (threadScheduler)
         threadScheduler->hookHandleMessage();
@@ -391,7 +393,7 @@ void MessagePort::DetachPipes()
 
 Message* MessagePort::GetMessage ()
 {
-    if (inQueue.empty())
+    if (Socket() < 0 || inQueue.empty())
         return NULL;
     else 
     {
@@ -424,6 +426,7 @@ void MessagePort::PostMessage (Message *msg)
 ///////////////////////////////////////////
 
 
+// message router retrieve message from the loopback port
 Message* MessagePortLoopback::GetMessage ()
 {
     if (inQueue.empty())
@@ -439,6 +442,7 @@ Message* MessagePortLoopback::GetMessage ()
 }
 
 
+// message router deliver message to the loopback port
 void MessagePortLoopback::PostMessage (Message *msg)
 {
     assert (msg);
@@ -453,6 +457,7 @@ void MessagePortLoopback::PostMessage (Message *msg)
 }
 
 
+// core thread get message from the message router ( from other ports)
 Message* MessagePortLoopback::GetLocalMessage ()
 {
     if (msgWriter.outQueue.empty())
@@ -468,6 +473,7 @@ Message* MessagePortLoopback::GetLocalMessage ()
 }
 
 
+// core thread send message to the message router( then to other ports)
 void MessagePortLoopback::PostLocalMessage (Message *msg)
 {
     assert (msg);
@@ -544,7 +550,6 @@ void MessageRouter::Run()
         Message* msg;
         Route* route;
         // TODO: Routing can be faster if using two-level hash map:  {queue, topic} ->portlist
-        // TODO: Handle "delivery confirmation" and "resend" in GetMessage()
         // TODO: When passing duplicate messages, watching out for thread-safe operations on passed pointers. Dup pointed data if needed!
         while ((msg = msgPort->GetMessage()) != NULL)
         {

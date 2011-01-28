@@ -100,6 +100,9 @@ void EventMaster::Schedule(Event* event)
     case EVENT_PRIORITY:
         priorities.push_back(event);
         break;
+    case EVENT_NICE:
+        nices.push_back(event);
+        break;
     case EVENT_READ:
        if (((Selector*)event)->fd < 0)
        {
@@ -138,7 +141,7 @@ void EventMaster::Schedule(Event* event)
 void
 EventMaster::Remove(Event *event)
 {
-    if (event == NULL || event->type > 4 || event->type < 0)
+    if (event == NULL || event->type > 5 || event->type < 0)
         return;
     
     list<Event*> *eList = &eventLists[event->type];
@@ -165,7 +168,7 @@ void
 EventMaster::Run()
 {
     Event *event;
-    while (1)
+    while (!stopped)
     {
         event = this->Fetch();
 
@@ -202,6 +205,12 @@ EventMaster::Run()
             delete event;
         }
     }
+}
+
+
+void EventMaster::Stop()
+{
+    stopped = true;
 }
 
 
@@ -302,7 +311,10 @@ EventMaster::Fetch()
       {
           priorities.pop_front();
           if (event->Nice())
-              nice.push_back(event);
+          {
+              event->SetType(EVENT_NICE);
+              nices.push_back(event);
+          }
           else
               return event;
       }
@@ -357,9 +369,9 @@ EventMaster::Fetch()
 
     _nice:
       // Handling nice events
-      if ((!nice.empty()) && (event = nice.front()))
+      if ((!nices.empty()) && (event = nices.front()))
       {
-          nice.pop_front();
+          nices.pop_front();
           return event;
       }
   }

@@ -51,6 +51,7 @@ typedef enum
     EVENT_READ,
     EVENT_WRITE,
     EVENT_READY,
+    EVENT_NICE,
     EVENT_IDLE
 } EventType;
 
@@ -212,7 +213,7 @@ private:
     fd_set readfd;
     fd_set writefd;
     fd_set exceptfd;
-    
+    bool stopped;
     list<Event*> eventLists[6];
 
     #define priorities eventLists[0]
@@ -220,9 +221,9 @@ private:
     #define reads eventLists[2]
     #define writes eventLists[3]
     #define ready eventLists[4]
-    #define nice eventLists[5]
+    #define nices eventLists[5]
     
-    EventMaster(){ FD_ZERO(&readfd); FD_ZERO(&writefd); FD_ZERO(&exceptfd); }
+    EventMaster(): stopped(false) { FD_ZERO(&readfd); FD_ZERO(&writefd); FD_ZERO(&exceptfd); }
 public:
     ~EventMaster();
     static EventMaster* GetInstance();
@@ -235,7 +236,8 @@ public:
     void ModifyFDSets (fd_set *pReadfd, fd_set *pWritefd);
     Event* Fetch();
     void Run();
-   
+    void Stop();
+
     friend class Event;
 };
 

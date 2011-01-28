@@ -190,11 +190,12 @@ void MxTCEMessageHandler::Run()
         } 
         else if (msg->GetType() == MSG_REPLY && msg->GetTopic() == "COMPUTE_REPLY") 
         {
-            //$$$$ handle the message 
             //@@@@ Prototype Testing code
+            string queue = "CORE";
             string topic = "API_REPLY";
             Message* msg_reply = msg->Duplicate();
             msg_reply->SetType(MSG_REPLY);
+            msg_reply->SetQueue(queue);
             msg_reply->SetTopic(topic);
             mxTCE->GetLoopbackPort()->PostLocalMessage(msg_reply);
 
@@ -206,6 +207,8 @@ void MxTCEMessageHandler::Run()
                 ssMsg << "Unknown computeWorkerThread: " << msg->GetPort()->GetName();
                 throw TCEException(ssMsg.str());
             }
+            //computingThread->GetEventMaster()->Stop();
+            //computingThread->Join();
         }
     }
 

@@ -84,7 +84,11 @@ void Action_ProcessRequestTopology::CleanUp()
 void Action_ProcessRequestTopology::Finish()
 {
     LOG(name<<"Finish() called"<<endl);
-    //$$$$ finish logic for current action
+    // send back COMPUTE_REPLY message to core thread
+    string queue = MxTCE::computeThreadPrefix + worker->GetName();
+    string topic = "COMPUTE_REPLY";
+    list<TLV*> noTLVs;
+    SendMessage(MSG_REPLY, queue, topic, noTLVs);
 
     // stop out from event loop
     Action::Finish();
@@ -145,7 +149,7 @@ void Action_CreateTEWG::CleanUp()
     //$$$$ cleanup logic for current action
 
     // cancel and cleanup children
-    Action::CleanUp();
+    Action::CleanUp();    
 
 }
 
