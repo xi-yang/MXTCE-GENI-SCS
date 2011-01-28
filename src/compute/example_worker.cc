@@ -86,12 +86,13 @@ void ExampleComputeWorker::hookHandleMessage()
                 if ((*its) == msg->GetTopic())
                 {
                     action->GetMessages().push_back(msg->Duplicate());
+                    its = action->GetExpectMessageTopics().erase(its);
                 }
             }
         }
+        delete msg;
     }
 
-    delete msg;
 }
 
 

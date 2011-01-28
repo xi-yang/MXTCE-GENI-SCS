@@ -102,6 +102,7 @@ public:
     void SetPort(MessagePort* p) { port = p; }
     bool IsUrgent() { return flagUrgent; }
     void SetUrgent(bool ur) { flagUrgent = ur; }
+    void AddTLV(TLV* tlv) { tlvList.push_back(tlv); }
     Message* Duplicate();
     void Transmit(int wfd);
     void Receive(int rfd);

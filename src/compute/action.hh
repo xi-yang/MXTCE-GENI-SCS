@@ -36,6 +36,7 @@
 #include <list>
 #include "types.hh"
 #include "event.hh"
+#include "message.hh"
 
 using namespace std;
 
@@ -49,7 +50,6 @@ typedef enum {
     _Finished
 } ActionState;
 
-class Message;
 class ComputeWorker;
 class Action: public Event
 {
@@ -79,6 +79,8 @@ public:
     void SetParent(Action* p) { parent = p; }
     list<Action*>& GetChildren() { return children; } 
     void AddChild(Action* child) { child->SetComputeWorker(worker); children.push_back(child); } 
+    void SendMessage(MessageType type, string& queue, string& topic, list<TLV*>& tlvs);
+    void SendMessage(MessageType type, string& queue, string& topic, list<TLV*>& tlvs, string& expectReturnTopic);
 
     virtual void Run();
     virtual void Wait();

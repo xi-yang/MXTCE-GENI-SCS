@@ -127,20 +127,39 @@ void Action::Run()
     }
 }
 
-//TODO: Remove before schedule! 
+ 
 void Action::Wait()
 {
     repeats = FOREVER;
     worker->GetEventMaster()->Remove(this);
     worker->GetEventMaster()->Schedule(this);
+    this->SetNice(true); //make sure messages can be sent and received during wait
+}
+
+
+void Action::SendMessage(MessageType type, string& queue, string& topic, list<TLV*>& tlvs)
+{
+    Message* msg = new Message(type, queue, topic);
+    list<TLV*>::iterator itlv;
+    for (itlv = tlvs.begin(); itlv != tlvs.end(); itlv++)
+        msg->AddTLV(*itlv);
+    GetComputeWorker()->GeMessagePort()->PostMessage(msg);
+}
+
+
+void Action::SendMessage(MessageType type, string& queue, string& topic, list<TLV*>& tlvs, string& expectReturnTopic)
+{
+    SendMessage(type, queue, topic, tlvs);
+    expectMesssageTopics.push_back(expectReturnTopic);
 }
 
 
 void Action::Process()
 {
-    //$$$$ run current action main logic
-
-    //$$$$ send out messages if needed and add to expectMessageTopics
+    // do nothing in root Action class
+    ;  
+    // in derived classes, run current action main logic
+    // send out messages if needed and add to expectMessageTopics
 }
 
 

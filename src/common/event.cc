@@ -301,7 +301,10 @@ EventMaster::Fetch()
       if ((!priorities.empty()) && (event = priorities.front()))
       {
           priorities.pop_front();
-          return event;
+          if (event->Nice())
+              nice.push_back(event);
+          else
+              return event;
       }
 
       // Handling timers
@@ -316,6 +319,7 @@ EventMaster::Fetch()
               return timer;
           }
       }
+      
       // Handling ready events
       if ((!ready.empty()) && (event = ready.front()))
       {
@@ -332,22 +336,30 @@ EventMaster::Fetch()
       numSelect = select (FD_SETSIZE, &s_readfd, &s_writefd, &s_exceptfd, &timeout);
 
       if (numSelect == 0)
-	continue;
+        goto _nice;
 
       if (numSelect < 0)
-	{
-	  // A signal was delivered before the time limit expired.
-	  if (errno == EINTR)
-	    continue;
-	  //Other error  //LOG
-	  return NULL;
-	}
+      {
+        // A signal was delivered before the time limit expired.
+        if (errno == EINTR)
+            goto _nice;
+        //Other error  //LOG
+        return NULL;
+      }
 
       ModifyFDSets (&s_readfd, &s_writefd);
 
       if ((!ready.empty()) && (event = ready.front()))
       {
           ready.pop_front();
+          return event;
+      }
+
+    _nice:
+      // Handling nice events
+      if ((!nice.empty()) && (event = nice.front()))
+      {
+          nice.pop_front();
           return event;
       }
   }

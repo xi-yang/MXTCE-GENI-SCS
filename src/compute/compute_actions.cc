@@ -34,6 +34,8 @@
 #include "log.hh"
 #include "event.hh"
 #include "exception.hh"
+#include "mxtce.hh"
+#include "compute_worker.hh"
 #include "compute_actions.hh"
 
 
@@ -95,9 +97,16 @@ void Action_ProcessRequestTopology::Finish()
 void Action_CreateTEWG::Process()
 {
     LOG(name<<"Process() called"<<endl);
-    //$$$$ run current action main logic
     
-    //$$$$ send out messages if needed and add to expectMessageTopics
+    // run current action main logic
+    string queue = MxTCE::computeThreadPrefix + worker->GetName();
+    string topic = "TEDB_REQUEST";
+    string expectReturnTopic = "TEDB_REPLY";
+    list<TLV*> noTLVs;
+    SendMessage(MSG_REQ, queue, topic, noTLVs, expectReturnTopic);
+    topic = "RESV_REQUEST";
+    expectReturnTopic = "RESV_REPLY";
+    SendMessage(MSG_REQ, queue, topic, noTLVs, expectReturnTopic);
 }
 
 
@@ -114,8 +123,16 @@ bool Action_CreateTEWG::ProcessChildren()
 bool Action_CreateTEWG::ProcessMessages()
 {
     LOG(name<<"ProcessMessages() called"<<endl);
-    //$$$$ process messages if received
-    //$$$$ run current action logic based on received messages 
+    //run current action logic based on received messages 
+    list<Message*>::iterator itm;
+    Message* msg;
+    for (itm = messages.begin(); itm != messages.end(); itm++)
+    {
+        msg = *itm;
+        msg->LogDump();
+        delete msg;
+        itm = messages.erase(itm);
+    }
 
     //return true if all messages received and processed; otherwise false
     return Action::ProcessMessages();

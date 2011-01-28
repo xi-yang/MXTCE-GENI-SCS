@@ -61,6 +61,7 @@ class Event
 private:
      bool shouldAutoDelete;
      bool isObsolete;
+     bool isNice;
 protected:
      EventType type;
      CallBack callFunc;
@@ -68,9 +69,9 @@ protected:
      void *param2;
      int repeats;
 public:
-    Event(): type(EVENT_PRIORITY), repeats(0), callFunc (NULL), param1(NULL), param2(NULL), shouldAutoDelete(false), isObsolete(false) {}
-    Event(int repeats_val): type(EVENT_PRIORITY), repeats(repeats_val), callFunc (NULL), param1(NULL), param2(NULL), shouldAutoDelete(false), isObsolete(false) { }
-    Event(EventType eType, int repeats_val): type(eType), repeats(repeats_val), callFunc (NULL), param1(NULL), param2(NULL), shouldAutoDelete(false), isObsolete(false) { }
+    Event(): type(EVENT_PRIORITY), repeats(0), callFunc (NULL), param1(NULL), param2(NULL), shouldAutoDelete(false), isObsolete(false), isNice(false) {}
+    Event(int repeats_val): type(EVENT_PRIORITY), repeats(repeats_val), callFunc (NULL), param1(NULL), param2(NULL), shouldAutoDelete(false), isObsolete(false), isNice(false) { }
+    Event(EventType eType, int repeats_val): type(eType), repeats(repeats_val), callFunc (NULL), param1(NULL), param2(NULL), shouldAutoDelete(false), isObsolete(false), isNice(false) { }
     virtual ~Event(){}
     EventType Type() {return type;}
     void SetType(EventType eType) {type = eType;}
@@ -85,7 +86,10 @@ public:
 
     bool Obsolete() { return isObsolete; }
     void SetObsolete(bool blObsolete) { isObsolete = blObsolete; }
-   
+
+    bool Nice() { return isNice; }
+    void SetNice(bool blNice) { isNice = blNice; }
+
     friend class EventMaster;
 };
 
@@ -209,13 +213,14 @@ private:
     fd_set writefd;
     fd_set exceptfd;
     
-    list<Event*> eventLists[5];
+    list<Event*> eventLists[6];
 
     #define priorities eventLists[0]
     #define timers eventLists[1]
     #define reads eventLists[2]
     #define writes eventLists[3]
     #define ready eventLists[4]
+    #define nice eventLists[5]
     
     EventMaster(){ FD_ZERO(&readfd); FD_ZERO(&writefd); FD_ZERO(&exceptfd); }
 public:

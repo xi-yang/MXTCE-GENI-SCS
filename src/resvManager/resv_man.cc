@@ -53,7 +53,14 @@ void ResvManThread::hookHandleMessage()
     while ((msg = msgPort->GetMessage()) != NULL)
     {
         msg->LogDump();
-        //delete msg; //msg consumed
+        if (msg->GetTopic() == "RESV_REQUEST") 
+        {
+            Message* replyMsg = msg->Duplicate();
+            string topic = "RESV_REPLY";
+            replyMsg->SetTopic(topic);
+            this->GeMessagePort()->PostMessage(replyMsg);
+        }
     }
+    delete msg; //msg consumed
 }
 
