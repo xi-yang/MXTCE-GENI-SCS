@@ -42,6 +42,7 @@
 void Action::Run()
 {
     std::stringstream ssMsg;
+    list<Action*>::iterator ita;
 
     switch (state)
     {
@@ -51,10 +52,6 @@ void Action::Run()
         try {
             //immediate execution of current action logic
             Process(); 
-            //schedule children actions
-            list<Action*>::iterator ita;
-            for (ita = children.begin(); ita != children.end(); ita++)
-                worker->GetEventMaster()->Schedule(*ita);
         } catch (ComputeThreadException e) {
             LOG("Action::Run caught Exception:" << e.what() << " ErrMsg: " << e.GetMessage() << endl);
             state = _Failed;
@@ -66,7 +63,12 @@ void Action::Run()
             if (children.size() == 0)
                 state = _Finished;
             else
+            {
+                //schedule children actions
+                for (ita = children.begin(); ita != children.end(); ita++)
+                    worker->GetEventMaster()->Schedule(*ita);
                 state = _WaitingChildren;
+            }
         }
         else 
         {
@@ -78,7 +80,7 @@ void Action::Run()
 
     case _WaitingMessages:
         try {
-            if (!ProcessMessages() || expectMesssageTopics.size()>0) // true -> all messages received, other wise false
+            if (!ProcessMessages())
             {
                 state = _WaitingMessages;
                 Wait();
@@ -89,6 +91,10 @@ void Action::Run()
             state = _Failed;
             CleanUp();
         }
+
+        //schedule children actions
+        for (ita = children.begin(); ita != children.end(); ita++)
+            worker->GetEventMaster()->Schedule(*ita);
 
         //## vvv Fall through to next case --> no break here by design vvv
     case _WaitingChildren:
@@ -133,7 +139,6 @@ void Action::Wait()
     repeats = FOREVER;
     worker->GetEventMaster()->Remove(this);
     worker->GetEventMaster()->Schedule(this);
-    this->SetNice(true); //make sure messages can be sent and received during wait
 }
 
 

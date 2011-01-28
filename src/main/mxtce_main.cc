@@ -161,8 +161,8 @@ int main( int argc, char* argv[])
     try {
         mxTCECore->Start();
     } catch (TCEException e) {
-        cerr << "MxTCE core cannot init ... check mxtce.conf" << "(Exception: " << e.GetMessage() << ")" << endl;
-        LOG("MxTCE core cannot init ... check mxtce.conf"<< "(Exception: " << e.GetMessage() << ")"<<endl);
+        cerr << "MxTCE core threw Exception: " << e.GetMessage() << endl;
+        LOG("MxTCE core threw Exception: " << e.GetMessage() <<endl);
     }
 
     //coreEventMaster->Run(); //moved to MxTCE core (MxTCE::Run)

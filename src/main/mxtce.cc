@@ -113,10 +113,6 @@ void MxTCE::Start()
     string routeQueue = "CORE", routeTopic1 = "API_REQUEST", routeTopic2 = "API_REPLY";
     messageRouter->AddRoute(routeQueue,routeTopic1, MxTCE::loopbackPortName);
     messageRouter->AddRoute(routeQueue,routeTopic2, MxTCE::apiServerPortName);
-    // @@@@
-    messageRouter->AddRoute(routeQueue,routeTopic1, MxTCE::tedbManPortName);
-    messageRouter->AddRoute(routeQueue,routeTopic1, MxTCE::resvManPortName);
-    messageRouter->AddRoute(routeQueue,routeTopic1, MxTCE::policyManPortName);
 
     // start message router
     messageRouter->Start();
@@ -207,8 +203,9 @@ void MxTCEMessageHandler::Run()
                 ssMsg << "Unknown computeWorkerThread: " << msg->GetPort()->GetName();
                 throw TCEException(ssMsg.str());
             }
-            //computingThread->GetEventMaster()->Stop();
-            //computingThread->Join();
+            //computingThread->GeMessagePort()->DetachPipes();
+            computingThread->GetEventMaster()->Stop();
+            computingThread->Join();
         }
     }
 

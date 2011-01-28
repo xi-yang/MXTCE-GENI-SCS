@@ -304,7 +304,7 @@ EventMaster::Fetch()
   list<Event*>::iterator iter;
   int numSelect;
 
-  while (1)
+  while (!stopped)
   {
       // Handling events with priorities
       if ((!priorities.empty()) && (event = priorities.front()))
@@ -375,6 +375,8 @@ EventMaster::Fetch()
           return event;
       }
   }
+
+  return NULL;
 }
 
 void Selector::Close()

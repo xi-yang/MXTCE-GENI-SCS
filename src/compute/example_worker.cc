@@ -90,7 +90,7 @@ void ExampleComputeWorker::hookHandleMessage()
                 }
             }
         }
-        delete msg;
+        //delete msg;
     }
 
 }

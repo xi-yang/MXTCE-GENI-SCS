@@ -176,6 +176,7 @@ public:
     ThreadPortScheduler* GetThreadScheduler() { return threadScheduler; }
     void SetThreadScheduler(ThreadPortScheduler* scheduler) { threadScheduler = scheduler; }
     virtual void Run ();
+    virtual void Close();
     virtual void AttachPipesAsServer();
     virtual void AttachPipesAsClient();
     virtual void DetachPipes();

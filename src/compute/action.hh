@@ -63,9 +63,9 @@ protected:
     list<string> expectMesssageTopics;
 
 public:
-    Action(): state(_Idle), worker(NULL), parent(NULL) { }
-    Action(ComputeWorker* w): state(_Idle), worker(w), parent(NULL) { assert(w != NULL); }
-    Action(string& n, ComputeWorker* w): name(n), state(_Idle), worker(w), parent(NULL) { assert(w != NULL); }
+    Action(): state(_Idle), worker(NULL), parent(NULL) { SetNice(true); }
+    Action(ComputeWorker* w): state(_Idle), worker(w), parent(NULL) { assert(w != NULL); SetNice(true); }
+    Action(string& n, ComputeWorker* w): name(n), state(_Idle), worker(w), parent(NULL) { assert(w != NULL); SetNice(true); }
     virtual ~Action() { }
     string& GetName() { return name; }
     void SetName(string& n) { name = n; }

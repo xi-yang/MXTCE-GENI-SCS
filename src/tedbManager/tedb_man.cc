@@ -57,11 +57,12 @@ void TEDBManThread::hookHandleMessage()
         if (msg->GetTopic() == "TEDB_REQUEST") 
         {
             Message* replyMsg = msg->Duplicate();
+            replyMsg->SetType(MSG_REPLY);
             string topic = "TEDB_REPLY";
             replyMsg->SetTopic(topic);
             this->GeMessagePort()->PostMessage(replyMsg);
         }
+        delete msg; //msg consumed
     }
-    delete msg; //msg consumed
 }
 

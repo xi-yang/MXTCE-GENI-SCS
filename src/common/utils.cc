@@ -122,7 +122,7 @@ void signal_init ()
     signal_set (SIGHUP, sighup);
     signal_set (SIGINT, sigint);
     signal_set (SIGTERM, sigint);
-    signal_set (SIGSEGV, sigsegv);
+    //signal_set (SIGSEGV, sigsegv);
     signal_set (SIGPIPE, SIG_IGN);
 #ifdef SIGTSTP
     signal_set (SIGTSTP, SIG_IGN);

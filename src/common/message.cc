@@ -180,7 +180,9 @@ void Message::Receive(int fd)
 void Message::LogDump()
 {
     LOG_DEBUG("Message Dump [type=" << this->type << " to queue=" << this->queueName << " with topic=" << this->topicName
-        << " urgentFlag=" << (this->flagUrgent?"true":"false") << " TLV count=" << this->tlvList.size() << "]" <<endl);
+        << " urgentFlag=" << (this->flagUrgent?"true":"false") << " TLV count=" << this->tlvList.size() << "]" <<endl); 
+    if (port != NULL)
+        LOG_DEBUG("    ==> MessagePort " << port->GetName() << " on Socket " << port->Socket() << endl);
 }
 
 
@@ -281,6 +283,20 @@ void MessagePort::Run()
     if (msgRouter)
         msgRouter->Check();    
 }
+
+
+void MessagePort::Close()
+{
+    if (eventMaster != NULL)
+    {
+        eventMaster->Remove(&this->msgWriter);
+        eventMaster->Remove(this);
+        this->msgWriter.Close();
+        Reader::Close();
+    }
+    up = false;
+}
+
 
 // pipeName == portName
 void MessagePort::AttachPipesAsServer()
@@ -384,10 +400,10 @@ void MessagePort::AttachPipesAsClient()
 // pipeName == portName
 void MessagePort::DetachPipes()
 {
-    msgWriter.Close();
     this->Close();
+    this->msgRouter->DeletePort(portName);
+
     //@@@@ remove named pipe files ?
-    up = false;
 }
 
 
