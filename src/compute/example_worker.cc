@@ -61,7 +61,6 @@ void* ExampleComputeWorker::hookRun()
     actionNext3->SetParent(actionNext2);
         
     // schedule the top level action(s)
-    sleep(1);
     eventMaster->Schedule(actionRoot);
     //## eventMaster->Run() will be called by parent Run() 
 }

@@ -401,9 +401,16 @@ void MessagePort::AttachPipesAsClient()
 void MessagePort::DetachPipes()
 {
     this->Close();
-    this->msgRouter->DeletePort(portName);
+    if (this->msgRouter)
+        this->msgRouter->DeletePort(portName);
 
-    //@@@@ remove named pipe files ?
+    // remove named pipe files
+    string pipe1 = MxTCE::tmpFilesDir+portName;
+    pipe1 += "_pipe_in";
+    string pipe2 = MxTCE::tmpFilesDir+portName;
+    pipe2 += "_pipe_out";
+    remove(pipe1.c_str());
+    remove(pipe2.c_str());
 }
 
 
@@ -679,18 +686,14 @@ MessagePort* MessageRouter::LookupPort(string& portName)
 
 void MessageRouter::DeletePort(string& portName)
 {
-    if (this->up)
+    list<MessagePort*>::iterator it = msgPortList.begin();
+    for (; it != msgPortList.end(); it++)
     {
-        list<MessagePort*>::iterator it = msgPortList.begin();
-        for (; it != msgPortList.end(); it++)
+        MessagePort* msgPort = *it;
+        if (msgPort->GetName() == portName)
         {
-            MessagePort* msgPort = *it;
-            if (msgPort->GetName() == portName)
-            {
-                msgPortList.erase(it);
-                delete msgPort;
-                return;
-            }
+            msgPortList.erase(it);
+            return;
         }
     }
 }

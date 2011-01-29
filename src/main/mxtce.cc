@@ -203,7 +203,7 @@ void MxTCEMessageHandler::Run()
                 ssMsg << "Unknown computeWorkerThread: " << msg->GetPort()->GetName();
                 throw TCEException(ssMsg.str());
             }
-            //computingThread->GeMessagePort()->DetachPipes();
+            computingThread->GeMessagePort()->DetachPipes();
             computingThread->GetEventMaster()->Stop();
             computingThread->Join();
         }
