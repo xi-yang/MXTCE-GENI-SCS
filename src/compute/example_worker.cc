@@ -41,7 +41,7 @@ void* ExampleComputeWorker::hookRun()
     string actionName = "Example_Action_Process_RT";
     Action* actionRoot = new Action_ProcessRequestTopology(actionName, this);
     actions.push_back(actionRoot);
-   
+
     actionName = "Example_Action_Create_TEWG";
     Action* actionNext = new Action_CreateTEWG(actionName, this);
     actions.push_back(actionNext);
@@ -59,10 +59,10 @@ void* ExampleComputeWorker::hookRun()
     actions.push_back(actionNext3);
     actionNext2->AddChild(actionNext3);
     actionNext3->SetParent(actionNext2);
-
+        
     // schedule the top level action(s)
+    sleep(1);
     eventMaster->Schedule(actionRoot);
-
     //## eventMaster->Run() will be called by parent Run() 
 }
 

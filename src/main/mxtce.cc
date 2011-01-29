@@ -52,7 +52,7 @@ MxTCE::MxTCE( const string& configFile)
 {
     // $$$$ read and parse configure file from configFile path
 
-    eventMaster = EventMaster::GetInstance();
+    eventMaster = new EventMaster;
     assert(eventMaster);
 
     messageRouter = MessageRouter::GetInstance();

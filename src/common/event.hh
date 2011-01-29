@@ -222,13 +222,10 @@ private:
     #define writes eventLists[3]
     #define ready eventLists[4]
     #define nices eventLists[5]
-    
-    EventMaster(): stopped(false) { FD_ZERO(&readfd); FD_ZERO(&writefd); FD_ZERO(&exceptfd); }
+
 public:
+    EventMaster(): stopped(false) { FD_ZERO(&readfd); FD_ZERO(&writefd); FD_ZERO(&exceptfd); }
     ~EventMaster();
-    static EventMaster* GetInstance();
-    static EventMaster* GetProcessInstance();
-    static EventMaster* GetThreadInstance(unsigned long tid);
     list<Event*>& GetEventList(EventType type) { return eventLists[(int)type]; }
     void Schedule(Event *event);
     void Remove(Event *event);

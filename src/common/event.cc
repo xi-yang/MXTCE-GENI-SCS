@@ -35,32 +35,6 @@
 #include "event.hh"
 #include <errno.h>
 
-map<unsigned long, EventMaster*> EventMaster::threadMasters;
-
-// Global variable - the core instance of EventMaster.
-EventMaster* coreEventMaster = EventMaster::GetInstance();
-
-
-EventMaster* EventMaster::GetInstance()
-{
-    return GetThreadInstance(0);
-}
-
-EventMaster* EventMaster::GetProcessInstance()
-{
-    unsigned long key = (unsigned long)getpid();
-    if (threadMasters[key] == NULL)
-        threadMasters[key] = new EventMaster;
-    return threadMasters[key];
-}
-
-EventMaster* EventMaster::GetThreadInstance(unsigned long tid)
-{
-    if (threadMasters[tid] == NULL)
-        threadMasters[tid] = new EventMaster;
-    return threadMasters[tid];
-}
-
 EventMaster::~EventMaster()
 {
     for (int i = 0; i < 5; i++)

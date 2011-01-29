@@ -192,8 +192,8 @@ void* ThreadPortScheduler::Run()
 {
     // init event manster
     if (eventMaster == NULL)
-        eventMaster = EventMaster::GetThreadInstance((unsigned long)this->GetId());
-    assert(eventMaster);
+        eventMaster = new EventMaster;
+
     msgPort->SetEventMaster(eventMaster);
     msgPort->SetThreadScheduler(this);
 
