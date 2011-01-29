@@ -135,7 +135,10 @@ EventMaster::Remove(Event *event)
         ((Selector*)event)->fd = -1;
     }
 
-    eList->remove(event);
+    list<Event*>::iterator ite;
+    for (ite = eList->begin(); ite != eList->end(); ite++)
+        if ((*ite) == event)
+            ite = eList->erase(ite);
 }
 
 void

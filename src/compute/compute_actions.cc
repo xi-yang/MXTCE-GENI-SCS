@@ -101,7 +101,7 @@ void Action_ProcessRequestTopology::Finish()
 void Action_CreateTEWG::Process()
 {
     LOG(name<<"Process() called"<<endl);
-    
+
     // run current action main logic
     string queue = MxTCE::computeThreadPrefix + worker->GetName();
     string topic = "TEDB_REQUEST";

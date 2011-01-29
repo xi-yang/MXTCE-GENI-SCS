@@ -182,7 +182,6 @@ void MxTCEMessageHandler::Run()
             msg_compute_request->SetQueue(computeThreadQueueName);
             msg_compute_request->SetTopic(routeTopic1);
             mxTCE->GetLoopbackPort()->PostLocalMessage(msg_compute_request);
-
         } 
         else if (msg->GetType() == MSG_REPLY && msg->GetTopic() == "COMPUTE_REPLY") 
         {

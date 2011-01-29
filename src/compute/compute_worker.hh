@@ -54,6 +54,7 @@ public:
     virtual ~ComputeWorker() { }
     string& GetName() { return this->msgPort->GetName();}
     list<Action*>& GetActions() { return actions; }
+    void* Run();
     virtual void* hookRun();
     virtual void hookHandleMessage();
 };

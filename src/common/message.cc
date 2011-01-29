@@ -199,13 +199,7 @@ void MessageReader::Run()
 
     Message * msg = NULL;
 
-    try {
-        msg = ReadMessage();
-    } catch (MsgIOException& e) {
-       // something is wrong with socket read
-       Close();
-       throw;
-    }
+    msg = ReadMessage();
 
     this->inQueue.push_back(msg);
 }
@@ -218,7 +212,7 @@ Message* MessageReader::ReadMessage()
     try {
         msg->Receive(this->Socket());
     } catch (MsgIOException& e) {
-        LOG("MessageReader::ReadMessage caught Exception:" << e.what() << " ErrMsg: " << e.GetMessage() << endl);
+        LOG("MessageReader::ReadMessage exception: " << e.what() << " ErrMsg: " << e.GetMessage() << endl);
         delete msg;
         throw;
     }
@@ -261,7 +255,7 @@ void MessageWriter::WriteMessage(Message* msg)
     try {
         msg->Transmit(this->Socket());
     } catch (MsgIOException& e) {
-        LOG("MessageReader::ReadMessage caught Exception:" << e.what() << " ErrMsg: "<< e.GetMessage() << endl);
+        LOG("MessageReader::ReadMessage exception: " << e.what() << " ErrMsg: "<< e.GetMessage() << endl);
         throw;
     }
     delete msg; //message consumed
@@ -273,10 +267,8 @@ void MessagePort::Run()
     try {
         MessageReader::Run();
     } catch (MsgIOException& e) {
-        eventMaster->Remove(this);
-        eventMaster->Remove(this->GetWriter());
-        //$$$ disable port when IO exception raised ? 
-        //up = false;
+        Close();
+        return;
     }
     if (threadScheduler)
         threadScheduler->hookHandleMessage();
@@ -292,7 +284,9 @@ void MessagePort::Close()
         eventMaster->Remove(&this->msgWriter);
         eventMaster->Remove(this);
         this->msgWriter.Close();
-        Reader::Close();
+        Selector::Close();
+        this->msgWriter.SetRepeats(0);
+        this->SetRepeats(0);
     }
     up = false;
 }
@@ -340,7 +334,7 @@ void MessagePort::AttachPipesAsServer()
     // schedule reader into selector
     msgWriter.SetAutoDelete(false);
     msgWriter.SetRepeats(0);
-    this->SetAutoDelete(true);
+    this->SetAutoDelete(false);
     this->SetRepeats(FOREVER);
     eventMaster->Schedule(this);
     up = true;
@@ -390,7 +384,7 @@ void MessagePort::AttachPipesAsClient()
     // schedule reader into selector
     msgWriter.SetAutoDelete(false);
     msgWriter.SetRepeats(0);
-    this->SetAutoDelete(true);
+    this->SetAutoDelete(false);
     this->SetRepeats(FOREVER);
     eventMaster->Schedule(this);
     up = true;

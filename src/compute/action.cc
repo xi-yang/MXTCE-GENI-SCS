@@ -44,6 +44,15 @@ void Action::Run()
     std::stringstream ssMsg;
     list<Action*>::iterator ita;
 
+    if (!worker->GeMessagePort()->IsUp())
+    {
+        worker->GetEventMaster()->Remove(this);
+        this->SetRepeats(0);
+        state = _Failed; 
+        CleanUp();
+        throw ComputeThreadException(" Action::Run abort due to messagePort down.");
+    }
+
     switch (state)
     {
     case _Idle:

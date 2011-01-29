@@ -163,7 +163,7 @@ protected:
     ThreadPortScheduler* threadScheduler;
 
 public:
-    MessagePort(string& name): MessageReader(0), portName(name), msgWriter(0), msgRouter(NULL), threadScheduler(NULL), up(false) { }
+    MessagePort(string& name): MessageReader(0), portName(name), msgWriter(0), msgRouter(NULL), threadScheduler(NULL), up(false) {  }
     MessagePort(string& name, MessageRouter* router): MessageReader(0), portName(name), msgWriter(0), msgRouter(router), threadScheduler(NULL), up(false) { }
     virtual ~MessagePort() { }
     string& GetName() { return portName; }

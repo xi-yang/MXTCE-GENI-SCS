@@ -37,6 +37,40 @@
 list<ComputeWorker*> ComputeWorkerFactory::workers;
 int ComputeWorkerFactory::serialNum = 0;
 
+
+void* ComputeWorker::Run()
+{
+    // init event manster
+    if (eventMaster == NULL)
+        eventMaster = new EventMaster;
+
+    msgPort->SetEventMaster(eventMaster);
+    msgPort->SetThreadScheduler(this);
+
+    void* pReturn = NULL;
+    if (!msgPort->IsUp())
+    {
+        try {
+            msgPort->AttachPipesAsClient();
+        } catch (MsgIOException& e) {
+            LOG("ComputeWorker::Run caugh Exception: " << e.what() << " errMsg: " << e.GetMessage() << endl);
+        }
+    }
+
+    // call job function
+    pReturn = this->hookRun();
+
+    // start event loop
+    try {
+        eventMaster->Run();
+    } catch (ComputeThreadException e) {
+        ; //@@@@
+    }
+
+    return pReturn;
+}
+
+
 // Thread specific logic
 void* ComputeWorker::hookRun()
 {
