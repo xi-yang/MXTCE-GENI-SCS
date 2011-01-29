@@ -64,7 +64,7 @@ void* ComputeWorker::Run()
     try {
         eventMaster->Run();
     } catch (ComputeThreadException e) {
-        ; //@@@@
+        //Tell mxTCE core to detach the pipes ?
     }
 
     return pReturn;

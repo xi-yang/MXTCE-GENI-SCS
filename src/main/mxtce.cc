@@ -181,6 +181,7 @@ void MxTCEMessageHandler::Run()
             Message* msg_compute_request = msg->Duplicate();
             msg_compute_request->SetQueue(computeThreadQueueName);
             msg_compute_request->SetTopic(routeTopic1);
+            sleep(1);
             mxTCE->GetLoopbackPort()->PostLocalMessage(msg_compute_request);
         } 
         else if (msg->GetType() == MSG_REPLY && msg->GetTopic() == "COMPUTE_REPLY") 
@@ -202,7 +203,7 @@ void MxTCEMessageHandler::Run()
                 ssMsg << "Unknown computeWorkerThread: " << msg->GetPort()->GetName();
                 throw TCEException(ssMsg.str());
             }
-            computingThread->GeMessagePort()->DetachPipes();
+            mxTCE->GetMessageRouter()->DeletePort(computingThread->GetName());
             computingThread->GetEventMaster()->Stop();
             computingThread->Join();
         }
