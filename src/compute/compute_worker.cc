@@ -52,6 +52,8 @@ void* ComputeWorker::Run()
     {
         try {
             msgPort->AttachPipesAsClient();
+            
+            LOG("ComputeWorker::Run AttachPipesAsClient" << endl);
         } catch (MsgIOException& e) {
             LOG("ComputeWorker::Run caugh Exception: " << e.what() << " errMsg: " << e.GetMessage() << endl);
         }
@@ -101,10 +103,10 @@ ComputeWorker* ComputeWorkerFactory::CreateComputeWorker(string type)
     if (type =="exampleComputeWorker") 
         worker = new ExampleComputeWorker(ssWorkerName.str());
     else 
-    {    
-        std::stringstream ssMsg;
-        ssMsg << "Unknown computeWorkerThread type: " << type;
-        throw TCEException(ssMsg.str());
+    {   
+        char buf[128];
+        snprintf(buf, 128, "Unknown computeWorkerThread type: %d", type);
+        throw TCEException(buf);
     }
     workers.push_back(worker);
     return worker;

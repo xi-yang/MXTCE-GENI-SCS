@@ -46,6 +46,7 @@ protected:
     string errMessage;
 public:
     TCEException(string msg): errMessage(msg){ }
+    TCEException(char* cstr) { errMessage = cstr; }
     virtual ~TCEException()throw(){ }  
     virtual const char* what() const throw() {
         return (const char*)"TCEException";
@@ -60,6 +61,7 @@ class MsgIOException: public TCEException
 {
 public:
     MsgIOException(string msg): TCEException(msg){ }
+    MsgIOException(char* cstr): TCEException(cstr) { }
     virtual ~MsgIOException()throw(){ }  
     virtual const char* what() const throw() {
         return (const char*)"MsgIOException";
@@ -70,6 +72,7 @@ class APIException: public TCEException
 {
 public:
     APIException(string msg): TCEException(msg){ }
+    APIException(char* cstr): TCEException(cstr) { }
     virtual ~APIException()throw(){ }  
     virtual const char* what() const throw() {
         return (const char*)"APIException";
@@ -81,6 +84,7 @@ class ThreadException: public TCEException
 {
 public:
     ThreadException(string msg): TCEException(msg){ }
+    ThreadException(char* cstr): TCEException(cstr) { }
     virtual ~ThreadException()throw(){ }  
     virtual const char* what() const throw() {
         return (const char*)"ThreadException";
@@ -92,6 +96,7 @@ class ComputeThreadException: public ThreadException
 {
 public:
     ComputeThreadException(string msg): ThreadException(msg){ }
+    ComputeThreadException(char* cstr): ThreadException(cstr){ }
     virtual ~ComputeThreadException()throw(){ }  
     virtual const char* what() const throw() {
         return (const char*)"ComputeThreadException";

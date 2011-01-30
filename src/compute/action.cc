@@ -41,8 +41,8 @@
 
 void Action::Run()
 {
-    std::stringstream ssMsg;
     list<Action*>::iterator ita;
+    char buf[128];
 
     if (!worker->GeMessagePort()->IsUp())
     {
@@ -50,7 +50,7 @@ void Action::Run()
         this->SetRepeats(0);
         state = _Failed; 
         CleanUp();
-        throw ComputeThreadException(" Action::Run abort due to messagePort down.");
+        throw ComputeThreadException((char*)" Action::Run abort due to messagePort down.");
     }
 
     switch (state)
@@ -134,11 +134,11 @@ void Action::Run()
         CleanUp();
         break;
 
-    default:        
-        ssMsg << "Action::Run() gets into unknown state: "<<state;
-        LOG(ssMsg.str()<<endl);
+    default:
+        snprintf(buf, 128, "Action::Run() gets into unknown state: %d\n", state);
+        LOG(buf << endl);
         CleanUp();
-        throw ComputeThreadException(ssMsg.str());
+        throw ComputeThreadException(buf);
     }
 }
 

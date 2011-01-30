@@ -174,14 +174,11 @@ void MxTCEMessageHandler::Run()
             mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic7, MxTCE::policyManPortName);
             mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic8, computeThreadPortName);
 
-            //$$$$ preserve the computingThread
-
             // pass the workflow init message with request details to computingThread
             //@@@@ Prototype Testing code
             Message* msg_compute_request = msg->Duplicate();
             msg_compute_request->SetQueue(computeThreadQueueName);
             msg_compute_request->SetTopic(routeTopic1);
-            sleep(1);
             mxTCE->GetLoopbackPort()->PostLocalMessage(msg_compute_request);
         } 
         else if (msg->GetType() == MSG_REPLY && msg->GetTopic() == "COMPUTE_REPLY") 
@@ -199,9 +196,9 @@ void MxTCEMessageHandler::Run()
             ComputeWorker* computingThread = ComputeWorkerFactory::LookupComputeWorker(msg->GetPort()->GetName());
             if (computingThread == NULL)
             {
-                std::stringstream ssMsg;
-                ssMsg << "Unknown computeWorkerThread: " << msg->GetPort()->GetName();
-                throw TCEException(ssMsg.str());
+                char buf[128];
+                snprintf(buf, 128, "Unknown computeWorkerThread: %s", msg->GetPort()->GetName().c_str());
+                throw TCEException(buf);
             }
             mxTCE->GetMessageRouter()->DeletePort(computingThread->GetName());
             computingThread->GetEventMaster()->Stop();

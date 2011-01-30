@@ -85,22 +85,21 @@ void Message::Transmit(int fd)
     }
 
     int wlen = writen(fd, buf, header->length);
-    std::stringstream ssMsg;
     if (wlen < 0)
     {
-        ssMsg << "MessageWriter failed to write " << fd;
-        throw MsgIOException(ssMsg.str());
+        snprintf(buf, 128, "MessageWriter failed to write %d", fd);
+        throw MsgIOException(buf);
     }
     else if (wlen == 0)
     {
         close(fd);
-        ssMsg << "Connection closed for MessageWriter(" << fd << ')';
-        throw MsgIOException(ssMsg.str());
+        snprintf(buf, 128, "Connection closed for MessageWriter(%d)", fd);
+        throw MsgIOException(buf);
     }
     else if (wlen != header->length)
     {
-        ssMsg << "MessageWriter(" << fd << ") cannot write the message";
-        throw MsgIOException(ssMsg.str());
+        snprintf(buf, 128,  "MessageWriter(%d) cannot write the message", fd);
+        throw MsgIOException(buf);
     }
 }
 
@@ -116,29 +115,28 @@ void Message::Receive(int fd)
     // Read message header 
     rlen = readn (fd, (char*)header, sizeof (MessageHeader));
 
-    std::stringstream ssMsg;
     if (rlen < 0)
     {
-        ssMsg << "MessageReader failed to read from "<<fd;
-        throw MsgIOException(ssMsg.str());
+        snprintf(buf, 128, "MessageReader failed to read from %d", fd);
+        throw MsgIOException(buf);
     }
     else if (rlen == 0)
     {
         close(fd);
-        ssMsg << "Connection closed for MessageReader(" << fd <<')';
-        throw MsgIOException(ssMsg.str());
+        snprintf(buf, 128, "Connection closed for MessageReader(%d)", fd);
+        throw MsgIOException(buf);
     }
     else if (rlen != sizeof (MessageHeader))
     {
-        ssMsg << "MessageReader(" << fd << ") cannot read the message header";
-        throw MsgIOException(ssMsg.str());
+        snprintf(buf, 128, "MessageReader(%d) cannot read the message header", fd);
+        throw MsgIOException(buf);
     }
 
     msglen = header->length;
     if (msglen > MAX_MSG_SIZE)
     {
-        ssMsg << "MessageReader(" << fd << ") cannot read oversized packet";
-        throw MsgIOException(ssMsg.str());
+        snprintf(buf, 128, "MessageReader(%d) cannot read oversized packet", fd);
+        throw MsgIOException(buf);
     }
 
     if (msglen > sizeof(MessageHeader))
@@ -147,18 +145,18 @@ void Message::Receive(int fd)
         rlen = readn (fd, buf, msglen-sizeof(MessageHeader));
         if (rlen < 0)
         {
-             ssMsg << "MessageReader failed to read from" << fd;
-             throw MsgIOException(ssMsg.str());
+            snprintf(buf, 128, "MessageReader failed to read from %d", fd);
+            throw MsgIOException(buf);
         }
         else if (rlen == 0)
         {
-             ssMsg << "Connection closed for MessageReader(" << fd <<')';
-             throw MsgIOException(ssMsg.str());
+            snprintf(buf, 128, "Connection closed for MessageReader(%d)", fd);
+            throw MsgIOException(buf);
         }
         else if (rlen != msglen-sizeof(MessageHeader))
         {
-             ssMsg << "MessageReader(" << fd << ") cannot read the message body";
-             throw MsgIOException(ssMsg.str());
+            snprintf(buf, 128, "MessageReader(%d) cannot read the message body", fd);
+            throw MsgIOException(buf);
         }
     }
     this->type = header->type;
@@ -296,37 +294,37 @@ void MessagePort::Close()
 void MessagePort::AttachPipesAsServer()
 {
     int rfd, wfd, ret;
-    std::stringstream ssMsg;
-
+    char buf[128];
+    
     // Create named pipe for reading
     string pipe1 = MxTCE::tmpFilesDir+portName;
     pipe1 += "_pipe_in";
     ret = mkfifo(pipe1.c_str(), 0666);
     if ((ret == -1) && (errno != EEXIST)) {
-        ssMsg << "MessagePort::AttachPipesAsServer failed on  mkfifo(" << pipe1<<", 0666)";
-        throw MsgIOException(ssMsg.str());
+        snprintf(buf, 128,  "MessagePort::AttachPipesAsServer failed on  mkfifo(%s, 0666)", pipe1.c_str());
+        throw MsgIOException(buf);
     }
     // Create named pipe for writing
     string pipe2 = MxTCE::tmpFilesDir+portName;
     pipe2 += "_pipe_out";
     ret = mkfifo(pipe2.c_str(), 0666);
     if ((ret == -1) && (errno != EEXIST)) {
-        ssMsg << "MessagePort::AttachPipesAsServer failed on  mkfifo(" << pipe2<<", 0666)";
-        throw MsgIOException(ssMsg.str());
+        snprintf(buf, 128, "MessagePort::AttachPipesAsServer failed on  mkfifo(%s, 0666)", pipe2.c_str());
+        throw MsgIOException(buf);
     }
     // Open named pipe for reading
     rfd = open(pipe1.c_str(), O_RDONLY);
     if (rfd < 0) 
     {
-        ssMsg << "MessagePort::AttachPipesAsServer failed on  open(" << pipe1<<", O_RDONLY)";
-        throw MsgIOException(ssMsg.str());
+        snprintf(buf, 128, "MessagePort::AttachPipesAsServer failed on  open(%s, O_RDONLY)", pipe1.c_str());
+        throw MsgIOException(buf);
     }
     // Open named pipe for writing
     wfd = open(pipe2.c_str(), O_WRONLY);
     if (wfd < 0) 
     {
-        ssMsg << "MessagePort::AttachPipesAsServer failed on  open(" << pipe2<<", O_WRONLY)";
-        throw MsgIOException(ssMsg.str());
+        snprintf(buf, 128, "MessagePort::AttachPipesAsServer failed on  open(%s, O_WRONLY)", pipe2.c_str());
+        throw MsgIOException(buf);
     }
     this->SetSocket(rfd);
     msgWriter.SetSocket(wfd);
@@ -345,37 +343,37 @@ void MessagePort::AttachPipesAsServer()
 void MessagePort::AttachPipesAsClient()
 {
     int rfd, wfd, ret;
-    std::stringstream ssMsg;
 
+    char buf[128];
     // Create named pipe for reading
     string pipe1 = MxTCE::tmpFilesDir+portName;
     pipe1 += "_pipe_in";
     ret = mkfifo(pipe1.c_str(), 0666);
     if ((ret == -1) && (errno != EEXIST)) {
-        ssMsg << "MessagePort::AttachPipesAsServer failed on  mkfifo(" << pipe1<<", 0666)";
-        throw MsgIOException(ssMsg.str());
+        snprintf(buf, 128, "MessagePort::AttachPipesAsServer failed on  mkfifo(%s, 0666)", pipe1.c_str());
+        throw MsgIOException(buf);
     }
     // Create named pipe for writing
     string pipe2 =MxTCE::tmpFilesDir+portName;
     pipe2 += "_pipe_out";
     ret = mkfifo(pipe2.c_str(), 0666);
     if ((ret == -1) && (errno != EEXIST)) {
-        ssMsg << "MessagePort::AttachPipesAsServer failed on  mkfifo(" << pipe2<<", 0666)";
-        throw MsgIOException(ssMsg.str());
+        snprintf(buf, 128, "MessagePort::AttachPipesAsServer failed on  mkfifo(%s, 0666)", pipe2.c_str());
+        throw MsgIOException(buf);
     }
     // Open named pipe for writing
     wfd = open(pipe1.c_str(), O_WRONLY);
     if (wfd < 0) 
     {
-        ssMsg << "MessagePort::AttachPipesAsClient failed on  open(" << pipe2<<", O_WRONLY)";
-        throw MsgIOException(ssMsg.str());
+        snprintf(buf, 128, "MessagePort::AttachPipesAsClient failed on  open(%s, O_WRONLY)", pipe1.c_str());
+        throw MsgIOException(buf);
     }
     // Open named pipe for reading
     rfd = open(pipe2.c_str(), O_RDONLY);
     if (rfd < 0) 
     {
-        ssMsg << "MessagePort::AttachPipesAsClient failed on  open(" << pipe1<<", O_RDONLY)";
-        throw MsgIOException(ssMsg.str());
+        snprintf(buf, 128, "MessagePort::AttachPipesAsClient failed on  open(%s, O_RDONLY)", pipe2.c_str());
+        throw MsgIOException(buf);
     }
 
     this->SetSocket(rfd);
