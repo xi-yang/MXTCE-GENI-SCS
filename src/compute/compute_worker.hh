@@ -51,7 +51,7 @@ protected:
 
 public:
     ComputeWorker(string n):ThreadPortScheduler(n){ }
-    virtual ~ComputeWorker() { }
+    virtual ~ComputeWorker();
     string& GetName() { return this->msgPort->GetName();}
     list<Action*>& GetActions() { return actions; }
     void* Run();
@@ -66,12 +66,14 @@ private:
     static list<ComputeWorker*> workers;
     static int serialNum;
     static int NewWorkerNum() { return ++serialNum; }
+    static Lock cwfLock;
 
 public:
     static int GetWorkerNum() { return serialNum; }
     static list<ComputeWorker*>& GetComputeWorkers() { return workers; }
-    static ComputeWorker* LookupComputeWorker(string name);
     static ComputeWorker* CreateComputeWorker(string type);
+    static ComputeWorker* LookupComputeWorker(string name);
+    static void RemoveComputeWorker(string name);
 };
 
 #endif

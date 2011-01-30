@@ -36,7 +36,12 @@
 
 list<ComputeWorker*> ComputeWorkerFactory::workers;
 int ComputeWorkerFactory::serialNum = 0;
+Lock ComputeWorkerFactory::cwfLock;
 
+ComputeWorker::~ComputeWorker()
+{
+    ComputeWorkerFactory::RemoveComputeWorker(this->GetName());
+}
 
 void* ComputeWorker::Run()
 {
@@ -96,31 +101,55 @@ void ComputeWorker::hookHandleMessage()
 
 ComputeWorker* ComputeWorkerFactory::CreateComputeWorker(string type)
 {
-    //TOOD: create compute worker based on type
-    std::stringstream ssWorkerName;
-    ssWorkerName << type << "(" << NewWorkerNum() << ")";
+    ComputeWorkerFactory::cwfLock.DoLock();
+    char buf[128];
+    snprintf(buf, 128, "%s(%d)", type.c_str(), NewWorkerNum());
+
     ComputeWorker* worker;
     if (type =="exampleComputeWorker") 
-        worker = new ExampleComputeWorker(ssWorkerName.str());
+        worker = new ExampleComputeWorker(buf);
     else 
     {   
-        char buf[128];
-        snprintf(buf, 128, "Unknown computeWorkerThread type: %d", type);
+        snprintf(buf, 128, "Unknown computeWorkerThread type: %s", type.c_str());
+        ComputeWorkerFactory::cwfLock.Unlock();
         throw TCEException(buf);
     }
     workers.push_back(worker);
+    ComputeWorkerFactory::cwfLock.Unlock();
     return worker;
 }
 
 
 ComputeWorker* ComputeWorkerFactory::LookupComputeWorker(string name)
 {
+    ComputeWorkerFactory::cwfLock.DoLock();
     list<ComputeWorker*>::iterator it;
     for (it = workers.begin(); it != workers.end(); it++)
     {
         if ((*it)->GetName() == name)
+        {
+            ComputeWorkerFactory::cwfLock.Unlock();
             return (*it);
+        }
     }
+    ComputeWorkerFactory::cwfLock.Unlock();
     return NULL;
+}
+
+
+void ComputeWorkerFactory::RemoveComputeWorker(string name)
+{
+    ComputeWorkerFactory::cwfLock.DoLock();
+    list<ComputeWorker*>::iterator it;
+    for (it = workers.begin(); it != workers.end(); it++)
+    {
+        if ((*it)->GetName() == name)
+        {
+            workers.erase(it);
+            ComputeWorkerFactory::cwfLock.Unlock();
+            return;
+       }
+    }
+    ComputeWorkerFactory::cwfLock.Unlock();
 }
 

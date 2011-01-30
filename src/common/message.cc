@@ -685,7 +685,6 @@ void MessageRouter::DeletePort(string& portName)
         if (msgPort->GetName() == portName)
         {
             msgPortList.erase(it);
-            (*it)->DetachPipes();
             return;
         }
     }
