@@ -38,6 +38,9 @@
 #include "mxtce.hh"
 #include "message.hh"
 
+list<MessagePipe*> MessagePipeFactory::pipes;
+Lock MessagePipeFactory::mpfLock;
+
 Message::~Message()
 {
     list<TLV*>::iterator itlv;
@@ -291,93 +294,11 @@ void MessagePort::Close()
 
 
 // pipeName == portName
-void MessagePort::AttachPipesAsServer()
+void MessagePort::AttachPipes()
 {
-    int rfd, wfd, ret;
     char buf[128];
-    
-    // Create named pipe for reading
-    string pipe1 = MxTCE::tmpFilesDir+portName;
-    pipe1 += "_pipe_in";
-    ret = mkfifo(pipe1.c_str(), 0666);
-    if ((ret == -1) && (errno != EEXIST)) {
-        snprintf(buf, 128,  "MessagePort::AttachPipesAsServer failed on  mkfifo(%s, 0666)", pipe1.c_str());
-        throw MsgIOException(buf);
-    }
-    // Create named pipe for writing
-    string pipe2 = MxTCE::tmpFilesDir+portName;
-    pipe2 += "_pipe_out";
-    ret = mkfifo(pipe2.c_str(), 0666);
-    if ((ret == -1) && (errno != EEXIST)) {
-        snprintf(buf, 128, "MessagePort::AttachPipesAsServer failed on  mkfifo(%s, 0666)", pipe2.c_str());
-        throw MsgIOException(buf);
-    }
-    // Open named pipe for reading
-    rfd = open(pipe1.c_str(), O_RDONLY);
-    if (rfd < 0) 
-    {
-        snprintf(buf, 128, "MessagePort::AttachPipesAsServer failed on  open(%s, O_RDONLY)", pipe1.c_str());
-        throw MsgIOException(buf);
-    }
-    // Open named pipe for writing
-    wfd = open(pipe2.c_str(), O_WRONLY);
-    if (wfd < 0) 
-    {
-        snprintf(buf, 128, "MessagePort::AttachPipesAsServer failed on  open(%s, O_WRONLY)", pipe2.c_str());
-        throw MsgIOException(buf);
-    }
-    this->SetSocket(rfd);
-    msgWriter.SetSocket(wfd);
 
-    // schedule reader into selector
-    msgWriter.SetAutoDelete(false);
-    msgWriter.SetRepeats(0);
-    this->SetAutoDelete(false);
-    this->SetRepeats(FOREVER);
-    eventMaster->Schedule(this);
-    up = true;
-}
-
-
-// pipeName == portName
-void MessagePort::AttachPipesAsClient()
-{
-    int rfd, wfd, ret;
-
-    char buf[128];
-    // Create named pipe for reading
-    string pipe1 = MxTCE::tmpFilesDir+portName;
-    pipe1 += "_pipe_in";
-    ret = mkfifo(pipe1.c_str(), 0666);
-    if ((ret == -1) && (errno != EEXIST)) {
-        snprintf(buf, 128, "MessagePort::AttachPipesAsServer failed on  mkfifo(%s, 0666)", pipe1.c_str());
-        throw MsgIOException(buf);
-    }
-    // Create named pipe for writing
-    string pipe2 =MxTCE::tmpFilesDir+portName;
-    pipe2 += "_pipe_out";
-    ret = mkfifo(pipe2.c_str(), 0666);
-    if ((ret == -1) && (errno != EEXIST)) {
-        snprintf(buf, 128, "MessagePort::AttachPipesAsServer failed on  mkfifo(%s, 0666)", pipe2.c_str());
-        throw MsgIOException(buf);
-    }
-    // Open named pipe for writing
-    wfd = open(pipe1.c_str(), O_WRONLY);
-    if (wfd < 0) 
-    {
-        snprintf(buf, 128, "MessagePort::AttachPipesAsClient failed on  open(%s, O_WRONLY)", pipe1.c_str());
-        throw MsgIOException(buf);
-    }
-    // Open named pipe for reading
-    rfd = open(pipe2.c_str(), O_RDONLY);
-    if (rfd < 0) 
-    {
-        snprintf(buf, 128, "MessagePort::AttachPipesAsClient failed on  open(%s, O_RDONLY)", pipe2.c_str());
-        throw MsgIOException(buf);
-    }
-
-    this->SetSocket(rfd);
-    msgWriter.SetSocket(wfd);
+    msgWriter.SetSocket(this->Socket());
 
     // schedule reader into selector
     msgWriter.SetAutoDelete(false);
@@ -395,14 +316,6 @@ void MessagePort::DetachPipes()
     this->Close();
     if (this->msgRouter)
         this->msgRouter->DeletePort(portName);
-
-    // remove named pipe files
-    string pipe1 = MxTCE::tmpFilesDir+portName;
-    pipe1 += "_pipe_in";
-    string pipe2 = MxTCE::tmpFilesDir+portName;
-    pipe2 += "_pipe_out";
-    remove(pipe1.c_str());
-    remove(pipe2.c_str());
 }
 
 
@@ -537,7 +450,8 @@ void MessageRouter::Start()
     {
         MessagePort* msgPort = *it;
         try {
-            msgPort->AttachPipesAsServer();
+            msgPort->AttachPipes();
+            LOG("MessageRouter::Start AttachPipes on server side" << endl);
         } catch (MsgIOException& e) {
             LOG("MessageRouter::Start caught" << e.what() << " when attaching port: " << msgPort->GetName() << " ErrMesage:" << e.GetMessage() << endl);
             //escalate the exception
@@ -643,8 +557,14 @@ void MessageRouter::Check()
 
 MessagePort* MessageRouter::AddPort(string& portName)
 {
-    // new port,
-    MessagePort* msgPort = new MessagePort(portName, this);
+    try {
+       MessagePipeFactory::CreateMessagePipe(portName, this);
+    } catch (MsgIOException e) {
+        LOG("MessageRouter::AddPort(" << portName <<") caught exception: " << e.what() << " ErrMesage:" << e.GetMessage() << endl);
+        return NULL;
+    }
+    MessagePort* msgPort = MessagePipeFactory::LookupMessagePipe(portName)->GetServerPort();
+    assert(msgPort);
     assert(eventMaster);
     msgPort->SetEventMaster(eventMaster);
     msgPortList.push_back(msgPort);
@@ -652,7 +572,8 @@ MessagePort* MessageRouter::AddPort(string& portName)
     if (this->up) 
     {
         try {
-            msgPort->AttachPipesAsServer();
+            msgPort->AttachPipes();
+            LOG("MessageRouter::AddPort CreateMessagePipe and call AttachPipes on server side" << endl);
         } catch (MsgIOException& e) {
             LOG("MessageRouter::AddPort caught" << e.what() << " when attaching port: " << msgPort->GetName() << " ErrMesage:" << e.GetMessage() << endl);
             //escalate the exception
@@ -685,6 +606,8 @@ void MessageRouter::DeletePort(string& portName)
         if (msgPort->GetName() == portName)
         {
             msgPortList.erase(it);
+            if ((*it)->IsUp())
+                (*it)->DetachPipes();
             return;
         }
     }
@@ -736,5 +659,61 @@ void MessageRouter::DeleteRoute(string& queueName, string& topicName)
         }
     }
 }
+
+
+void MessagePipe::InitPipe()
+{
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) < 0) {
+        char buf[128];
+        snprintf(buf, 128, "MessagePipe(%s) failed to init sockets.", name.c_str());
+        throw MsgIOException(buf);
+    }
+    serverPort->SetSocket(sockets[0]);
+    clientPort->SetSocket(sockets[1]);
+}
+
+
+MessagePipe* MessagePipeFactory::CreateMessagePipe(string name, MessageRouter* router) 
+{
+    mpfLock.DoLock();
+    MessagePipe* pipe = new MessagePipe(name, router);
+    pipes.push_back(pipe);
+    mpfLock.Unlock();
+    return pipe;
+}
+
+
+MessagePipe* MessagePipeFactory::LookupMessagePipe(string name) 
+{
+    mpfLock.DoLock();
+    list<MessagePipe*>::iterator itp;
+    for (itp = pipes.begin(); itp != pipes.end(); itp++)
+    {
+        if ((*itp)->GetName() == name)
+        {
+            mpfLock.Unlock();
+            return (*itp);
+        }
+    }
+    mpfLock.Unlock();
+    return NULL;
+}
+
+
+void MessagePipeFactory::RemoveMessagePipe(string name) 
+{
+    mpfLock.DoLock();
+    list<MessagePipe*>::iterator itp;
+    for (itp = pipes.begin(); itp != pipes.end(); itp++)
+    {
+        if ((*itp)->GetName() == name)
+        {
+            pipes.erase(itp);
+            mpfLock.Unlock();
+            return;
+        }
+    }
+    mpfLock.Unlock();
+}    
 
 

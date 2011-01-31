@@ -81,17 +81,6 @@ void MxTCE::Start()
 {
     mkpath((const char*)MxTCE::tmpFilesDir.c_str(), 0777);
 
-    // start binary API server thread 
-    apiServerThread->Start(NULL);
-    
-    // start TEDB thread
-    tedbManThread->Start(NULL);
-    
-    // start ResvMan thread
-    resvManThread->Start(NULL);
-    
-    // start PolicyMan thread
-    policyManThread->Start(NULL);
 
     // init apiServer port and routes on messge router
     messageRouter->AddPort(MxTCE::apiServerPortName);
@@ -107,7 +96,19 @@ void MxTCE::Start()
 
     // init core loopback message port on messge router
     messageRouter->GetMessagePortList().push_back(loopbackPort);
-    loopbackPort->AttachPipesAsServer();
+    loopbackPort->AttachPipes();
+
+    // start binary API server thread 
+    apiServerThread->Start(NULL);
+    
+    // start TEDB thread
+    tedbManThread->Start(NULL);
+    
+    // start ResvMan thread
+    resvManThread->Start(NULL);
+    
+    // start PolicyMan thread
+    policyManThread->Start(NULL);
 
     // @@@@ tmp testing message routes
     string routeQueue = "CORE", routeTopic1 = "API_REQUEST", routeTopic2 = "API_REPLY";
@@ -153,10 +154,8 @@ void MxTCEMessageHandler::Run()
         msg->LogDump();
         if (msg->GetType() == MSG_REQ && msg->GetTopic() == "API_REQUEST") {
             // creating computeWorkerThread
-            //$$$$ lookup to avoid duplicate before creating ?
             string computeWorkerType = "exampleComputeWorker";
             ComputeWorker* computingThread = ComputeWorkerFactory::CreateComputeWorker(computeWorkerType); 
-            computingThread->Start(NULL);
 
             // init computing thread port and routes on messge router and start thread
             string computeThreadPortName = computingThread->GetName();
@@ -174,8 +173,11 @@ void MxTCEMessageHandler::Run()
             mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic7, MxTCE::policyManPortName);
             mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic8, computeThreadPortName);
 
-            // pass the workflow init message with request details to computingThread
+            // start compute thread
+            computingThread->Start(NULL);
+
             //@@@@ Prototype Testing code
+            // pass the workflow init message with request details to computingThread
             Message* msg_compute_request = msg->Duplicate();
             msg_compute_request->SetQueue(computeThreadQueueName);
             msg_compute_request->SetTopic(routeTopic1);

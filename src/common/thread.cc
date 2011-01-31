@@ -172,19 +172,9 @@ void Condition::Notify()
 
 // Class ThreadPortScheduler
 
-ThreadPortScheduler::ThreadPortScheduler(string pn)
-{
-    eventMaster = NULL;
-    msgPort = new MessagePort(pn);
-    assert(msgPort);
-    msgPort->SetEventMaster(eventMaster);
-}
-
-
 ThreadPortScheduler::~ThreadPortScheduler()
 {
     msgPort->DetachPipes();
-    delete msgPort;
 }
 
 
@@ -194,6 +184,8 @@ void* ThreadPortScheduler::Run()
     if (eventMaster == NULL)
         eventMaster = new EventMaster;
 
+    msgPort = MessagePipeFactory::LookupMessagePipe(portName)->GetClientPort();
+    assert(msgPort);
     msgPort->SetEventMaster(eventMaster);
     msgPort->SetThreadScheduler(this);
 
@@ -201,7 +193,7 @@ void* ThreadPortScheduler::Run()
     if (!msgPort->IsUp())
     {
         try {
-            msgPort->AttachPipesAsClient();
+            msgPort->AttachPipes();
         } catch (MsgIOException& e) {
             LOG("ThreadPortScheduler::Run caugh Exception: " << e.what() << " errMsg: " << e.GetMessage() << endl);
         }

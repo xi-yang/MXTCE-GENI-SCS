@@ -49,6 +49,8 @@ void* ComputeWorker::Run()
     if (eventMaster == NULL)
         eventMaster = new EventMaster;
 
+    msgPort = MessagePipeFactory::LookupMessagePipe(portName)->GetClientPort();
+    assert(msgPort);
     msgPort->SetEventMaster(eventMaster);
     msgPort->SetThreadScheduler(this);
 
@@ -56,9 +58,8 @@ void* ComputeWorker::Run()
     if (!msgPort->IsUp())
     {
         try {
-            msgPort->AttachPipesAsClient();
-            
-            LOG("ComputeWorker::Run AttachPipesAsClient" << endl);
+            msgPort->AttachPipes();
+            LOG("ComputeWorker::Run AttachPipes on client side" << endl);
         } catch (MsgIOException& e) {
             LOG("ComputeWorker::Run caugh Exception: " << e.what() << " errMsg: " << e.GetMessage() << endl);
         }

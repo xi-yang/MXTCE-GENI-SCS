@@ -36,8 +36,8 @@
 
 #include<list>
 #include "types.hh"
-#include "event.hh"
 #include "thread.hh"
+#include "event.hh"
 
 using namespace std;
 
@@ -177,8 +177,7 @@ public:
     void SetThreadScheduler(ThreadPortScheduler* scheduler) { threadScheduler = scheduler; }
     virtual void Run ();
     virtual void Close();
-    virtual void AttachPipesAsServer();
-    virtual void AttachPipesAsClient();
+    virtual void AttachPipes();
     virtual void DetachPipes();
     virtual Message* GetMessage();
     virtual void PostMessage (Message *msg);
@@ -198,14 +197,14 @@ public:
     MessagePortLoopback(string& name, MessageRouter* router, MxTCE* tce):MessagePort(name, router), mxTCE(tce) { }
     virtual ~MessagePortLoopback() { }
     virtual void Run () { } //no op
-    virtual void AttachPipesAsServer() { up = true; }
-    virtual void AttachPipesAsClient() { up = true; }
+    virtual void AttachPipes() { up = true; }
     virtual void DetachPipes() { up = false; }
     virtual Message* GetMessage();
     virtual void PostMessage (Message *msg);
     virtual Message* GetLocalMessage();
     virtual void PostLocalMessage (Message *msg);
 };
+
 
 class Route
 {
@@ -261,6 +260,59 @@ public:
     Route* AddRoute(string& queueName, string& topicName, string& portName);
     Route* LookupRoute(string& queueName, string& topicName);
     void DeleteRoute(string& queueName, string& topicName);
+};
+
+
+class MessagePipe
+{
+private:
+    string name;
+    int sockets[2];//sockets[0]: server side; sockets[1] client side
+    MessagePort* serverPort;
+    MessagePort* clientPort;
+    
+    MessagePipe() { }
+    void InitPipe();
+
+public:
+    MessagePipe(string n): name(n) 
+    {
+        serverPort = new MessagePort(n);
+        clientPort = new MessagePort(n);
+        InitPipe();
+    }
+    MessagePipe(string n, MessageRouter* r): name(n) 
+    {
+        serverPort = new MessagePort(n, r);
+        clientPort = new MessagePort(n);
+        InitPipe();
+    }
+    ~MessagePipe()
+    {
+        if (serverPort->IsUp())
+            serverPort->DetachPipes();
+        if (clientPort->IsUp())
+            clientPort->DetachPipes();
+        delete serverPort;
+        delete clientPort;
+    }
+    string GetName() { return name; }
+    MessagePort* GetServerPort() { return serverPort; }
+    MessagePort* GetClientPort() { return clientPort; }
+};
+
+
+class Lock;
+class MessagePipeFactory
+{
+private:
+    static list<MessagePipe*> pipes;
+    static Lock mpfLock;
+
+public:
+    static MessagePipe* CreateMessagePipe(string name, MessageRouter* router);
+    static MessagePipe* LookupMessagePipe(string name);
+    static void RemoveMessagePipe(string name);
 };
 
 

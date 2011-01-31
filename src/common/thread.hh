@@ -128,6 +128,7 @@ class MessagePort;
 class ThreadPortScheduler: public Thread
 {
 protected:
+    string portName;
     EventMaster* eventMaster;
     MessagePort* msgPort;
     // Prevent copying or assignment 
@@ -135,7 +136,7 @@ protected:
     ThreadPortScheduler& operator=(const ThreadPortScheduler& tp);
     
 public:
-    ThreadPortScheduler(string portName);
+    ThreadPortScheduler(string pn): portName(pn), eventMaster(NULL), msgPort(NULL) { }
     virtual ~ThreadPortScheduler();
     EventMaster* GetEventMaster() { return eventMaster; }
     MessagePort* GeMessagePort() { return msgPort; }

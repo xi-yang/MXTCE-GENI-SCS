@@ -52,7 +52,7 @@ protected:
 public:
     ComputeWorker(string n):ThreadPortScheduler(n){ }
     virtual ~ComputeWorker();
-    string& GetName() { return this->msgPort->GetName();}
+    string& GetName() { return portName;}
     list<Action*>& GetActions() { return actions; }
     void* Run();
     virtual void* hookRun();
