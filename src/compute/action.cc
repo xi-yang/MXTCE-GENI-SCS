@@ -70,7 +70,11 @@ void Action::Run()
         if (expectMesssageTopics.size() == 0) 
         {
             if (children.size() == 0)
+            {
                 state = _Finished;
+                Finish();
+                break;
+            }
             else
             {
                 //schedule children actions
