@@ -51,21 +51,25 @@ typedef enum {
 } ActionState;
 
 class ComputeWorker;
-class Action: public Event
+class Action: public Timer
 {
 protected:
     string name;
     ActionState state;
     ComputeWorker* worker;
     Action* parent;
-    list<Action*> children; // scheduled to run in event queue (allow for concurrent branches)
+    // children actions are scheduled to run in event queue. this allows for concurrent branches
+    list<Action*> children; 
+    // messages received (as reply) from other threads
     list<Message*> messages;
+    // expected message topics. this allows action pending on message replies
     list<string> expectMesssageTopics;
 
 public:
-    Action(): state(_Idle), worker(NULL), parent(NULL) { SetNice(true); }
-    Action(ComputeWorker* w): state(_Idle), worker(w), parent(NULL) { assert(w != NULL); SetNice(true); }
-    Action(string& n, ComputeWorker* w): name(n), state(_Idle), worker(w), parent(NULL) { assert(w != NULL); SetNice(true); }
+    //use Timer as base class to cover both regular (PRIORITY) and scheduling (TIMER) cases.
+    Action(): state(_Idle), worker(NULL), parent(NULL) { SetType(EVENT_PRIORITY); SetNice(true); }
+    Action(ComputeWorker* w): state(_Idle), worker(w), parent(NULL) { assert(w != NULL); SetType(EVENT_PRIORITY); SetNice(true); }
+    Action(string& n, ComputeWorker* w): name(n), state(_Idle), worker(w), parent(NULL) { assert(w != NULL); SetType(EVENT_PRIORITY);  SetNice(true); }
     virtual ~Action() { }
     string& GetName() { return name; }
     void SetName(string& n) { name = n; }

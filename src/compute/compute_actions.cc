@@ -133,7 +133,6 @@ bool Action_CreateTEWG::ProcessMessages()
     for (itm = messages.begin(); itm != messages.end(); itm++)
     {
         msg = *itm;
-        msg->LogDump();
         //delete msg;
         itm = messages.erase(itm);
     }

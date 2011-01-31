@@ -139,6 +139,7 @@ private:
     struct timeval due;
     struct timeval interval;
 public:
+    Timer() : due((struct timeval){0, 0}),  interval ((struct timeval){0, 0}), Event(EVENT_TIMER, 0) {}
     Timer(struct timeval due_val) : due(due_val),  interval ((struct timeval){0, 0}), Event(EVENT_TIMER, 0) {}
     Timer(struct timeval due_val, struct timeval interval_val, int repeats_val) 
         : due(due_val), interval(interval_val), Event(EVENT_TIMER, repeats_val) {}
