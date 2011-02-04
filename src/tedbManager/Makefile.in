@@ -47,7 +47,7 @@ LIBRARIES = $(noinst_LIBRARIES)
 ARFLAGS = cru
 libtedb_a_AR = $(AR) $(ARFLAGS)
 libtedb_a_LIBADD =
-am_libtedb_a_OBJECTS = tedb_man.$(OBJEXT)
+am_libtedb_a_OBJECTS = tedb_man.$(OBJEXT) resource.$(OBJEXT)
 libtedb_a_OBJECTS = $(am_libtedb_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
@@ -192,7 +192,7 @@ INSTALL_SDATA = @INSTALL@ -m 600
 #tedb_test_SOURCES = tedb_test.cc
 
 # -- Library Sources
-libtedb_a_SOURCES = tedb_man.hh tedb_man.cc
+libtedb_a_SOURCES = tedb_man.hh resource.hh tedb_man.cc resource.cc
 all: all-am
 
 .SUFFIXES:
@@ -263,6 +263,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/resource.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tedb_man.Po@am__quote@
 
 .cc.o:

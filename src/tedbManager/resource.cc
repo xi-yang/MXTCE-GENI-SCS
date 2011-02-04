@@ -32,38 +32,12 @@
  */
 
 #include "resource.hh"
-#include "tedb_man.hh"
 
-
-// Thread specific logic
-void* TEDBManThread::hookRun()
-{
-    msgPort->SetThreadScheduler(this);
-
-    // thread specific init
-
-    // start event loop
-    // eventMaster has been initiated in parent class ThreadPortScheduler::Run() method
-    eventMaster->Run();
+Node::~Node() 
+{ 
+    if (ifAdaptMatrix) 
+        delete ifAdaptMatrix; 
 }
 
 
-// Handle message from thread message router
-void TEDBManThread::hookHandleMessage()
-{
-    Message* msg = NULL;
-    while ((msg = msgPort->GetMessage()) != NULL)
-    {
-        msg->LogDump();
-        if (msg->GetTopic() == "TEDB_REQUEST") 
-        {
-            Message* replyMsg = msg->Duplicate();
-            replyMsg->SetType(MSG_REPLY);
-            string topic = "TEDB_REPLY";
-            replyMsg->SetTopic(topic);
-            this->GeMessagePort()->PostMessage(replyMsg);
-        }
-        delete msg; //msg consumed
-    }
-}
 
