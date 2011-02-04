@@ -105,7 +105,6 @@ class Link;
 class Port;
 class Node;
 class ISCD;
-class NodeIfAdaptMatrix;
 
 class Domain: public Resource
 {
@@ -118,6 +117,7 @@ public:
     virtual ~Domain() { }    
 };
 
+class NodeIfAdaptMatrix;
 
 class Node: public Resource
 {
@@ -127,8 +127,8 @@ protected:
     NodeIfAdaptMatrix* ifAdaptMatrix;
 
 public:
-    Node(u_int32_t id, string& name): Resource(RTYPE_NODE, id, name), domain(NULL), ifAdaptMatrix(NULL) { }
-    Node(u_int32_t id, string& name, string& address): Resource(RTYPE_NODE, id, name, address), domain(NULL), ifAdaptMatrix(NULL) { }
+    Node(u_int32_t id, string& name);
+    Node(u_int32_t id, string& name, string& address);
     virtual ~Node();
     Domain* GetDomain() { return domain; }
     void SetDomain(Domain* d) { domain = d; }
@@ -319,25 +319,42 @@ public:
 
 
 // Node-Interface Switching Maxtrix
+
 #define MATRIX_SIZE 1024  //1024 x 1024 matrix
+
+struct portcmpless {
+    bool operator() (Port* lp, Port* rp) const 
+    {   return (lp->GetName().compare(rp->GetName()) < 0); }
+};
+
 class NodeIfAdaptMatrix
 {
 private:
     float* bwCaps;
     int size;
     int portSN;
-    map<string, int, strcmpless> portMap;
+    map<Port*, int, portcmpless> portMap;
 
     NodeIfAdaptMatrix() { }
 
 public:
-    NodeIfAdaptMatrix(int n=MATRIX_SIZE): size(n), portSN(0) { bwCaps = new float[n*n]; }
+    NodeIfAdaptMatrix(int n): size(n), portSN(0) { bwCaps = new float[n*n]; }
     ~NodeIfAdaptMatrix() { delete[] bwCaps; }
-    void AddPort(string portName) { assert(portSN < size); portMap[portName] = portSN++; }
-    float GetAdaptationCap(int p1, int p2) { return bwCaps[p1*size+p2]; }
-    float GetAdaptationCap(string& pn1, string& pn2) { 
-        if (portMap.find(pn1) != portMap.end() && portMap.find(pn2) != portMap.end()) return bwCaps[portMap[pn1]*size+portMap[pn2]]; 
+    void AddPort(Port* port) { assert(port && portSN < size); portMap[port] = portSN++; }
+    float GetAdaptCap(int n1, int n2) { 
+        assert(n1 >= 0 && n1 < size && n2 >= 0 && n2 < size); 
+        return bwCaps[n1*size+n2]; 
     }
+    float GetAdaptCap(Port* p1, Port* p2) { 
+        if (portMap.find(p1) != portMap.end() && portMap.find(p2) != portMap.end()) 
+        {
+            int n1 = portMap[p1];
+            int n2 = portMap[p2];
+            return GetAdaptCap(n1, n2); 
+        }
+    }
+    list<Port*> GetAdaptToPorts(Port* port, float bw=0.0);
+    list<Port*> GetAdaptFromPorts(Port* port, float bw=0.0);
 };
 
 

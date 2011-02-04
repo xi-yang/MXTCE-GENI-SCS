@@ -294,6 +294,8 @@ extern "C"
     void signal_init ();
 
     int mkpath(const char *path, mode_t mode);
+
+    bool float_zero();
 }
 
 

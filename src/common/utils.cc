@@ -180,3 +180,9 @@ int mkpath(const char *path, mode_t mode)
     return (status);
 }
 
+
+bool float_zero(float x)
+{
+    return (x > -0.000000001 && x < 0.000000001);
+}
+
