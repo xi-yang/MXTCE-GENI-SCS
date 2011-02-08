@@ -133,7 +133,6 @@ TPort* TPort::Clone(bool newSubLevels)
     map<string, Link*, strcmpless>::iterator itl = this->links.begin();
     for (; itl != this->links.end(); itl++)
         tp->links[(*itl).first] = (newSubLevels ? ((TLink*)(*itl).second)->Clone() : (*itl).second);
-    map<string, Point*, strcmpless>::iterator itp = this->points.begin();
     // TODO: Clone TPoint when implemented
     return tp;
 }

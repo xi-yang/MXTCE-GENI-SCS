@@ -172,6 +172,8 @@ public:
     void SetMaxBandwidth(float bw) { maxBandwidth = bw;}
     float GetMaxReservableBandwidth() {return maxReservableBandwidth;}
     void SetMaxReservableBandwidth(float bw) { maxReservableBandwidth = bw;}
+    float GetMinReservableBandwidth() {return minReservableBandwidth;}
+    void SetMinReservableBandwidth(float bw) { minReservableBandwidth = bw;}
     float* GetUnreservedBandwidth() { return unreservedBandwidth; }
 };
 
@@ -211,6 +213,8 @@ public:
     void SetMaxBandwidth(float bw) { maxBandwidth = bw;}
     float GetMaxReservableBandwidth() {return maxReservableBandwidth;}
     void SetMaxReservableBandwidth(float bw) { maxReservableBandwidth = bw;}
+    float GetMinReservableBandwidth() {return minReservableBandwidth;}
+    void SetMinReservableBandwidth(float bw) { minReservableBandwidth = bw;}
     float* GetUnreservedBandwidth() { return unreservedBandwidth; }
     Link* GetRemoteLink() {return remoteLink;}
     void SetRemoteLink(Link* rmt) { remoteLink = rmt;}
