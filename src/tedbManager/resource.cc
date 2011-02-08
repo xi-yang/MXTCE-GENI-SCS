@@ -32,22 +32,54 @@
  */
 
 #include "resource.hh"
+#include "exception.hh"
 
-Node::Node(u_int32_t id, string& name): Resource(RTYPE_NODE, id, name), domain(NULL)
-{ 
-    ifAdaptMatrix = new NodeIfAdaptMatrix(MATRIX_SIZE);
-}
 
-Node::Node(u_int32_t id, string& name, string& address): Resource(RTYPE_NODE, id, name, address), domain(NULL)
+void Domain::AddNode(Node* node)
 {
-    ifAdaptMatrix = new NodeIfAdaptMatrix(MATRIX_SIZE);
-
+    if (node->GetName().size() == 0)
+        throw TEDBException((char*)"Domain::AddNode raises Excaption: node name is empty.");
+    else if (nodes.find(node->GetName()) == nodes.end())
+    {
+        char buf[128];
+        snprintf(buf, 128, "Domain::AddNode raises Excaption: node name %s has already existed.", node->GetName().c_str());
+        throw TEDBException(buf);
+    }
+    this->nodes[node->GetName()] = node;
 }
+
 
 Node::~Node()
 {
     if (ifAdaptMatrix)
         delete ifAdaptMatrix;
+}
+
+void Node::AddPort(Port* port)
+{
+    if (port->GetName().size() == 0)
+        throw TEDBException((char*)"Node::AddPort raises Excaption: port name is empty.");
+    else if (ports.find(port->GetName()) == ports.end())
+    {
+        char buf[128];
+        snprintf(buf, 128, "Node::AddPort raises Excaption: port name %s has already existed.", port->GetName().c_str());
+        throw TEDBException(buf);
+    }
+    this->ports[port->GetName()] = port;
+}
+
+
+void Port::AddLink(Link* link)
+{
+    link->SetPort(this);
+
+    if (links.find(link->GetName()) == links.end())
+    {
+        char buf[128];
+        snprintf(buf, 128, "Port::AddLink raises Excaption: link name %s has already existed.", link->GetName().c_str());
+        throw TEDBException(buf);
+    }
+    this->links[link->GetName()] = link;
 }
 
 list<Port*> NodeIfAdaptMatrix::GetAdaptToPorts(Port* fromPort, float bw)

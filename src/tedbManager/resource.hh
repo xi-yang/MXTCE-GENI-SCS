@@ -101,10 +101,13 @@ public:
 };
 
 
-class Link;
-class Port;
 class Node;
+class Port;
+class Link;
+class Point;
 class ISCD;
+class IACD;
+class NodeIfAdaptMatrix;
 
 class Domain: public Resource
 {
@@ -115,9 +118,9 @@ public:
     Domain(u_int32_t id, string& name): Resource(RTYPE_DOMAIN, id, name) { }
     Domain(u_int32_t id, string& name, string& address): Resource(RTYPE_DOMAIN, id, name, address) { }
     virtual ~Domain() { }    
+    map<string, Node*, strcmpless>& GetNodes() { return nodes; }
+    void AddNode(Node* node);
 };
-
-class NodeIfAdaptMatrix;
 
 class Node: public Resource
 {
@@ -127,11 +130,13 @@ protected:
     NodeIfAdaptMatrix* ifAdaptMatrix;
 
 public:
-    Node(u_int32_t id, string& name);
-    Node(u_int32_t id, string& name, string& address);
+    Node(u_int32_t id, string& name): Resource(RTYPE_NODE, id, name), domain(NULL), ifAdaptMatrix(NULL) { }
+    Node(u_int32_t id, string& name, string& address): Resource(RTYPE_NODE, id, name, address), domain(NULL), ifAdaptMatrix(NULL) { }
     virtual ~Node();
     Domain* GetDomain() { return domain; }
     void SetDomain(Domain* d) { domain = d; }
+    map<string, Port*, strcmpless>& GetPorts() { return ports; }
+    void AddPort(Port* port);
     NodeIfAdaptMatrix* GetIfAdaptMatrix() { return ifAdaptMatrix; }
     void SetIfAdaptMatrix(NodeIfAdaptMatrix* matrix) { ifAdaptMatrix = matrix; }
 };
@@ -141,6 +146,7 @@ class Port: public Resource
 {
 protected:
     map<string, Link*, strcmpless> links;
+    map<string, Point*, strcmpless> points; //$$$ place holder
     Node* node;
     float maxBandwidth;
     float maxReservableBandwidth;
@@ -158,6 +164,10 @@ public:
     virtual ~Port() { }    
     Node* GetNode() { return node; }
     void SetNode(Node* n) { node = n; }
+    map<string, Link*, strcmpless>& GetLinks() { return links; }
+    void AddLink(Link* link);
+    map<string, Point*, strcmpless>& GetPoints() { return points; }
+    void AddPoint();
     float GetMaxBandwidth() {return maxBandwidth;}
     void SetMaxBandwidth(float bw) { maxBandwidth = bw;}
     float GetMaxReservableBandwidth() {return maxReservableBandwidth;}
@@ -178,6 +188,7 @@ protected:
     float unreservedBandwidth[8];   // 8 priorities: use unreservedBandwidth[7] by default
     Link* remoteLink;
     list<ISCD> swCapDescriptors;
+    list<IACD> swAdaptDescriptors;
     list<Link*> containerLinks;      // the lower-layer links that this (virtual) link depends on (optional)
     list<Link*> componentLinks;     // the upper-layer (virtual) links that depends on this link (optional)
     void _Init() {
@@ -204,6 +215,7 @@ public:
     Link* GetRemoteLink() {return remoteLink;}
     void SetRemoteLink(Link* rmt) { remoteLink = rmt;}
     list<ISCD>& GetSwCapDescriptors() { return swCapDescriptors; }
+    list<IACD>& GetSwAdaptDescriptors() { return swAdaptDescriptors; }
     list<Link*>& GetContainerLinks() { return containerLinks; }
     list<Link*>& GetComponentLinks() { return componentLinks; }
 };
@@ -296,8 +308,10 @@ public:
     float minReservableBandwidth;
     ConstraintTagSet availableTimeSlots;
     ConstraintTagSet assignedTimeSlots;
+    bool vlanTranslationCapable;
 
-    ISCD_TDM(float min): ISCD(LINK_IFSWCAP_TDM, LINK_IFSWCAP_ENC_SONETSDH), minReservableBandwidth(min), availableTimeSlots(MAX_TIMESLOTS_NUM), assignedTimeSlots(MAX_TIMESLOTS_NUM) { }
+    ISCD_TDM(float min): ISCD(LINK_IFSWCAP_TDM, LINK_IFSWCAP_ENC_SONETSDH), minReservableBandwidth(min), availableTimeSlots(MAX_TIMESLOTS_NUM), 
+        assignedTimeSlots(MAX_TIMESLOTS_NUM), vlanTranslationCapable(false) { }
     ~ISCD_TDM() { }
 };
 
@@ -311,11 +325,26 @@ class ISCD_LSC: public ISCD
 public:
     ConstraintTagSet availableWavelengs;
     ConstraintTagSet assignedWavelengs;
+    bool waveTranslationCapable;
 
-    ISCD_LSC(float min): ISCD(LINK_IFSWCAP_LSC, LINK_IFSWCAP_ENC_LAMBDA), availableWavelengs(MAX_OTNX_CHAN_NUM), assignedWavelengs(MAX_OTNX_CHAN_NUM) { }
+    ISCD_LSC(float min): ISCD(LINK_IFSWCAP_LSC, LINK_IFSWCAP_ENC_LAMBDA), availableWavelengs(MAX_OTNX_CHAN_NUM), assignedWavelengs(MAX_OTNX_CHAN_NUM),
+        waveTranslationCapable(false) { }
     ~ISCD_LSC() { }
 };
 
+
+
+// Interface Switching Adaptoation Descriptor
+
+class IACD
+{
+public:
+    u_char	lowerLayerSwitchingType;
+    u_char	lowerLayerEncodingType;
+    u_char  upperLayerSwitchingType;
+    u_char	upperLayerEncodingType;
+    float maxAdaptBandwidth;
+};
 
 
 // Node-Interface Switching Maxtrix

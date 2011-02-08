@@ -103,4 +103,17 @@ public:
     }
 };
 
+
+class TEDBException: public TCEException
+{
+public:
+    TEDBException(string msg): TCEException(msg){ }
+    TEDBException(char* cstr): TCEException(cstr){ }
+    virtual ~TEDBException()throw(){ }  
+    virtual const char* what() const throw() {
+        return (const char*)"TEDBException";
+    }
+};
+
+
 #endif
