@@ -181,6 +181,18 @@ int mkpath(const char *path, mode_t mode)
 }
 
 
+
+time_t get_mtime(const char *path)
+{
+    struct stat statbuf;
+    if (stat(path, &statbuf) == -1) {
+        perror(path);
+        exit(1);
+    }
+    return statbuf.st_mtime;
+}
+
+
 bool float_zero(float x)
 {
     return (x > -0.000000001 && x < 0.000000001);

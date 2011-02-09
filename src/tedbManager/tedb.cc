@@ -62,6 +62,11 @@ TDomain* DBDomain::Checkout(TGraph* tg)
     return td;
 }
 
+DBDomain::~DBDomain()
+{
+    //$$$$ delete sublevels
+}
+
 
 void DBNode::UpdateToXML(bool populateSubLevels)
 {
@@ -87,6 +92,12 @@ TNode* DBNode::Checkout(TGraph* tg)
         tg->AddPort(tn, tp);
     }
     return tn;
+}
+
+
+DBNode::~DBNode()
+{
+
 }
 
 
@@ -118,6 +129,12 @@ TPort* DBPort::Checkout(TGraph* tg)
         tg->AddLink(tp, tl);
     }
     return tp;
+}
+
+
+DBPort::~DBPort()
+{
+
 }
 
 
@@ -176,6 +193,95 @@ TLink* DBLink::Checkout(TGraph* tg)
     return tl;
 }
 
+
+DBLink::~DBLink()
+{
+
+}
+
+
+void TEDB::ClearXmlTree()
+{
+    if (xmlTree == NULL)
+        return;
+    xmlFreeDoc(xmlTree);
+    list<DBDomain*>::iterator itd = dbDomains.begin();
+    for (; itd != dbDomains.end(); itd++)
+    {
+        (*itd)->SetXmlElement(NULL);
+    }
+    list<DBNode*>::iterator itn = dbNodes.begin();
+    for (; itn != dbNodes.end(); itn++)
+    {
+        (*itn)->SetXmlElement(NULL);
+    }
+    list<DBPort*>::iterator itp = dbPorts.begin();
+    for (; itp != dbPorts.end(); itp++)
+    {
+        (*itp)->SetXmlElement(NULL);
+    }    
+    list<DBLink*>::iterator itl = dbLinks.begin();
+    for (; itl != dbLinks.end(); itl++)
+    {
+        (*itl)->SetXmlElement(NULL);
+    }    
+    xmlTree = NULL;
+}
+
+
+void TEDB::PopulateXmlTree()
+{
+    assert(xmlTree != NULL);
+
+    xmlNodePtr node;
+    xmlNodePtr rootLevel;
+    xmlNodePtr domainLevel;
+    xmlNodePtr nodeLevel;
+    xmlNodePtr PortLevel;
+    xmlNodePtr linkLevel;
+
+    rootLevel = xmlDocGetRootElement(xmlTree);
+    if (rootLevel->type != XML_ELEMENT_NODE || strncasecmp((const char*)rootLevel->name, "topology", 8) != 0)
+    {
+        throw TEDBException((char*)"TEDB::PopulateXmlTree failed to locate root <topology> element");
+    }
+
+    //match up Domain level elements
+    for (domainLevel = rootLevel->children; domainLevel != NULL; domainLevel = domainLevel->next)
+    {
+        if (domainLevel->type != XML_ELEMENT_NODE || strncasecmp((const char*)domainLevel->name, "domain", 6) != 0)
+            continue;
+        bool newDomain = false;
+        string domainName = (const char*)xmlGetProp(domainLevel, (const xmlChar*)"id");
+        DBDomain* domain = LookupDomainByName(domainName);
+        if (domain == NULL)
+        {
+            domain = new DBDomain(0, domainName);
+            domain->SetXmlElement(domainLevel);            
+            dbDomains.push_back(domain);
+            newDomain = true;
+        }
+
+        domain->UpdateFromXML(true);
+        //match up Node level elements and bridge up domain to children nodes
+            //match up Port level elements and bridge up node to children ports
+                //match up Port level elements and bridge up port to children links
+                    //match up Link level elements and bridge up local-remote peers
+    }
+
+    // cleanup domains that no longer exist in XML
+    list<DBDomain*>::iterator itd = dbDomains.begin();
+    for (; itd != dbDomains.end(); itd++)
+    {
+        if((*itd)->GetXmlElement() == NULL)
+        {
+            delete (*itd);
+            itd = dbDomains.erase(itd);
+        }
+    }
+}
+
+
 TGraph* TEDB::CheckoutTEWG(string& name)
 {
     TGraph* tg = new TGraph(name);
@@ -189,3 +295,15 @@ TGraph* TEDB::CheckoutTEWG(string& name)
     return tg;
 }
 
+
+DBDomain* TEDB::LookupDomainByName(string& name)
+{
+    list<DBDomain*>::iterator itd = dbDomains.begin();
+    for (; itd != dbDomains.end(); itd++)
+    {
+        DBDomain* dbd = *itd;
+        if (strcasecmp(dbd->GetName().c_str(), name.c_str()) == 0)
+            return dbd;
+    }
+    return NULL;
+}

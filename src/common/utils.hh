@@ -295,6 +295,8 @@ extern "C"
 
     int mkpath(const char *path, mode_t mode);
 
+    time_t get_mtime(const char *path);
+
     bool float_zero();
 }
 

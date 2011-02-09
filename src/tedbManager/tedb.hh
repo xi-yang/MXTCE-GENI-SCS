@@ -35,9 +35,11 @@
 #define __TEDB_HH__
 
 #include "event.hh"
-#include "tewg.hh"
+#include "thread.hh"
 #include "resource.hh"
+#include "tewg.hh"
 #include <libxml/tree.h>
+#include <libxml/parser.h>
 
 using namespace std;
 
@@ -76,7 +78,7 @@ protected:
 public:
     DBDomain(u_int32_t id, string& name): Domain(id, name), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
     DBDomain(u_int32_t id, string& name, string& address): Domain(id, name, address), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
-    virtual ~DBDomain() { }
+    virtual ~DBDomain();
     xmlNodePtr GetXmlElement() { return xmlElem; }
     void SetXmlElement(xmlNodePtr x) { xmlElem = x; }
     void UpdateToXML(bool populateSubLevels=false);
@@ -95,7 +97,7 @@ protected:
 public:
     DBNode(u_int32_t id, string& name): Node(id, name), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
     DBNode(u_int32_t id, string& name, string& address): Node(id, name, address), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
-    virtual ~DBNode() { }
+    virtual ~DBNode();
     xmlNodePtr GetXmlElement() { return xmlElem; }
     void SetXmlElement(xmlNodePtr x) { xmlElem = x; }            
     void UpdateToXML(bool populateSubLevels=false);
@@ -114,7 +116,7 @@ protected:
 public:
     DBPort(u_int32_t id, string& name): Port(id, name), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
     DBPort(u_int32_t id, string& name, string& address): Port(id, name, address), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
-    virtual ~DBPort() { }
+    virtual ~DBPort();
     xmlNodePtr GetXmlElement() { return xmlElem; }
     void SetXmlElement(xmlNodePtr x) { xmlElem = x; }            
     void UpdateToXML(bool populateSubLevels=false);
@@ -133,7 +135,7 @@ protected:
 public:
     DBLink(u_int32_t id, string& name): Link(id, name), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
     DBLink(u_int32_t id, string& name, string& address): Link(id, name, address), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
-    virtual ~DBLink() { }
+    virtual ~DBLink();
     xmlNodePtr GetXmlElement() { return xmlElem; }
     void SetXmlElement(xmlNodePtr x) { xmlElem = x; }            
     void UpdateToXML(bool populateSubLevels=false);
@@ -150,18 +152,24 @@ protected:
     list<DBNode*> dbNodes;
     list<DBPort*> dbPorts;
     list<DBLink*> dbLinks;
-    
+    xmlDocPtr xmlTree;
+    Lock tedbLock;
+
 public:
-    TEDB(string& n): name(n) { }
+    TEDB(string& n): name(n), xmlTree(NULL) { }
     virtual ~TEDB() { }
-
-    //$$$$ DB orgnization methods --> TODO with xml importer
-    //$$$$ insert /delete/ update ...
-
-    //$$$$ XML I/O methods          --> TODO with xml importer
-
+    xmlDocPtr GetXmlTree() { return xmlTree; }
+    void SetXmlTree(xmlDocPtr x) { xmlTree = x; }
+    void ClearXmlTree();
+    void PopulateXmlTree();
+    void LockDB() { tedbLock.DoLock(); }
+    void UnlockDB() { tedbLock.Unlock(); }
     TGraph* CheckoutTEWG(string& name); // full copy
-    //TGraph* LeaseTEWG();  //partial copy
+    //TGraph* LeaseTEWG(...);  //partial copy /leasing
+
+    // DB operations ( lookup / insert /delete/ update)
+    DBDomain* LookupDomainByName(string& name);
+
 };
 
 
