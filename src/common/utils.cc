@@ -193,8 +193,71 @@ time_t get_mtime(const char *path)
 }
 
 
-bool float_zero(float x)
+void StripXmlString(string& str, xmlChar* val) 
 {
-    return (x > -0.000000001 && x < 0.000000001);
+    char cstr[512];
+    if (val == NULL || (*val) == 0)
+    {
+        str = "";
+        return;
+    }
+    strncpy(cstr, (const char*)val, 512);
+    char* ptr = cstr;
+    while ((*ptr) && isspace(*ptr))
+        ptr++;
+    char* ptr2 = cstr + strlen(cstr)-1;
+    while (ptr2 >= ptr && isspace(*ptr2))
+        ptr2--;
+    if (ptr > ptr2)
+    {
+        str = "";
+        return;
+    }
+    ptr2++;
+    *ptr2 = 0;
+    str = (const char*) ptr;
+}
+
+
+long StringToBandwidth(string strBandwidth) 
+{
+    long bandwidth = 0L;
+    long factor = 1;
+    if (strcasestr(strBandwidth.c_str(), "K"))
+    {
+        factor = 1000;
+    }
+    if (strcasestr(strBandwidth.c_str(), "M"))
+    {
+        factor = 1000000;
+    }
+    if (strcasestr(strBandwidth.c_str(), "G"))
+    {
+        factor = 1000000000;
+    }
+
+    if (sscanf(strBandwidth.c_str(), "%ld", & bandwidth) == 1)
+        return bandwidth*factor;
+    return 0;
+}
+
+
+string GetUrnField(string urn, const char* field) 
+{
+    string name;
+    char str[128];
+    snprintf(str, 128, "%s=", field);
+    char* ptr = strstr(urn.c_str(), str);
+    if (ptr == NULL)
+        return NULL;
+    char* ptr2 = strstr(ptr, ":"); 
+    if (ptr2 == NULL)
+        name = (const char*)ptr;
+    else 
+    {
+        strncpy(str, ptr, ptr2-ptr);
+        name = (const char*)str;
+    }
+    return name;
 }
 

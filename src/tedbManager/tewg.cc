@@ -128,6 +128,7 @@ TPort* TPort::Clone(bool newSubLevels)
     tp->maxBandwidth = this->maxBandwidth;
     tp->maxReservableBandwidth = this->maxReservableBandwidth;
     tp->minReservableBandwidth = this->minReservableBandwidth;
+    tp->bandwidthGranularity = this->minReservableBandwidth;
     for (int i = 0; i < 8; i++)
         tp->unreservedBandwidth[i] = this->unreservedBandwidth[i];
     map<string, Link*, strcmpless>::iterator itl = this->links.begin();
@@ -163,7 +164,7 @@ bool TLink::VerifyFullLink()
 ISCD* TLink::GetTheISCD()
 {
     assert(swCapDescriptors.size() > 0);
-    return &swCapDescriptors.front();
+    return swCapDescriptors.front();
 }
 
 
@@ -177,12 +178,13 @@ TLink* TLink::Clone()
     tl->maxBandwidth = this->maxBandwidth;
     tl->maxReservableBandwidth = this->maxReservableBandwidth;
     tl->minReservableBandwidth = this->minReservableBandwidth;
+    tl->bandwidthGranularity = this->minReservableBandwidth;
     tl->remoteLink = this->remoteLink;
     for (int i = 0; i < 8; i++)
         tl->unreservedBandwidth[i] = this->unreservedBandwidth[i];
-    list<ISCD>::iterator its = swCapDescriptors.begin();
+    list<ISCD*>::iterator its = swCapDescriptors.begin();
     for (; its != swCapDescriptors.end(); its++)
-        tl->swCapDescriptors.push_back(*its);
+        tl->swCapDescriptors.push_back((*its)->Duplicate());
     list<IACD>::iterator ita = swAdaptDescriptors.begin();
     for (; ita != swAdaptDescriptors.end(); ita++)
         tl->swAdaptDescriptors.push_back(*ita);

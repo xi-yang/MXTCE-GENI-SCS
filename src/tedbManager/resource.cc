@@ -82,7 +82,7 @@ void Port::AddLink(Link* link)
     this->links[link->GetName()] = link;
 }
 
-list<Port*> NodeIfAdaptMatrix::GetAdaptToPorts(Port* fromPort, float bw)
+list<Port*> NodeIfAdaptMatrix::GetAdaptToPorts(Port* fromPort, long bw)
 {
     list<Port*> portList;
     if (portMap.find(fromPort) != portMap.end())
@@ -101,7 +101,7 @@ list<Port*> NodeIfAdaptMatrix::GetAdaptToPorts(Port* fromPort, float bw)
 }
 
 
-list<Port*> NodeIfAdaptMatrix::GetAdaptFromPorts(Port* toPort, float bw)
+list<Port*> NodeIfAdaptMatrix::GetAdaptFromPorts(Port* toPort, long bw)
 {
     list<Port*> portList;
     if (portMap.find(toPort) != portMap.end())

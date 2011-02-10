@@ -36,11 +36,13 @@
 #define __UTILS_HH__
  
 #include "types.hh"
-
+#include <libxml/tree.h>
 
 #ifndef RETSIGTYPE
 #define RETSIGTYPE void
 #endif
+
+using namespace std;
 
 #define ANY_TAG 0xffff
 
@@ -133,6 +135,21 @@ public:
             assert(bitmask);
             for (int i = 0; i < (max_num-1)/8+1 && i < numBytes; i++)
                 byteArray[i] |= bitmask[i];
+        }
+    void LoadRangeString(string rangeStr)
+        {
+            char buf[128];
+            strncpy(buf, rangeStr.c_str(), 128);
+            for (char* ptr = strtok(buf, ", \t\n"); ptr; ptr = strtok(NULL,  ", \t\n"))
+            {
+                int low, high;
+                int n = sscanf(ptr, "%d-%d", &low, &high);
+                if (n == 1)
+                    AddTag(low);
+                else if (n == 2)
+                    for (int t = low; t <= high; t++)
+                        AddTag(t);
+            }
         }
     void DeleteTag(u_int32_t tag)
         {
@@ -241,43 +258,85 @@ public:
             return 0;
         }
     int Size() 
-    {
-        int num = 0;
-        for (int i = numBytes-1; i >=0; i--)
-            if (byteArray[i] != 0)
-            {
-                if (byteArray[i]&0x01)
-                    num++;
-                if (byteArray[i]&0x02)
-                    num++;
-                if (byteArray[i]&0x04)
-                    num++;
-                if (byteArray[i]&0x08)
-                    num++;
-                if (byteArray[i]&0x10)
-                    num++;
-                if (byteArray[i]&0x20)
-                    num++;
-                if (byteArray[i]&0x40)
-                    num++;
-                if (byteArray[i]&0x80)
-                    num++;
-            }
-        return num;
-    }
+        {
+            int num = 0;
+            for (int i = numBytes-1; i >=0; i--)
+                if (byteArray[i] != 0)
+                {
+                    if (byteArray[i]&0x01)
+                        num++;
+                    if (byteArray[i]&0x02)
+                        num++;
+                    if (byteArray[i]&0x04)
+                        num++;
+                    if (byteArray[i]&0x08)
+                        num++;
+                    if (byteArray[i]&0x10)
+                        num++;
+                    if (byteArray[i]&0x20)
+                        num++;
+                    if (byteArray[i]&0x40)
+                        num++;
+                    if (byteArray[i]&0x80)
+                        num++;
+                }
+            return num;
+        }
     void Clear() { memset(byteArray, 0, numBytes); }
     u_int8_t* TagBitmask() { return byteArray; }
-    /*
-    void DisplayTags()
-        {
-            if (IsEmpty()) return;
-            cout << "Tags:";
-            for (u_int32_t i = 0; i < numBits; i++)
+    string GetRangeString() 
+        { 
+            string rangeStr = "";
+            char buf[128];
+            char buf2[16];
+            buf[0] = 0;
+            int i, i_start, i_end;
+            for (i = 1, i_start = 1, i_end = 0; i <= numBits; i++)
+            {
                 if (HasTag(i))
-                    cout << ' ' << (i-1)*interval+base;
-            cout << endl;
+                {
+                    if (i_end < i_start)
+                    {
+                        sprintf(buf2, ",%d", i);
+                        strcat(buf, buf2);
+                        i_start = i;
+                    }
+                    if (i == numBits)
+                    {
+                        if (i - i_start >= 2) 
+                        {
+                            sprintf(buf2, "-%d", i);
+                            strcat(buf, buf2);
+                        }
+                        else if (i - i_start == 1) 
+                        {
+                            sprintf(buf2,",%d", i);
+                            strcat(buf, buf2);
+                        }
+                    }
+                    i_end = i;
+                }
+                else
+                {
+                    if (i_end - i_start >= 2)
+                    {
+                        sprintf(buf2, "-%d", i_end);
+                        strcat(buf, buf2);
+                    }
+                    else if (i_end - i_start == 1)
+                    {
+                        sprintf(buf2, ",%d", i_end);
+                        strcat(buf, buf2);
+                    }
+                    i_end = 0;
+                }
+            }
+            if (buf[0] == ',')
+                rangeStr = (const char*)buf+1;
+            else 
+                rangeStr = (const char*)buf;
+            return rangeStr;
         }
-        */
 };
 
 
@@ -296,9 +355,13 @@ extern "C"
     int mkpath(const char *path, mode_t mode);
 
     time_t get_mtime(const char *path);
-
-    bool float_zero();
 }
+
+void StripXmlString(string& str, xmlChar* val);
+
+long StringToBandwidth(string strBandwidth);
+
+string GetUrnField(string urn, const char* field);
 
 
 #endif

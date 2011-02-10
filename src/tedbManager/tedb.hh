@@ -68,16 +68,19 @@ public:
 };
 
 
+class TEDB;
+
 class DBDomain: public Domain
 {
 protected:
+    TEDB* tedb;
     struct timeval updateTime;
     xmlNodePtr xmlElem;
     list<TEWGLease> leases;
 
 public:
-    DBDomain(u_int32_t id, string& name): Domain(id, name), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
-    DBDomain(u_int32_t id, string& name, string& address): Domain(id, name, address), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
+    DBDomain(TEDB* db, u_int32_t id, string& name): Domain(id, name), tedb(db), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
+    DBDomain(TEDB* db, u_int32_t id, string& name, string& address): Domain(id, name, address), tedb(db), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
     virtual ~DBDomain();
     xmlNodePtr GetXmlElement() { return xmlElem; }
     void SetXmlElement(xmlNodePtr x) { xmlElem = x; }
@@ -90,13 +93,14 @@ public:
 class DBNode: public Node
 {
 protected:
+    TEDB* tedb;
     struct timeval updateTime;
     xmlNodePtr xmlElem;
     list<TEWGLease> leases;
     
 public:
-    DBNode(u_int32_t id, string& name): Node(id, name), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
-    DBNode(u_int32_t id, string& name, string& address): Node(id, name, address), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
+    DBNode(TEDB* db, u_int32_t id, string& name): Node(id, name), tedb(db), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
+    DBNode(TEDB* db, u_int32_t id, string& name, string& address): Node(id, name, address), tedb(db), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
     virtual ~DBNode();
     xmlNodePtr GetXmlElement() { return xmlElem; }
     void SetXmlElement(xmlNodePtr x) { xmlElem = x; }            
@@ -109,13 +113,14 @@ public:
 class DBPort: public Port
 {
 protected:
+    TEDB* tedb;
     struct timeval updateTime;
     xmlNodePtr xmlElem;
     list<TEWGLease> leases;
         
 public:
-    DBPort(u_int32_t id, string& name): Port(id, name), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
-    DBPort(u_int32_t id, string& name, string& address): Port(id, name, address), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
+    DBPort(TEDB* db, u_int32_t id, string& name): Port(id, name), tedb(db), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
+    DBPort(TEDB* db, u_int32_t id, string& name, string& address): Port(id, name, address), tedb(db), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
     virtual ~DBPort();
     xmlNodePtr GetXmlElement() { return xmlElem; }
     void SetXmlElement(xmlNodePtr x) { xmlElem = x; }            
@@ -128,16 +133,18 @@ public:
 class DBLink: public Link
 {
 protected:
+    TEDB* tedb;
     struct timeval updateTime;
     xmlNodePtr xmlElem;
     list<TEWGLease> leases;
             
 public:
-    DBLink(u_int32_t id, string& name): Link(id, name), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
-    DBLink(u_int32_t id, string& name, string& address): Link(id, name, address), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
+    DBLink(TEDB* db, u_int32_t id, string& name): Link(id, name), tedb(db), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
+    DBLink(TEDB* db, u_int32_t id, string& name, string& address): Link(id, name, address), tedb(db), updateTime((struct timeval){0, 0}), xmlElem(NULL) { }
     virtual ~DBLink();
     xmlNodePtr GetXmlElement() { return xmlElem; }
     void SetXmlElement(xmlNodePtr x) { xmlElem = x; }            
+    ISCD* GetISCDFromXML(xmlNodePtr xmlNode);
     void UpdateToXML(bool populateSubLevels=false);
     void UpdateFromXML(bool populateSubLevels=false);
     TLink* Checkout(TGraph* tg);
@@ -164,12 +171,17 @@ public:
     void PopulateXmlTree();
     void LockDB() { tedbLock.DoLock(); }
     void UnlockDB() { tedbLock.Unlock(); }
-    TGraph* CheckoutTEWG(string& name); // full copy
-    //TGraph* LeaseTEWG(...);  //partial copy /leasing
+    TGraph* GetSnapshot(string& name); // full copy
+
+    // TODO: TGraph* LeaseTEWG(...);  //partial copy /leasing
 
     // DB operations ( lookup / insert /delete/ update)
     DBDomain* LookupDomainByName(string& name);
-
+    DBDomain* LookupDomainByURN(string& urn);
+    DBNode* LookupNodeByURN(string& urn);
+    DBPort* LookupPortByURN(string& urn);
+    DBLink* LookupLinkByURN(string& urn);
+    // TODO: more?
 };
 
 
