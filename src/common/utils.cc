@@ -243,12 +243,12 @@ long StringToBandwidth(string strBandwidth)
 
 string GetUrnField(string urn, const char* field) 
 {
-    string name;
+    string name = "";
     char str[128];
     snprintf(str, 128, "%s=", field);
     char* ptr = strstr(urn.c_str(), str);
     if (ptr == NULL)
-        return NULL;
+        return name;
     ptr += (strlen(field)+1);
     char* ptr2 = strstr(ptr, ":"); 
     if (ptr2 == NULL)
@@ -256,6 +256,7 @@ string GetUrnField(string urn, const char* field)
     else 
     {
         strncpy(str, ptr, ptr2-ptr);
+        str[ptr2-ptr] = 0;
         name = (const char*)str;
     }
     return name;

@@ -31,8 +31,9 @@
  * SUCH DAMAGE.
  */
 
-#include "tewg.hh"
 #include "exception.hh"
+#include "log.hh"
+#include "tewg.hh"
 
 
 TDomain* TDomain::Clone(bool newSubLevels)
@@ -242,12 +243,6 @@ void TGraph::AddLink(TNode* node, TLink* link)
 }
 
 
-void TGraph::Groom()
-{
-    // TODO:
-}
-
-
 TGraph* TGraph::Clone()
 {
     TGraph* tg = new TGraph(name);
@@ -280,5 +275,60 @@ TGraph* TGraph::Clone()
         }
     }
     return tg;
+}
+
+
+
+void TGraph::LogDump()
+{
+    char buf[102400]; //up to 100K
+    char str[128];
+    strcpy(buf, "TEWG Dump...\n");
+    list<TDomain*>::iterator itd = this->tDomains.begin();
+    for (; itd != this->tDomains.end(); itd++)
+    {
+        TDomain* td = (*itd);
+        snprintf(str, 128, "<domain id=%s>\n", td->GetName().c_str());
+        strcat(buf, str);
+        map<string, Node*, strcmpless>::iterator itn = td->GetNodes().begin();
+        for (; itn != td->GetNodes().end(); itn++)
+        {
+            TNode* tn = (TNode*)(*itn).second;
+            snprintf(str, 128, "\t<node id=%s>\n", tn->GetName().c_str());
+            strcat(buf, str);
+            map<string, Port*, strcmpless>::iterator itp = tn->GetPorts().begin();
+            for (; itp != tn->GetPorts().end(); itp++)
+            {
+                TPort* tp = (TPort*)(*itp).second;
+                snprintf(str, 128, "\t\t<port id=%s>\n", tp->GetName().c_str());
+                strcat(buf, str);
+                map<string, Link*, strcmpless>::iterator itl = tp->GetLinks().begin();
+                for (; itl != tp->GetLinks().end(); itl++) 
+                {
+                    TLink* tl = (TLink*)(*itl).second;
+                    snprintf(str, 128, "\t\t\t<link id=%s>\n", tl->GetName().c_str());
+                    strcat(buf, str);
+                    if (tl->GetRemoteLink())
+                    {
+                        snprintf(str, 128, "\t\t\t\t<remoteLinkId>domain=%s:node=%s:port=%s:link=%s</remoteLinkId>\n",  
+                            tl->GetRemoteLink()->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
+                            tl->GetRemoteLink()->GetPort()->GetNode()->GetName().c_str(),
+                            tl->GetRemoteLink()->GetPort()->GetName().c_str(), 
+                            tl->GetRemoteLink()->GetName().c_str());
+                        strcat(buf, str);
+                    }
+                    snprintf(str, 128, "\t\t\t</link>\n");
+                    strcat(buf, str);
+                }
+                snprintf(str, 128, "\t\t</port>\n");
+                strcat(buf, str);
+            }
+            snprintf(str, 128, "\t</node>\n");
+            strcat(buf, str);
+        }
+        snprintf(str, 128, "</domain>\n");
+        strcat(buf, str);
+    }    
+    LOG_DEBUG(buf);
 }
 

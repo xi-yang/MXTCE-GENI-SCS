@@ -182,6 +182,8 @@ public:
     DBPort* LookupPortByURN(string& urn);
     DBLink* LookupLinkByURN(string& urn);
     // TODO: more?
+
+    void LogDump();
 };
 
 

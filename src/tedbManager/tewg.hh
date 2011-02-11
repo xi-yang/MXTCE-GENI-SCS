@@ -155,8 +155,8 @@ public:
     void AddPort(TNode* node, TPort* port);
     void AddLink(TPort* port, TLink* link);
     void AddLink(TNode* node, TLink* link);
-    void Groom(); //remove duplciates, check domain->node->link(port->link) hierarchy and local-remote link paring etc.
     TGraph* Clone();
+    void LogDump();
 };
 
 #endif

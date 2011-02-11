@@ -137,7 +137,9 @@ bool Action_CreateTEWG::ProcessMessages()
         if (msg->GetTopic() == "TEWG_REPLY") 
         {
             list<TLV*>& tlvList = msg->GetTLVList();
-            TGraph* tewg = (TGraph*)tlvList.front()->value;
+            TGraph* tewg; 
+            memcpy(&tewg, (TGraph*)tlvList.front()->value, sizeof(void*));
+            tewg->LogDump();
         }
         //delete msg; //msg consumed 
         itm = messages.erase(itm);

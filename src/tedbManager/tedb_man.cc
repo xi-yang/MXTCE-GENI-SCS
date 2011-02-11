@@ -46,7 +46,7 @@ void* TEDBManThread::hookRun()
     xmlImporter = new TopologyXMLImporter(tedb, MxTCE::xmlTopoFilePath, 60);
     xmlImporter->Run();
     eventMaster->Schedule(xmlImporter);
-
+    tedb->LogDump();
     // start event loop. eventMaster has been initiated in ThreadPortScheduler::Run()
     eventMaster->Run();
 }
