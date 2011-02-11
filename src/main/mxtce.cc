@@ -163,7 +163,7 @@ void MxTCEMessageHandler::Run()
             mxTCE->GetMessageRouter()->AddPort(computeThreadPortName);
             string computeThreadQueueName = MxTCE::computeThreadPrefix + computingThread->GetName();
             string routeTopic1 = "COMPUTE_REQUEST", routeTopic2 = "COMPUTE_REPLY",
-                routeTopic3 = "TEDB_REQUEST", routeTopic4 = "TEDB_REPLY", routeTopic5 = "RESV_REQUEST", 
+                routeTopic3 = "TEWG_REQUEST", routeTopic4 = "TEWG_REPLY", routeTopic5 = "RESV_REQUEST", 
                 routeTopic6 = "RESV_REPLY", routeTopic7 = "POLICY_REQUEST", routeTopic8 = "POLICY_REPLY";
             mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic1, computeThreadPortName);
             mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic2, MxTCE::loopbackPortName);

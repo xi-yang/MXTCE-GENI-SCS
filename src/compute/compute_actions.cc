@@ -105,8 +105,8 @@ void Action_CreateTEWG::Process()
 
     // run current action main logic
     string queue = MxTCE::computeThreadPrefix + worker->GetName();
-    string topic = "TEDB_REQUEST";
-    string expectReturnTopic = "TEDB_REPLY";
+    string topic = "TEWG_REQUEST";
+    string expectReturnTopic = "TEWG_REPLY";
     list<TLV*> noTLVs;
     SendMessage(MSG_REQ, queue, topic, noTLVs, expectReturnTopic);
     topic = "RESV_REQUEST";
@@ -134,7 +134,7 @@ bool Action_CreateTEWG::ProcessMessages()
     for (itm = messages.begin(); itm != messages.end(); itm++)
     {
         msg = *itm;
-        if (msg->GetTopic() == "TEDB_REPLY") 
+        if (msg->GetTopic() == "TEWG_REPLY") 
         {
             list<TLV*>& tlvList = msg->GetTLVList();
             TGraph* tewg = (TGraph*)tlvList.front()->value;

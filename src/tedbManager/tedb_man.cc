@@ -59,13 +59,13 @@ void TEDBManThread::hookHandleMessage()
     while ((msg = msgPort->GetMessage()) != NULL)
     {
         msg->LogDump();
-        if (msg->GetTopic() == "TEDB_REQUEST") 
+        if (msg->GetTopic() == "TEWG_REQUEST") 
         {
             Message* replyMsg = msg->Duplicate();
             replyMsg->SetType(MSG_REPLY);
             //Get TEWG
             TGraph* tewg = tedb->GetSnapshot(msg->GetQueue());
-            string topic = "TEDB_REPLY";
+            string topic = "TEWG_REPLY";
             replyMsg->SetTopic(topic);
             TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
             tlv->type = MSG_TLV_VOID_PTR;
