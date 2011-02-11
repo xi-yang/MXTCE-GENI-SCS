@@ -38,9 +38,15 @@
 void TopologyXMLImporter::Run()
 {
     time_t lastModTime = get_mtime((const char *)xmlFilePath.c_str());
+    if (lastModTime == 0)
+    {
+        char buf[128];
+        snprintf(buf, 128, "TopologyXMLImporter::Run failed to open XML file: %s", xmlFilePath.c_str());
+        throw TEDBException(buf);
+    }
     if (xmlFileModTime >= lastModTime)  // XML topology file has not been modified since last import. 
         return;
-
+    xmlFileModTime = lastModTime;
     tedb->LockDB();
 
     xmlDocPtr xmlDoc = xmlParseFile(xmlFilePath.c_str());

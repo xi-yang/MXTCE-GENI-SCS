@@ -46,19 +46,16 @@ void* ExampleComputeWorker::hookRun()
     Action* actionNext = new Action_CreateTEWG(actionName, this);
     actions.push_back(actionNext);
     actionRoot->AddChild(actionNext);
-    actionNext->SetParent(actionRoot);
 
     actionName = "Example_Action_Compute_KSP";
     Action* actionNext2 = new Action_ComputeKSP(actionName, this);
     actions.push_back(actionNext2);
     actionNext->AddChild(actionNext2);
-    actionNext2->SetParent(actionNext);
 
     actionName = "Example_Action_Finalize_ST";
     Action* actionNext3 = new Action_FinalizeServiceTopology(actionName, this);
     actions.push_back(actionNext3);
     actionNext2->AddChild(actionNext3);
-    actionNext3->SetParent(actionNext2);
         
     // schedule the top level action(s)
     eventMaster->Schedule(actionRoot);
@@ -89,7 +86,7 @@ void ExampleComputeWorker::hookHandleMessage()
                 }
             }
         }
-        //delete msg;
+        //delete msg in Action::ProcessMessages()
     }
 
 }

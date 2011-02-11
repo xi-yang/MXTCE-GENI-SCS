@@ -57,8 +57,8 @@ Message* Message::Duplicate()
     list<TLV*>::iterator itlv; 
     for (itlv = this->tlvList.begin(); itlv != this->tlvList.end(); itlv++)
     {
-        TLV* tlv = (TLV*)(new char[(*itlv)->length+4]);
-        memcpy(tlv, (char*)(*itlv), (*itlv)->length+4);
+        TLV* tlv = (TLV*)(new char[TLV_HEAD_SIZE + (*itlv)->length]);
+        memcpy(tlv, (char*)(*itlv), TLV_HEAD_SIZE + (*itlv)->length);
         msg->tlvList.push_back(tlv);
     }
     return msg;
@@ -83,8 +83,8 @@ void Message::Transmit(int fd)
     for (itlv = tlvList.begin(); itlv != tlvList.end(); itlv++)
     {
         TLV* tlv = *itlv;
-        memcpy(buf, tlv, tlv->length+4);
-        header->length += (tlv->length+4);
+        memcpy(buf+header->length, tlv, TLV_HEAD_SIZE+tlv->length);
+        header->length += (TLV_HEAD_SIZE+tlv->length);
     }
 
     int wlen = writen(fd, buf, header->length);
@@ -145,7 +145,7 @@ void Message::Receive(int fd)
     if (msglen > sizeof(MessageHeader))
     {
         // Read message body
-        rlen = readn (fd, buf, msglen-sizeof(MessageHeader));
+        rlen = readn (fd, buf+sizeof(MessageHeader), msglen-sizeof(MessageHeader));
         if (rlen < 0)
         {
             snprintf(buf, 128, "MessageReader failed to read from %d", fd);
@@ -171,9 +171,10 @@ void Message::Receive(int fd)
     while (offset + sizeof(TLV) < msglen)
     {
         TLV* tlv = (TLV*)(buf + offset);
-        TLV* newTlv = (TLV*) new char[tlv->length + 4];
-        memcpy((char*)newTlv, buf + offset, tlv->length + 4);
+        TLV* newTlv = (TLV*) new char[TLV_HEAD_SIZE+tlv->length];
+        memcpy((char*)newTlv, buf + offset, TLV_HEAD_SIZE+tlv->length);
         tlvList.push_back(newTlv);
+        offset += (TLV_HEAD_SIZE+tlv->length);
     }
 }
 

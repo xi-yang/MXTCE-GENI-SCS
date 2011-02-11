@@ -397,7 +397,8 @@ void DBLink::UpdateFromXML(bool populateSubLevels)
         else if (sublinkLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)sublinkLevel->name, "switchingCapabilityDescriptors", 30) == 0)
         {
             ISCD* iscd = GetISCDFromXML(sublinkLevel);
-            swCapDescriptors.push_back(iscd); 
+            if (iscd != NULL)
+                swCapDescriptors.push_back(iscd); 
         }
         // TODO: parse IACD?
     }
@@ -419,7 +420,7 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
     bool wavelengthTranslation = false;
     for (xmlNode = xmlNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
     {
-        if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "switchingType", 12) == 0)
+        if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "switchingcapType", 12) == 0)
         {
             string swTypeStr;
             StripXmlString(swTypeStr, xmlNodeGetContent(xmlNode));
@@ -447,7 +448,7 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
         }
         else if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "switchingCapabilitySpecificInfo", 30) == 0)
         {
-            for (specLevel = specLevel->children; specLevel != NULL; specLevel = specLevel->next)
+            for (specLevel = xmlNode->children; specLevel != NULL; specLevel = specLevel->next)
             {
                 if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "capacity", 12) == 0)
                 {

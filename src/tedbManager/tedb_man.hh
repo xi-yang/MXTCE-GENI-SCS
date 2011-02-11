@@ -39,16 +39,21 @@
 #include "event.hh"
 #include "thread.hh"
 #include "api.hh"
+#include "tedb.hh"
+#include "tewg.hh"
+#include "topology_importer.hh"
+
 
 using namespace std;
 
 class TEDBManThread: public ThreadPortScheduler
 {
 protected:
-    //tedb man
+    TEDB* tedb;
+    TopologyXMLImporter* xmlImporter;
 
 public:
-    TEDBManThread(string name):ThreadPortScheduler(name){ }
+    TEDBManThread(string name):ThreadPortScheduler(name), tedb(NULL), xmlImporter(NULL) { }
     virtual ~TEDBManThread() { }
     virtual void* hookRun();
     virtual void hookHandleMessage();

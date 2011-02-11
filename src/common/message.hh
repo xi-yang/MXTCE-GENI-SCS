@@ -41,7 +41,7 @@
 
 using namespace std;
 
-#define MAX_MSG_SIZE 102400
+#define MAX_MSG_SIZE 4096
 
 typedef enum {
     MSG_REQ = 0x0001,
@@ -69,9 +69,10 @@ typedef enum {
 //no need for hton and htoh conversion
 typedef struct {
     u_int16_t type;
-    u_int16_t length;
+    u_int16_t length; //value size 
     u_int8_t value[4];
 } TLV;
+#define TLV_HEAD_SIZE 4
 
 #define MSG_FLAG_URGENT 0x00000001
 
@@ -103,6 +104,7 @@ public:
     bool IsUrgent() { return flagUrgent; }
     void SetUrgent(bool ur) { flagUrgent = ur; }
     void AddTLV(TLV* tlv) { tlvList.push_back(tlv); }
+    list<TLV*>& GetTLVList() { return tlvList; }
     Message* Duplicate();
     void Transmit(int wfd);
     void Receive(int rfd);

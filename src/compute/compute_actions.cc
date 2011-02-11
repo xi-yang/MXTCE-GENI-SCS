@@ -35,6 +35,7 @@
 #include "event.hh"
 #include "exception.hh"
 #include "mxtce.hh"
+#include "tewg.hh"
 #include "compute_worker.hh"
 #include "compute_actions.hh"
 
@@ -133,7 +134,12 @@ bool Action_CreateTEWG::ProcessMessages()
     for (itm = messages.begin(); itm != messages.end(); itm++)
     {
         msg = *itm;
-        //delete msg;
+        if (msg->GetTopic() == "TEDB_REPLY") 
+        {
+            list<TLV*>& tlvList = msg->GetTLVList();
+            TGraph* tewg = (TGraph*)tlvList.front()->value;
+        }
+        //delete msg; //msg consumed 
         itm = messages.erase(itm);
     }
 

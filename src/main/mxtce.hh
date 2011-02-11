@@ -61,6 +61,7 @@ public:
     static string policyManPortName;
     static string computeThreadPrefix;
     static string tmpFilesDir;
+    static string xmlTopoFilePath;
 
 public:
 	MxTCE( const string& configFile);

@@ -186,8 +186,7 @@ time_t get_mtime(const char *path)
 {
     struct stat statbuf;
     if (stat(path, &statbuf) == -1) {
-        perror(path);
-        exit(1);
+        return 0;
     }
     return statbuf.st_mtime;
 }
@@ -250,6 +249,7 @@ string GetUrnField(string urn, const char* field)
     char* ptr = strstr(urn.c_str(), str);
     if (ptr == NULL)
         return NULL;
+    ptr += (strlen(field)+1);
     char* ptr2 = strstr(ptr, ":"); 
     if (ptr2 == NULL)
         name = (const char*)ptr;
