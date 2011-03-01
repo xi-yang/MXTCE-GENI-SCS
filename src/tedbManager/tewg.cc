@@ -34,6 +34,7 @@
 #include "exception.hh"
 #include "log.hh"
 #include "tewg.hh"
+#include "reservation.hh"
 
 
 TDomain* TDomain::Clone(bool newSubLevels)
@@ -331,4 +332,107 @@ void TGraph::LogDump()
     }    
     LOG_DEBUG(buf);
 }
+
+
+void TEWG::AddResvDeltas(TReservation* resv)
+{
+    list<TDelta*>& resvDeltas = resv->GetDeltas();
+    list<TLink*>::iterator itl = this->tLinks.begin();
+    list<TDelta*>::iterator itd;
+    for (; itl != this->tLinks.end(); itl++)
+    {
+        for (itd = resvDeltas.begin(); itd != resvDeltas.end(); itd++)
+        {
+            TDelta* delta = *itd;
+            if (*(*itl) == (*(TLink*)delta->GetTargetResource()))
+            {
+                list<TDelta*> oldDeltaList = (*itl)->LookupDeltasByName(resv->GetName());
+                if (oldDeltaList.size() == 0)
+                    continue;
+                struct timeval lastGenTime = oldDeltaList.back()->GetGeneratedTime();
+                struct timeval thisGenTime =  delta->GetGeneratedTime();
+                if (oldDeltaList.size() > 0 && lastGenTime < thisGenTime)
+                {
+                    delta = delta->Clone();
+                    this->deltaList.push_back(delta);
+                    (*itl)->AddDelta(delta);
+                }
+            }
+        }
+    }
+}
+
+void TEWG::RemoveResvDeltas(string& resvName)
+{
+    //remove and delete deltas from deltaList
+    list<TDelta*>::iterator itd = this->deltaList.begin();
+    for (; itd != this->deltaList.end(); itd++)
+    {
+        TDelta* delta = *itd;
+        if (delta->GetReservationName() == resvName)
+        {
+            if (delta->GetTargetResource())
+                delta->GetTargetResource()->RemoveDelta(delta);
+            delete delta;
+            itd = this->deltaList.erase(itd);
+        }
+    }
+}
+
+void TEWG::HoldResvDeltas(string& resvName, bool doHold)
+{
+    list<TDelta*>::iterator itd = this->deltaList.begin();
+    for (; itd != this->deltaList.end(); itd++)
+    {
+        TDelta* delta = *itd;
+        if (delta->GetReservationName() == resvName)
+        {
+            if (delta->GetTargetResource())
+            {
+                if (doHold)
+                {
+                    delta->GetTargetResource()->RemoveDelta(delta);
+                    delta->Revoke();
+                }
+                else 
+                {
+                    list<TDelta*>::iterator itd = delta->GetTargetResource()->GetDeltaList().begin();
+                    for (; itd != delta->GetTargetResource()->GetDeltaList().end(); itd++)
+                    {
+                        if (*itd == delta)
+                            break;
+                    }
+                    if (itd == delta->GetTargetResource()->GetDeltaList().end())
+                    {
+                        delta->GetTargetResource()->AddDelta(delta);
+                        delta->Apply();
+                    }
+                }
+            }
+        }
+    }
+}
+
+void TEWG::ApplyResvDeltas(string& resvName)
+{
+    list<TDelta*>::iterator itd = this->deltaList.begin();
+    for (; itd != this->deltaList.end(); itd++)
+    {
+        TDelta* delta = *itd;
+        if (delta->GetReservationName() == resvName)
+            delta->Apply();
+    }
+}
+
+void TEWG::RevokeResvDeltas(string& resvName)
+{
+    list<TDelta*>::iterator itd = this->deltaList.begin();
+    for (; itd != this->deltaList.end(); itd++)
+    {
+        TDelta* delta = *itd;
+        if (delta->GetReservationName() == resvName)
+            delta->Revoke();
+    }
+}
+
 

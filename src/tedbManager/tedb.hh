@@ -171,7 +171,7 @@ public:
     void PopulateXmlTree();
     void LockDB() { tedbLock.DoLock(); }
     void UnlockDB() { tedbLock.Unlock(); }
-    TGraph* GetSnapshot(string& name); // full copy
+    TEWG* GetSnapshot(string& name); // full copy
 
     // TODO: TGraph* LeaseTEWG(...);  //partial copy /leasing
 

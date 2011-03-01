@@ -52,6 +52,7 @@ enum ResourceType
 };
 
 class ResourceMapByString;
+class TDelta;
 class Resource
 {
 protected:
@@ -59,10 +60,7 @@ protected:
     u_int32_t _id;  // unique resource ID 
     string name;    // topology identification name
     string address; // IPv address (with /slash netmask if applicable)
-
-    //map<u_int32_t, Resource*>* IdIndex;
-    //ResourceMapByName* NameIndex;
-    //ResourceMapByAddress* NameIndex;    
+    list<TDelta*> deltaList;
 
 public:
     Resource(ResourceType t, u_int32_t i, string& n, string& a): type(t), _id(i), name(n), address(a) { }
@@ -77,6 +75,11 @@ public:
     void SetName(string& n) { name = n; }
     string& GetAddress() { return address; }
     void SetAddress(string& a) { address = a; }
+    list<TDelta*>& GetDeltaList() { return deltaList; }
+    void AddDelta(TDelta* delta);
+    void RemoveDelta(TDelta* delta);
+    void RemoveDeltasByName(string resvName);
+    list<TDelta*> LookupDeltasByName(string resvName);
 };
 
 
@@ -120,6 +123,9 @@ public:
     virtual ~Domain() { }    
     map<string, Node*, strcmpless>& GetNodes() { return nodes; }
     void AddNode(Node* node);
+    bool operator==(Domain& aDomain) {
+        return (this->name == aDomain.name);
+    }
 };
 
 class Node: public Resource
@@ -139,6 +145,14 @@ public:
     void AddPort(Port* port);
     NodeIfAdaptMatrix* GetIfAdaptMatrix() { return ifAdaptMatrix; }
     void SetIfAdaptMatrix(NodeIfAdaptMatrix* matrix) { ifAdaptMatrix = matrix; }
+    bool operator==(Node& aNode) {
+        if (this->domain == NULL && aNode.domain != NULL 
+            || this->domain != NULL && aNode.domain == NULL)
+            return false;
+        if (this->domain != NULL && aNode.domain != NULL && !(*this->domain == *aNode.domain))
+            return false;
+        return (this->name == aNode.name);
+    }
 };
 
 
@@ -179,6 +193,14 @@ public:
     long GetBandwidthGranularity() {return bandwidthGranularity;}
     void SetBandwidthGranularity(long bw) { bandwidthGranularity = bw;}
     long* GetUnreservedBandwidth() { return unreservedBandwidth; }
+    bool operator==(Port& aPort) {
+        if (this->node == NULL && aPort.node != NULL 
+            || this->node != NULL && aPort.node == NULL)
+            return false;
+        if (this->node != NULL && aPort.node != NULL && !(*this->node == *aPort.node))
+            return false;
+        return (this->name == aPort.name);
+    }
 };
 
 #define _INF_ 2147483647
@@ -230,6 +252,14 @@ public:
     list<IACD>& GetSwAdaptDescriptors() { return swAdaptDescriptors; }
     list<Link*>& GetContainerLinks() { return containerLinks; }
     list<Link*>& GetComponentLinks() { return componentLinks; }
+    bool operator==(Link& aLink) {
+        if (this->port == NULL && aLink.port != NULL 
+            || this->port != NULL && aLink.port == NULL)
+            return false;
+        if (this->port != NULL && aLink.port != NULL && !(*this->port == *aLink.port))
+            return false;
+        return (this->name == aLink.name);
+    }
 };
 
 
@@ -245,6 +275,14 @@ public:
     ~Point() { }
     Port* GetPort() { return port; }
     void SetPort(Port* p) { port = p; }
+    bool operator==(Point& aPoint) {
+        if (this->port == NULL && aPoint.port != NULL 
+            || this->port != NULL && aPoint.port == NULL)
+            return false;
+        if (this->port != NULL && aPoint.port != NULL && !(*this->port == *aPoint.port))
+            return false;
+        return (this->name == aPoint.name);
+    }
 };
 
 

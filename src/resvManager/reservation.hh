@@ -83,19 +83,24 @@ protected:
     struct timeval appliedTime;
     TSchedule* schedule;
     Resource* targetResource;
+    bool applied;
 
 public:
     TDelta(string& r, TSchedule* s, Resource* t): resvName(r), schedule(s), targetResource(t) {
         gettimeofday (&generatedTime, NULL);
         appliedTime.tv_sec = appliedTime.tv_usec = 0;
+        applied = false;
     }
     virtual ~TDelta() { if (schedule) delete schedule; }
+    string& GetReservationName() { return resvName; }
+    void SetReservationName(string& name) { resvName = name; }
     struct timeval GetGeneratedTime() { return generatedTime; }
     struct timeval GetAppliedTime() { return appliedTime; }
     TSchedule* GetSchedule() { return schedule; }
     void SetSchedule(TSchedule* s) { schedule = s; }
     Resource* GetTargetResource() { return targetResource; }
     void SetTargetResource(Resource* t) { targetResource = t; }
+    bool IsApplied() { return applied; }
     virtual TDelta* Clone() = 0; 
     virtual void Apply() = 0;
     virtual void Revoke() = 0;
@@ -121,6 +126,8 @@ class TLinkDelta_PSC: public TLinkDelta
 public:
     TLinkDelta_PSC(string& r, TSchedule* s, Resource* t, long bw): TLinkDelta(r, s, t, bw) { }
     virtual ~TLinkDelta_PSC() { }    
+    virtual void Apply();
+    virtual void Revoke();
 };
 
 class TLinkDelta_L2SC: public TLinkDelta
@@ -134,6 +141,8 @@ public:
     virtual ~TLinkDelta_L2SC() { }    
     ConstraintTagSet& GetVlanTags() { return vlanTags; }
     void SetVlanTags(ConstraintTagSet& vtags) { vlanTags = vtags; }
+    virtual void Apply();
+    virtual void Revoke();
 };
 
 class TLinkDelta_TDM: public TLinkDelta
@@ -147,6 +156,8 @@ public:
     virtual ~TLinkDelta_TDM() { }    
     ConstraintTagSet& GetTimeslots() { return timeslots; }
     void SetTimeslots(ConstraintTagSet& slots) { timeslots = slots; }
+    virtual void Apply();
+    virtual void Revoke();
 };
 
 class TLinkDelta_LSC: public TLinkDelta
@@ -160,6 +171,8 @@ public:
     virtual ~TLinkDelta_LSC() { }    
     ConstraintTagSet& GetWavelengths() { return wavelengths; }
     void SetWavelengths(ConstraintTagSet& waves) { wavelengths = waves; }
+    virtual void Apply();
+    virtual void Revoke();
 };
 
 
@@ -179,6 +192,9 @@ public:
     void SetName(string& n) { name = n; }
     string& GeStatus() { return status; }
     void SetStatus(string& s) { status = s; }
+    TGraph* GetServiceTopology() { return serviceTopology; }
+    void SetServiceTopology(TGraph* tg) { serviceTopology = tg; }
+    list<TSchedule*>& GetSchedules() { return schedules; }
     list<TDelta*>& GetDeltas() { return deltaCache; }
     list<TDelta*> CloneDeltas();
     void BuildDeltaCache();

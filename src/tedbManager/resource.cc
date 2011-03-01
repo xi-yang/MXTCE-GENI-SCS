@@ -33,6 +33,39 @@
 
 #include "resource.hh"
 #include "exception.hh"
+#include "reservation.hh"
+
+
+void Resource::AddDelta(TDelta* delta) 
+{ 
+    deltaList.push_back(delta); delta->SetTargetResource(this); 
+}
+
+void Resource::RemoveDelta(TDelta* delta) 
+{
+    list<TDelta*>::iterator itd = deltaList.begin();
+    for ( ; itd != deltaList.end(); itd++)
+        if ((*itd) == delta)
+            itd = deltaList.erase(itd);
+}
+
+void Resource::RemoveDeltasByName(string resvName) 
+{
+    list<TDelta*>::iterator itd = deltaList.begin();
+    for ( ; itd != deltaList.end(); itd++)
+        if ((*itd)->GetReservationName() == resvName)
+            itd = deltaList.erase(itd);
+}
+
+list<TDelta*> Resource::LookupDeltasByName(string resvName) 
+{
+    list<TDelta*> deltaListNew;
+    list<TDelta*>::iterator itd = deltaList.begin();
+    for ( ; itd != deltaList.end(); itd++)
+        if ((*itd)->GetReservationName() == resvName)
+            deltaListNew.push_back(*itd);
+    return deltaListNew;
+}
 
 
 void Domain::AddNode(Node* node)

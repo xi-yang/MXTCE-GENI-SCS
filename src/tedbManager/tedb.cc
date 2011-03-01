@@ -685,9 +685,9 @@ void TEDB::PopulateXmlTree()
 }
 
 
-TGraph* TEDB::GetSnapshot(string& name)
+TEWG* TEDB::GetSnapshot(string& name)
 {
-    TGraph* tg = new TGraph(name);
+    TEWG* tg = new TEWG(name);
     if (dbDomains.empty())
         return NULL;
 

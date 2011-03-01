@@ -45,6 +45,10 @@ void TLinkDelta::Apply()
 {
     if (targetResource == NULL)
         return;
+    if (applied)
+        return;
+    gettimeofday (&appliedTime, NULL);
+    applied = true;
     Link* link = (Link*)targetResource;
     for (int i = 0; i < 8; i++) {
         link->GetUnreservedBandwidth()[i] -= this->bandwidth;
@@ -58,12 +62,135 @@ void TLinkDelta::Revoke()
 {
     if (targetResource == NULL)
         return;
+    if (!applied)
+        return;
+    gettimeofday (&appliedTime, NULL);
+    applied = false;
     Link* link = (Link*)targetResource;
     for (int i = 0; i < 8; i++) {
         link->GetUnreservedBandwidth()[i] += this->bandwidth;
         if (link->GetUnreservedBandwidth()[i] >  link->GetMaxReservableBandwidth()) 
             link->GetUnreservedBandwidth()[i] = link->GetMaxReservableBandwidth();
     } 
+}
+
+/**
+  * Assume the first ISCD represents the link layer. Will support multi-ISCDs in future.
+  */
+
+void TLinkDelta_PSC::Apply()
+{
+    if (applied)
+        return;
+    TLinkDelta::Apply();
+    TLink* link = (TLink*)targetResource;
+    ISCD_PSC* iscd = (ISCD_PSC*)link->GetTheISCD();
+    assert(iscd->switchingType >= LINK_IFSWCAP_PSC1 && iscd->switchingType <= LINK_IFSWCAP_PSC4);
+}
+
+
+void TLinkDelta_PSC::Revoke()
+{
+    if (!applied)
+        return;
+    TLinkDelta::Revoke();
+    TLink* link = (TLink*)targetResource;
+    ISCD_PSC* iscd = (ISCD_PSC*)link->GetTheISCD();
+    assert(iscd->switchingType >= LINK_IFSWCAP_PSC1 && iscd->switchingType <= LINK_IFSWCAP_PSC4);
+}
+
+
+void TLinkDelta_L2SC::Apply()
+{
+    if (targetResource == NULL)
+        return;
+    if (applied)
+        return;
+    TLinkDelta::Apply();
+    TLink* link = (TLink*)targetResource;
+    ISCD_L2SC* iscd = (ISCD_L2SC*)link->GetTheISCD();
+    assert(iscd->switchingType == LINK_IFSWCAP_L2SC);
+    iscd->availableVlanTags.Intersect(this->vlanTags);
+    iscd->assignedVlanTags.Join(this->vlanTags);
+}
+
+
+void TLinkDelta_L2SC::Revoke()
+{
+    if (targetResource == NULL)
+        return;
+    if (!applied)
+        return;
+    TLinkDelta::Revoke();
+    TLink* link = (TLink*)targetResource;
+    ISCD_L2SC* iscd = (ISCD_L2SC*)link->GetTheISCD();
+    assert(iscd->switchingType == LINK_IFSWCAP_L2SC);
+    iscd->availableVlanTags.Join(this->vlanTags);
+    iscd->assignedVlanTags.Intersect(this->vlanTags);
+}
+
+
+void TLinkDelta_TDM::Apply()
+{
+    if (targetResource == NULL)
+        return;
+    if (applied)
+        return;
+    // TODO: round-up bandwidth
+    TLinkDelta::Apply();
+    TLink* link = (TLink*)targetResource;
+    ISCD_TDM* iscd = (ISCD_TDM*)link->GetTheISCD();
+    assert(iscd->switchingType == LINK_IFSWCAP_TDM);
+    iscd->availableTimeSlots.Intersect(this->timeslots);
+    iscd->assignedTimeSlots.Join(this->timeslots);
+}
+
+
+void TLinkDelta_TDM::Revoke()
+{
+    if (targetResource == NULL)
+        return;
+    if (!applied)
+        return;
+    // TODO: round-up bandwidth
+    TLinkDelta::Revoke();
+    TLink* link = (TLink*)targetResource;
+    ISCD_TDM* iscd = (ISCD_TDM*)link->GetTheISCD();
+    assert(iscd->switchingType == LINK_IFSWCAP_TDM);
+    iscd->availableTimeSlots.Join(this->timeslots);
+    iscd->assignedTimeSlots.Intersect(this->timeslots);
+}
+
+
+void TLinkDelta_LSC::Apply()
+{
+    if (targetResource == NULL)
+        return;
+    if (applied)
+        return;
+    // TODO: round-up bandwidth
+    TLinkDelta::Apply();
+    TLink* link = (TLink*)targetResource;
+    ISCD_LSC* iscd = (ISCD_LSC*)link->GetTheISCD();
+    assert(iscd->switchingType == LINK_IFSWCAP_LSC);
+    iscd->availableWavelengths.Intersect(this->wavelengths);
+    iscd->assignedWavelengths.Join(this->wavelengths);
+}
+
+
+void TLinkDelta_LSC::Revoke()
+{
+    if (targetResource == NULL)
+        return;
+    if (!applied)
+        return;
+    // TODO: round-up bandwidth
+    TLinkDelta::Revoke();
+    TLink* link = (TLink*)targetResource;
+    ISCD_LSC* iscd = (ISCD_LSC*)link->GetTheISCD();
+    assert(iscd->switchingType == LINK_IFSWCAP_LSC);
+    iscd->availableWavelengths.Join(this->wavelengths);
+    iscd->assignedWavelengths.Intersect(this->wavelengths);
 }
 
 
@@ -76,8 +203,10 @@ list<TDelta*> TReservation::CloneDeltas()
     return deltaList;
 }
 
-// The serviceTopology may contain abstract links. We may need to wait for the reservation beeing full computed 
-// and serviceTopology being completele updated before we call this method.
+/**
+  * The serviceTopology may contain abstract links. We may need to wait for the reservation beeing
+  *  fully computed and serviceTopology being completele updated before we call this method.
+  */
 void TReservation::BuildDeltaCache()
 {
     //clean up list ???
@@ -101,19 +230,20 @@ void TReservation::BuildDeltaCache()
         case LINK_IFSWCAP_PSC2:
         case LINK_IFSWCAP_PSC3:
         case LINK_IFSWCAP_PSC4:
+            // use maxResvableBw of the serviceTopology as the delta bandwidth.
             delta = new TLinkDelta_PSC(name, NULL, link, link->GetMaxReservableBandwidth());
             break;
         case LINK_IFSWCAP_L2SC:
             delta = new TLinkDelta_L2SC(name, NULL, link, link->GetMaxReservableBandwidth());
-            //add vlans later
+            // TODO: add vlans from link ISCD and/or from later computation
             break;
         case LINK_IFSWCAP_TDM:
             delta = new TLinkDelta_TDM(name, NULL, link, link->GetMaxReservableBandwidth());
-            //add timeslots later
+            // TODO: add timeslots to delta
             break;
         case LINK_IFSWCAP_LSC:
             delta = new TLinkDelta_LSC(name, NULL, link, link->GetMaxReservableBandwidth());
-            //add wavelengths later
+            // TODO: add wavelengths to delta
             break;
         default:
             delta = NULL;

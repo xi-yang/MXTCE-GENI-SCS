@@ -64,7 +64,7 @@ void TEDBManThread::hookHandleMessage()
             Message* replyMsg = msg->Duplicate();
             replyMsg->SetType(MSG_REPLY);
             //Get TEWG
-            TGraph* tewg = tedb->GetSnapshot(msg->GetQueue());
+            TEWG* tewg = tedb->GetSnapshot(msg->GetQueue());
             string topic = "TEWG_REPLY";
             replyMsg->SetTopic(topic);
             TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];

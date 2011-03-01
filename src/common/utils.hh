@@ -209,6 +209,20 @@ public:
                 this->byteArray[i] &= tagset.byteArray[i];
             hasAnyTag = false;
         }
+    void Join(ConstraintTagSet & tagset)
+        {
+            assert(this->base == tagset.base && this->interval == tagset.interval);
+            if (this->hasAnyTag)
+                return;
+            if (tagset.HasAnyTag()) 
+            {
+                memset(this->byteArray, this->numBytes, 0xff);
+                this->hasAnyTag = true;
+                return;
+            }
+            for (int i = 0; i < this->numBytes && i < tagset.numBytes; i++)
+                this->byteArray[i] |= tagset.byteArray[i];
+        }
     u_int32_t LowestTag()
         {
             for (int i = 0; i < numBytes; i++)

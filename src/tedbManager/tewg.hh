@@ -56,6 +56,9 @@ public:
     bool IsDisabled() { return disabled; }
     void SetDisabled(bool d) { disabled = d; }
     TDomain* Clone(bool newSubLevels=true);
+    bool operator==(TDomain& aDomain) {
+        return (this->name == aDomain.name);
+    }
 };
 
 
@@ -83,6 +86,14 @@ public:
     void AddRemoteLink(TLink* link);
     bool HasRemoteLink(TLink* link);
     TNode* Clone(bool newSubLevels=true);
+    bool operator==(TNode& aNode) {
+        if (this->domain == NULL && aNode.domain != NULL 
+            || this->domain != NULL && aNode.domain == NULL)
+            return false;
+        if (this->domain != NULL && aNode.domain != NULL && !(*this->domain == *aNode.domain))
+            return false;
+        return (this->name == aNode.name);
+    }
 };
 
 
@@ -101,6 +112,14 @@ public:
     void SetDisabled(bool d) { disabled = d; }
     bool HasLink();
     TPort* Clone(bool newSubLevels=true);
+    bool operator==(TPort& aPort) {
+        if (this->node == NULL && aPort.node != NULL 
+            || this->node != NULL && aPort.node == NULL)
+            return false;
+        if (this->node != NULL && aPort.node != NULL && !(*this->node == *aPort.node))
+            return false;
+        return (this->name == aPort.name);
+    }
 };
 
 
@@ -131,6 +150,14 @@ public:
     bool VerifyFullLink();
     ISCD* GetTheISCD();
     TLink* Clone();
+    bool operator==(TLink& aLink) {
+        if (this->port == NULL && aLink.port != NULL 
+            || this->port != NULL && aLink.port == NULL)
+            return false;
+        if (this->port != NULL && aLink.port != NULL && !(*this->port == *aLink.port))
+            return false;
+        return (this->name == aLink.name);
+    }
 };
 
 
@@ -158,5 +185,25 @@ public:
     TGraph* Clone();
     void LogDump();
 };
+
+
+class TDelta;
+class TReservation;
+class TEWG: public TGraph
+{
+protected:
+    list<TDelta*> deltaList;
+
+public:
+    TEWG(string& name): TGraph(name) {}
+    virtual ~TEWG() {}
+    list<TDelta*>& GetDeltaList() { return deltaList; }
+    void AddResvDeltas(TReservation* resv);
+    void RemoveResvDeltas(string& resvName);
+    void HoldResvDeltas(string& resvName, bool doHold);
+    void ApplyResvDeltas(string& resvName);
+    void RevokeResvDeltas(string& resvName);
+};
+
 
 #endif
