@@ -109,9 +109,6 @@ void Action_CreateTEWG::Process()
     string expectReturnTopic = "TEWG_REPLY";
     list<TLV*> noTLVs;
     SendMessage(MSG_REQ, queue, topic, noTLVs, expectReturnTopic);
-    topic = "RESV_REQUEST";
-    expectReturnTopic = "RESV_REPLY";
-    SendMessage(MSG_REQ, queue, topic, noTLVs, expectReturnTopic);
 }
 
 

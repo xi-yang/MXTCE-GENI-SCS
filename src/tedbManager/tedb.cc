@@ -800,6 +800,12 @@ void TEDB::LogDump()
                             tl->GetRemoteLink()->GetName().c_str());
                         strcat(buf, str);
                     }
+                    snprintf(str, 128, "\t\t\t\t<MaxBandwidth>%ld</MaxBandwidth>\n", tl->GetMaxBandwidth());
+                    strcat(buf, str);
+                    snprintf(str, 128, "\t\t\t\t<MaxReservableBandwidth>%ld</MaxReservableBandwidth>\n", tl->GetMaxReservableBandwidth());
+                    strcat(buf, str);
+                    snprintf(str, 128, "\t\t\t\t<Granularity>%ld</Granularity>\n", tl->GetBandwidthGranularity());
+                    strcat(buf, str);
                     snprintf(str, 128, "\t\t\t</link>\n");
                     strcat(buf, str);
                 }

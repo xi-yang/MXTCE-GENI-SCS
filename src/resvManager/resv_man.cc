@@ -53,12 +53,14 @@ void ResvManThread::hookHandleMessage()
     while ((msg = msgPort->GetMessage()) != NULL)
     {
         msg->LogDump();
-        if (msg->GetTopic() == "RESV_REQUEST") 
+        if (msg->GetTopic() == "TEWG_RESV_REQUEST") 
         {
             Message* replyMsg = msg->Duplicate();
             replyMsg->SetType(MSG_REPLY);
-            string topic = "RESV_REPLY";
+            string topic = "TEWG_REPLY";
             replyMsg->SetTopic(topic);
+            // use the same queue that is dedicated to computeThread
+            // add reservation deltas
             this->GeMessagePort()->PostMessage(replyMsg);
         }
         delete msg; //msg consumed

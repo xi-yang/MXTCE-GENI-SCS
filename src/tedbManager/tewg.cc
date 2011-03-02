@@ -318,6 +318,14 @@ void TGraph::LogDump()
                             tl->GetRemoteLink()->GetName().c_str());
                         strcat(buf, str);
                     }
+                    if (tl->GetTheISCD())
+                    {
+                        snprintf(str, 128, "\t\t\t\t<SwitchingCapabilityDescriptors> <switchingcapType=%d><encodingType=%d><capacity=%ld> </SwitchingCapabilityDescriptors>\n",  
+                            tl->GetTheISCD()->switchingType,
+                            tl->GetTheISCD()->encodingType,
+                            tl->GetTheISCD()->capacity);
+                        strcat(buf, str);
+                    }
                     snprintf(str, 128, "\t\t\t</link>\n");
                     strcat(buf, str);
                 }

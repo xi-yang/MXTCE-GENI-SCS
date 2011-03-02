@@ -61,18 +61,19 @@ void TEDBManThread::hookHandleMessage()
         msg->LogDump();
         if (msg->GetTopic() == "TEWG_REQUEST") 
         {
-            Message* replyMsg = msg->Duplicate();
-            replyMsg->SetType(MSG_REPLY);
-            //Get TEWG
+            Message* fwdMsg = msg->Duplicate();
+            fwdMsg->SetType(MSG_REQ);
+            // get TEWG simply by taking full snapshot copy
             TEWG* tewg = tedb->GetSnapshot(msg->GetQueue());
-            string topic = "TEWG_REPLY";
-            replyMsg->SetTopic(topic);
+            string topic = "TEWG_RESV_REQUEST";
+            fwdMsg->SetTopic(topic);
+            // use the same queue that is dedicated to computeThread
             TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
             tlv->type = MSG_TLV_VOID_PTR;
             tlv->length = sizeof(void*);
             memcpy(tlv->value, (void*)&tewg, sizeof(void*)); 
-            replyMsg->AddTLV(tlv);
-            this->GeMessagePort()->PostMessage(replyMsg);
+            fwdMsg->AddTLV(tlv);
+            this->GeMessagePort()->PostMessage(fwdMsg);
         }
         delete msg; //msg consumed
     }

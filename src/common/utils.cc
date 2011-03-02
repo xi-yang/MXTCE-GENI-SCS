@@ -235,7 +235,7 @@ long StringToBandwidth(string strBandwidth)
         factor = 1000000000;
     }
 
-    if (sscanf(strBandwidth.c_str(), "%ld", & bandwidth) == 1)
+    if (sscanf(strBandwidth.c_str(), "%ld", &bandwidth) == 1)
         return bandwidth*factor;
     return 0;
 }

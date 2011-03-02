@@ -163,16 +163,23 @@ void MxTCEMessageHandler::Run()
             mxTCE->GetMessageRouter()->AddPort(computeThreadPortName);
             string computeThreadQueueName = MxTCE::computeThreadPrefix + computingThread->GetName();
             string routeTopic1 = "COMPUTE_REQUEST", routeTopic2 = "COMPUTE_REPLY",
-                routeTopic3 = "TEWG_REQUEST", routeTopic4 = "TEWG_REPLY", routeTopic5 = "RESV_REQUEST", 
-                routeTopic6 = "RESV_REPLY", routeTopic7 = "POLICY_REQUEST", routeTopic8 = "POLICY_REPLY";
+                routeTopic3 = "TEWG_REQUEST", routeTopic4 = "TEWG_RESV_REQUEST", routeTopic5 = "TEWG_REPLY", 
+                routeTopic6 = "POLICY_REQUEST", routeTopic7 = "POLICY_REPLY";
+
+            // coreThread send compute request to computeThread
             mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic1, computeThreadPortName);
+            // computeThread reply to coreThread with computation result
             mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic2, MxTCE::loopbackPortName);
+
+            // computeThread send TEWG request to tedbMan
             mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic3, MxTCE::tedbManPortName);
-            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic4, computeThreadPortName);
-            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic5, MxTCE::resvManPortName);
-            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic6, computeThreadPortName);
-            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic7, MxTCE::policyManPortName);
-            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic8, computeThreadPortName);
+            // tedbMan forward the request with TEWG to resvMan
+            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic4, MxTCE::resvManPortName);
+            // resvMan reply to computeThread with TEWG and added deltaList
+            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic5, computeThreadPortName);
+            // TODO: policyMan can be invloved in the above TEWG chain and add policy modifiers to TEWG
+            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic6, MxTCE::policyManPortName);
+            mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic7, computeThreadPortName);
 
             // start compute thread
             computingThread->Start(NULL);
