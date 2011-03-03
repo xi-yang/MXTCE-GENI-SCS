@@ -38,7 +38,7 @@ void* ResvManThread::hookRun()
 {
     msgPort->SetThreadScheduler(this);
 
-    // thread specific init
+    // init RData ?
 
     // start event loop
     // eventMaster has been initiated in parent class ThreadPortScheduler::Run() method
@@ -60,7 +60,14 @@ void ResvManThread::hookHandleMessage()
             string topic = "TEWG_REPLY";
             replyMsg->SetTopic(topic);
             // use the same queue that is dedicated to computeThread
-            // add reservation deltas
+            // add reservation deltas from RData
+            list<TLV*>& tlvList = replyMsg->GetTLVList();
+            TEWG* tewg; 
+            memcpy(&tewg, (TGraph*)tlvList.front()->value, sizeof(void*));
+            list<TReservation*>& resvList = RData.GetReservations();
+            list<TReservation*>::iterator itr;
+            for (itr = resvList.begin(); itr != resvList.end(); itr++)
+                tewg->AddResvDeltas(*itr);
             this->GeMessagePort()->PostMessage(replyMsg);
         }
         delete msg; //msg consumed

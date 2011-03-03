@@ -85,11 +85,13 @@ void Action_ProcessRequestTopology::CleanUp()
 void Action_ProcessRequestTopology::Finish()
 {
     LOG(name<<"Finish() called"<<endl);
-    // send back COMPUTE_REPLY message to core thread
+    //$$$$ send back COMPUTE_REPLY message to core thread
     string queue = MxTCE::computeThreadPrefix + worker->GetName();
     string topic = "COMPUTE_REPLY";
     list<TLV*> noTLVs;
     SendMessage(MSG_REPLY, queue, topic, noTLVs);
+
+    //$$$$ destroy stored data including tewg
 
     // stop out from event loop
     Action::Finish();
@@ -125,17 +127,18 @@ bool Action_CreateTEWG::ProcessChildren()
 bool Action_CreateTEWG::ProcessMessages()
 {
     LOG(name<<"ProcessMessages() called"<<endl);
-    //run current action logic based on received messages 
+    // run current action logic based on received messages 
     list<Message*>::iterator itm;
     Message* msg;
+    //$$$$ replace :  store TEWG
     for (itm = messages.begin(); itm != messages.end(); itm++)
     {
         msg = *itm;
         if (msg->GetTopic() == "TEWG_REPLY") 
         {
             list<TLV*>& tlvList = msg->GetTLVList();
-            TGraph* tewg; 
-            memcpy(&tewg, (TGraph*)tlvList.front()->value, sizeof(void*));
+            TEWG* tewg; 
+            memcpy(&tewg, (TEWG*)tlvList.front()->value, sizeof(void*));
             tewg->LogDump();
         }
         //delete msg; //msg consumed 
@@ -174,9 +177,12 @@ void Action_CreateTEWG::Finish()
 void Action_ComputeKSP::Process()
 {
     LOG(name<<"Process() called"<<endl);
-    //$$$$ run current action main logic
-    //$$$$ send out messages if needed and add to expectMessageTopics
 
+    //$$$$ prune with bandwidth
+    //$$$$ compute with KSP
+    //$$$$ verify constraints with switchingType / layer adaptation / VLAN etc.
+    //$$$$ store a list of ordered result paths 
+    
 }
 
 
@@ -227,8 +233,9 @@ void Action_ComputeKSP::Finish()
 void Action_FinalizeServiceTopology::Process()
 {
     LOG(name<<"Process() called"<<endl);
-    //$$$$ run current action main logic
-    //$$$$ send out messages if needed and add to expectMessageTopics
+
+    //$$$$ pick one or multiple paths (or return failure)
+    //$$$$ translate into format API requires
 }
 
 

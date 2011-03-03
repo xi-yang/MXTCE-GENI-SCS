@@ -39,13 +39,14 @@
 #include "event.hh"
 #include "thread.hh"
 #include "api.hh"
-
+#include "reservation.hh"
+ 
 using namespace std;
 
 class ResvManThread: public ThreadPortScheduler
 {
 protected:
-    //resv man
+    RDatabase RData;
 
 public:
     ResvManThread(string name):ThreadPortScheduler(name){ }

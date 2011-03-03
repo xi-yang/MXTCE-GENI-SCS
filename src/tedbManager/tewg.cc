@@ -35,7 +35,7 @@
 #include "log.hh"
 #include "tewg.hh"
 #include "reservation.hh"
-
+#include <vector>
 
 TDomain* TDomain::Clone(bool newSubLevels)
 {
@@ -214,12 +214,57 @@ void TGraph::AddNode(TDomain* domain, TNode* node)
     node->SetDomain(domain);
 }
 
+void TGraph::RemoveNode(TNode* node)
+{
+    list<TLink*>::iterator itl;
+    list<TLink*>& lclLinks = node->GetLocalLinks();
+    itl = lclLinks.begin();
+    while (itl != lclLinks.end())
+    {
+        TLink* link = *itl;
+        ++itl;
+        RemoveLink(link);
+    }
+    list<TLink*>& rmtLinks = node->GetRemoteLinks();
+    itl = rmtLinks.begin();
+    while (itl != rmtLinks.end())
+    {
+        TLink* link = *itl;
+        ++itl;
+        RemoveLink(link);
+    }
+    map<string, Port*, strcmpless>::iterator itp;
+    map<string, Port*, strcmpless>& ports = node->GetPorts();
+    while (itp != ports.end())
+    {
+        TPort* port = (TPort*)(*itp).second;
+        ++itp;
+        RemovePort(port);
+    }
+    node->GetDomain()->GetNodes().erase(node->GetName());
+    tNodes.remove(node);
+}
 
 void TGraph::AddPort(TNode* node, TPort* port)
 {
     tPorts.push_back(port);
     node->AddPort(port);
     port->SetNode(node);
+}
+
+void TGraph::RemovePort(TPort* port)
+{
+    map<string, Link*, strcmpless>& links = port->GetLinks();
+    map<string, Link*, strcmpless>::iterator itl;
+    itl = links.begin();
+    while (itl != links.end())
+    {
+        TLink* link = (TLink*)(*itl).second;
+        ++itl;
+        RemoveLink(link);
+    }
+    port->GetNode()->GetPorts().erase(port->GetName());
+    tPorts.remove(port);
 }
 
 
@@ -243,6 +288,11 @@ void TGraph::AddLink(TNode* node, TLink* link)
     link->SetLocalEnd(node);
 }
 
+void TGraph::RemoveLink(TLink* link)
+{
+    link->GetPort()->GetLinks().erase(link->GetName());
+    tLinks.remove(link);
+}
 
 TGraph* TGraph::Clone()
 {
@@ -443,4 +493,137 @@ void TEWG::RevokeResvDeltas(string& resvName)
     }
 }
 
+void TEWG::PruneByBandwidth(long bw)
+{
+    list<TLink*>::iterator itl = tLinks.begin();
+    itl = tLinks.begin();
+    while (itl != tLinks.end())
+    {
+        TLink* link = *itl;
+        ++itl;
+        if (link->GetAvailableBandwidth() < bw)
+            RemoveLink(link);
+    }
+}
+
+// TODO: exception  handling
+list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode)
+{
+    // init WorkData in TLinks
+    list<TNode*>::iterator itn = tNodes.begin();
+    while (itn != tNodes.end())
+    {
+        TNode* node = *itn;
+        if (node->GetWorkData())
+            TWDATA(node)->Cleanup();
+        else
+            node->SetWorkData(new TWorkData());
+        ++itn;
+    }
+    list<TLink*>::iterator itl = tLinks.begin();
+    itl = tLinks.begin();
+    while (itl != tLinks.end())
+    {
+        TLink* link = *itl;
+        if (link->GetWorkData())
+        {
+            TWDATA(link)->Cleanup();
+            TWDATA(link)->linkCost = link->GetMetric();
+        }
+        else
+            link->SetWorkData(new TWorkData(link->GetMetric(), 0));
+        ++itl;
+    }
+
+    // Dijkstra's SPF algorithm
+    TWDATA(srcNode)->visited = true;
+    TNode* headnode= NULL;
+    vector<TNode*>::iterator itNode;
+    vector<TNode*> ReachableNodes;
+    list<TLink*>::iterator itLink;
+    TNode* nextnode;
+
+    itLink = srcNode->GetLocalLinks().begin();
+    while (itLink != srcNode->GetLocalLinks().end()) 
+    {
+        if (TWDATA(*itLink)->filteroff)
+        {
+            itLink++;
+            continue;
+        }
+        nextnode=(*itLink)->GetRemoteEnd();
+        if (TWDATA(nextnode)->filteroff)
+        {
+            itLink++;
+            continue;
+        }
+        ReachableNodes.push_back(nextnode); // found path to this node
+        TWDATA(nextnode)->pathCost = TWDATA(*itLink)->linkCost;
+        TWDATA(nextnode)->path.push_back(*itLink);
+        itLink++;
+    }
+    if (ReachableNodes.size()==0) 
+        throw TCEException((char*)"TEWG::ComputeDijkstraPath(): No Path Found");
+
+    vector<TNode*>::iterator start;
+    vector<TNode*>::iterator end;
+    start=ReachableNodes.begin();
+    end=ReachableNodes.end();
+    itNode = min_element(start, end);
+    headnode = *itNode;
+    TWDATA(headnode)->visited = true; // shortest path to this node has been found
+    ReachableNodes.erase(itNode); // shortest path found for this head node (srcNode)
+
+    for (;;) 
+    {
+        if (headnode==NULL) 
+            break;
+    	// Go through all the outgoing links for the newly added node
+    	itLink = headnode->GetLocalLinks().begin();
+        while (itLink!=headnode->GetLocalLinks().end()) {
+            nextnode=(*itLink)->GetRemoteEnd();
+            if ( !TWDATA(nextnode)->visited && !TWDATA(nextnode)->filteroff && !TWDATA(*itLink)->filteroff 
+                && TWDATA(nextnode)->pathCost > TWDATA(headnode)->pathCost + TWDATA(*itLink)->linkCost ) 
+            {
+                TWDATA(nextnode)->pathCost = TWDATA(headnode)->pathCost + TWDATA(*itLink)->linkCost;
+                bool hasNode = false;
+                vector<TNode*>::iterator itRNode;
+                itRNode=ReachableNodes.begin();
+                while ((!hasNode) && (itRNode!=ReachableNodes.end())) 
+                {
+                    if ((*itRNode)==nextnode) 
+                        hasNode = true;
+                    itRNode++;
+                }
+                if (!hasNode)
+                {
+                    ReachableNodes.push_back(nextnode);
+                }
+
+                list<TLink*>::iterator itPath;
+                itPath = TWDATA(headnode)->path.begin();
+                TWDATA(nextnode)->path.clear();
+                while (itPath != TWDATA(headnode)->path.end()) 
+                {
+                    TWDATA(nextnode)->path.push_back(*itPath);
+                    itPath++;
+                }
+                TWDATA(nextnode)->path.push_back(*itLink);
+            }
+            itLink++;
+        }
+
+        if (ReachableNodes.size()==0) 
+            break;
+        itNode = min_element(ReachableNodes.begin(), ReachableNodes.end());
+        headnode= *itNode;
+        TWDATA(headnode)->visited=true; // shortest path to this node has been found
+        ReachableNodes.erase(itNode); // shortest path found for this head node;
+    } 
+
+    if (TWDATA(dstNode)->path.size() == 0)
+        throw TCEException((char*)"TEWG::ComputeDijkstraPath(): No Path Found");
+
+    return TWDATA(dstNode)->path;
+}
 

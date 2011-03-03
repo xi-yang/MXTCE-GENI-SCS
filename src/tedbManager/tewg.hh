@@ -39,15 +39,40 @@
 using namespace std;
 
 
-// Rule of Thumb: resources shoud be constructed in domain->node->port->link order and destroyed in reverse order
+class TLink;
+
+class TWorkData: public WorkData
+{
+public:
+    double linkCost;
+    double pathCost;
+    bool visited;
+    bool filteroff;
+    list<TLink*> path;
+
+public:
+    TWorkData(): WorkData(), linkCost(0), pathCost(0), visited(false), filteroff(false) { }
+    TWorkData(double lc, double pc): WorkData(), linkCost(lc), pathCost(pc), visited(false), filteroff(false) { }
+    ~TWorkData() {}
+    void Cleanup() {
+        linkCost = 0;
+        pathCost = 0;
+        visited = false;
+        filteroff = false;
+        path.clear();
+    }
+};
+
+#define TWDATA(x) ((TWorkData*)((x)->GetWorkData()))
 
 // TGraph component classes
+
+// Rule of Thumb: resources shoud be constructed in domain->node->port->link order and destroyed in reverse order
 
 class TDomain: public Domain
 {
 protected:
     bool disabled;
-    //TWData
     
 public:
     TDomain(u_int32_t id, string& name): Domain(id, name), disabled(false) { }
@@ -62,8 +87,6 @@ public:
 };
 
 
-class TLink;
-
 class TNode: public Node
 {
 protected:
@@ -71,7 +94,6 @@ protected:
     bool visited;
     list<TLink*> lclLinks;
     list<TLink*> rmtLinks;
-    //TWData
 
 public:
     TNode(u_int32_t id, string& name): Node(id, name), disabled(false), visited(false) { }
@@ -94,6 +116,10 @@ public:
             return false;
         return (this->name == aNode.name);
     }
+    bool operator<(TNode& aNode) {
+        assert (this->workData != NULL && aNode.GetWorkData() != NULL);
+        return (((TWorkData*)this->workData)->pathCost < ((TWorkData*)aNode.GetWorkData())->pathCost);
+    }
 };
 
 
@@ -102,7 +128,6 @@ class TPort: public Port
 protected:
     bool disabled;
     bool visited;
-    //TWData
 
 public:
     TPort(u_int32_t id, string& name): Port(id, name), disabled(false), visited(false) { }
@@ -131,7 +156,6 @@ protected:
     bool edgeOnly;
     TNode* lclEnd;
     TNode* rmtEnd;
-    //TWData
 
 public:
     TLink(u_int32_t id, string& name): Link(id, name),disabled(false), visited(false), edgeOnly(false), lclEnd(NULL), rmtEnd(NULL) { }
@@ -158,6 +182,10 @@ public:
             return false;
         return (this->name == aLink.name);
     }
+    bool operator<(TLink& aLink) {
+        assert (this->workData != NULL && aLink.GetWorkData() != NULL);
+        return (((TWorkData*)this->workData)->pathCost < ((TWorkData*)aLink.GetWorkData())->pathCost);
+    }
 };
 
 
@@ -179,9 +207,12 @@ public:
     list<TLink*>& GetLinks() { return tLinks; }
     void AddDomain(TDomain* domain);
     void AddNode(TDomain* domain, TNode* node);
+    void RemoveNode(TNode* node);
     void AddPort(TNode* node, TPort* port);
+    void RemovePort(TPort* port);
     void AddLink(TPort* port, TLink* link);
     void AddLink(TNode* node, TLink* link);
+    void RemoveLink(TLink* link);
     TGraph* Clone();
     void LogDump();
 };
@@ -203,7 +234,10 @@ public:
     void HoldResvDeltas(string& resvName, bool doHold);
     void ApplyResvDeltas(string& resvName);
     void RevokeResvDeltas(string& resvName);
+    void PruneByBandwidth(long bw);
+    list<TLink*> ComputeDijkstraPath(TNode* srcNode, TNode* dstLink);
 };
+
 
 
 #endif

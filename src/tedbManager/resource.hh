@@ -51,6 +51,14 @@ enum ResourceType
     RTYPE_POINT,
 };
 
+
+class WorkData
+{
+public:
+    WorkData() {}
+    virtual ~WorkData() {}
+};
+
 class ResourceMapByString;
 class TDelta;
 class Resource
@@ -61,12 +69,13 @@ protected:
     string name;    // topology identification name
     string address; // IPv address (with /slash netmask if applicable)
     list<TDelta*> deltaList;
+    WorkData* workData;
 
 public:
-    Resource(ResourceType t, u_int32_t i, string& n, string& a): type(t), _id(i), name(n), address(a) { }
-    Resource(ResourceType t, u_int32_t i, string& n): type(t), _id(i), name(n) { address = ""; }
-    Resource(ResourceType t, u_int32_t i): type(t), _id(i) { name= ""; address = ""; }
-    virtual ~Resource() { }
+    Resource(ResourceType t, u_int32_t i, string& n, string& a): type(t), _id(i), name(n), address(a), workData(NULL) { }
+    Resource(ResourceType t, u_int32_t i, string& n): type(t), _id(i), name(n), workData(NULL)  { address = ""; }
+    Resource(ResourceType t, u_int32_t i): type(t), _id(i), workData(NULL)  { name= ""; address = ""; }
+    virtual ~Resource() { if (workData != NULL) delete workData; }
     ResourceType GetType() {return type;}
     void SetType(ResourceType t) { type = t;}
     u_int32_t GetId() { return _id; }
@@ -80,6 +89,8 @@ public:
     void RemoveDelta(TDelta* delta);
     void RemoveDeltasByName(string resvName);
     list<TDelta*> LookupDeltasByName(string resvName);
+    WorkData* GetWorkData() { return workData; }
+    void SetWorkData(WorkData* w) { workData = w; }
 };
 
 
@@ -246,6 +257,8 @@ public:
     long GetBandwidthGranularity() {return bandwidthGranularity;}
     void SetBandwidthGranularity(long bw) { bandwidthGranularity = bw;}
     long* GetUnreservedBandwidth() { return unreservedBandwidth; }
+    long GetAvailableBandwidth() { return unreservedBandwidth[7]; }
+    void SetAvailableBandwidth(long bw) { unreservedBandwidth[7] = bw; }
     Link* GetRemoteLink() {return remoteLink;}
     void SetRemoteLink(Link* rmt) { remoteLink = rmt;}
     list<ISCD*>& GetSwCapDescriptors() { return swCapDescriptors; }

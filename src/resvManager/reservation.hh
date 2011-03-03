@@ -213,6 +213,7 @@ protected:
 public:
     RDatabase(){ }
     virtual ~RDatabase() {}
+    list<TReservation*>& GetReservations() { return reservations; }
     TReservation* LookupReservation(string& name) {
         list<TReservation*>::iterator itr = reservations.begin();
         for (; itr != reservations.end(); itr++)
