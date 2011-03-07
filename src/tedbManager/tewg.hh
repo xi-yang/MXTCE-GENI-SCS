@@ -35,11 +35,34 @@
 #define __TEWG_HH__
 
 #include "resource.hh"
+#include <vector>
 
 using namespace std;
 
 
 class TLink;
+
+class TSpec
+{
+public:    
+    u_int8_t SWtype;    
+    u_int8_t ENCtype;    
+    long Bandwidth;    
+    TSpec ():SWtype(0), ENCtype(0), Bandwidth(0) {}    
+    TSpec (u_int8_t sw, u_int8_t enc, long bw):SWtype(sw), ENCtype(enc), Bandwidth(bw) {}    
+    void Update(u_int8_t sw_type, u_int8_t encoding, float bw) {            
+        SWtype = sw_type;            
+        ENCtype = encoding;            
+        Bandwidth = bw;        
+    }    
+    bool operator == (TSpec &t) {
+        return (this->SWtype == t.SWtype && this->ENCtype == t.ENCtype && this->Bandwidth == t.Bandwidth);
+    }
+    bool operator <= (TSpec &t) {
+        return (this->SWtype == t.SWtype && this->ENCtype == t.ENCtype && this->Bandwidth <= t.Bandwidth);           
+    }
+};
+
 
 class TWorkData: public WorkData
 {
@@ -48,17 +71,19 @@ public:
     double pathCost;
     bool visited;
     bool filteroff;
+    TSpec tspec;
     list<TLink*> path;
 
 public:
-    TWorkData(): WorkData(), linkCost(0), pathCost(0), visited(false), filteroff(false) { }
+    TWorkData(): WorkData(), linkCost(_INF_), pathCost(_INF_), visited(false), filteroff(false) { }
     TWorkData(double lc, double pc): WorkData(), linkCost(lc), pathCost(pc), visited(false), filteroff(false) { }
     ~TWorkData() {}
     void Cleanup() {
-        linkCost = 0;
-        pathCost = 0;
+        linkCost = _INF_;
+        pathCost = _INF_;
         visited = false;
         filteroff = false;
+        tspec.Update(0, 0, 0);
         path.clear();
     }
 };
@@ -174,6 +199,16 @@ public:
     bool VerifyFullLink();
     ISCD* GetTheISCD();
     TLink* Clone();
+    // path computation helpers
+    bool IsAvailableForTspec(TSpec& tspec);
+    bool CanBeEgressLink(TSpec& tspec);
+    void ExcludeAllocatedVtags(ConstraintTagSet &vtagset);
+    void ProceedByUpdatingVtags(ConstraintTagSet &head_vtagset, ConstraintTagSet &next_vtagset);
+    void ProceedByUpdatingWaves(ConstraintTagSet &head_waveset, ConstraintTagSet &next_waveset);
+    void ProceedByUpdatingTimeslots(ConstraintTagSet &head_timeslotset, ConstraintTagSet &next_timeslotset);
+    bool CrossingRegionBoundary(TSpec& tspec);
+    bool GetNextRegionTspec(TSpec& tspec);
+    // operators
     bool operator==(TLink& aLink) {
         if (this->port == NULL && aLink.port != NULL 
             || this->port != NULL && aLink.port == NULL)
@@ -218,6 +253,54 @@ public:
 };
 
 
+
+class TPath {
+protected:
+    list<TLink*> path;
+    double cost;
+    list<TLink*> maskedLinkList; // links that have filteroff = true
+    TNode* deviationNode;
+
+public:
+    TPath(): cost(_INF_), deviationNode(NULL) {}
+    ~TPath() {}
+    list<TLink*>& GetPath() { return path; }
+    void SetPath(list<TLink*>& p) { path.assign(p.begin(), p.end()); }
+    double GetCost() { return cost; }
+    void SetCost(double c) { cost = c; }
+    list<TLink*>& GetMaskedLinkList() { return maskedLinkList; }
+    void FilterOffLinks(bool bl) { 
+            list<TLink*>::iterator itLink;
+            for (itLink = path.begin(); itLink != path.end(); itLink++) {
+                TWDATA(*itLink)->filteroff = bl;
+            }
+        }
+    TNode* GetDeviationNode() { return deviationNode; }
+    void SetDeviationNode(TNode* node) { deviationNode = node; }
+    void CalculatePathCost() {
+            list<TLink*>::iterator itLink;
+            if (path.size() == 0)
+            {
+                cost = _INF_;
+                return;
+            }                
+            cost=0;
+            for (itLink = path.begin(); itLink != path.end(); itLink++) {
+                cost += (*itLink)->GetMetric();
+            }
+        }
+    bool VerifyTEConstraints(u_int32_t& vtag, u_int32_t& wave, TSpec& tspec);
+    void Cleanup() {
+        path.clear();
+        cost = _INF_;
+        maskedLinkList.clear();
+        deviationNode = NULL;
+    }
+    bool operator< (const TPath& p) const { return this->cost < p.cost; }
+    void LogDump();
+};
+
+
 class TDelta;
 class TReservation;
 class TEWG: public TGraph
@@ -236,6 +319,7 @@ public:
     void RevokeResvDeltas(string& resvName);
     void PruneByBandwidth(long bw);
     list<TLink*> ComputeDijkstraPath(TNode* srcNode, TNode* dstLink);
+    void ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<TPath*>& KSP);
 };
 
 

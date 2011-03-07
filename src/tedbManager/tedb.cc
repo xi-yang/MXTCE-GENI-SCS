@@ -544,7 +544,7 @@ TLink* DBLink::Checkout(TGraph* tg)
     list<ISCD*>::iterator its = this->GetSwCapDescriptors().begin();
     for (; its != this->GetSwCapDescriptors().end(); its++)
         tl->GetSwCapDescriptors().push_back((*its)->Duplicate());
-    list<IACD>::iterator ita = this->GetSwAdaptDescriptors().begin();
+    list<IACD*>::iterator ita = this->GetSwAdaptDescriptors().begin();
     for (; ita != this->GetSwAdaptDescriptors().end(); ita++)
         tl->GetSwAdaptDescriptors().push_back(*ita);
     list<Link*>::iterator itl = this->GetContainerLinks().begin();

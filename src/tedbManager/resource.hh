@@ -228,7 +228,7 @@ protected:
     long bandwidthGranularity;
     Link* remoteLink;
     list<ISCD*> swCapDescriptors;
-    list<IACD> swAdaptDescriptors;
+    list<IACD*> swAdaptDescriptors;
     list<Link*> containerLinks;      // the lower-layer links that this (virtual) link depends on (optional)
     list<Link*> componentLinks;     // the upper-layer (virtual) links that depends on this link (optional)
     void _Init() {
@@ -262,7 +262,7 @@ public:
     Link* GetRemoteLink() {return remoteLink;}
     void SetRemoteLink(Link* rmt) { remoteLink = rmt;}
     list<ISCD*>& GetSwCapDescriptors() { return swCapDescriptors; }
-    list<IACD>& GetSwAdaptDescriptors() { return swAdaptDescriptors; }
+    list<IACD*>& GetSwAdaptDescriptors() { return swAdaptDescriptors; }
     list<Link*>& GetContainerLinks() { return containerLinks; }
     list<Link*>& GetComponentLinks() { return componentLinks; }
     bool operator==(Link& aLink) {
@@ -399,8 +399,8 @@ public:
 };
 
 
-#ifndef MAX_OTNX_CHAN_NUM
-#define MAX_OTNX_CHAN_NUM 256 //64: 10G with OPVCX; 40: WDM 
+#ifndef MAX_WAVE_NUM
+#define MAX_WAVE_NUM 256 //64: 10G with OPVCX; 40: WDM 
 #endif
 
 class ISCD_LSC: public ISCD
@@ -410,7 +410,7 @@ public:
     ConstraintTagSet assignedWavelengths;
     bool wavelengthTranslation;
 
-    ISCD_LSC(): ISCD(LINK_IFSWCAP_LSC, LINK_IFSWCAP_ENC_LAMBDA), availableWavelengths(MAX_OTNX_CHAN_NUM), assignedWavelengths(MAX_OTNX_CHAN_NUM), wavelengthTranslation(false) { }
+    ISCD_LSC(): ISCD(LINK_IFSWCAP_LSC, LINK_IFSWCAP_ENC_LAMBDA), availableWavelengths(MAX_WAVE_NUM), assignedWavelengths(MAX_WAVE_NUM), wavelengthTranslation(false) { }
     ~ISCD_LSC() { }
     virtual ISCD* Duplicate(){
         ISCD_LSC* iscd = new ISCD_LSC();

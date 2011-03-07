@@ -57,6 +57,8 @@ public:
     void* Run();
     virtual void* hookRun();
     virtual void hookHandleMessage();
+    virtual void SetParameter(string& paramName, void* paramPtr) {}
+    virtual void* GetParameter(string& paramName) { return NULL; }
 };
 
 

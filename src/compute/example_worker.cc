@@ -91,4 +91,20 @@ void ExampleComputeWorker::hookHandleMessage()
 
 }
 
+void ExampleComputeWorker::SetParameter(string& paramName, void* paramPtr)
+{
+    if (paramName == "TEWG")
+        tewg = (TEWG*)paramPtr;
+    else if (paramName == "KSP")
+        ksp = (vector<TPath*>*)paramPtr;
+}
+
+void* ExampleComputeWorker::GetParameter(string& paramName)
+{
+    if (paramName == "TEWG")
+        return tewg;    
+    else if (paramName == "KSP")
+        return ksp;
+    return NULL;
+}
 

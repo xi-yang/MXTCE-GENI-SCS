@@ -35,6 +35,7 @@
 #define __COMPUTE_ACTIONS_HH__
 
 #include "action.hh"
+#include <vector>
 
 
 class Action_ProcessRequestTopology: public Action

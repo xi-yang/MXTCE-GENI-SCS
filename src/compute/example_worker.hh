@@ -40,19 +40,23 @@
 #include "thread.hh"
 #include "api.hh"
 #include "compute_worker.hh"
+#include "tewg.hh"
 
 using namespace std;
 
 class ExampleComputeWorker: public ComputeWorker
 {
 protected:
-    //workflow specific additional data
+    TEWG* tewg;
+    vector<TPath*>* ksp;
 
 public:
-    ExampleComputeWorker(string n):ComputeWorker(n){ }
+    ExampleComputeWorker(string n):ComputeWorker(n), tewg(NULL), ksp(NULL) { }
     virtual ~ExampleComputeWorker() { }
     virtual void* hookRun();
     virtual void hookHandleMessage();
+    virtual void SetParameter(string& paramName, void* paramPtr);
+    virtual void* GetParameter(string& paramName);
 };
 
 #endif

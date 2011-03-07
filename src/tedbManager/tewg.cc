@@ -35,7 +35,6 @@
 #include "log.hh"
 #include "tewg.hh"
 #include "reservation.hh"
-#include <vector>
 
 TDomain* TDomain::Clone(bool newSubLevels)
 {
@@ -187,7 +186,7 @@ TLink* TLink::Clone()
     list<ISCD*>::iterator its = swCapDescriptors.begin();
     for (; its != swCapDescriptors.end(); its++)
         tl->swCapDescriptors.push_back((*its)->Duplicate());
-    list<IACD>::iterator ita = swAdaptDescriptors.begin();
+    list<IACD*>::iterator ita = swAdaptDescriptors.begin();
     for (; ita != swAdaptDescriptors.end(); ita++)
         tl->swAdaptDescriptors.push_back(*ita);
     list<Link*>::iterator itl = this->containerLinks.begin();
@@ -199,6 +198,326 @@ TLink* TLink::Clone()
     return tl;
 }
 
+
+bool TLink::IsAvailableForTspec(TSpec& tspec)
+{
+    TSpec tspec_link;
+    ISCD * iscd;
+    list<ISCD*>::iterator it;
+    for (it = swCapDescriptors.begin(); it != swCapDescriptors.end(); it++)
+    {
+        iscd = *it;
+        assert(iscd);
+        tspec_link.Update(iscd->switchingType, iscd->encodingType, iscd->capacity);
+
+        if (tspec == tspec_link)
+            return true;
+
+        // TODO: This is testing code for now. We need to further consider meaning of bandwidth parameters in LSC and FSC.
+        //$$ A temporary matching (available) condition for LSC and FSC links
+        if ( (tspec.SWtype == LINK_IFSWCAP_LSC || tspec.SWtype == LINK_IFSWCAP_FSC)
+            && tspec_link.SWtype == tspec.SWtype && tspec_link.ENCtype == tspec.ENCtype )
+                return true;
+
+        if (tspec <= tspec_link)
+        {
+            if (tspec.SWtype == LINK_IFSWCAP_TDM)
+            {
+               //if (tspec.ENCtype == LINK_IFSWCAP_ENC_G709ODUK && !this->GetOTNXInterfaceISCD(LINK_IFSWCAP_SUBTLV_SWCAP_TDM))
+               //    return true; // no need for timeslots checking as that will be done by ::ProceedByUpdatingTimeslots
+               if (((ISCD_TDM*)iscd)->minReservableBandwidth == 0 || tspec.Bandwidth % ((ISCD_TDM*)iscd)->minReservableBandwidth == 0)
+                    return true;
+            }
+            else if (tspec.SWtype >= LINK_IFSWCAP_PSC1 && 
+                    tspec.SWtype <=  LINK_IFSWCAP_PSC4 ||
+                    tspec.SWtype == LINK_IFSWCAP_L2SC)
+                return true;
+            else // tspec.SWtype == LINK_IFSWCAP_SUBTLV_SWCAP_LSC || LINK_IFSWCAP_SUBTLV_SWCAP_FSC
+                continue;
+        }
+    }
+
+    return false;
+}
+
+bool TLink::CanBeEgressLink(TSpec& tspec)
+{
+    TSpec tspec_link;
+    ISCD * iscd;
+    list<ISCD*>::iterator it;
+
+    if (GetRemoteLink() == NULL)
+        return false;
+    for (it = GetRemoteLink()->GetSwCapDescriptors().begin(); it != GetRemoteLink()->GetSwCapDescriptors().end(); it++)
+    {
+        iscd = *it;
+        assert(iscd);
+        tspec_link.Update(iscd->switchingType, iscd->encodingType, iscd->capacity);
+        if (tspec_link.ENCtype != tspec.ENCtype)
+            continue;
+
+        if (tspec == tspec_link)
+            return true;
+
+        if (tspec <= tspec_link)
+        {
+            if (tspec.SWtype == LINK_IFSWCAP_TDM)
+            {
+                if (((ISCD_TDM*)iscd)->minReservableBandwidth == 0 || tspec.Bandwidth % ((ISCD_TDM*)iscd)->minReservableBandwidth == 0)
+                    return true;
+            }
+            else if (tspec.SWtype >= LINK_IFSWCAP_PSC1 && tspec.SWtype <=  LINK_IFSWCAP_PSC4 || tspec.SWtype == LINK_IFSWCAP_L2SC)
+                return true;
+            else // tspec.SWtype == LINK_IFSWCAP_SUBTLV_SWCAP_LSC || LINK_IFSWCAP_SUBTLV_SWCAP_FSC
+                continue;
+        }
+    }
+
+    return false;
+}
+
+
+void TLink::ExcludeAllocatedVtags(ConstraintTagSet &vtagset)
+{
+    list<ISCD*>::iterator it;
+
+    for (it = swCapDescriptors.begin(); it != swCapDescriptors.end(); it++)
+    {
+        if ((*it)->switchingType != LINK_IFSWCAP_L2SC)
+            continue;
+        ISCD_L2SC* iscd = (ISCD_L2SC*)(*it);
+        vtagset.DeleteTags(iscd->assignedVlanTags.TagBitmask(), MAX_VLAN_NUM);
+    }
+}
+
+
+//$$$$ Only constraining the forward direction (not checking the reverse; assuming symetric L2SC link configurations)
+void TLink::ProceedByUpdatingVtags(ConstraintTagSet &head_vtagset, ConstraintTagSet &next_vtagset)
+{
+    next_vtagset.Clear();
+    list<ISCD*>::iterator it;
+    bool any_vlan_ok = head_vtagset.HasAnyTag();
+    bool non_vlan_link = true;
+
+    // Add VLAN tags available for this link.
+    for (it = swCapDescriptors.begin(); it != swCapDescriptors.end(); it++)
+    {
+         // The non-L2SC layers are temoperaty here and yet to remove.
+        if ((*it)->switchingType != LINK_IFSWCAP_L2SC || (*it)->encodingType != LINK_IFSWCAP_ENC_ETH)
+            continue;
+        ISCD_L2SC* iscd = (ISCD_L2SC*)(*it);
+        if (iscd->assignedVlanTags.Size()+iscd->availableVlanTags.Size() > 0)
+        {
+            non_vlan_link = false;
+            next_vtagset.Join(iscd->assignedVlanTags);
+        }
+    }
+
+    // Add VLAN tags used by any links on the local- or remote-end nodes of the link.
+    list<TLink*>::iterator it_link;
+    if (lclEnd)
+    {
+        for (it_link = lclEnd->GetRemoteLinks().begin(); it_link != lclEnd->GetRemoteLinks().end(); it_link++)
+        {
+            (*it_link)->ExcludeAllocatedVtags(next_vtagset);
+        }
+        for (it_link = lclEnd->GetLocalLinks().begin(); it_link != lclEnd->GetLocalLinks().end(); it_link++)
+        {
+            if (*it_link != this)
+                (*it_link)->ExcludeAllocatedVtags(next_vtagset);
+        }
+    }
+    if (rmtEnd)
+    {
+        for (it_link = rmtEnd->GetRemoteLinks().begin(); it_link != rmtEnd->GetRemoteLinks().end(); it_link++)
+        {
+            if (*it_link != this)
+                (*it_link)->ExcludeAllocatedVtags(next_vtagset);
+        }
+        for (it_link = rmtEnd->GetLocalLinks().begin(); it_link != rmtEnd->GetLocalLinks().end(); it_link++)
+        {
+            (*it_link)->ExcludeAllocatedVtags(next_vtagset);
+        }
+    }
+        
+    if (non_vlan_link)
+        next_vtagset = head_vtagset;
+    else if (!any_vlan_ok)
+        next_vtagset.Intersect(head_vtagset);
+}
+
+
+//$$$$ only constrain the forward direction (not checking the reverse)
+void TLink::ProceedByUpdatingWaves(ConstraintTagSet &head_waveset, ConstraintTagSet &next_waveset)
+{
+    next_waveset.Clear();
+    bool any_wave_ok = head_waveset.HasAnyTag();
+
+    // TODO: vendor specific wavelength constraint handling
+
+    if (!any_wave_ok)
+        next_waveset.Intersect(head_waveset);
+}
+
+
+//$$$$ only constrain the forward direction (not checking the reverse)
+void TLink::ProceedByUpdatingTimeslots(ConstraintTagSet &head_timeslotset, ConstraintTagSet &next_timeslotset)
+{
+
+    next_timeslotset.Clear();
+    bool any_timeslot_ok = head_timeslotset.HasAnyTag();
+
+    // TODO: vendor specific wavelength constraint handling
+
+    if (!any_timeslot_ok)
+        next_timeslotset.Intersect(head_timeslotset);
+}
+
+
+bool TLink::CrossingRegionBoundary(TSpec& tspec)
+{
+    // Check adaptation defined by IACD(s)
+    list<IACD*>::iterator it_iacd;
+    for (it_iacd = swAdaptDescriptors.begin(); it_iacd != swAdaptDescriptors.end(); it_iacd++)
+    {
+        //crossing from lower layer to upper layer
+        if ((*it_iacd)->lowerLayerSwitchingType == tspec.SWtype && (*it_iacd)->lowerLayerEncodingType == tspec.ENCtype)
+            return true;
+        //crossing from upper layer to lower layer
+        if ((*it_iacd)->upperLayerSwitchingType == tspec.SWtype && (*it_iacd)->upperLayerEncodingType == tspec.ENCtype)
+            return true;
+
+        // TODO: bandwidth adaptation criteria to be considered in the future.
+    }
+
+    // Check implicit adaptation
+    if (this->remoteLink)
+    {
+        if (this->swCapDescriptors.size()*remoteLink->GetSwCapDescriptors().size() > 1) 
+            return true; // at least one direction of the link supports multiple ISCDs
+        if (this->swCapDescriptors.size() == 1 && remoteLink->GetSwCapDescriptors().size() == 1
+            && this->GetTheISCD()->switchingType != ((TLink*)remoteLink)->GetTheISCD()->switchingType)
+            return true; // one-to-one implicit adaptation
+    }
+
+    return false;
+}
+
+bool TLink::GetNextRegionTspec(TSpec& tspec)
+{
+    // Check adaptation defined by IACD(s)
+    list<IACD*>::iterator it_iacd;
+    for (it_iacd = swAdaptDescriptors.begin(); it_iacd != swAdaptDescriptors.end(); it_iacd++)
+    {
+        //crossing from lower layer to upper layer
+        if ((*it_iacd)->lowerLayerSwitchingType == tspec.SWtype && (*it_iacd)->lowerLayerEncodingType == tspec.ENCtype)
+        {
+            tspec.SWtype = (*it_iacd)->upperLayerSwitchingType;
+            tspec.ENCtype = (*it_iacd)->upperLayerEncodingType;
+            // TODO: Bandwidth adaptation for lower->upper layer
+            switch (tspec.SWtype)
+            {
+            case LINK_IFSWCAP_PSC1:
+            case LINK_IFSWCAP_PSC2:
+            case LINK_IFSWCAP_PSC3:
+            case LINK_IFSWCAP_PSC4:
+            case LINK_IFSWCAP_L2SC:
+                //bandwidth constraint unchanged
+                break;
+            case LINK_IFSWCAP_TDM:
+                // TODO: ... (unchanged for now)
+                break;
+            case LINK_IFSWCAP_LSC:
+                // TODO: ... (unchanged for now)
+                break;
+            case LINK_IFSWCAP_FSC:
+                // TODO: ... (unchanged for now)
+                break;
+            }
+            return true;
+        }
+        
+        //crossing from upper layer to lower layer
+        if ((*it_iacd)->upperLayerSwitchingType == tspec.SWtype && (*it_iacd)->upperLayerSwitchingType == tspec.ENCtype)
+        {
+            tspec.SWtype = (*it_iacd)->lowerLayerSwitchingType;
+            tspec.ENCtype = (*it_iacd)->lowerLayerEncodingType;
+            // TODO: Bandwidth adaptation for upper->lower layer
+            switch (tspec.SWtype)
+            {
+                case LINK_IFSWCAP_PSC1:
+                case LINK_IFSWCAP_PSC2:
+                case LINK_IFSWCAP_PSC3:
+                case LINK_IFSWCAP_PSC4:
+                case LINK_IFSWCAP_L2SC:
+                    //bandwidth constraint unchanged
+                    break;
+                case LINK_IFSWCAP_TDM:
+                    // TODO: ... (unchanged for now)
+                    break;
+                case LINK_IFSWCAP_LSC:
+                    // TODO: ... (unchanged for now)
+                    break;
+                case LINK_IFSWCAP_FSC:
+                    // TODO: ... (unchanged for now)
+                    break;
+            }
+            return true;
+        }
+    }
+
+
+    // Check implicit adaptation
+    if (this->remoteLink)
+    {
+        ISCD* iscd_adapted = NULL;         
+        if (this->swAdaptDescriptors.size() == 1 && remoteLink->GetSwAdaptDescriptors().size() == 1 && this->GetTheISCD()->switchingType != ((TLink*)remoteLink)->GetTheISCD()->switchingType)
+            iscd_adapted = ((TLink*)remoteLink)->GetTheISCD();
+        else if (this->swAdaptDescriptors.size()*remoteLink->GetSwAdaptDescriptors().size() > 1)
+        {
+            list<ISCD*>::iterator iter_iscd = this->remoteLink->GetSwCapDescriptors().begin();
+            for (; iter_iscd != this->remoteLink->GetSwCapDescriptors().end(); iter_iscd++)
+                if ((*iter_iscd)->switchingType != tspec.SWtype)
+                {
+                    iscd_adapted = (*iter_iscd);
+                    break;
+                }
+        }
+        
+        if (iscd_adapted)
+        {
+            tspec.SWtype = iscd_adapted->switchingType;
+            tspec.ENCtype = iscd_adapted->encodingType;
+
+            // TODO: Bandwidth adaptation
+            switch (tspec.SWtype)
+            {
+            case LINK_IFSWCAP_PSC1:
+            case LINK_IFSWCAP_PSC2:
+            case LINK_IFSWCAP_PSC3:
+            case LINK_IFSWCAP_PSC4:
+            case LINK_IFSWCAP_L2SC:
+                //bandwidth constraint unchanged
+                break;
+            case LINK_IFSWCAP_TDM:
+                // bandwidth constraint unchanged
+                // TODO: ?
+                break;
+            case LINK_IFSWCAP_LSC:
+                // bandwidth constraint unchanged
+                // TODO: ?
+                break;
+            case LINK_IFSWCAP_FSC:
+                // bandwidth constraint unchanged
+                // TODO: ?
+                break;
+            }
+            return true;
+        }
+    }
+
+    return false;
+}
 
 
 void TGraph::AddDomain(TDomain* domain)
@@ -339,7 +658,7 @@ void TGraph::LogDump()
     for (; itd != this->tDomains.end(); itd++)
     {
         TDomain* td = (*itd);
-        snprintf(str, 128, "<domain id=%s>\n", td->GetName().c_str());
+        snprintf(str, 256, "<domain id=%s>\n", td->GetName().c_str());
         strcat(buf, str);
         map<string, Node*, strcmpless>::iterator itn = td->GetNodes().begin();
         for (; itn != td->GetNodes().end(); itn++)
@@ -388,6 +707,123 @@ void TGraph::LogDump()
         snprintf(str, 128, "</domain>\n");
         strcat(buf, str);
     }    
+    LOG_DEBUG(buf);
+}
+
+// verify constrains of vlantag, wavelength and cross-layer adapation (via Tspec) 
+// TODO: take api_request as input
+bool TPath::VerifyTEConstraints(u_int32_t& vtag, u_int32_t& wave, TSpec& tspec) 
+{
+    TLink* L;
+    list<TLink*>::iterator iterL;
+    ConstraintTagSet head_vtagset(MAX_VLAN_NUM), next_vtagset(MAX_VLAN_NUM);
+    ConstraintTagSet head_waveset(MAX_WAVE_NUM, 190000, 100), next_waveset(MAX_WAVE_NUM, 190000, 100);
+
+    if (path.size() == 0)
+        return false;
+
+    // initializing tspecs
+    for (iterL = path.begin(); iterL != path.end(); iterL++)
+    {
+        L = *iterL;
+        if (L->GetLocalEnd())
+            TWDATA(L->GetLocalEnd())->tspec.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+        if (L->GetRemoteEnd())
+            TWDATA(L->GetRemoteEnd())->tspec.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+        TWDATA(L)->tspec.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+    }
+
+    // initializing vtags and wavelengths
+    if (vtag != 0)
+        head_vtagset.AddTag(vtag);
+    else         
+        head_vtagset.Clear();
+    head_waveset.Clear();
+
+    // verifying path constraints
+    for (iterL = path.begin(); iterL != path.end(); iterL++)
+    {
+        L = (*iterL);
+        if (L->GetLocalEnd() == NULL || L->GetRemoteEnd()==NULL || L->GetSwCapDescriptors().size() == 0)
+            return false;
+
+        if (!L->IsAvailableForTspec(TWDATA(L->GetLocalEnd())->tspec))
+            return false;
+
+        if (!head_vtagset.IsEmpty())
+        {
+            L->ProceedByUpdatingVtags(head_vtagset, next_vtagset);
+            if (next_vtagset.IsEmpty())
+                return false;
+            head_vtagset = next_vtagset;
+        }
+        if (!head_waveset.IsEmpty())
+        {
+            L->ProceedByUpdatingWaves(head_waveset, next_waveset);
+            if (next_waveset.IsEmpty())
+                return false;
+            head_waveset = next_waveset;
+        }
+
+        if (L->CrossingRegionBoundary(TWDATA(L->GetLocalEnd())->tspec))
+        {
+            L->GetNextRegionTspec(TWDATA(L->GetRemoteEnd())->tspec);
+            // TODO: WDM  special handling
+            /*
+            if (has_wdm_layer && (L->rmt_end->tspec.SWtype == LINK_IFSWCAP_SUBTLV_SWCAP_LSC || L->rmt_end->tspec.SWtype == MOVAZ_LSC))
+            {
+            }
+            else if (has_wdm_layer && (L->lcl_end->tspec.SWtype == LINK_IFSWCAP_SUBTLV_SWCAP_LSC || L->lcl_end->tspec.SWtype == MOVAZ_LSC))
+            {
+                head_waveset.Clear();
+            }
+            */
+        }       
+        else
+        {
+            TWDATA(L->GetRemoteEnd())->tspec = TWDATA(L->GetLocalEnd())->tspec;
+        }
+    }
+
+    vtag = next_vtagset.LowestTag();
+    wave = next_waveset.LowestTag();
+    return true;
+}
+
+
+void TPath::LogDump()
+{
+    char buf[10240]; //up to 10K
+    char str[256];
+    sprintf(buf, "TPath:");
+    if (path.size() == 0)
+    {
+        strcat(buf," empty (No links)");
+    }
+    else
+    {  
+        list<TLink*>::iterator itL = path.begin();
+        for (; itL != path.end(); itL++)
+        {
+            TLink* L = *itL;
+            snprintf(str, 256, " ->%s:%s:%s:%s",
+                L->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
+                L->GetPort()->GetNode()->GetName().c_str(),
+                L->GetPort()->GetName().c_str(), 
+                L->GetName().c_str());
+            strcat(buf, str);
+            if (L->GetRemoteLink())
+            {
+                snprintf(str, 256, " ->%s:%s:%s:%s",
+                    L->GetRemoteLink()->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
+                    L->GetRemoteLink()->GetPort()->GetNode()->GetName().c_str(),
+                    L->GetRemoteLink()->GetPort()->GetName().c_str(), 
+                    L->GetRemoteLink()->GetName().c_str());
+                strcat(buf, str);
+            }
+        }
+    }
+    strcat(buf, "\n");
     LOG_DEBUG(buf);
 }
 
@@ -506,10 +942,10 @@ void TEWG::PruneByBandwidth(long bw)
     }
 }
 
-// TODO: exception  handling
+
 list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode)
 {
-    // init WorkData in TLinks
+    // init TWorkData in TLinks
     list<TNode*>::iterator itn = tNodes.begin();
     while (itn != tNodes.end())
     {
@@ -531,7 +967,7 @@ list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode)
             TWDATA(link)->linkCost = link->GetMetric();
         }
         else
-            link->SetWorkData(new TWorkData(link->GetMetric(), 0));
+            link->SetWorkData(new TWorkData(link->GetMetric(), _INF_));
         ++itl;
     }
 
@@ -626,4 +1062,107 @@ list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode)
 
     return TWDATA(dstNode)->path;
 }
+
+
+// An implementation of Yen's KSP algorithm. --> To be moved to TEWG class as common method.
+void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<TPath*>& KSP)
+{
+    int KSPcounter=0;    
+    KSP.clear();
+    vector<TPath*> CandidatePaths;
+    list<TLink*>::iterator itLink;
+    list<TLink*>::iterator pathstart;
+    list<TLink*>::iterator pathend;
+    list<TLink*>::iterator deviationstart;
+    this->ComputeDijkstraPath(srcNode, dstNode);
+    TPath* nextpath = new TPath();
+    nextpath->GetPath().assign(TWDATA(dstNode)->path.begin(), TWDATA(dstNode)->path.end());
+    nextpath->SetCost(TWDATA(dstNode)->pathCost);
+    nextpath->SetDeviationNode(srcNode);
+    CandidatePaths.push_back(nextpath);
+    KSP.push_back(nextpath);
+    KSPcounter++;
+
+    vector<TPath*>::iterator itPath;
+    while ((CandidatePaths.size()>0) && (KSPcounter<=K))
+    {
+        //@@@@ RestoreGraphKeepFilter();
+        itPath = min_element(CandidatePaths.begin(), CandidatePaths.end());
+        TPath* headpath= *itPath;
+        CandidatePaths.erase(itPath); 
+
+        //headpath->DisplayPath();
+        if (KSPcounter > 1) 
+            KSP.push_back(headpath);
+        if (KSPcounter==K) 
+            break;
+
+        itLink = headpath->GetPath().begin();
+        while ((*itLink)->GetLocalEnd() != headpath->GetDeviationNode()) 
+        {
+            //filteroff for local end of the link
+            list<TLink*>::iterator itl;
+            for (itl = (*itLink)->GetLocalEnd()->GetLocalLinks().begin(); itl != (*itLink)->GetLocalEnd()->GetLocalLinks().end(); itl++)
+                TWDATA(*itl)->filteroff = true; 
+            for (itl = (*itLink)->GetLocalEnd()->GetRemoteLinks().begin(); itl != (*itLink)->GetLocalEnd()->GetRemoteLinks().end(); itl++)
+                TWDATA(*itl)->filteroff = true; 
+            TWDATA((*itLink)->GetLocalEnd())->filteroff = true; 
+            itLink++;
+        }
+        pathend = headpath->GetPath().end();
+        // penultimate node along path p_k
+        for ( ; itLink!=pathend; itLink++) 
+        {
+            headpath->FilterOffLinks(true);
+            TWDATA(*itLink)->filteroff = true;
+            // cleanup nodes data is done inside ComputeDijkstraPath
+            this->ComputeDijkstraPath((*itLink)->GetLocalEnd(), dstNode);
+            // find SPF from Vk_i to destination node
+            if (TWDATA(dstNode)->path.size()>0) 
+            {
+                // concatenate subpk(s, vk_i) to shortest path found from vk_i to destination
+                nextpath = new TPath(); // $$ Memory leak...?
+                if (itLink != headpath->GetPath().begin()) 
+                {
+                    nextpath->GetPath().assign(headpath->GetPath().begin(), itLink);
+                    nextpath->SetDeviationNode((*itLink)->GetLocalEnd());
+                } 
+                else 
+                {
+                    nextpath->SetDeviationNode(srcNode);
+                } 
+                list<TLink*>::iterator halfpath;
+                halfpath = TWDATA(dstNode)->path.begin();
+                while (halfpath!= TWDATA(dstNode)->path.end())
+                {
+                    (nextpath->GetPath()).push_back(*halfpath);
+                    halfpath++;
+                }
+
+                // calculate the path cost
+                nextpath->CalculatePathCost(); 
+                // mask the parent path and current path (links have filteroff == true)
+                nextpath->GetMaskedLinkList().assign(headpath->GetMaskedLinkList().begin(),headpath->GetMaskedLinkList().end());
+                nextpath->GetMaskedLinkList().push_back(*itLink);
+                //$$ nextpath->DisplayPath();
+                CandidatePaths.push_back(nextpath);
+            }
+            // filter reset for local end of the current link ????
+            //TWDATA(*itLink)->filteroff = false;
+            list<TLink*>::iterator itl;
+            for (itl = (*itLink)->GetLocalEnd()->GetLocalLinks().begin(); itl != (*itLink)->GetLocalEnd()->GetLocalLinks().end(); itl++)
+                TWDATA(*itl)->filteroff = true;
+            for (itl = (*itLink)->GetLocalEnd()->GetRemoteLinks().begin(); itl != (*itLink)->GetLocalEnd()->GetRemoteLinks().end(); itl++)
+                TWDATA(*itl)->filteroff = true; 
+            TWDATA((*itLink)->GetLocalEnd())->filteroff = true;
+        }
+        KSPcounter++;
+    }
+    // release memory of remaining paths in CandidatePaths list
+    for (int i = 0; i < CandidatePaths.size(); i++)
+    {
+        delete CandidatePaths[i];
+    }
+}
+
 
