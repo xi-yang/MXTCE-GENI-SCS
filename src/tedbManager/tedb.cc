@@ -195,6 +195,18 @@ TNode* DBNode::Checkout(TGraph* tg)
     {
         TPort* tp = ((DBPort*)(*itp).second)->Checkout(tg);
         tg->AddPort(tn, tp);
+        map<string, Link*, strcmpless>::iterator itl = tp->GetLinks().begin();
+        for (; itl != tp->GetLinks().end(); itl++)
+        {
+            TLink* tl = (TLink*)(*itl).second;
+            tg->AddLink(tn, tl);
+            if (tl->GetRemoteLink()) 
+            {
+                ((TLink*)tl->GetRemoteLink())->SetRemoteEnd(tn);
+                tl->SetRemoteEnd(((TLink*)tl->GetRemoteLink())->GetLocalEnd());
+                ((TLink*)tl->GetRemoteLink())->SetRemoteEnd(tn);
+            }
+        }
     }
     return tn;
 }
@@ -556,12 +568,13 @@ TLink* DBLink::Checkout(TGraph* tg)
     for (; itl != this->GetComponentLinks().end(); itl++)
         tl->GetComponentLinks().push_back(*itl);
     // correct remoteLink references
-    tl->SetRemoteLink(this->remoteLink);
+    tl->SetRemoteLink(this->remoteLink); // first point to the original remote link in TEDB
     list<TLink*>::iterator itl2 = tg->GetLinks().begin();
     for (; itl2 != tg->GetLinks().end(); itl2++)
     {
         TLink* tl2 = *itl2;
-        if ((Link*)tl2 == (Link*)this)
+        // now get the real remote link in TEWG; only the later formed TLink in the pair has this
+        if ((Link*)(tl2->GetRemoteLink()) == (Link*)this) 
         {
             tl->SetRemoteLink(tl2);
             tl2->SetRemoteLink(tl);

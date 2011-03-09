@@ -596,17 +596,13 @@ void TGraph::AddLink(TPort* port, TLink* link)
     tLinks.push_back(link);
     port->AddLink(link);
     link->SetPort(port);
-    if (port->GetNode()) {
-        ((TNode*)port->GetNode())->AddLocalLink(link);
-        link->SetLocalEnd((TNode*)port->GetNode());
-    }
 }
 
 
 void TGraph::AddLink(TNode* node, TLink* link)
 {
-    tLinks.push_back(link);
-    link->SetPort(NULL);
+    if (link->GetPort() == NULL)
+        tLinks.push_back(link);
     node->AddLocalLink(link);
     link->SetLocalEnd(node);
 }
