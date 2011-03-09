@@ -38,6 +38,7 @@
 #include "tewg.hh"
 #include "compute_worker.hh"
 #include "compute_actions.hh"
+#include <algorithm> 
 
 
 ///////////////////// class Action_ProcessRequestTopology ///////////////////////////

@@ -46,9 +46,11 @@
 #include <errno.h>
 #include <netdb.h>
 #include <assert.h>
+#include <string.h>
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <memory>
 
 #ifndef NULL
 #define NULL 0

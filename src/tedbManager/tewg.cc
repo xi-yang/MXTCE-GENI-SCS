@@ -35,6 +35,7 @@
 #include "log.hh"
 #include "tewg.hh"
 #include "reservation.hh"
+#include <algorithm> 
 
 TDomain* TDomain::Clone(bool newSubLevels)
 {
