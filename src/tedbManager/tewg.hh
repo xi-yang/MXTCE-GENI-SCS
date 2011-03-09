@@ -201,7 +201,8 @@ public:
     TLink* Clone();
     // path computation helpers
     bool IsAvailableForTspec(TSpec& tspec);
-    bool CanBeEgressLink(TSpec& tspec);
+    bool VerifyEdgeLinkTSpec(TSpec& tspec);
+    bool CanBeLastHopTrunk(TSpec& tspec);
     void ExcludeAllocatedVtags(ConstraintTagSet &vtagset);
     void ProceedByUpdatingVtags(ConstraintTagSet &head_vtagset, ConstraintTagSet &next_vtagset);
     void ProceedByUpdatingWaves(ConstraintTagSet &head_waveset, ConstraintTagSet &next_waveset);

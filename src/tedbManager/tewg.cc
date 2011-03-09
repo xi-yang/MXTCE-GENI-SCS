@@ -240,15 +240,12 @@ bool TLink::IsAvailableForTspec(TSpec& tspec)
     return false;
 }
 
-bool TLink::CanBeEgressLink(TSpec& tspec)
+bool TLink::VerifyEdgeLinkTSpec(TSpec& tspec)
 {
     TSpec tspec_link;
     ISCD * iscd;
     list<ISCD*>::iterator it;
-
-    if (GetRemoteLink() == NULL)
-        return false;
-    for (it = GetRemoteLink()->GetSwCapDescriptors().begin(); it != GetRemoteLink()->GetSwCapDescriptors().end(); it++)
+    for (it = this->GetSwCapDescriptors().begin(); it != this->GetSwCapDescriptors().end(); it++)
     {
         iscd = *it;
         assert(iscd);
@@ -272,10 +269,16 @@ bool TLink::CanBeEgressLink(TSpec& tspec)
                 continue;
         }
     }
-
     return false;
 }
 
+bool TLink::CanBeLastHopTrunk(TSpec& tspec)
+{
+    if (remoteLink == NULL)
+        return false;
+
+    return ((TLink*)remoteLink)->VerifyEdgeLinkTSpec(tspec);
+}
 
 void TLink::ExcludeAllocatedVtags(ConstraintTagSet &vtagset)
 {
@@ -1074,7 +1077,11 @@ void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<T
     list<TLink*>::iterator pathstart;
     list<TLink*>::iterator pathend;
     list<TLink*>::iterator deviationstart;
-    this->ComputeDijkstraPath(srcNode, dstNode);
+    try {
+        this->ComputeDijkstraPath(srcNode, dstNode);
+    } catch (TCEException e) {
+        throw TCEException((char*)"TEWG::ComputeKShortestPaths() Initial call of ComputeDijkstraPath found no path.");
+    }    
     TPath* nextpath = new TPath();
     nextpath->GetPath().assign(TWDATA(dstNode)->path.begin(), TWDATA(dstNode)->path.end());
     nextpath->SetCost(TWDATA(dstNode)->pathCost);
@@ -1086,17 +1093,35 @@ void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<T
     vector<TPath*>::iterator itPath;
     while ((CandidatePaths.size()>0) && (KSPcounter<=K))
     {
-        //@@@@ RestoreGraphKeepFilter();
+        // reset graph TWData but keep filter
+        list<TNode*>::iterator itNode;
+        bool oldFilter;
+        for (itNode = tNodes.begin(); itNode != tNodes.end(); itNode++)
+        {
+            if (!TWDATA(*itNode))
+                continue;
+            oldFilter = TWDATA(*itNode)->filteroff;
+            TWDATA(*itNode)->Cleanup();
+            TWDATA(*itNode)->filteroff = oldFilter;
+        }
+        for (itLink = tLinks.begin(); itLink != tLinks.end(); itLink++)
+        {
+            if (!TWDATA(*itLink))
+                continue;
+            oldFilter = TWDATA(*itLink)->filteroff;
+            TWDATA(*itLink)->Cleanup();
+            TWDATA(*itLink)->filteroff = oldFilter;
+        }
+
+
         itPath = min_element(CandidatePaths.begin(), CandidatePaths.end());
         TPath* headpath= *itPath;
         CandidatePaths.erase(itPath); 
-
-        //headpath->DisplayPath();
+        //$$ headpath->DisplayPath();
         if (KSPcounter > 1) 
             KSP.push_back(headpath);
         if (KSPcounter==K) 
             break;
-
         itLink = headpath->GetPath().begin();
         while ((*itLink)->GetLocalEnd() != headpath->GetDeviationNode()) 
         {
@@ -1116,7 +1141,11 @@ void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<T
             headpath->FilterOffLinks(true);
             TWDATA(*itLink)->filteroff = true;
             // cleanup nodes data is done inside ComputeDijkstraPath
-            this->ComputeDijkstraPath((*itLink)->GetLocalEnd(), dstNode);
+            try {
+                this->ComputeDijkstraPath((*itLink)->GetLocalEnd(), dstNode);
+            } catch (TCEException e) {
+                throw TCEException((char*)"TEWG::ComputeKShortestPaths() Call of ComputeDijkstraPath((*itLink)->GetLocalEnd(), dstNode) found no path.");
+            }    
             // find SPF from Vk_i to destination node
             if (TWDATA(dstNode)->path.size()>0) 
             {

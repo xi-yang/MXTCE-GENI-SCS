@@ -85,7 +85,10 @@ void Action_ProcessRequestTopology::CleanUp()
 void Action_ProcessRequestTopology::Finish()
 {
     LOG(name<<"Finish() called"<<endl);
+
     // TODO: send back COMPUTE_REPLY message to core thread
+    // TODO: if (status == _Failed)  send back failure/error message
+
     string queue = MxTCE::computeThreadPrefix + worker->GetName();
     string topic = "COMPUTE_REPLY";
     list<TLV*> noTLVs;
@@ -173,7 +176,6 @@ void Action_CreateTEWG::CleanUp()
 
     // cancel and cleanup children
     Action::CleanUp();    
-
 }
 
 
@@ -206,16 +208,25 @@ void Action_ComputeKSP::Process()
     u_int32_t wave = 0;
     TSpec tspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);    
 
+    // TODO: verify ingress/egress edge Tspec
+
     // prune bandwidth
-    tewg->PruneByBandwidth(bw); //bwndwidth
+    tewg->PruneByBandwidth(bw);
     // compute KSP
     vector<TPath*>* KSP = new vector<TPath*>;
-    tewg->ComputeKShortestPaths(srcNode, dstNode,tewg->GetNodes().size(), *KSP);
+    try {
+        tewg->ComputeKShortestPaths(srcNode, dstNode,tewg->GetNodes().size(), *KSP);
+    } catch (TCEException e) {
+        LOG_DEBUG("Action_ComputeKSP::Process raised exception: " << e.GetMessage() <<endl);
+        throw ComputeThreadException(e.GetMessage());
+    }
+
     paramName = "KSP";
     if (KSP->size() == 0)
     {
         delete KSP;
         this->GetComputeWorker()->SetParameter(paramName, NULL);
+        LOG_DEBUG("Action_ComputeKSP::Process() No KSP found after bandwidh pruning!" <<endl);
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No KSP found after bandwidh pruning!");
     }
     this->GetComputeWorker()->SetParameter(paramName, KSP);
@@ -268,6 +279,8 @@ void Action_ComputeKSP::CleanUp()
 {
     LOG(name<<"CleanUp() called"<<endl);
     //$$$$ cleanup logic for current action
+
+    // TODO: if (status == _Failed) set failure status to worker thread ? Or leave to Action_ProcessRequestTopology::Finish
 
     // cancel and cleanup children
     Action::CleanUp();

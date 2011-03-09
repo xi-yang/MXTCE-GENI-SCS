@@ -50,6 +50,7 @@ void Action::Run()
         this->SetRepeats(0);
         state = _Failed; 
         CleanUp();
+        // ???
         throw ComputeThreadException((char*)" Action::Run abort due to messagePort down.");
     }
 
@@ -62,9 +63,10 @@ void Action::Run()
             //immediate execution of current action logic
             Process(); 
         } catch (ComputeThreadException e) {
-            LOG("Action::Run caught Exception:" << e.what() << " ErrMsg: " << e.GetMessage() << endl);
+            LOG("Action::Run caught Exception:" << e.what() << endl);
             state = _Failed;
             CleanUp();
+            break;
         }
 
         if (expectMesssageTopics.size() == 0) 
@@ -100,7 +102,7 @@ void Action::Run()
                 break;
             }
         } catch (ComputeThreadException e) {
-            LOG("Action::Run caught Exception:" << e.what() << " ErrMsg: " << e.GetMessage() << endl);
+            LOG("Action::Run caught Exception:" << e.what() << endl);
             state = _Failed;
             CleanUp();
         }
@@ -119,9 +121,10 @@ void Action::Run()
                 break;
             }
         } catch (ComputeThreadException e) {
-            LOG("Action::Run caught Exception:" << e.what() << " ErrMsg: " << e.GetMessage() << endl);
+            LOG("Action::Run caught Exception:" << e.what() << endl);
             state = _Failed;
             CleanUp();
+            break;
         }
         
         //if all children are finished, we are done with the current action.
@@ -221,6 +224,8 @@ void Action::CleanUp()
             action->SetState(_Cancelled);
             action->CleanUp();
         }
+        if (action->GetState() == _Failed)
+            this->SetState(_Failed);
     }
 
     //cleanning up data before being destroyed

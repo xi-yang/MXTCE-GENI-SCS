@@ -61,7 +61,7 @@ void* ComputeWorker::Run()
             msgPort->AttachPipes();
             LOG("ComputeWorker::Run AttachPipes on client side" << endl);
         } catch (MsgIOException& e) {
-            LOG("ComputeWorker::Run caugh Exception: " << e.what() << " errMsg: " << e.GetMessage() << endl);
+            LOG("ComputeWorker::Run caugh Exception: " << e.what() << endl);
         }
     }
 

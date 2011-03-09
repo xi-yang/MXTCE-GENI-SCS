@@ -195,7 +195,7 @@ void* ThreadPortScheduler::Run()
         try {
             msgPort->AttachPipes();
         } catch (MsgIOException& e) {
-            LOG("ThreadPortScheduler::Run caugh Exception: " << e.what() << " errMsg: " << e.GetMessage() << endl);
+            LOG("ThreadPortScheduler::Run caugh Exception: " << e.what() << endl);
         }
     }
 

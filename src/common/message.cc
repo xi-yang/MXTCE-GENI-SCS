@@ -214,7 +214,7 @@ Message* MessageReader::ReadMessage()
     try {
         msg->Receive(this->Socket());
     } catch (MsgIOException& e) {
-        LOG("MessageReader::ReadMessage exception: " << e.what() << " ErrMsg: " << e.GetMessage() << endl);
+        LOG("MessageReader::ReadMessage exception: " << e.what() << endl);
         delete msg;
         throw;
     }
@@ -257,7 +257,7 @@ void MessageWriter::WriteMessage(Message* msg)
     try {
         msg->Transmit(this->Socket());
     } catch (MsgIOException& e) {
-        LOG("MessageReader::ReadMessage exception: " << e.what() << " ErrMsg: "<< e.GetMessage() << endl);
+        LOG("MessageReader::ReadMessage exception: " << e.what() << endl);
         throw;
     }
     delete msg; //message consumed
@@ -454,7 +454,7 @@ void MessageRouter::Start()
             msgPort->AttachPipes();
             LOG("MessageRouter::Start AttachPipes on server side" << endl);
         } catch (MsgIOException& e) {
-            LOG("MessageRouter::Start caught" << e.what() << " when attaching port: " << msgPort->GetName() << " ErrMesage:" << e.GetMessage() << endl);
+            LOG("MessageRouter::Start caught" << e.what() << " when attaching port: " << msgPort->GetName() << endl);
             //escalate the exception
             throw;
         }
@@ -561,7 +561,7 @@ MessagePort* MessageRouter::AddPort(string& portName)
     try {
        MessagePipeFactory::CreateMessagePipe(portName, this);
     } catch (MsgIOException e) {
-        LOG("MessageRouter::AddPort(" << portName <<") caught exception: " << e.what() << " ErrMesage:" << e.GetMessage() << endl);
+        LOG("MessageRouter::AddPort(" << portName <<") caught exception: " << e.what() << endl);
         return NULL;
     }
     MessagePort* msgPort = MessagePipeFactory::LookupMessagePipe(portName)->GetServerPort();
@@ -576,7 +576,7 @@ MessagePort* MessageRouter::AddPort(string& portName)
             msgPort->AttachPipes();
             LOG("MessageRouter::AddPort CreateMessagePipe and call AttachPipes on server side" << endl);
         } catch (MsgIOException& e) {
-            LOG("MessageRouter::AddPort caught" << e.what() << " when attaching port: " << msgPort->GetName() << " ErrMesage:" << e.GetMessage() << endl);
+            LOG("MessageRouter::AddPort caught" << e.what() << " when attaching port: " << msgPort->GetName() << endl);
             //escalate the exception
             throw;
         }

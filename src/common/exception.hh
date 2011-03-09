@@ -43,13 +43,16 @@ using namespace std;
 class TCEException: public exception
 {
 protected:
+    char msgBuf[256];
     string errMessage;
+
 public:
-    TCEException(string msg): errMessage(msg){ }
-    TCEException(char* cstr) { errMessage = cstr; }
+
+    TCEException(string msg): errMessage(msg){ snprintf(msgBuf, 256, "TCEException [ %s ]", errMessage.c_str()); }
+    TCEException(char* cstr) { errMessage = cstr; snprintf(msgBuf, 256, "TCEException [ %s ]", errMessage.c_str()); }
     virtual ~TCEException()throw(){ }  
     virtual const char* what() const throw() {
-        return (const char*)"TCEException";
+        return (const char*)msgBuf;
     }
     virtual string& GetMessage()
     {
@@ -60,22 +63,22 @@ public:
 class MsgIOException: public TCEException
 {
 public:
-    MsgIOException(string msg): TCEException(msg){ }
-    MsgIOException(char* cstr): TCEException(cstr) { }
+    MsgIOException(string msg): TCEException(msg){ snprintf(msgBuf, 256, "TCEException [ %s ]", errMessage.c_str()); }
+    MsgIOException(char* cstr): TCEException(cstr) { snprintf(msgBuf, 256, "TCEException [ %s ]", errMessage.c_str()); }
     virtual ~MsgIOException()throw(){ }  
     virtual const char* what() const throw() {
-        return (const char*)"MsgIOException";
+        return (const char*)msgBuf;
     }
 };
 
 class APIException: public TCEException
 {
 public:
-    APIException(string msg): TCEException(msg){ }
-    APIException(char* cstr): TCEException(cstr) { }
+    APIException(string msg): TCEException(msg){ snprintf(msgBuf, 256, "TCEException [ %s ]", errMessage.c_str()); }
+    APIException(char* cstr): TCEException(cstr) { snprintf(msgBuf, 256, "TCEException [ %s ]", errMessage.c_str()); }
     virtual ~APIException()throw(){ }  
     virtual const char* what() const throw() {
-        return (const char*)"APIException";
+        return (const char*)msgBuf;
     }
 };
 
@@ -83,11 +86,11 @@ public:
 class ThreadException: public TCEException
 {
 public:
-    ThreadException(string msg): TCEException(msg){ }
-    ThreadException(char* cstr): TCEException(cstr) { }
+    ThreadException(string msg): TCEException(msg){ snprintf(msgBuf, 256, "TCEException [ %s ]", errMessage.c_str()); }
+    ThreadException(char* cstr): TCEException(cstr) { snprintf(msgBuf, 256, "TCEException [ %s ]", errMessage.c_str()); }
     virtual ~ThreadException()throw(){ }  
     virtual const char* what() const throw() {
-        return (const char*)"ThreadException";
+        return (const char*)msgBuf;
     }
 };
 
@@ -95,11 +98,11 @@ public:
 class ComputeThreadException: public ThreadException
 {
 public:
-    ComputeThreadException(string msg): ThreadException(msg){ }
-    ComputeThreadException(char* cstr): ThreadException(cstr){ }
+    ComputeThreadException(string msg): ThreadException(msg){ snprintf(msgBuf, 256, "TCEException [ %s ]", errMessage.c_str()); }
+    ComputeThreadException(char* cstr): ThreadException(cstr){ snprintf(msgBuf, 256, "TCEException [ %s ]", errMessage.c_str()); }
     virtual ~ComputeThreadException()throw(){ }  
     virtual const char* what() const throw() {
-        return (const char*)"ComputeThreadException";
+        return (const char*)msgBuf;
     }
 };
 
@@ -107,11 +110,11 @@ public:
 class TEDBException: public TCEException
 {
 public:
-    TEDBException(string msg): TCEException(msg){ }
-    TEDBException(char* cstr): TCEException(cstr){ }
+    TEDBException(string msg): TCEException(msg){ snprintf(msgBuf, 256, "TCEException [ %s ]", errMessage.c_str()); }
+    TEDBException(char* cstr): TCEException(cstr){ snprintf(msgBuf, 256, "TCEException [ %s ]", errMessage.c_str()); }
     virtual ~TEDBException()throw(){ }  
     virtual const char* what() const throw() {
-        return (const char*)"TEDBException";
+        return (const char*)msgBuf;
     }
 };
 
