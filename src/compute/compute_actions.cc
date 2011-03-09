@@ -202,10 +202,10 @@ void Action_ComputeKSP::Process()
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No TEWG available for computation!");
 
     // TODO: should get the following params from API request
-    long bw = 100000000; // 100M
+    long bw = 1000000000; // 100M
     TNode* srcNode = tewg->GetNodes().front();
     TNode* dstNode = tewg->GetNodes().back();
-    u_int32_t vtag = 2000;
+    u_int32_t vtag = 2001;
     u_int32_t wave = 0;
     TSpec tspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);    
 
@@ -232,17 +232,19 @@ void Action_ComputeKSP::Process()
     }
     this->GetComputeWorker()->SetParameter(paramName, KSP);
     // verify constraints with switchingType / layer adaptation / VLAN etc.
-    vector<TPath*>::iterator itP;
-    for (itP = KSP->begin(); itP != KSP->end(); itP++)
+    vector<TPath*>::iterator itP = KSP->begin(); 
+    while (itP != KSP->end())
     {
         u_int32_t vtagResult = vtag;
         u_int32_t waveResult = wave;        
         if (!(*itP)->VerifyTEConstraints(vtagResult, waveResult, tspec))
         {
-            delete (*itP);
+            TPath* path2erase = *itP;
             itP = KSP->erase(itP);
+            delete path2erase;
         }
-            
+        else
+            itP++;
     }
     // store a list of ordered result paths 
     if (KSP->size() == 0)

@@ -432,7 +432,7 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
     bool wavelengthTranslation = false;
     for (xmlNode = xmlNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
     {
-        if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "switchingcapType", 12) == 0)
+        if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "switchingcapType", 16) == 0)
         {
             string swTypeStr;
             StripXmlString(swTypeStr, xmlNodeGetContent(xmlNode));
@@ -513,22 +513,24 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
             }
         }
     }
+    if (capacity == 0)
+        capacity = this->GetAvailableBandwidth();
     switch (swType)
     {
         case LINK_IFSWCAP_L2SC:
-            iscd = new ISCD_L2SC(mtu);
+            iscd = new ISCD_L2SC(capacity, mtu);
             ((ISCD_L2SC*)iscd)->availableVlanTags.LoadRangeString(vlanRange);
             ((ISCD_L2SC*)iscd)->vlanTranslation = vlanTranslation;
             break;
         case LINK_IFSWCAP_PSC1:
-            iscd = new ISCD_PSC(1, mtu);
+            iscd = new ISCD_PSC(1, capacity, mtu);
             break;
         case LINK_IFSWCAP_TDM:
-            iscd = new ISCD_TDM(minBandwidth);
+            iscd = new ISCD_TDM(capacity, minBandwidth);
             ((ISCD_TDM*)iscd)->availableTimeSlots.LoadRangeString(timeslotRange);
             break;
         case LINK_IFSWCAP_LSC:
-            iscd = new ISCD_LSC();
+            iscd = new ISCD_LSC(capacity);
             ((ISCD_LSC*)iscd)->availableWavelengths.LoadRangeString(wavelengthRange);
             ((ISCD_LSC*)iscd)->wavelengthTranslation = wavelengthTranslation;
             break;

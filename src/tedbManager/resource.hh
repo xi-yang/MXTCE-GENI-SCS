@@ -331,7 +331,7 @@ public:
     u_char	switchingType;
     u_char	encodingType;
     long capacity;
-    ISCD (u_char swType, u_char enc): switchingType(swType), encodingType(enc)  { for (int i = 0; i < 8; i++) capacity = 0; }
+    ISCD (u_char swType, u_char enc, long bw): switchingType(swType), encodingType(enc), capacity(bw)  { }
     virtual ~ISCD() { }
     virtual ISCD* Duplicate() { }
 };
@@ -341,10 +341,10 @@ class ISCD_PSC: public ISCD
 {
 public:
     int mtu;
-    ISCD_PSC(int level, int m): ISCD(LINK_IFSWCAP_PSC1+level-1, LINK_IFSWCAP_ENC_PKT), mtu(m) { }
+    ISCD_PSC(int level,long bw,  int m): ISCD(LINK_IFSWCAP_PSC1+level-1, LINK_IFSWCAP_ENC_PKT, bw), mtu(m) { }
     virtual ~ISCD_PSC() { }
     virtual ISCD* Duplicate(){
-        ISCD_PSC* iscd = new ISCD_PSC(encodingType-LINK_IFSWCAP_PSC1+1, mtu);
+        ISCD_PSC* iscd = new ISCD_PSC(encodingType-LINK_IFSWCAP_PSC1+1, this->capacity, this->mtu);
         return iscd;
     }
         
@@ -363,10 +363,10 @@ public:
     ConstraintTagSet assignedVlanTags;
     bool vlanTranslation;
 
-    ISCD_L2SC(int m): ISCD(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH), mtu(m), availableVlanTags(MAX_VLAN_NUM), assignedVlanTags(MAX_VLAN_NUM), vlanTranslation(false) { }
+    ISCD_L2SC(long bw, int m): ISCD(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw), mtu(m), availableVlanTags(MAX_VLAN_NUM), assignedVlanTags(MAX_VLAN_NUM), vlanTranslation(false) { }
     virtual ~ISCD_L2SC() { }
     virtual ISCD* Duplicate(){
-        ISCD_L2SC* iscd = new ISCD_L2SC(this->mtu);
+        ISCD_L2SC* iscd = new ISCD_L2SC(this->capacity, this->mtu);
         iscd->availableVlanTags = this->availableVlanTags;
         iscd->assignedVlanTags = this->assignedVlanTags;
         iscd->vlanTranslation = this->vlanTranslation;
@@ -387,10 +387,10 @@ public:
     ConstraintTagSet availableTimeSlots;
     ConstraintTagSet assignedTimeSlots;
 
-    ISCD_TDM(long min): ISCD(LINK_IFSWCAP_TDM, LINK_IFSWCAP_ENC_SONETSDH), minReservableBandwidth(min), availableTimeSlots(MAX_TIMESLOTS_NUM), assignedTimeSlots(MAX_TIMESLOTS_NUM) { }
+    ISCD_TDM(long bw, long min): ISCD(LINK_IFSWCAP_TDM, LINK_IFSWCAP_ENC_SONETSDH, bw), minReservableBandwidth(min), availableTimeSlots(MAX_TIMESLOTS_NUM), assignedTimeSlots(MAX_TIMESLOTS_NUM) { }
     ~ISCD_TDM() { }
     virtual ISCD* Duplicate(){
-        ISCD_TDM* iscd = new ISCD_TDM(this->minReservableBandwidth);
+        ISCD_TDM* iscd = new ISCD_TDM(this->capacity, this->minReservableBandwidth);
         iscd->availableTimeSlots = this->availableTimeSlots;
         iscd->assignedTimeSlots = this->assignedTimeSlots;
         return iscd;
@@ -410,10 +410,10 @@ public:
     ConstraintTagSet assignedWavelengths;
     bool wavelengthTranslation;
 
-    ISCD_LSC(): ISCD(LINK_IFSWCAP_LSC, LINK_IFSWCAP_ENC_LAMBDA), availableWavelengths(MAX_WAVE_NUM), assignedWavelengths(MAX_WAVE_NUM), wavelengthTranslation(false) { }
+    ISCD_LSC(long bw): ISCD(LINK_IFSWCAP_LSC, LINK_IFSWCAP_ENC_LAMBDA, bw), availableWavelengths(MAX_WAVE_NUM), assignedWavelengths(MAX_WAVE_NUM), wavelengthTranslation(false) { }
     ~ISCD_LSC() { }
     virtual ISCD* Duplicate(){
-        ISCD_LSC* iscd = new ISCD_LSC();
+        ISCD_LSC* iscd = new ISCD_LSC(this->capacity);
         iscd->availableWavelengths = this->availableWavelengths;
         iscd->assignedWavelengths = this->assignedWavelengths;
         iscd->wavelengthTranslation = this->wavelengthTranslation;

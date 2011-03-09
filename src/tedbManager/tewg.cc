@@ -313,7 +313,7 @@ void TLink::ProceedByUpdatingVtags(ConstraintTagSet &head_vtagset, ConstraintTag
         if (iscd->assignedVlanTags.Size()+iscd->availableVlanTags.Size() > 0)
         {
             non_vlan_link = false;
-            next_vtagset.Join(iscd->assignedVlanTags);
+            next_vtagset.AddTags(iscd->availableVlanTags.TagBitmask(), MAX_VLAN_NUM);
         }
     }
 
@@ -358,6 +358,7 @@ void TLink::ProceedByUpdatingWaves(ConstraintTagSet &head_waveset, ConstraintTag
     bool any_wave_ok = head_waveset.HasAnyTag();
 
     // TODO: vendor specific wavelength constraint handling
+    //load up next_wavset from link
 
     if (!any_wave_ok)
         next_waveset.Intersect(head_waveset);
@@ -372,6 +373,7 @@ void TLink::ProceedByUpdatingTimeslots(ConstraintTagSet &head_timeslotset, Const
     bool any_timeslot_ok = head_timeslotset.HasAnyTag();
 
     // TODO: vendor specific wavelength constraint handling
+    //load up next_timeslotset from link
 
     if (!any_timeslot_ok)
         next_timeslotset.Intersect(head_timeslotset);
@@ -610,6 +612,24 @@ void TGraph::AddLink(TNode* node, TLink* link)
 void TGraph::RemoveLink(TLink* link)
 {
     link->GetPort()->GetLinks().erase(link->GetName());
+    if (link->GetLocalEnd())
+    {
+        list<TLink*>::iterator itLink = link->GetLocalEnd()->GetLocalLinks().begin();
+        for (; itLink != link->GetLocalEnd()->GetLocalLinks().end(); itLink++)
+        {
+            if ((*itLink) == link)
+                itLink = link->GetLocalEnd()->GetLocalLinks().erase(itLink);
+        }
+    }
+    if (link->GetRemoteEnd())
+    {
+        list<TLink*>::iterator itLink = link->GetRemoteEnd()->GetRemoteLinks().begin();
+        for (; itLink != link->GetRemoteEnd()->GetRemoteLinks().end(); itLink++)
+        {
+            if ((*itLink) == link)
+                itLink = link->GetRemoteEnd()->GetRemoteLinks().erase(itLink);
+        }
+    }
     tLinks.remove(link);
 }
 
@@ -943,7 +963,7 @@ void TEWG::PruneByBandwidth(long bw)
 }
 
 
-list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode)
+list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode, bool cleanStart)
 {
     // init TWorkData in TLinks
     list<TNode*>::iterator itn = tNodes.begin();
@@ -951,7 +971,10 @@ list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode)
     {
         TNode* node = *itn;
         if (node->GetWorkData())
-            TWDATA(node)->Cleanup();
+        {
+            if (cleanStart) 
+                TWDATA(node)->Cleanup();
+        }
         else
             node->SetWorkData(new TWorkData());
         ++itn;
@@ -963,7 +986,8 @@ list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode)
         TLink* link = *itl;
         if (link->GetWorkData())
         {
-            TWDATA(link)->Cleanup();
+            if (cleanStart) 
+                TWDATA(link)->Cleanup();
             TWDATA(link)->linkCost = link->GetMetric();
         }
         else
@@ -982,13 +1006,13 @@ list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode)
     itLink = srcNode->GetLocalLinks().begin();
     while (itLink != srcNode->GetLocalLinks().end()) 
     {
-        if (TWDATA(*itLink)->filteroff)
+        if (!TWDATA(*itLink) || TWDATA(*itLink)->filteroff)
         {
             itLink++;
             continue;
         }
         nextnode=(*itLink)->GetRemoteEnd();
-        if (TWDATA(nextnode)->filteroff)
+        if (!TWDATA(nextnode) || TWDATA(nextnode)->filteroff)
         {
             itLink++;
             continue;
@@ -1016,10 +1040,11 @@ list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode)
             break;
     	// Go through all the outgoing links for the newly added node
     	itLink = headnode->GetLocalLinks().begin();
-        while (itLink!=headnode->GetLocalLinks().end()) {
+        while (itLink!=headnode->GetLocalLinks().end()) 
+        {
             nextnode=(*itLink)->GetRemoteEnd();
-            if ( !TWDATA(nextnode)->visited && !TWDATA(nextnode)->filteroff && !TWDATA(*itLink)->filteroff 
-                && TWDATA(nextnode)->pathCost > TWDATA(headnode)->pathCost + TWDATA(*itLink)->linkCost ) 
+            if (TWDATA(nextnode) && !TWDATA(nextnode)->visited && !TWDATA(nextnode)->filteroff && !TWDATA(*itLink)->filteroff 
+                && TWDATA(nextnode)->pathCost > TWDATA(headnode)->pathCost + TWDATA(*itLink)->linkCost)
             {
                 TWDATA(nextnode)->pathCost = TWDATA(headnode)->pathCost + TWDATA(*itLink)->linkCost;
                 bool hasNode = false;
@@ -1137,11 +1162,11 @@ void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<T
         {
             headpath->FilterOffLinks(true);
             TWDATA(*itLink)->filteroff = true;
-            // cleanup nodes data is done inside ComputeDijkstraPath
+            //$$ reset link/node cost, visited flag and clean path -- already done?
             try {
                 this->ComputeDijkstraPath((*itLink)->GetLocalEnd(), dstNode);
             } catch (TCEException e) {
-                throw TCEException((char*)"TEWG::ComputeKShortestPaths() Call of ComputeDijkstraPath((*itLink)->GetLocalEnd(), dstNode) found no path.");
+                ; // do nothing
             }    
             // find SPF from Vk_i to destination node
             if (TWDATA(dstNode)->path.size()>0) 

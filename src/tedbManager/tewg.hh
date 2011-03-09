@@ -319,7 +319,7 @@ public:
     void ApplyResvDeltas(string& resvName);
     void RevokeResvDeltas(string& resvName);
     void PruneByBandwidth(long bw);
-    list<TLink*> ComputeDijkstraPath(TNode* srcNode, TNode* dstLink);
+    list<TLink*> ComputeDijkstraPath(TNode* srcNode, TNode* dstLink, bool cleanStart=false);
     void ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<TPath*>& KSP);
 };
 
