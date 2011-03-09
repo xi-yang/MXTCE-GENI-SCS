@@ -353,6 +353,7 @@ public:
 
 #ifndef MAX_VLAN_NUM
 #define MAX_VLAN_NUM 4096
+#define VTAG_UNTAGGED 4096
 #endif
 
 class ISCD_L2SC: public ISCD

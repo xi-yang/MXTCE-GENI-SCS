@@ -296,6 +296,7 @@ void TLink::ExcludeAllocatedVtags(ConstraintTagSet &vtagset)
 
 
 //$$$$ Only constraining the forward direction (not checking the reverse; assuming symetric L2SC link configurations)
+// TODO: handle "untagged" vlans (VTAG_UNTAGGED == 4096)
 void TLink::ProceedByUpdatingVtags(ConstraintTagSet &head_vtagset, ConstraintTagSet &next_vtagset)
 {
     next_vtagset.Clear();
@@ -1012,7 +1013,7 @@ list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode, bool clea
             continue;
         }
         nextnode=(*itLink)->GetRemoteEnd();
-        if (!TWDATA(nextnode) || TWDATA(nextnode)->filteroff)
+        if (!nextnode || !TWDATA(nextnode) || TWDATA(nextnode)->filteroff)
         {
             itLink++;
             continue;
@@ -1043,8 +1044,8 @@ list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode, bool clea
         while (itLink!=headnode->GetLocalLinks().end()) 
         {
             nextnode=(*itLink)->GetRemoteEnd();
-            if (TWDATA(nextnode) && !TWDATA(nextnode)->visited && !TWDATA(nextnode)->filteroff && !TWDATA(*itLink)->filteroff 
-                && TWDATA(nextnode)->pathCost > TWDATA(headnode)->pathCost + TWDATA(*itLink)->linkCost)
+            if (nextnode && TWDATA(nextnode) && !TWDATA(nextnode)->visited && !TWDATA(nextnode)->filteroff 
+                && !TWDATA(*itLink)->filteroff && TWDATA(nextnode)->pathCost > TWDATA(headnode)->pathCost + TWDATA(*itLink)->linkCost)
             {
                 TWDATA(nextnode)->pathCost = TWDATA(headnode)->pathCost + TWDATA(*itLink)->linkCost;
                 bool hasNode = false;
@@ -1110,6 +1111,7 @@ void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<T
     nextpath->SetDeviationNode(srcNode);
     CandidatePaths.push_back(nextpath);
     KSP.push_back(nextpath);
+    nextpath->LogDump();
     KSPcounter++;
 
     vector<TPath*>::iterator itPath;
@@ -1139,7 +1141,7 @@ void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<T
         itPath = min_element(CandidatePaths.begin(), CandidatePaths.end());
         TPath* headpath= *itPath;
         CandidatePaths.erase(itPath); 
-        //$$ headpath->DisplayPath();
+        headpath->LogDump(); //@@@@
         if (KSPcounter > 1) 
             KSP.push_back(headpath);
         if (KSPcounter==K) 

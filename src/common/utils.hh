@@ -46,6 +46,11 @@ using namespace std;
 
 #define ANY_TAG 0xffff
 
+#ifndef MAX_VLAN_NUM
+#define MAX_VLAN_NUM 4096
+#define VTAG_UNTAGGED 4096
+#endif
+
 class ConstraintTagSet
 {
 private:
@@ -144,11 +149,18 @@ public:
             {
                 int low, high;
                 int n = sscanf(ptr, "%d-%d", &low, &high);
-                if (n == 1)
-                    AddTag(low);
+                if (n == 1) 
+                {
+                    if (low == 0 && numBits == MAX_VLAN_NUM)
+                        AddTag(VTAG_UNTAGGED);
+                    else
+                        AddTag(low);
+                }
                 else if (n == 2)
+                {
                     for (int t = low; t <= high; t++)
                         AddTag(t);
+                }
             }
         }
     void DeleteTag(u_int32_t tag)

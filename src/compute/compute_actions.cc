@@ -205,7 +205,7 @@ void Action_ComputeKSP::Process()
     long bw = 1000000000; // 100M
     TNode* srcNode = tewg->GetNodes().front();
     TNode* dstNode = tewg->GetNodes().back();
-    u_int32_t vtag = 2001;
+    u_int32_t vtag = 4001;
     u_int32_t wave = 0;
     TSpec tspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);    
 
