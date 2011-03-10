@@ -731,6 +731,11 @@ void TGraph::LogDump()
     LOG_DEBUG(buf);
 }
 
+bool cmp_tpath(TPath* p1, TPath* p2)
+{
+    return (p1->GetCost() < p2->GetCost());
+}
+
 // verify constrains of vlantag, wavelength and cross-layer adapation (via Tspec) 
 // TODO: take api_request as input
 bool TPath::VerifyTEConstraints(u_int32_t& vtag, u_int32_t& wave, TSpec& tspec) 
@@ -816,7 +821,7 @@ void TPath::LogDump()
 {
     char buf[10240]; //up to 10K
     char str[256];
-    sprintf(buf, "TPath:");
+    sprintf(buf, "TPath (cost=%lf):", this->cost);
     if (path.size() == 0)
     {
         strcat(buf," empty (No links)");
@@ -999,7 +1004,6 @@ list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode, bool clea
     // Dijkstra's SPF algorithm
     TWDATA(srcNode)->visited = true;
     TNode* headnode= NULL;
-    vector<TNode*>::iterator itNode;
     vector<TNode*> ReachableNodes;
     list<TLink*>::iterator itLink;
     TNode* nextnode;
@@ -1019,21 +1023,28 @@ list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode, bool clea
             continue;
         }
         ReachableNodes.push_back(nextnode); // found path to this node
-        TWDATA(nextnode)->pathCost = TWDATA(*itLink)->linkCost;
-        TWDATA(nextnode)->path.push_back(*itLink);
+        if (TWDATA(nextnode)->pathCost > TWDATA(*itLink)->linkCost)
+        {
+            TWDATA(nextnode)->pathCost = TWDATA(*itLink)->linkCost;
+            TWDATA(nextnode)->path.push_back(*itLink);
+        }
         itLink++;
     }
     if (ReachableNodes.size()==0) 
         throw TCEException((char*)"TEWG::ComputeDijkstraPath(): No Path Found");
 
-    vector<TNode*>::iterator start;
-    vector<TNode*>::iterator end;
-    start=ReachableNodes.begin();
-    end=ReachableNodes.end();
-    itNode = min_element(start, end);
-    headnode = *itNode;
-    TWDATA(headnode)->visited = true; // shortest path to this node has been found
-    ReachableNodes.erase(itNode); // shortest path found for this head node (srcNode)
+    vector<TNode*>::iterator start = ReachableNodes.begin();
+    vector<TNode*>::iterator end = ReachableNodes.begin();
+    start++;
+    while (start != ReachableNodes.end())
+    {
+        if ( TWDATA(*end)->pathCost > TWDATA(*start)->pathCost)
+            end = start;
+        start++;
+    }
+    headnode = *end;
+    TWDATA(headnode)->visited = true;
+    ReachableNodes.erase(end);
 
     for (;;) 
     {
@@ -1044,8 +1055,8 @@ list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode, bool clea
         while (itLink!=headnode->GetLocalLinks().end()) 
         {
             nextnode=(*itLink)->GetRemoteEnd();
-            if (nextnode && TWDATA(nextnode) && !TWDATA(nextnode)->visited && !TWDATA(nextnode)->filteroff 
-                && !TWDATA(*itLink)->filteroff && TWDATA(nextnode)->pathCost > TWDATA(headnode)->pathCost + TWDATA(*itLink)->linkCost)
+            if (nextnode && TWDATA(nextnode) && !TWDATA(nextnode)->visited && !TWDATA(nextnode)->filteroff && !TWDATA(*itLink)->filteroff 
+                && TWDATA(nextnode)->pathCost > TWDATA(headnode)->pathCost + TWDATA(*itLink)->linkCost)
             {
                 TWDATA(nextnode)->pathCost = TWDATA(headnode)->pathCost + TWDATA(*itLink)->linkCost;
                 bool hasNode = false;
@@ -1060,16 +1071,9 @@ list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode, bool clea
                 if (!hasNode)
                 {
                     ReachableNodes.push_back(nextnode);
+                    //LOG("DijkstraPath can reach node: " << nextnode->GetName() <<endl);
                 }
-
-                list<TLink*>::iterator itPath;
-                itPath = TWDATA(headnode)->path.begin();
-                TWDATA(nextnode)->path.clear();
-                while (itPath != TWDATA(headnode)->path.end()) 
-                {
-                    TWDATA(nextnode)->path.push_back(*itPath);
-                    itPath++;
-                }
+                TWDATA(nextnode)->path.assign(TWDATA(headnode)->path.begin(), TWDATA(headnode)->path.end());
                 TWDATA(nextnode)->path.push_back(*itLink);
             }
             itLink++;
@@ -1077,16 +1081,29 @@ list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode, bool clea
 
         if (ReachableNodes.size()==0) 
             break;
-        itNode = min_element(ReachableNodes.begin(), ReachableNodes.end());
-        headnode= *itNode;
-        TWDATA(headnode)->visited=true; // shortest path to this node has been found
-        ReachableNodes.erase(itNode); // shortest path found for this head node;
+        start = ReachableNodes.begin();
+        end = ReachableNodes.begin();
+        start++;
+        while (start != ReachableNodes.end())
+        {
+            if ( TWDATA(*end)->pathCost > TWDATA(*start)->pathCost)
+                end = start;
+            start++;
+        }
+        headnode= *end;
+        TWDATA(headnode)->visited=true;
+        ReachableNodes.erase(end);
+        if (headnode == dstNode)
+        {
+            //TPath tPath;
+            //tPath.SetPath(TWDATA(dstNode)->path);
+            //LOG("DijkstraPath return "<<endl);
+            //tPath.LogDump();
+            return TWDATA(dstNode)->path;
+        }
     } 
-
-    if (TWDATA(dstNode)->path.size() == 0)
-        throw TCEException((char*)"TEWG::ComputeDijkstraPath(): No Path Found");
-
-    return TWDATA(dstNode)->path;
+    // no path found
+    throw TCEException((char*)"TEWG::ComputeDijkstraPath(): No Path Found");
 }
 
 
@@ -1099,23 +1116,23 @@ void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<T
     list<TLink*>::iterator itLink;
     list<TLink*>::iterator pathstart;
     list<TLink*>::iterator pathend;
-    list<TLink*>::iterator deviationstart;
+
     try {
         this->ComputeDijkstraPath(srcNode, dstNode);
     } catch (TCEException e) {
         throw TCEException((char*)"TEWG::ComputeKShortestPaths() Initial call of ComputeDijkstraPath found no path.");
     }    
+
     TPath* nextpath = new TPath();
     nextpath->GetPath().assign(TWDATA(dstNode)->path.begin(), TWDATA(dstNode)->path.end());
     nextpath->SetCost(TWDATA(dstNode)->pathCost);
     nextpath->SetDeviationNode(srcNode);
     CandidatePaths.push_back(nextpath);
     KSP.push_back(nextpath);
-    nextpath->LogDump();
     KSPcounter++;
 
     vector<TPath*>::iterator itPath;
-    while ((CandidatePaths.size()>0) && (KSPcounter<=K))
+    while ((CandidatePaths.size() > 0) && (KSPcounter <= K))
     {
         // reset graph TWData but keep filter
         list<TNode*>::iterator itNode;
@@ -1136,16 +1153,16 @@ void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<T
             TWDATA(*itLink)->Cleanup();
             TWDATA(*itLink)->filteroff = oldFilter;
         }
-
-
-        itPath = min_element(CandidatePaths.begin(), CandidatePaths.end());
+        // get so-far least cost candidate path
+        itPath = min_element(CandidatePaths.begin(), CandidatePaths.end(), cmp_tpath);
         TPath* headpath= *itPath;
         CandidatePaths.erase(itPath); 
-        headpath->LogDump(); //@@@@
+        //headpath->LogDump(); 
         if (KSPcounter > 1) 
             KSP.push_back(headpath);
-        if (KSPcounter==K) 
+        if (KSPcounter == K) 
             break;
+
         itLink = headpath->GetPath().begin();
         while ((*itLink)->GetLocalEnd() != headpath->GetDeviationNode()) 
         {
@@ -1156,15 +1173,37 @@ void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<T
             for (itl = (*itLink)->GetLocalEnd()->GetRemoteLinks().begin(); itl != (*itLink)->GetLocalEnd()->GetRemoteLinks().end(); itl++)
                 TWDATA(*itl)->filteroff = true; 
             TWDATA((*itLink)->GetLocalEnd())->filteroff = true; 
+            
             itLink++;
         }
         pathend = headpath->GetPath().end();
-        // penultimate node along path p_k
-        for ( ; itLink!=pathend; itLink++) 
+        // penultimate node along path p_k (segment starting from deviationNode)
+        for ( ; itLink != pathend; itLink++) 
         {
-            headpath->FilterOffLinks(true);
+            // filteroff all masked links for headpath before new search
+            headpath->FilterOffMaskedLinks(true);
             TWDATA(*itLink)->filteroff = true;
-            //$$ reset link/node cost, visited flag and clean path -- already done?
+            // again, eset graph TWData but keep filter
+            list<TNode*>::iterator itNode2;
+            list<TLink*>::iterator itLink2;
+            for (itNode2 = tNodes.begin(); itNode2 != tNodes.end(); itNode2++)
+            {
+                if (!TWDATA(*itNode2))
+                    continue;
+                oldFilter = TWDATA(*itNode2)->filteroff;
+                TWDATA(*itNode2)->Cleanup();
+                TWDATA(*itNode2)->filteroff = oldFilter;
+            }
+            for (itLink2 = tLinks.begin(); itLink2 != tLinks.end(); itLink2++)
+            {
+                if (!TWDATA(*itLink2))
+                    continue;
+                oldFilter = TWDATA(*itLink2)->filteroff;
+                TWDATA(*itLink2)->Cleanup();
+                TWDATA(*itLink2)->filteroff = oldFilter;
+            }
+            // compute shortest path from local end of current link
+            //LogDumpWithFlags();
             try {
                 this->ComputeDijkstraPath((*itLink)->GetLocalEnd(), dstNode);
             } catch (TCEException e) {
@@ -1174,7 +1213,7 @@ void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<T
             if (TWDATA(dstNode)->path.size()>0) 
             {
                 // concatenate subpk(s, vk_i) to shortest path found from vk_i to destination
-                nextpath = new TPath(); // $$ Memory leak...?
+                nextpath = new TPath(); // $$ Memory leak...
                 if (itLink != headpath->GetPath().begin()) 
                 {
                     nextpath->GetPath().assign(headpath->GetPath().begin(), itLink);
@@ -1200,22 +1239,91 @@ void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<T
                 //$$ nextpath->DisplayPath();
                 CandidatePaths.push_back(nextpath);
             }
-            // filter reset for local end of the current link ????
-            //TWDATA(*itLink)->filteroff = false;
+            TWDATA(*itLink)->filteroff = false;
+            /*  filter set for local end of the current link
             list<TLink*>::iterator itl;
             for (itl = (*itLink)->GetLocalEnd()->GetLocalLinks().begin(); itl != (*itLink)->GetLocalEnd()->GetLocalLinks().end(); itl++)
                 TWDATA(*itl)->filteroff = true;
             for (itl = (*itLink)->GetLocalEnd()->GetRemoteLinks().begin(); itl != (*itLink)->GetLocalEnd()->GetRemoteLinks().end(); itl++)
                 TWDATA(*itl)->filteroff = true; 
             TWDATA((*itLink)->GetLocalEnd())->filteroff = true;
+            */
         }
         KSPcounter++;
     }
     // release memory of remaining paths in CandidatePaths list
+    /*
     for (int i = 0; i < CandidatePaths.size(); i++)
     {
         delete CandidatePaths[i];
     }
+    */
 }
 
+
+
+void TEWG::LogDumpWithFlags()
+{
+    char buf[102400]; //up to 100K
+    char str[128];
+    strcpy(buf, "TEWG Dump...\n");
+    list<TDomain*>::iterator itd = this->tDomains.begin();
+    for (; itd != this->tDomains.end(); itd++)
+    {
+        TDomain* td = (*itd);
+        snprintf(str, 256, "<domain id=%s>\n", td->GetName().c_str());
+        strcat(buf, str);
+        map<string, Node*, strcmpless>::iterator itn = td->GetNodes().begin();
+        for (; itn != td->GetNodes().end(); itn++)
+        {
+            TNode* tn = (TNode*)(*itn).second;
+            snprintf(str, 128, "\t<node id=%s>\n", tn->GetName().c_str());
+            strcat(buf, str);
+            if (tn->GetWorkData())
+            {
+                snprintf(str, 128, "\t\t<visited=%d> <filteroff=%d>\n",
+                    TWDATA(tn)->visited, TWDATA(tn)->filteroff);
+                strcat(buf, str);
+            }
+            map<string, Port*, strcmpless>::iterator itp = tn->GetPorts().begin();
+            for (; itp != tn->GetPorts().end(); itp++)
+            {
+                TPort* tp = (TPort*)(*itp).second;
+                snprintf(str, 128, "\t\t<port id=%s>\n", tp->GetName().c_str());
+                strcat(buf, str);
+                map<string, Link*, strcmpless>::iterator itl = tp->GetLinks().begin();
+                for (; itl != tp->GetLinks().end(); itl++) 
+                {
+                    TLink* tl = (TLink*)(*itl).second;
+                    snprintf(str, 128, "\t\t\t<link id=%s>\n", tl->GetName().c_str());
+                    strcat(buf, str);
+                    if (tl->GetWorkData())
+                    {
+                        snprintf(str, 128, "\t\t\t\t<visited=%d> <filteroff=%d>\n",  
+                            TWDATA(tl)->visited, TWDATA(tl)->filteroff);
+                        strcat(buf, str);
+                    }
+                    if (tl->GetRemoteLink())
+                    {
+                        snprintf(str, 128, "\t\t\t\t<remoteLinkId>domain=%s:node=%s:port=%s:link=%s</remoteLinkId>\n",  
+                            tl->GetRemoteLink()->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
+                            tl->GetRemoteLink()->GetPort()->GetNode()->GetName().c_str(),
+                            tl->GetRemoteLink()->GetPort()->GetName().c_str(), 
+                            tl->GetRemoteLink()->GetName().c_str());
+                        strcat(buf, str);
+                    }
+                    snprintf(str, 128, "\t\t\t</link>\n");
+                    strcat(buf, str);
+                }
+                snprintf(str, 128, "\t\t</port>\n");
+                strcat(buf, str);
+            }
+            snprintf(str, 128, "\t</node>\n");
+            strcat(buf, str);
+        }
+        snprintf(str, 128, "</domain>\n");
+        strcat(buf, str);
+    }    
+    LOG_DEBUG(buf);
+}
 

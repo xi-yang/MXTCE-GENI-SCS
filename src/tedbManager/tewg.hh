@@ -270,9 +270,9 @@ public:
     double GetCost() { return cost; }
     void SetCost(double c) { cost = c; }
     list<TLink*>& GetMaskedLinkList() { return maskedLinkList; }
-    void FilterOffLinks(bool bl) { 
+    void FilterOffMaskedLinks(bool bl) { 
             list<TLink*>::iterator itLink;
-            for (itLink = path.begin(); itLink != path.end(); itLink++) {
+            for (itLink = maskedLinkList.begin(); itLink != maskedLinkList.end(); itLink++) {
                 TWDATA(*itLink)->filteroff = bl;
             }
         }
@@ -297,11 +297,12 @@ public:
         maskedLinkList.clear();
         deviationNode = NULL;
     }
-    bool operator< (const TPath& p) const { return this->cost < p.cost; }
+    bool operator< (TPath& p) const { return this->cost < p.cost; }
     void LogDump();
 };
 
-
+extern bool cmp_tpath(TPath* p1, TPath* p2);
+    
 class TDelta;
 class TReservation;
 class TEWG: public TGraph
@@ -321,6 +322,7 @@ public:
     void PruneByBandwidth(long bw);
     list<TLink*> ComputeDijkstraPath(TNode* srcNode, TNode* dstLink, bool cleanStart=false);
     void ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<TPath*>& KSP);
+    void LogDumpWithFlags();
 };
 
 

@@ -205,6 +205,7 @@ void Action_ComputeKSP::Process()
     long bw = 1000000000; // 100M
     TNode* srcNode = tewg->GetNodes().front();
     TNode* dstNode = tewg->GetNodes().back();
+    //TNode* dstNode = *(++(++(++tewg->GetNodes().begin())));
     u_int32_t vtag = 4001;
     u_int32_t wave = 0;
     TSpec tspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);    
@@ -216,7 +217,7 @@ void Action_ComputeKSP::Process()
     // compute KSP
     vector<TPath*>* KSP = new vector<TPath*>;
     try {
-        tewg->ComputeKShortestPaths(srcNode, dstNode,tewg->GetNodes().size(), *KSP);
+        tewg->ComputeKShortestPaths(srcNode, dstNode, tewg->GetNodes().size()*2, *KSP);
     } catch (TCEException e) {
         LOG_DEBUG("Action_ComputeKSP::Process raised exception: " << e.GetMessage() <<endl);
         throw ComputeThreadException(e.GetMessage());
@@ -253,7 +254,9 @@ void Action_ComputeKSP::Process()
         this->GetComputeWorker()->SetParameter(paramName, NULL);
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No KSP found after being applied with TE constraints!");
     }
-    sort(KSP->begin(), KSP->end());
+    sort(KSP->begin(), KSP->end(), cmp_tpath);
+    for (itP = KSP->begin(); itP != KSP->end(); itP++)
+        (*itP)->LogDump();
 }
 
 
@@ -315,7 +318,7 @@ void Action_FinalizeServiceTopology::Process()
         throw ComputeThreadException((char*)"Action_FinalizeServiceTopology::Process() No path found!");
     
     // TODO:  translate into format API requires
-    KSP->front()->LogDump();
+    (*min_element(KSP->begin(), KSP->end(), cmp_tpath))->LogDump();
 }
 
 
