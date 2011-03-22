@@ -38,6 +38,7 @@ TDelta* TLinkDelta::Clone()
 {
     TSchedule* sched = (this->schedule ? this->schedule->Clone():NULL);
     TDelta* td = (TDelta*)new TLinkDelta(this->resvName, sched, this->targetResource, this->bandwidth);
+    return td;
 }
 
 
@@ -73,6 +74,21 @@ void TLinkDelta::Revoke()
             link->GetUnreservedBandwidth()[i] = link->GetMaxReservableBandwidth();
     } 
 }
+
+
+void TLinkDelta::Combine(TDelta* delta)
+{
+    bandwidth += ((TLinkDelta*)delta)->GetBandwidth();
+}
+
+
+void TLinkDelta::Decombine(TDelta* delta)
+{
+    bandwidth -= ((TLinkDelta*)delta)->GetBandwidth();
+    if (bandwidth < 0) bandwidth = 0;
+}
+
+
 
 /**
   * Assume the first ISCD represents the link layer. Will support multi-ISCDs in future.

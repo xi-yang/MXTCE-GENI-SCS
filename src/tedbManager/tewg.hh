@@ -64,6 +64,7 @@ public:
 };
 
 
+// TODO: use map<string, void*> for additional storage
 class TWorkData: public WorkData
 {
 public:

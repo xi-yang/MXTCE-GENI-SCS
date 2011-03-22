@@ -1239,15 +1239,8 @@ void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<T
                 //$$ nextpath->DisplayPath();
                 CandidatePaths.push_back(nextpath);
             }
-            TWDATA(*itLink)->filteroff = false;
-            /*  filter set for local end of the current link
-            list<TLink*>::iterator itl;
-            for (itl = (*itLink)->GetLocalEnd()->GetLocalLinks().begin(); itl != (*itLink)->GetLocalEnd()->GetLocalLinks().end(); itl++)
-                TWDATA(*itl)->filteroff = true;
-            for (itl = (*itLink)->GetLocalEnd()->GetRemoteLinks().begin(); itl != (*itLink)->GetLocalEnd()->GetRemoteLinks().end(); itl++)
-                TWDATA(*itl)->filteroff = true; 
-            TWDATA((*itLink)->GetLocalEnd())->filteroff = true;
-            */
+            // reset filteroff for current link
+            TWDATA(*itLink)->filteroff = false;            
         }
         KSPcounter++;
     }

@@ -52,11 +52,28 @@ enum ResourceType
 };
 
 
+struct strcmpless {
+    bool operator() (const string& ls, const string& rs) const 
+    {   return (ls.compare(rs) < 0); }
+};
+
 class WorkData
 {
+private:
+    map<string, void*, strcmpless> store;
+
 public:
     WorkData() {}
     virtual ~WorkData() {}
+    void* GetData(string& s) { if (store.find(s) != store.end()) return store[s]; else return NULL; }
+    void SetData(string& s, void* d) { store[s] = d; }
+    void SetData(const char* cs, void* d) { string s = cs; store[s] = d; }
+    bool GetBool(const char* cs) { string s = cs; return *((bool*)(GetData(s))); }
+    int GetInt(const char* cs) { string s = cs; return *((int*)GetData(s)); }
+    long GetLong(const char* cs) { string s = cs; return *((long*)GetData(s)); }
+    float GetFloat(const char* cs) { string s = cs; return *((float*)GetData(s)); }
+    double GetDouble(const char* cs) { string s = cs; return *((double*)GetData(s)); }
+    string GetString(const char* cs) { string s = cs; return *((string*)GetData(s)); }
 };
 
 class ResourceMapByString;
@@ -91,12 +108,6 @@ public:
     list<TDelta*> LookupDeltasByName(string resvName);
     WorkData* GetWorkData() { return workData; }
     void SetWorkData(WorkData* w) { workData = w; }
-};
-
-
-struct strcmpless {
-    bool operator() (const string& ls, const string& rs) const 
-    {   return (ls.compare(rs) < 0); }
 };
 
 

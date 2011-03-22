@@ -98,12 +98,18 @@ public:
     struct timeval GetAppliedTime() { return appliedTime; }
     TSchedule* GetSchedule() { return schedule; }
     void SetSchedule(TSchedule* s) { schedule = s; }
+    time_t GetStartTime() { if (schedule) return schedule->GetStartTime(); else return 0; }
+    void SetStartTime(time_t t) { if (schedule) schedule->SetStartTime(t); }
+    time_t GetEndTime() { if (schedule) return schedule->GetEndTime(); else return 0; }
+    void SetEndTime(time_t t) { if (schedule) schedule->SetEndTime(t); }
     Resource* GetTargetResource() { return targetResource; }
     void SetTargetResource(Resource* t) { targetResource = t; }
     bool IsApplied() { return applied; }
     virtual TDelta* Clone() = 0; 
     virtual void Apply() = 0;
     virtual void Revoke() = 0;
+    virtual void Combine(TDelta* delta) = 0;
+    virtual void Decombine(TDelta* delta) = 0;
 };
 
 class TLinkDelta: public TDelta
@@ -114,11 +120,13 @@ protected:
 public:
     TLinkDelta(string& r, TSchedule* s, Resource* t, long bw): TDelta(r, s, t), bandwidth(bw) { }
     virtual ~TLinkDelta() { }
-    long GetBandwidtdh() { return bandwidth; }
-    void SetBandwidtdh(long b) { bandwidth = b; }    
+    long GetBandwidth() { return bandwidth; }
+    void SetBandwidth(long b) { bandwidth = b; }    
     virtual TDelta* Clone(); 
     virtual void Apply(); // bandwidth only -- more activities by derived classes
     virtual void Revoke(); // bandwidth only -- more activities by derived classes
+    virtual void Combine(TDelta* delta);
+    virtual void Decombine(TDelta* delta);
 };
 
 class TLinkDelta_PSC: public TLinkDelta
