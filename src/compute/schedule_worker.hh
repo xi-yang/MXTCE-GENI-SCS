@@ -49,11 +49,12 @@ class ScheduleComputeWorker: public ComputeWorker
 {
 protected:
     TEWG* tewg;
-    vector<TPath*>* candidatePaths;
-    vector<time_t>* startTimePoints;
+    vector<TPath*>* ksp;
+    vector<TPath*>* feasiblePaths;
+    vector<time_t>* orderedATS;
 
 public:
-    ScheduleComputeWorker(string n):ComputeWorker(n), tewg(NULL), candidatePaths(NULL), startTimePoints(NULL) { }
+    ScheduleComputeWorker(string n):ComputeWorker(n), tewg(NULL), feasiblePaths(NULL), orderedATS(NULL) { }
     virtual ~ScheduleComputeWorker() { }
     virtual void* hookRun();
     virtual void hookHandleMessage();

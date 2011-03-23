@@ -66,6 +66,7 @@ public:
     WorkData() {}
     virtual ~WorkData() {}
     void* GetData(string& s) { if (store.find(s) != store.end()) return store[s]; else return NULL; }
+    void* GetData(const char* cs) { string s = cs; if (store.find(s) != store.end()) return store[s]; else return NULL; }
     void SetData(string& s, void* d) { store[s] = d; }
     void SetData(const char* cs, void* d) { string s = cs; store[s] = d; }
     bool GetBool(const char* cs) { string s = cs; return *((bool*)(GetData(s))); }

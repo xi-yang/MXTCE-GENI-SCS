@@ -50,6 +50,7 @@ public:
     virtual ~AggregateDeltaSeries();
     list<TDelta*>& GetADS() { return ADS; }
     inline list<TDelta*> GetADSInWindow(time_t start, time_t end);
+    inline TDelta* JoinADSInWindow(time_t start, time_t end);
     inline void Insert(TDelta* delta);
     void AddDelta(TDelta* delta);
     void RemoveDelta(TDelta* delta);

@@ -55,6 +55,24 @@ inline list<TDelta*> AggregateDeltaSeries::GetADSInWindow(time_t start, time_t e
     return deltaList;
 }
 
+inline TDelta* AggregateDeltaSeries::JoinADSInWindow(time_t start, time_t end)
+{
+    TDelta* deltaA = NULL;
+    list<TDelta*>::iterator itd = ADS.begin();
+    for (; itd != ADS.end(); itd++)
+    {
+        TDelta* delta = *itd;
+        if ( (delta->GetStartTime() >= start && delta->GetStartTime() < end)
+            || (delta->GetEndTime() > start && delta->GetEndTime() <= end) )
+        {
+            if (deltaA == NULL) 
+                deltaA = delta->Clone();
+            else
+                deltaA->Join(delta);
+        }
+    }
+}
+
 inline void AggregateDeltaSeries::Insert(TDelta* delta)
 {
     list<TDelta*>::iterator itd = ADS.begin();

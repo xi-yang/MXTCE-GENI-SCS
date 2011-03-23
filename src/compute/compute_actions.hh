@@ -93,18 +93,56 @@ class Action_ComputeKSP: public Action
 
 class Action_FinalizeServiceTopology: public Action
 {
-    protected:
+protected:
+
+public:
+    Action_FinalizeServiceTopology(): Action(){ }
+    Action_FinalizeServiceTopology(string& n, ComputeWorker* w): Action(n, w) { }
+    virtual ~Action_FinalizeServiceTopology() { }
     
-    public:
-        Action_FinalizeServiceTopology(): Action(){ }
-        Action_FinalizeServiceTopology(string& n, ComputeWorker* w): Action(n, w) { }
-        virtual ~Action_FinalizeServiceTopology() { }
+    virtual void Process();
+    virtual bool ProcessChildren();
+    virtual bool ProcessMessages();
+    virtual void Finish();
+    virtual void CleanUp();
+};
+
+
+///////////// scheduling workflow actions //////////
+
+class Action_CreateOrderedATS: public Action
+{
+protected:
+    inline void AddUniqueTimePoint(vector<time_t>* ats, time_t t);
     
-        virtual void Process();
-        virtual bool ProcessChildren();
-        virtual bool ProcessMessages();
-        virtual void Finish();
-        virtual void CleanUp();
+public:
+    Action_CreateOrderedATS(): Action(){ }
+    Action_CreateOrderedATS(string& n, ComputeWorker* w): Action(n, w) { }
+    virtual ~Action_CreateOrderedATS() { }
+    
+    virtual void Process();
+    virtual bool ProcessChildren();
+    virtual bool ProcessMessages();
+    virtual void Finish();
+    virtual void CleanUp();
+};
+
+#define MAX_ATS_SIZE 100 // change / configurable
+
+class Action_ComputeSchedulesWithKSP: public Action
+{
+protected:
+
+public:
+    Action_ComputeSchedulesWithKSP(): Action(){ }
+    Action_ComputeSchedulesWithKSP(string& n, ComputeWorker* w): Action(n, w) { }
+    virtual ~Action_ComputeSchedulesWithKSP() { }
+    
+    virtual void Process();
+    virtual bool ProcessChildren();
+    virtual bool ProcessMessages();
+    virtual void Finish();
+    virtual void CleanUp();
 };
 
 #endif

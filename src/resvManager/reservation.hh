@@ -110,6 +110,7 @@ public:
     virtual void Revoke() = 0;
     virtual void Combine(TDelta* delta) = 0;
     virtual void Decombine(TDelta* delta) = 0;
+    virtual void Join(TDelta* delta) = 0;
 };
 
 class TLinkDelta: public TDelta
@@ -127,6 +128,7 @@ public:
     virtual void Revoke(); // bandwidth only -- more activities by derived classes
     virtual void Combine(TDelta* delta);
     virtual void Decombine(TDelta* delta);
+    virtual void Join(TDelta* delta);
 };
 
 class TLinkDelta_PSC: public TLinkDelta
@@ -151,6 +153,9 @@ public:
     void SetVlanTags(ConstraintTagSet& vtags) { vlanTags = vtags; }
     virtual void Apply();
     virtual void Revoke();
+    virtual void Combine(TDelta* delta);
+    virtual void Decombine(TDelta* delta);
+    virtual void Join(TDelta* delta);
 };
 
 class TLinkDelta_TDM: public TLinkDelta

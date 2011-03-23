@@ -36,6 +36,7 @@
 #include "exception.hh"
 #include "mxtce.hh"
 #include "tewg.hh"
+#include "scheduling.hh"
 #include "compute_worker.hh"
 #include "compute_actions.hh"
 #include <algorithm> 
@@ -362,3 +363,277 @@ void Action_FinalizeServiceTopology::Finish()
     Action::Finish();
 }
 
+
+///////////////////// class Action_CreateOrderedATS ///////////////////////////
+
+inline void Action_CreateOrderedATS::AddUniqueTimePoint(vector<time_t>* ats, time_t t)
+{
+    vector<time_t>::iterator it;
+    for (it = ats->begin(); it != ats->end(); it++)
+    {
+        if ((*it) == t)
+            return;
+    }
+    ats->push_back(t);
+}
+
+// TODO: Add request parameters (max-bandwidth, max-duration, volume)
+
+void Action_CreateOrderedATS::Process()
+{
+    LOG(name<<"Process() called"<<endl);
+
+    string paramName = "KSP";
+    vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+
+    if (KSP == NULL || KSP->size() == 0)
+        throw ComputeThreadException((char*)"Action_CreateOrderedATS::Process() Empty KSP list: no path found!");
+
+    paramName = "TEWG";
+    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetParameter(paramName);
+
+    vector<time_t>* orderedATS = new vector<time_t>;
+    vector<TPath*>::iterator itP;
+    list<TLink*>::iterator itL;
+    int* piVal = new int(0);
+    for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
+        (*itL)->GetWorkData()->SetData("ATS_Order_Counter", (void*)piVal);
+    for (itP = KSP->begin(); itP != KSP->end(); itP++)
+    {
+        TPath* P = *itP;
+        for (itL = P->GetPath().begin(); itL != P->GetPath().end(); itL++)
+        {
+            piVal = new int ((*itL)->GetWorkData()->GetInt("ATS_Order_Counter"));
+            (*piVal)++;
+            (*itL)->GetWorkData()->SetData("ATS_Order_Counter", piVal);
+        }
+    }
+
+    list<TLink*> orderedLinks;
+    list<TLink*>::iterator itL2;
+    for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
+    {
+        if ((*itL)->GetWorkData()->GetInt("ATS_Order_Counter") == 0)
+            continue;
+        int iVal = (*itL)->GetWorkData()->GetInt("ATS_Order_Counter");        
+        for (itL2 = orderedLinks.begin(); itL2 != orderedLinks.end(); itL2++)
+        {
+            if (iVal > (*itL2)->GetWorkData()->GetInt("ATS_Order_Counter"))
+                orderedLinks.insert(itL2, *itL);
+        }
+        if (itL2 == orderedLinks.end())
+            orderedLinks.push_back(*itL);
+    }
+
+    // clean up
+    for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
+    {
+        if ((*itL)->GetWorkData()->GetData("ATS_Order_Counter") != NULL)
+            delete (int*)(*itL)->GetWorkData()->GetData("ATS_Order_Counter");
+        (*itL)->GetWorkData()->SetData("ATS_Order_Counter", NULL);
+    }
+
+    paramName = "ORDERED_ATS";
+    vector<time_t>* ats = new vector<time_t>;
+    this->GetComputeWorker()->SetParameter(paramName, ats);
+
+    for (itL2 = orderedLinks.begin(); itL2 != orderedLinks.end(); itL2++)
+    {
+        TLink* L = *itL2;
+        //$$ create Link ADS
+        AggregateDeltaSeries* ads = new AggregateDeltaSeries;
+        (*itL2)->GetWorkData()->SetData("ADS", ads);
+        if (L->GetDeltaList().size() == 0)
+            continue;
+        list<TDelta*>::iterator itD;
+        for (itD = L->GetDeltaList().begin(); itD != L->GetDeltaList().end(); itD++)
+        {
+            TDelta* delta = *itD;
+            ads->AddDelta(delta);
+        }
+        //$$ add qualified link time points to orderedATS
+        time_t t_start = time(0); 
+        time_t t_end = t_start;
+        time_t t_next = 0; // for sliding t_start
+        long bw = L->GetMaxReservableBandwidth() - ((TLinkDelta*)ads->GetADS().front())->GetBandwidth();
+        for (itD = ads->GetADS().begin(); itD != ads->GetADS().end(); itD++)
+        {
+            TDelta* delta = *itD;
+            t_end = delta->GetStartTime();
+            if (t_next == 0 || t_next <= t_start)
+                t_next = t_end;
+
+            //$$ judge whether link resource between (t_start, t_end) can satisfy request (before current delta)
+            // @@ if (bw*(t_end - t_start) > _Volume_)
+            //  {
+            //      AddUniqueTimePoint(ats, t_start);
+            //      t_start = t_next;
+            //  }
+
+            if (bw > L->GetMaxReservableBandwidth() - (((TLinkDelta*)delta)->GetBandwidth()))
+                bw = L->GetMaxReservableBandwidth() - (((TLinkDelta*)delta)->GetBandwidth());
+             t_end = delta->GetEndTime();
+             if (t_next <= t_start)
+                t_next = t_end;
+
+            //$$ judge whether link resource between (t_start, t_end) can satisfy request (including current delta)
+            // @@ if (bw < _Requested_BW_)
+            //  {
+            //      t_start = t_end = delta->GetEndTime();
+            //      bw = L->GetMaxReservableBandwidth();
+            //      continue;
+            //  }
+            // @@ if (bw*(t_end - t_start) > _Volume_)
+            //  {
+            //      AddUniqueTimePoint(ats, t_start);
+            //      t_start = t_next;
+            //  }
+        }
+    }
+}
+
+
+bool Action_CreateOrderedATS::ProcessChildren()
+{
+    LOG(name<<"ProcessChildren() called"<<endl);
+    //$$$$ loop through all children to look for states
+
+    // return true if all children have finished; otherwise false
+    return Action::ProcessChildren();
+}
+
+
+bool Action_CreateOrderedATS::ProcessMessages()
+{
+    LOG(name<<"ProcessMessages() called"<<endl);
+    //$$$$ process messages if received
+    //$$$$ run current action logic based on received messages 
+
+    //return true if all messages received and processed; otherwise false
+    return Action::ProcessMessages();
+}
+
+
+void Action_CreateOrderedATS::CleanUp()
+{
+    LOG(name<<"CleanUp() called"<<endl);
+    //$$$$ cleanup logic for current action
+    // TODO: clean up link AggregateDeltaSeries in TEWG
+
+    // cancel and cleanup children
+    Action::CleanUp();
+}
+
+
+void Action_CreateOrderedATS::Finish()
+{
+    LOG(name<<"Finish() called"<<endl);
+    //$$$$ finish logic for current action
+
+    // stop out from event loop
+    Action::Finish();
+}
+
+
+///////////////////// class Action_ComputeSchedulesWithKSP ///////////////////////////
+
+void Action_ComputeSchedulesWithKSP::Process()
+{
+    LOG(name<<"Process() called"<<endl);
+    string paramName = "TEWG";
+    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetParameter(paramName);
+    if (tewg == NULL)
+        throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() No TEWG available for computation!");
+    
+    paramName = "ORDERED_ATS";
+    vector<time_t>* orderedATS = (vector<time_t>*)this->GetComputeWorker()->GetParameter(paramName);
+    if (tewg == NULL)
+        throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() No Ordered Aggregate Time Series available for computation!");
+
+    paramName = "FEASIBLE_PATHS";
+    vector<TPath*>* feasiblePaths = new vector<TPath*>;
+    this->GetComputeWorker()->SetParameter(paramName, feasiblePaths);
+
+    //TSpec tspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);    
+    // TODO: verify ingress/egress edge Tspec
+
+    // $$ loop on ordered ATS
+        // $$ get ADS delta list in window
+        // $$ deduct resource by conjunction of delta's (bandwidth = max; vlan = joint)     
+        // $$ tewg->PruneByBandwidth(bw);
+        // $$ call SearchKSP
+        /*
+                    vector<TPath*> KSP;
+                    try {
+                        tewg->ComputeKShortestPaths(srcNode, dstNode, tewg->GetNodes().size(), KSP);
+                    } catch (TCEException e) {
+                        //some debug logging here but do not throw exception upward
+                        //LOG_DEBUG("Action_ComputeKSP::Process raised exception: " << e.GetMessage() <<endl);
+                        //throw ComputeThreadException(e.GetMessage());
+                    }
+              */
+        // $$ verify candidate paths
+        /*
+                    vector<TPath*>::iterator itP = KSP.begin(); 
+                    while (itP != KSP.end())
+                    {
+                        u_int32_t vtagResult = vtag;
+                        u_int32_t waveResult = wave;        
+                        if (!(*itP)->VerifyTEConstraints(vtagResult, waveResult, tspec))
+                        {
+                            TPath* path2erase = *itP;
+                            itP = KSP.erase(itP);
+                            delete path2erase;
+                        }
+                        else
+                            itP++;
+                    }
+              */
+        // $$ collect results into feasible paths
+        // $$ restore TEWG, including restore link resources by adding back conjoined delta
+        // $$ break if feasiblePaths.size() == requested_num ? 
+            // Or get more paths then sort and return the best ones
+}
+
+
+bool Action_ComputeSchedulesWithKSP::ProcessChildren()
+{
+    LOG(name<<"ProcessChildren() called"<<endl);
+    //$$$$ loop through all children to look for states
+
+    // return true if all children have finished; otherwise false
+    return Action::ProcessChildren();
+}
+
+
+bool Action_ComputeSchedulesWithKSP::ProcessMessages()
+{
+    LOG(name<<"ProcessMessages() called"<<endl);
+    //$$$$ process messages if received
+    //$$$$ run current action logic based on received messages 
+
+    //return true if all messages received and processed; otherwise false
+    return Action::ProcessMessages();
+}
+
+
+void Action_ComputeSchedulesWithKSP::CleanUp()
+{
+    LOG(name<<"CleanUp() called"<<endl);
+    //$$$$ cleanup logic for current action
+    // TODO: clean up link AggregateDeltaSeries in TEWG
+    // TODO: this has to happen after BAG / RAF have been generated
+
+    // cancel and cleanup children
+    Action::CleanUp();
+}
+
+
+void Action_ComputeSchedulesWithKSP::Finish()
+{
+    LOG(name<<"Finish() called"<<endl);
+    //$$$$ finish logic for current action
+
+    // stop out from event loop
+    Action::Finish();
+}

@@ -95,20 +95,24 @@ void ScheduleComputeWorker::SetParameter(string& paramName, void* paramPtr)
 {
     if (paramName == "TEWG")
         tewg = (TEWG*)paramPtr;
-    else if (paramName == "CANDIDATE_PATHS")
-        candidatePaths= (vector<TPath*>*)paramPtr;
-    else if (paramName == "START_TIME_POINTS")
-        startTimePoints = (vector<time_t>*)paramPtr;
+    else if (paramName == "KSP")
+        ksp = (vector<TPath*>*)paramPtr;
+    else if (paramName == "FEASIBLE_PATHS")
+        feasiblePaths= (vector<TPath*>*)paramPtr;
+    else if (paramName == "ORDERED_ATS")
+        orderedATS = (vector<time_t>*)paramPtr;
 }
 
 void* ScheduleComputeWorker::GetParameter(string& paramName)
 {
     if (paramName == "TEWG")
         return tewg;
-    else if (paramName == "CANDIDATE_PATHS")
-        return candidatePaths;
-    else if (paramName == "START_TIME_POINTS")
-        return startTimePoints;
+    else if (paramName == "KSP")
+        return ksp;
+    else if (paramName == "FEASIBLE_PATHS")
+        return feasiblePaths;
+    else if (paramName == "ORDERED_ATS")
+        return orderedATS;
     return NULL;
 }
 

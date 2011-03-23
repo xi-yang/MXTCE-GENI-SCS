@@ -88,6 +88,12 @@ void TLinkDelta::Decombine(TDelta* delta)
     if (bandwidth < 0) bandwidth = 0;
 }
 
+void TLinkDelta::Join(TDelta* delta)
+{
+    if (bandwidth < ((TLinkDelta*)delta)->GetBandwidth())
+        bandwidth = ((TLinkDelta*)delta)->GetBandwidth();
+}
+
 
 
 /**
@@ -144,6 +150,28 @@ void TLinkDelta_L2SC::Revoke()
     iscd->availableVlanTags.Join(this->vlanTags);
     iscd->assignedVlanTags.Intersect(this->vlanTags);
 }
+
+
+
+void TLinkDelta_L2SC::Combine(TDelta* delta)
+{
+    TLinkDelta::Combine(delta);
+    vlanTags.Join(((TLinkDelta_L2SC*)delta)->GetVlanTags());
+}
+
+
+void TLinkDelta_L2SC::Decombine(TDelta* delta)
+{
+    TLinkDelta::Decombine(delta);
+    vlanTags.DeleteTags(((TLinkDelta_L2SC*)delta)->GetVlanTags().TagBitmask(), MAX_VLAN_NUM);
+}
+
+void TLinkDelta_L2SC::Join(TDelta* delta)
+{
+    TLinkDelta::Join(delta);
+    vlanTags.Join(((TLinkDelta_L2SC*)delta)->GetVlanTags());
+}
+
 
 
 void TLinkDelta_TDM::Apply()
