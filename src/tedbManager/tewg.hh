@@ -255,17 +255,18 @@ public:
 };
 
 
-
+class TSchedule;
 class TPath {
 protected:
     list<TLink*> path;
     double cost;
     list<TLink*> maskedLinkList; // links that have filteroff = true
     TNode* deviationNode;
+    list<TSchedule*> schedules; // feasible schedules on the path
 
 public:
     TPath(): cost(_INF_), deviationNode(NULL) {}
-    ~TPath() {}
+    ~TPath();
     list<TLink*>& GetPath() { return path; }
     void SetPath(list<TLink*>& p) { path.assign(p.begin(), p.end()); }
     double GetCost() { return cost; }
@@ -279,6 +280,7 @@ public:
         }
     TNode* GetDeviationNode() { return deviationNode; }
     void SetDeviationNode(TNode* node) { deviationNode = node; }
+    list<TSchedule*>& GetSchedules() { return schedules; }
     void CalculatePathCost() {
             list<TLink*>::iterator itLink;
             if (path.size() == 0)
@@ -299,6 +301,16 @@ public:
         deviationNode = NULL;
     }
     bool operator< (TPath& p) const { return this->cost < p.cost; }
+    bool operator== (TPath& p) const { 
+        if (path.size() != p.path.size())
+            return false;
+        list<TLink*>::const_iterator itL1 = this->path.begin();
+        list<TLink*>::const_iterator itL2 = p.path.begin();
+        for (; itL1 != path.end(); itL1++, itL2++)
+            if ((*itL1) != (*itL2))
+                return false;
+        return true;
+    }
     void LogDump();
 };
 

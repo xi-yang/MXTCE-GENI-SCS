@@ -736,6 +736,16 @@ bool cmp_tpath(TPath* p1, TPath* p2)
     return (p1->GetCost() < p2->GetCost());
 }
 
+
+TPath::~TPath()
+{
+    list<TSchedule*>::iterator itS = schedules.begin();
+    for (; itS != schedules.end(); itS++)
+        delete *itS;
+    schedules.clear();
+}
+
+
 // verify constrains of vlantag, wavelength and cross-layer adapation (via Tspec) 
 // TODO: take api_request as input
 bool TPath::VerifyTEConstraints(u_int32_t& vtag, u_int32_t& wave, TSpec& tspec) 
@@ -847,6 +857,14 @@ void TPath::LogDump()
                     L->GetRemoteLink()->GetName().c_str());
                 strcat(buf, str);
             }
+        }
+        list<TSchedule*>::iterator itS = this->schedules.begin();
+        if (itS != this->schedules.end())
+            strcat(buf, " with feasible scheules: ");
+        for (; itS != this->schedules.end(); itS++)
+        {
+            snprintf(str, 256, " [start:%ld-duration:%ld] ", (*itS)->GetStartTime(), (*itS)->GetDuration());
+            strcat(buf, str);
         }
     }
     strcat(buf, "\n");

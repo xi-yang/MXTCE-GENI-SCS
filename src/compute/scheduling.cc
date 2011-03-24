@@ -55,7 +55,23 @@ inline list<TDelta*> AggregateDeltaSeries::GetADSInWindow(time_t start, time_t e
     return deltaList;
 }
 
-inline TDelta* AggregateDeltaSeries::JoinADSInWindow(time_t start, time_t end)
+inline void AggregateDeltaSeries::Insert(TDelta* delta)
+{
+    list<TDelta*>::iterator itd = ADS.begin();
+    for (; itd != ADS.end(); itd++)
+    {
+        TDelta* deltaInList = *itd;
+        if (deltaInList->GetStartTime() <= delta->GetEndTime())
+        {
+            ADS.insert(itd, delta);
+            break;
+        }
+    }
+    ADS.push_back(delta);
+}
+
+
+TDelta* AggregateDeltaSeries::JoinADSInWindow(time_t start, time_t end)
 {
     TDelta* deltaA = NULL;
     list<TDelta*>::iterator itd = ADS.begin();
@@ -71,21 +87,6 @@ inline TDelta* AggregateDeltaSeries::JoinADSInWindow(time_t start, time_t end)
                 deltaA->Join(delta);
         }
     }
-}
-
-inline void AggregateDeltaSeries::Insert(TDelta* delta)
-{
-    list<TDelta*>::iterator itd = ADS.begin();
-    for (; itd != ADS.end(); itd++)
-    {
-        TDelta* deltaInList = *itd;
-        if (deltaInList->GetStartTime() <= delta->GetEndTime())
-        {
-            ADS.insert(itd, delta);
-            break;
-        }
-    }
-    ADS.push_back(delta);
 }
 
 void AggregateDeltaSeries::AddDelta(TDelta* delta)
