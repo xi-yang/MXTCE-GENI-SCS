@@ -54,9 +54,9 @@ public:
     TDelta* JoinADSInWindow(time_t start, time_t end);
     void AddDelta(TDelta* delta);
     void RemoveDelta(TDelta* delta);
+    AggregateDeltaSeries* Duplicate();
+    void Join(AggregateDeltaSeries& ads, time_t start, time_t end);
+    void Join(AggregateDeltaSeries& ads) { return Join(ads, 0, 0); }
 };
-
-
-// TODO:  BAG / RSF class  --> BAG / RSF will be an optional parameter of TPath
 
 #endif

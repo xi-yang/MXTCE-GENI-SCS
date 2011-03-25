@@ -160,7 +160,8 @@ void AggregateDeltaSeries::AddDelta(TDelta* delta)
         this->Insert(delta);
 }
 
-// TODO: should follow the procedure above
+
+// TODO: should do the same procedure above
 void AggregateDeltaSeries::RemoveDelta(TDelta* delta)
 {
     list<TDelta*> contactDeltaList = this->GetADSInWindow(delta->GetStartTime(), delta->GetEndTime());
@@ -172,5 +173,28 @@ void AggregateDeltaSeries::RemoveDelta(TDelta* delta)
         if (((TLinkDelta*)deltaA)->GetBandwidth() == 0)
             ADS.remove(deltaA);
     }
+}
+
+
+AggregateDeltaSeries* AggregateDeltaSeries::Duplicate()
+{
+    AggregateDeltaSeries* newAds = new AggregateDeltaSeries;
+    list<TDelta*>::iterator itD = this->ADS.begin();
+    for (; itD != this->ADS.end(); itD++)
+        newAds->GetADS().push_back((*itD)->Clone());
+    return newAds;
+}
+
+
+void AggregateDeltaSeries::Join(AggregateDeltaSeries& ads, time_t start, time_t end)
+{
+    list<TDelta*> deltaList;
+    if (end > start)
+        deltaList = ads.GetADSInWindow(start, end);
+    else 
+        deltaList = ads.GetADS();
+    list<TDelta*>::iterator itD = this->ADS.begin();
+    for (; itD != this->ADS.end(); itD++)
+        this->AddDelta(*itD);
 }
 

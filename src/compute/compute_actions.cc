@@ -307,6 +307,14 @@ void Action_ComputeKSP::Finish()
 
 ///////////////////// class Action_FinalizeServiceTopology ///////////////////////////
 
+void Action_FinalizeServiceTopology::CreatePathBAG(TPath*)
+{
+    // get minmum link bandwidth/capacity on path
+    // combine link ADS into path ADS
+    // get BAG by substracting path ADS bandwidth from minmum bandwidth for the time window
+        // map <time_t, long> (time, bandwidth)
+}
+
 void Action_FinalizeServiceTopology::Process()
 {
     LOG(name<<"Process() called"<<endl);
@@ -326,6 +334,7 @@ void Action_FinalizeServiceTopology::Process()
             (*itP)->LogDump();
         }
         // TODO: generate path BAG using link ADS? --> ADS will be removed later in Action_ComputeSchedulesWithKSP::CleanUp
+        
     }
     else 
     {

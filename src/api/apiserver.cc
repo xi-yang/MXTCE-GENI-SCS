@@ -63,7 +63,7 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
     if (user_cons->getGri().empty())
     {
         char cstrClientConnId[32];
-        snprintf(cstrClientConnId, "%d-%d", ntohl(apiMsg->header.ucid), ntohl(apiMsg->header.seqnum));
+        snprintf(cstrClientConnId, 32, "%d-%d", ntohl(apiMsg->header.ucid), ntohl(apiMsg->header.seqnum));
         string gri = cstrClientConnId;
         user_cons->setGri(gri);
     }

@@ -198,11 +198,6 @@ api_msg * APIReader::ReadMessage ()
     int bodylen;
     int rlen;
 
-     //snprintf(buf, 128, "test");
-    // LOG(buf<<endl);
-
-
-
     /* Read message header */
     rlen = readn (fd, (char *) &header, sizeof (api_msg_header));
 

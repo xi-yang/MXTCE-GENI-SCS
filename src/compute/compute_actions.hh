@@ -90,10 +90,11 @@ class Action_ComputeKSP: public Action
         virtual void CleanUp();
 };
 
-
+class TPath;
 class Action_FinalizeServiceTopology: public Action
 {
 protected:
+    void CreatePathBAG(TPath*);
 
 public:
     Action_FinalizeServiceTopology(): Action(){ }
