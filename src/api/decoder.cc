@@ -66,17 +66,7 @@ void Apimsg_decoder::decode_usercons(char* decode_ptr, int total_len, Apimsg_use
 
 
 
-	string debug_output_path = getenv("HOME");
-	string debug_filename = "/testoutput.txt";
-	string debug_output = debug_output_path+debug_filename;
 
-
-    ofstream outfile(debug_output.c_str(), ios::out);
-    if(! outfile)
-    {
-        cerr<<"open error!"<<endl;
-        exit(1);
-    }
 
 	while(length_offset<total_len)
 	{
@@ -188,6 +178,20 @@ void Apimsg_decoder::decode_usercons(char* decode_ptr, int total_len, Apimsg_use
     	user_cons->setDscp(dscp);
     	user_cons->setBurstlimit(burst_limit);
     	user_cons->setLspclass(lsp_class);
+    }
+
+
+    //for debug issue output result to file
+	string debug_output_path = getenv("HOME");
+	string debug_filename = "/testoutput.txt";
+	string debug_output = debug_output_path+debug_filename;
+
+
+    ofstream outfile(debug_output.c_str(), ios::out);
+    if(! outfile)
+    {
+        cerr<<"open error!"<<endl;
+        exit(1);
     }
 
     outfile<<"starttime="<<starttime<<endl;
