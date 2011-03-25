@@ -73,6 +73,8 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
 
     tMsg->AddTLV(tlv_ptr);
 
+    apiThread->GetMessagePort()->PostMessage(tMsg);
+
 
 
 
