@@ -55,8 +55,22 @@ public:
     void AddDelta(TDelta* delta);
     void RemoveDelta(TDelta* delta);
     AggregateDeltaSeries* Duplicate();
-    void Join(AggregateDeltaSeries& ads, time_t start, time_t end);
-    void Join(AggregateDeltaSeries& ads) { return Join(ads, 0, 0); }
+    void Join(AggregateDeltaSeries& ads, time_t start=0, time_t end=0);
+};
+
+class BandwidthAggregateGraph
+{
+protected:
+    map<time_t, long> TBSF; //Time-Bandwidth-Step-Function (first element is for startTime, last element always has BW value 0)
+
+public:
+    BandwidthAggregateGraph() { }
+    virtual ~BandwidthAggregateGraph() { }
+    void AddStep(time_t t, long bw);
+    void LoadADS(AggregateDeltaSeries& ads, time_t start, time_t end, long capacity);
+    void LogDump();
+    
+    //$$ methods to convert into other representation
 };
 
 #endif

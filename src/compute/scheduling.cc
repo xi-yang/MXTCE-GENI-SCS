@@ -32,6 +32,7 @@
  */
 
 #include "scheduling.hh"
+#include "log.hh"
 
 AggregateDeltaSeries::~AggregateDeltaSeries()
 {
@@ -189,7 +190,7 @@ AggregateDeltaSeries* AggregateDeltaSeries::Duplicate()
 void AggregateDeltaSeries::Join(AggregateDeltaSeries& ads, time_t start, time_t end)
 {
     list<TDelta*> deltaList;
-    if (end > start)
+    if (start > 0 && end > start)
         deltaList = ads.GetADSInWindow(start, end);
     else 
         deltaList = ads.GetADS();
@@ -197,4 +198,73 @@ void AggregateDeltaSeries::Join(AggregateDeltaSeries& ads, time_t start, time_t 
     for (; itD != this->ADS.end(); itD++)
         this->AddDelta(*itD);
 }
+
+
+
+void BandwidthAggregateGraph::AddStep(time_t t, long bw)
+{
+    this->TBSF[t] = bw;
+}
+
+void BandwidthAggregateGraph::LoadADS(AggregateDeltaSeries& ads, time_t start, time_t end, long capacity)
+{
+    // get BAG by substracting ADS bandwidth from capacity for the time window
+    list<TDelta*> deltaList = ads.GetADSInWindow(start, end);
+    if (deltaList.size() == 0)
+    {
+        AddStep(start, capacity);
+        AddStep(end, 0);
+        return;
+    }
+    list<TDelta*>::iterator itD1, itD2;
+    itD1 = itD2 = deltaList.begin();
+    itD2++;
+    if ((*itD1)->GetStartTime() > start)
+        AddStep(start, capacity);
+    for (; itD1 != deltaList.end(); itD1++, itD2++)
+    {
+        AddStep((*itD1)->GetStartTime(), capacity - ((TLinkDelta*)(*itD1))->GetBandwidth() > 0 ? capacity -  ((TLinkDelta*)(*itD1))->GetBandwidth() : 0);
+        if ((*itD1)->GetEndTime() >= end)
+            break;
+        if (itD2 == deltaList.end() || (itD2 != deltaList.end() && (*itD2)->GetStartTime() > (*itD1)->GetEndTime()))
+        {
+            AddStep((*itD1)->GetEndTime(), capacity);
+        }
+    }
+    AddStep(end, 0);
+}
+
+void BandwidthAggregateGraph::LogDump()
+{
+    char buf[4096]; //up to 4K
+    char str[64];
+    sprintf(buf, "BAG: ");
+
+    map<time_t, long>::iterator itA, itB;
+    itA = itB = TBSF.begin();
+    if (itA == TBSF.end())
+    {
+        strcat(buf, "[empty]");
+    }
+    else
+        itB++;
+    for (; itA != TBSF.end(); itA++, itB++)
+    {
+        if (itB == TBSF.end())
+        {
+            snprintf(str, 64, "\n\t[%ld - +INF] : bw=%ld", (*itA).first, (*itA).second);
+            strcat(buf, str);
+        }
+        else 
+        {
+            snprintf(str, 64, "\n\t[%ld - %ld] : bw=%ld", (*itA).first, (*itB).first, (*itA).second);
+            strcat(buf, str);
+        }
+    }
+
+_output:
+    strcat(buf, "\n");
+    LOG_DEBUG(buf);
+}
+
 

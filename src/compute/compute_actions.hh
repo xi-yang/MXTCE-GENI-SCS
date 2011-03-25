@@ -90,24 +90,6 @@ class Action_ComputeKSP: public Action
         virtual void CleanUp();
 };
 
-class TPath;
-class Action_FinalizeServiceTopology: public Action
-{
-protected:
-    void CreatePathBAG(TPath*);
-
-public:
-    Action_FinalizeServiceTopology(): Action(){ }
-    Action_FinalizeServiceTopology(string& n, ComputeWorker* w): Action(n, w) { }
-    virtual ~Action_FinalizeServiceTopology() { }
-    
-    virtual void Process();
-    virtual bool ProcessChildren();
-    virtual bool ProcessMessages();
-    virtual void Finish();
-    virtual void CleanUp();
-};
-
 
 ///////////// scheduling workflow actions //////////
 
@@ -128,6 +110,7 @@ public:
     virtual void CleanUp();
 };
 
+
 #define MAX_ATS_SIZE 100 // change / configurable
 
 class Action_ComputeSchedulesWithKSP: public Action
@@ -145,5 +128,26 @@ public:
     virtual void Finish();
     virtual void CleanUp();
 };
+
+
+class TPath;
+class BandwidthAggregateGraph;
+class Action_FinalizeServiceTopology: public Action
+{
+protected:
+    BandwidthAggregateGraph* CreatePathBAG(TPath*);
+
+public:
+    Action_FinalizeServiceTopology(): Action(){ }
+    Action_FinalizeServiceTopology(string& n, ComputeWorker* w): Action(n, w) { }
+    virtual ~Action_FinalizeServiceTopology() { }
+    
+    virtual void Process();
+    virtual bool ProcessChildren();
+    virtual bool ProcessMessages();
+    virtual void Finish();
+    virtual void CleanUp();
+};
+
 
 #endif

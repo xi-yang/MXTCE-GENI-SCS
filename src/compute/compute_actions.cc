@@ -304,96 +304,6 @@ void Action_ComputeKSP::Finish()
 }
 
 
-
-///////////////////// class Action_FinalizeServiceTopology ///////////////////////////
-
-void Action_FinalizeServiceTopology::CreatePathBAG(TPath*)
-{
-    // get minmum link bandwidth/capacity on path
-    // combine link ADS into path ADS
-    // get BAG by substracting path ADS bandwidth from minmum bandwidth for the time window
-        // map <time_t, long> (time, bandwidth)
-}
-
-void Action_FinalizeServiceTopology::Process()
-{
-    LOG(name<<"Process() called"<<endl);
-
-    string paramName = "FEASIBLE_PATHS";
-
-    vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
-
-    if (feasiblePaths != NULL)
-    {
-        if (feasiblePaths->size() == 0)
-            throw ComputeThreadException((char*)"Action_FinalizeServiceTopology::Process() No feasible path found!");
-        LOG_DEBUG("Feasible Paths and Schedules: "<<endl);
-        vector<TPath*>::iterator itP = feasiblePaths->begin();
-        for (; itP != feasiblePaths->end(); itP++)
-        {
-            (*itP)->LogDump();
-        }
-        // TODO: generate path BAG using link ADS? --> ADS will be removed later in Action_ComputeSchedulesWithKSP::CleanUp
-        
-    }
-    else 
-    {
-        paramName = "KSP";
-        vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
-
-        // TODO: pick one or multiple paths (or return failure)
-        if (KSP == NULL || KSP->size() == 0)
-            throw ComputeThreadException((char*)"Action_FinalizeServiceTopology::Process() No path found!");
-        
-        // TODO:  translate into format API requires
-        (*min_element(KSP->begin(), KSP->end(), cmp_tpath))->LogDump();
-    }
-}
-
-
-bool Action_FinalizeServiceTopology::ProcessChildren()
-{
-    LOG(name<<"ProcessChildren() called"<<endl);
-    //$$$$ loop through all children to look for states
-
-    // return true if all children have finished; otherwise false
-    return Action::ProcessChildren();
-}
-
-
-bool Action_FinalizeServiceTopology::ProcessMessages()
-{
-    LOG(name<<"ProcessMessages() called"<<endl);
-    //$$$$ process messages if received
-    //$$$$ run current action logic based on received messages 
-
-    //return true if all messages received and processed; otherwise false
-    return Action::ProcessMessages();
-}
-
-
-void Action_FinalizeServiceTopology::CleanUp()
-{
-    LOG(name<<"CleanUp() called"<<endl);
-    //$$$$ cleanup logic for current action
-
-    // TODO: clean up work data such as KSP, feasiblePaths and ATS 
-
-    // cancel and cleanup children
-    Action::CleanUp();
-}
-
-
-void Action_FinalizeServiceTopology::Finish()
-{
-    LOG(name<<"Finish() called"<<endl);
-    //$$$$ finish logic for current action
-
-    // stop out from event loop
-    Action::Finish();
-}
-
-
 ///////////////////// class Action_CreateOrderedATS ///////////////////////////
 
 inline void Action_CreateOrderedATS::AddUniqueTimePoint(vector<time_t>* ats, time_t t)
@@ -715,3 +625,110 @@ void Action_ComputeSchedulesWithKSP::Finish()
     // stop out from event loop
     Action::Finish();
 }
+
+
+
+///////////////////// class Action_FinalizeServiceTopology ///////////////////////////
+
+BandwidthAggregateGraph* Action_FinalizeServiceTopology::CreatePathBAG(TPath* path)
+{
+    assert(path->GetPath().size() > 0);
+    // get minmum link bandwidth/capacity on path
+    // combine link ADS into path ADS
+    // get BAG from path ADS
+    list<TLink*>::iterator itL = path->GetPath().begin();
+    AggregateDeltaSeries* ads = (AggregateDeltaSeries*)((*itL)->GetWorkData()->GetData("ADS"));
+    assert(ads != NULL);
+    ads = ads->Duplicate();
+    itL++;
+    for (; itL != path->GetPath().end(); itL++)
+    {
+        assert((*itL)->GetWorkData()->GetData("ADS") != NULL);
+        ads->Join(*(AggregateDeltaSeries*)((*itL)->GetWorkData()->GetData("ADS")));
+    }
+    BandwidthAggregateGraph* bag = new BandwidthAggregateGraph();
+    // TODO: parameters from API
+    //bag->LoadADS(*ads, start, end, bw_min);
+    return bag;
+}
+
+void Action_FinalizeServiceTopology::Process()
+{
+    LOG(name<<"Process() called"<<endl);
+
+    string paramName = "FEASIBLE_PATHS";
+
+    vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+
+    if (feasiblePaths != NULL)
+    {
+        if (feasiblePaths->size() == 0)
+            throw ComputeThreadException((char*)"Action_FinalizeServiceTopology::Process() No feasible path found!");
+        LOG_DEBUG("Feasible Paths and Schedules: "<<endl);
+        vector<TPath*>::iterator itP = feasiblePaths->begin();
+        for (; itP != feasiblePaths->end(); itP++)
+        {
+            (*itP)->LogDump();
+        }
+        // generate path BAG 
+        BandwidthAggregateGraph* bag = CreatePathBAG(*itP);
+        bag->LogDump();
+    }
+    else 
+    {
+        paramName = "KSP";
+        vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+
+        // TODO: pick one or multiple paths (or return failure)
+        if (KSP == NULL || KSP->size() == 0)
+            throw ComputeThreadException((char*)"Action_FinalizeServiceTopology::Process() No path found!");
+        
+        // TODO:  translate into format API requires
+        (*min_element(KSP->begin(), KSP->end(), cmp_tpath))->LogDump();
+    }
+}
+
+
+bool Action_FinalizeServiceTopology::ProcessChildren()
+{
+    LOG(name<<"ProcessChildren() called"<<endl);
+    //$$$$ loop through all children to look for states
+
+    // return true if all children have finished; otherwise false
+    return Action::ProcessChildren();
+}
+
+
+bool Action_FinalizeServiceTopology::ProcessMessages()
+{
+    LOG(name<<"ProcessMessages() called"<<endl);
+    //$$$$ process messages if received
+    //$$$$ run current action logic based on received messages 
+
+    //return true if all messages received and processed; otherwise false
+    return Action::ProcessMessages();
+}
+
+
+void Action_FinalizeServiceTopology::CleanUp()
+{
+    LOG(name<<"CleanUp() called"<<endl);
+    //$$$$ cleanup logic for current action
+
+    // TODO: clean up work data such as KSP, feasiblePaths and ATS 
+
+    // cancel and cleanup children
+    Action::CleanUp();
+}
+
+
+void Action_FinalizeServiceTopology::Finish()
+{
+    LOG(name<<"Finish() called"<<endl);
+    //$$$$ finish logic for current action
+
+    // stop out from event loop
+    Action::Finish();
+}
+
+
