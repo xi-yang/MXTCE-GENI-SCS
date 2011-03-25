@@ -52,6 +52,7 @@
 #include <sstream>
 #include <memory>
 
+
 #ifndef NULL
 #define NULL 0
 #endif
