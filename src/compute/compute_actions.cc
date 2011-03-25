@@ -213,6 +213,28 @@ void Action_ComputeKSP::Process()
 
     // TODO: verify ingress/egress edge Tspec
 
+    // TODO: Judge whether this is an advacne schduling request. If so get startTime, endTime, bw = minBw then do the following
+    /*
+    time_t startTime = ?;
+    time_t endTime = ?;
+    list<TLink*>::iterator itL;
+    for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
+    {
+        TLink* L = *itL;
+        if (L->GetDeltaList().size() == 0)
+            continue;
+        AggregateDeltaSeries ads;
+        list<TDelta*>::iterator itD;
+        for (itD = L->GetDeltaList().begin(); itD != L->GetDeltaList().end(); itD++)
+        {
+            TDelta* delta = *itD;
+            ads.AddDelta(delta);
+        }
+        TDelta* conjDelta = ads.JoinADSInWindow(startTime, endTime);
+        conjDelta->SetTargetResource(L);
+        conjDelta->Apply();
+    }
+    */
     // prune bandwidth
     tewg->PruneByBandwidth(bw);
     // compute KSP
@@ -647,7 +669,7 @@ BandwidthAggregateGraph* Action_FinalizeServiceTopology::CreatePathBAG(TPath* pa
         ads->Join(*(AggregateDeltaSeries*)((*itL)->GetWorkData()->GetData("ADS")));
     }
     BandwidthAggregateGraph* bag = new BandwidthAggregateGraph();
-    // TODO: parameters from API
+    // TODO: Get parameters from API
     //bag->LoadADS(*ads, start, end, bw_min);
     return bag;
 }
@@ -660,7 +682,7 @@ void Action_FinalizeServiceTopology::Process()
 
     vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
 
-    if (feasiblePaths != NULL)
+    if (feasiblePaths != NULL) // TODO: change to computeWorker ID condition ?
     {
         if (feasiblePaths->size() == 0)
             throw ComputeThreadException((char*)"Action_FinalizeServiceTopology::Process() No feasible path found!");
@@ -670,7 +692,7 @@ void Action_FinalizeServiceTopology::Process()
         {
             (*itP)->LogDump();
         }
-        // generate path BAG 
+        // generate path BAG; pass to ... ?
         BandwidthAggregateGraph* bag = CreatePathBAG(*itP);
         bag->LogDump();
     }
@@ -680,11 +702,13 @@ void Action_FinalizeServiceTopology::Process()
         vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
 
         // TODO: pick one or multiple paths (or return failure)
+        // TODO: combine with feasible paths above?
         if (KSP == NULL || KSP->size() == 0)
             throw ComputeThreadException((char*)"Action_FinalizeServiceTopology::Process() No path found!");
         
         // TODO:  translate into format API requires
         (*min_element(KSP->begin(), KSP->end(), cmp_tpath))->LogDump();
+        //$$ generate path BAG too ?
     }
 }
 
