@@ -46,6 +46,38 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
         return -1;
     }
 
+    Apimsg_decoder* api_decoder = new Apimsg_decoder();
+
+    Apimsg_user_constraint* user_cons = api_decoder->test_decode_msg(apiMsg->body);
+
+    /*
+    TLV* tlv_ptr = new TLV();
+    tlv_ptr->type = 1;
+    tlv_ptr->length = sizeof(user_cons);
+    memcpy(tlv_ptr->value, &user_cons, sizeof(user_cons));
+    */
+    //cout<<sizeof(user_cons)<<endl;
+
+
+    u_int8_t* tlv_var_ptr = new u_int8_t[TLV_HEAD_SIZE + sizeof(user_cons)];
+    TLV* tlv_ptr = (TLV*)tlv_var_ptr;
+    tlv_ptr->type = 1;
+    tlv_ptr->length = sizeof(user_cons);
+    memcpy(tlv_ptr->value, &user_cons, sizeof(user_cons));
+     
+
+    string queueName="CORE";
+    string topicName="API_REQUEST";
+
+    Message* tMsg = new Message(MSG_REQ, queueName, topicName);
+
+    tMsg->AddTLV(tlv_ptr);
+
+
+
+
+
+/*
 
     // @@@@ Testing code -- Begin
 
@@ -95,10 +127,31 @@ void* APIServerThread::hookRun()
 void APIServerThread::hookHandleMessage()
 {
     Message* msg = NULL;
+    int msg_body_len = 0;
     while ((msg = msgPort->GetMessage()) != NULL)
     {
         msg->LogDump();
         //delete msg; //msg consumed ?
+
+        api_msg* apiMsg = new api_msg();
+        Apimsg_encoder* api_encoder = new Apimsg_encoder();
+        msg_body_len = api_encoder->test_encode_msg(msg,apiMsg->body);
+        api_encoder->encode_msg_header(apiMsg->header, msg_body_len);
+
+        /*
+        api_msg_header* apiMsgHeader = &(apiMsg->header);
+
+        apiMsgHeader->type = htons(API_MSG_REPLY);
+        apiMsgHeader->ucid = htonl(0x0002);
+        apiMsgHeader->length = htons(0);
+        apiMsgHeader->seqnum = htonl(0);
+        apiMsgHeader->chksum = htonl(MSG_CHKSUM(apiMsg->header));
+        apiMsgHeader->options = htonl(0);
+        apiMsgHeader->tag = htonl(0);
+        */
+
+        //apiWriter->PostMessage(apiMsg);
+
     }
 }
 

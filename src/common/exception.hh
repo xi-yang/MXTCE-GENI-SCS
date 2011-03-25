@@ -37,6 +37,7 @@
 
 #include <string>
 #include <exception>
+#include <stdio.h>
 
 using namespace std;
 

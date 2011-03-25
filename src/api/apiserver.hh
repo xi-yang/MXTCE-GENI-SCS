@@ -40,6 +40,9 @@
 #include "thread.hh"
 #include "api.hh"
 
+#include "decoder.hh"
+#include "encoder.hh"
+
 using namespace std;
 
 class APIServerThread;

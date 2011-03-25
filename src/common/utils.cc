@@ -246,7 +246,7 @@ string GetUrnField(string urn, const char* field)
     string name = "";
     char str[128];
     snprintf(str, 128, "%s=", field);
-    char* ptr = strstr(urn.c_str(), str);
+    char* ptr = (char*)strstr(urn.c_str(), str);
     if (ptr == NULL)
         return name;
     ptr += (strlen(field)+1);
