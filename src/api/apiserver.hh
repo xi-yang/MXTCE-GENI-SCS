@@ -39,7 +39,7 @@
 #include "event.hh"
 #include "thread.hh"
 #include "api.hh"
-
+#include "resource.hh"
 #include "decoder.hh"
 #include "encoder.hh"
 
@@ -50,6 +50,7 @@ class MxTCEAPIServer: public APIServer
 {
 protected:
     APIServerThread* apiThread;
+    map<string, APIReader*, strcmpless> apiClientConns;
 
 public:
     MxTCEAPIServer(int port , APIServerThread* thread): APIServer(port, NULL), apiThread(thread) {

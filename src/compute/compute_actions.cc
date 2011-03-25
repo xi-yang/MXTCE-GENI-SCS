@@ -325,6 +325,7 @@ void Action_FinalizeServiceTopology::Process()
         {
             (*itP)->LogDump();
         }
+        // TODO: generate path BAG using link ADS? --> ADS will be removed later in Action_ComputeSchedulesWithKSP::CleanUp
     }
     else 
     {
@@ -366,6 +367,8 @@ void Action_FinalizeServiceTopology::CleanUp()
 {
     LOG(name<<"CleanUp() called"<<endl);
     //$$$$ cleanup logic for current action
+
+    // TODO: clean up work data such as KSP, feasiblePaths and ATS 
 
     // cancel and cleanup children
     Action::CleanUp();
