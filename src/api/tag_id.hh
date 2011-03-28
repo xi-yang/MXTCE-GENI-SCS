@@ -4,6 +4,8 @@
 #define PCE_USERCONSTRAINT 0xF1
 //#define PCE_RESERVEDCONSTRAINT 0xF1
 
+#define PCE_REPLY 0xF8
+
 	
 #define PCE_GRI   0x81
 #define PCE_LOGIN 0x82
@@ -25,6 +27,14 @@
 #define PCE_L3_DSCP 0x92
 #define PCE_MPLS_BURSTLIMIT 0x93
 #define PCE_MPLS_LSPCLASS 0x94
+
+#define PCE_HOP 0x95
+
+#define PCE_TEST1 0xE0
+#define PCE_TEST2 0xE1
+#define PCE_TEST3 0xE2
+#define PCE_TEST4 0xE3
+#define PCE_TEST5 0xE4
 	
 #define ASN_LONG_LEN 0x80
 
