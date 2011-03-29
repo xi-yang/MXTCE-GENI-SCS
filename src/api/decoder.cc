@@ -154,6 +154,7 @@ void Apimsg_decoder::decode_usercons(char* decode_ptr, int total_len, Apimsg_use
 
 	}
 
+	user_cons->setGri(gri);
     user_cons->setStarttime(starttime);
     user_cons->setEndtime(endtime);
     user_cons->setBandwidth(bandwidth);
@@ -194,6 +195,7 @@ void Apimsg_decoder::decode_usercons(char* decode_ptr, int total_len, Apimsg_use
         exit(1);
     }
 
+    outfile<<"gri="<<gri<<endl;
     outfile<<"starttime="<<starttime<<endl;
     outfile<<"endtime="<<endtime<<endl;
     outfile<<"bandwidth="<<bandwidth<<endl;
