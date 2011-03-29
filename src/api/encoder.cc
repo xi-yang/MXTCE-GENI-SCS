@@ -5,7 +5,7 @@
 
 int Apimsg_encoder::msg_seq_num=0;
 
-int Apimsg_encoder::test_encode_msg(Message* msg, char* body)
+int Apimsg_encoder::test_encode_msg(Message* msg, char*& body)
 {
 	int msg_sublen=0;
 	int msg_sub_startlen=0;

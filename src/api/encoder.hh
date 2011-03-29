@@ -31,7 +31,7 @@ public:
 		delete pri_type_encoder;
 	}
 
-	int test_encode_msg(Message*, char*);
+	int test_encode_msg(Message*, char*&);
 
 	void encode_msg_header(api_msg_header&, int);
 
