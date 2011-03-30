@@ -200,7 +200,7 @@ protected:
 
 public:
     TReservation(string& n): name(n) {}
-    virtual ~TReservation() {}
+    virtual ~TReservation() {} // TODO: free memory of serviceTopology, schedules and deltas (deltas need to unlink from targetResources in TEDB)
     string& GetName() { return name; }
     void SetName(string& n) { name = n; }
     string& GeStatus() { return status; }

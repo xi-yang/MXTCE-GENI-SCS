@@ -32,6 +32,8 @@
  */
 
 #include "resv_man.hh"
+#include "resv_apiserver.hh"
+#include "mxtce.hh"
 
 // Thread specific logic
 void* ResvManThread::hookRun()
@@ -39,6 +41,10 @@ void* ResvManThread::hookRun()
     msgPort->SetThreadScheduler(this);
 
     // init RData ?
+
+    // init push APIServer which gets pushed-in reservation data from external proxy
+    ResvAPIServer revApiServer(MxTCE::resvApiServerPort, this);
+    eventMaster->Schedule(&revApiServer);
 
     // start event loop
     // eventMaster has been initiated in parent class ThreadPortScheduler::Run() method
@@ -62,14 +68,20 @@ void ResvManThread::hookHandleMessage()
             // use the same queue that is dedicated to computeThread
             // add reservation deltas from RData
             list<TLV*>& tlvList = replyMsg->GetTLVList();
-            TEWG* tewg; 
+            TEWG* tewg;
             memcpy(&tewg, (TGraph*)tlvList.front()->value, sizeof(void*));
             list<TReservation*>& resvList = RData.GetReservations();
             list<TReservation*>::iterator itr;
             for (itr = resvList.begin(); itr != resvList.end(); itr++)
                 tewg->AddResvDeltas(*itr);
             this->GeMessagePort()->PostMessage(replyMsg);
+        } else if (msg->GetTopic() == "TEDB_ADD_RESV_REPLY") 
+        {
+            TReservation* resv = (TReservation*)(msg->GetTLVList().front()->value);
+            assert (resv->GetSchedules().size() > 0 && resv->GetServiceTopology() != NULL);
+            RData.AddReservation(resv);
         }
+
         delete msg; //msg consumed
     }
 }

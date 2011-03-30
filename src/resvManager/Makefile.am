@@ -25,5 +25,5 @@ INSTALL_SDATA=@INSTALL@ -m 600
 #resv_test_SOURCES = resv_test.cc
 
 # -- Library Sources
-librm_a_SOURCES  = resv_man.hh reservation.hh
-librm_a_SOURCES  += resv_man.cc reservation.cc
+librm_a_SOURCES  = resv_man.hh reservation.hh resv_apiserver.hh
+librm_a_SOURCES  += resv_man.cc reservation.cc resv_apiserver.cc
