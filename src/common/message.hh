@@ -62,8 +62,10 @@ typedef struct {
 
 typedef enum {
     MSG_TLV_VOID_PTR = 0x0001,
-    MSG_TLV_API_REQ_PTR,
-    MSG_TLV_ERR_CODE
+    MSG_TLV_API_REQ_PTR = 0x0002,
+    MSG_TLV_ERR_CODE = 0x0003,
+    MSG_TLV_RESV_INFO = 0x0011,
+    MSG_TLV_PATH_ELEM = 0x0012,
 } TLVType;
 
 //no need for hton and htoh conversion

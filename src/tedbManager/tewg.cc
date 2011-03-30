@@ -634,6 +634,110 @@ void TGraph::RemoveLink(TLink* link)
     tLinks.remove(link);
 }
 
+
+
+TDomain* TGraph::LookupDomainByName(string& name)
+{
+    list<TDomain*>::iterator itd = tDomains.begin();
+    for (; itd != tDomains.end(); itd++)
+    {
+        TDomain* td = *itd;
+        if (strcasecmp(td->GetName().c_str(), name.c_str()) == 0)
+            return td;
+    }
+    return NULL;
+}
+
+
+
+TDomain* TGraph::LookupDomainByURN(string& urn)
+{
+    string domainName = GetUrnField(urn, "domain");
+    if (domainName.empty())
+        return NULL;
+    return LookupDomainByName(domainName);
+}
+
+
+TNode* TGraph::LookupNodeByURN(string& urn)
+{
+    TDomain* td = LookupDomainByURN(urn);
+    if (td == NULL)
+        return NULL;
+    string nodeName = GetUrnField(urn, "node");
+    map<string, Node*, strcmpless>::iterator itn = td->GetNodes().find(nodeName);
+    if (itn == td->GetNodes().end())
+        return NULL;
+    return (TNode*)(*itn).second;
+}
+
+
+TPort* TGraph::LookupPortByURN(string& urn)
+{
+    TNode* tn = LookupNodeByURN(urn);
+    if (tn == NULL)
+        return NULL;
+    string portName = GetUrnField(urn, "port");
+    map<string, Port*, strcmpless>::iterator itp = tn->GetPorts().find(portName);
+    if (itp == tn->GetPorts().end())
+        return NULL;
+    return (TPort*)(*itp).second;
+}
+
+
+TLink* TGraph::LookupLinkByURN(string& urn)
+{
+    TPort* tp = LookupPortByURN(urn);
+    if (tp == NULL)
+        return NULL;
+    string linkName = GetUrnField(urn, "link");
+    map<string, Link*, strcmpless>::iterator itl = tp->GetLinks().find(linkName);
+    if (itl == tp->GetLinks().end())
+        return NULL;
+    return (TLink*)(*itl).second;
+}
+
+
+void TGraph::LoadPath(list<TLink*> path)
+{
+    string domainName, nodeName, portName, linkName;
+    list<TLink*>::iterator itL;
+    TLink* lastLink = NULL;
+    for (itL = path.begin(); itL != path.end(); itL++)
+    {
+        TLink* link = *itL;
+        string urn = link->GetName();
+        ParseFQUrn(urn, domainName, nodeName, portName, linkName);
+        assert(domainName.length() > 0 && nodeName.length() > 0 && portName.length() > 0 && linkName.length() > 0);
+        assert(LookupLinkByURN(urn) == NULL && LookupPortByURN(urn) == NULL);
+        link->SetName(linkName);
+        TDomain* domain = LookupDomainByName(domainName);
+        if (domain == NULL)
+        {
+            domain = new TDomain(0, domainName);
+            AddDomain(domain);
+        }
+        TNode* node = LookupNodeByURN(urn);
+        if (node == NULL)
+        {
+            node = new TNode(0, nodeName);
+            AddNode(domain, node);
+            if (lastLink != NULL)
+            {
+                lastLink->SetRemoteEnd(node);
+                lastLink->SetRemoteLink(link);
+                link->SetRemoteEnd((TNode*)lastLink->GetPort()->GetNode());
+                link->SetRemoteLink(lastLink);
+            }
+        }
+        TPort* port = new TPort(link->GetId(), portName);
+        AddPort(node, port);
+        AddLink(port, link);
+        lastLink = link;
+    }
+}
+
+
 TGraph* TGraph::Clone()
 {
     TGraph* tg = new TGraph(name);
@@ -863,7 +967,7 @@ void TPath::LogDump()
             strcat(buf, " with feasible scheules: ");
         for (; itS != this->schedules.end(); itS++)
         {
-            snprintf(str, 256, " [start:%ld-duration:%ld] ", (*itS)->GetStartTime(), (*itS)->GetDuration());
+            snprintf(str, 256, " [start:%d-duration:%d] ", (int)(*itS)->GetStartTime(), (*itS)->GetDuration());
             strcat(buf, str);
         }
     }

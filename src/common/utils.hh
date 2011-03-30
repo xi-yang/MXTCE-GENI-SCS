@@ -385,9 +385,10 @@ extern "C"
 
 void StripXmlString(string& str, xmlChar* val);
 
-long StringToBandwidth(string strBandwidth);
+long StringToBandwidth(string& strBandwidth);
 
-string GetUrnField(string urn, const char* field);
+string GetUrnField(string& urn, const char* field);
 
+void ParseFQUrn(string& urn, string& domain, string& node, string& port, string& link);
 
 #endif

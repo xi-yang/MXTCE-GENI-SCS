@@ -74,7 +74,7 @@ void ResvManThread::hookHandleMessage()
             list<TReservation*>::iterator itr;
             for (itr = resvList.begin(); itr != resvList.end(); itr++)
                 tewg->AddResvDeltas(*itr);
-            this->GeMessagePort()->PostMessage(replyMsg);
+            this->GetMessagePort()->PostMessage(replyMsg);
         } else if (msg->GetTopic() == "TEDB_ADD_RESV_REPLY") 
         {
             TReservation* resv = (TReservation*)(msg->GetTLVList().front()->value);
@@ -85,4 +85,5 @@ void ResvManThread::hookHandleMessage()
         delete msg; //msg consumed
     }
 }
+
 

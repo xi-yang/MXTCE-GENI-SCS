@@ -54,6 +54,7 @@ private:
     
 public:
     static int apiServerPort;
+    static int resvApiServerPort;
     static string loopbackPortName;
     static string apiServerPortName;
     static string tedbManPortName;

@@ -40,6 +40,7 @@
 
 
 int MxTCE::apiServerPort = 2089;
+int MxTCE::resvApiServerPort = 2091;
 string MxTCE::apiServerPortName = "MX-TCE_API_SERVER";
 string MxTCE::tedbManPortName = "MX-TCE_TEDB_MANAGER";
 string MxTCE::resvManPortName = "MX-TCE_RESV_MANAGER";
@@ -115,6 +116,9 @@ void MxTCE::Start()
     string routeQueue = "CORE", routeTopic1 = "API_REQUEST", routeTopic2 = "API_REPLY";
     messageRouter->AddRoute(routeQueue,routeTopic1, MxTCE::loopbackPortName);
     messageRouter->AddRoute(routeQueue,routeTopic2, MxTCE::apiServerPortName);
+    routeQueue = "RESV"; routeTopic1 = "TEDB_ADD_RESV", routeTopic2 = "TEDB_ADD_RESV_REPLY";
+    messageRouter->AddRoute(routeQueue,routeTopic1, MxTCE::tedbManPortName);
+    messageRouter->AddRoute(routeQueue,routeTopic2, MxTCE::resvManPortName);
 
     // start message router
     messageRouter->Start();

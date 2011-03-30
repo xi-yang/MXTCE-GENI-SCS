@@ -250,6 +250,12 @@ public:
     void AddLink(TPort* port, TLink* link);
     void AddLink(TNode* node, TLink* link);
     void RemoveLink(TLink* link);
+    TDomain* LookupDomainByName(string& name);
+    TDomain* LookupDomainByURN(string& urn);
+    TNode* LookupNodeByURN(string& urn);
+    TPort* LookupPortByURN(string& urn);
+    TLink* LookupLinkByURN(string& urn);
+    void LoadPath(list<TLink*> path);
     TGraph* Clone();
     void LogDump();
 };
@@ -325,7 +331,7 @@ protected:
 
 public:
     TEWG(string& name): TGraph(name) {}
-    virtual ~TEWG() {}
+    virtual ~TEWG() {} // TODO: free memory of resources (cloned from TEDB) and deltas's (cloned from RDatabase) 
     list<TDelta*>& GetDeltaList() { return deltaList; }
     void AddResvDeltas(TReservation* resv);
     void RemoveResvDeltas(string& resvName);

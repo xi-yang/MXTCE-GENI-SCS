@@ -44,7 +44,7 @@ void Action::Run()
     list<Action*>::iterator ita;
     char buf[128];
 
-    if (!worker->GeMessagePort()->IsUp())
+    if (!worker->GetMessagePort()->IsUp())
     {
         worker->GetEventMaster()->Remove(this);
         this->SetRepeats(0);
@@ -164,7 +164,7 @@ void Action::SendMessage(MessageType type, string& queue, string& topic, list<TL
     list<TLV*>::iterator itlv;
     for (itlv = tlvs.begin(); itlv != tlvs.end(); itlv++)
         msg->AddTLV(*itlv);
-    GetComputeWorker()->GeMessagePort()->PostMessage(msg);
+    GetComputeWorker()->GetMessagePort()->PostMessage(msg);
 }
 
 

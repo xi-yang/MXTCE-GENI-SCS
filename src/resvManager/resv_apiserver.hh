@@ -43,6 +43,7 @@
 
 using namespace std;
 
+class ResvManThread;
 class ResvAPIServer: public APIServer
 {
 protected:

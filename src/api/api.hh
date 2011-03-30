@@ -46,6 +46,8 @@ enum api_msg_type
 {
     API_MSG_REQUEST = 0x0001,
     API_MSG_REPLY = 0x00002,
+    API_MSG_ACK = 0x00003,
+    API_MSG_RESV_PUSH = 0x00011,
 };   
 
 struct api_msg_header

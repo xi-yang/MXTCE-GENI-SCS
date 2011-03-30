@@ -218,7 +218,7 @@ void StripXmlString(string& str, xmlChar* val)
 }
 
 
-long StringToBandwidth(string strBandwidth) 
+long StringToBandwidth(string& strBandwidth) 
 {
     long bandwidth = 0L;
     long factor = 1;
@@ -241,7 +241,7 @@ long StringToBandwidth(string strBandwidth)
 }
 
 
-string GetUrnField(string urn, const char* field) 
+string GetUrnField(string& urn, const char* field) 
 {
     string name = "";
     char str[128];
@@ -260,5 +260,13 @@ string GetUrnField(string urn, const char* field)
         name = (const char*)str;
     }
     return name;
+}
+
+void ParseFQUrn(string& urn, string& domain, string& node, string& port, string& link) 
+{
+    domain = GetUrnField(urn, "domain");
+    node = GetUrnField(urn, "node");
+    port = GetUrnField(urn, "port");
+    link = GetUrnField(urn, "link");
 }
 

@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-#include "apiserver.hh"
+#include "resv_apiserver.hh"
+#include "resv_man.hh"
 
 // Handle message from API client
 

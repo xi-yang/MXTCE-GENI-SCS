@@ -33,6 +33,7 @@
 
 #include "resource.hh"
 #include "tedb_man.hh"
+#include "resv_apiserver.hh"
 #include "mxtce.hh"
 
 // Thread specific logic
@@ -73,7 +74,72 @@ void TEDBManThread::hookHandleMessage()
             tlv->length = sizeof(void*);
             memcpy(tlv->value, (void*)&tewg, sizeof(void*)); 
             fwdMsg->AddTLV(tlv);
-            this->GeMessagePort()->PostMessage(fwdMsg);
+            this->GetMessagePort()->PostMessage(fwdMsg);
+        }
+        else if (msg->GetTopic() == "TEDB_ADD_RESV") 
+        {
+            string gri;
+            string status;
+            long bw = 0;
+            int mtu = 9000;
+            time_t start, end;
+            list<TLink*> path;
+
+            //$$ get reservation info
+            list<TLV*>& tlvList = msg->GetTLVList();
+            list<TLV*>::iterator itlv = tlvList.begin();
+            int seq = 0;
+            for (; itlv != tlvList.end(); itlv++)
+            {
+                if ((*itlv)->type == MSG_TLV_RESV_INFO)
+                {
+                    TLV_ResvInfo* tlv = (TLV_ResvInfo*)(*itlv);
+                    gri = (const char*)tlv->gri;
+                    start = tlv->start_time;
+                    end = tlv->end_time;
+                    bw = (long)tlv->bandwidth;
+                    status = (const char*)tlv->status;
+                }
+                else if ((*itlv)->type == MSG_TLV_PATH_ELEM)
+                {
+                    ISCD* iscd = NULL;
+                    seq++;
+                    TLV_PathElem* tlv = (TLV_PathElem*)(*itlv);
+                    string urn = (const char*)tlv->urn;
+                    TLink* link = new TLink(seq, urn);
+                    if (tlv->switching_type == LINK_IFSWCAP_L2SC) {
+                        iscd = new ISCD_L2SC(bw, mtu);
+                        ((ISCD_L2SC*)iscd)->assignedVlanTags.AddTag(tlv->vlan);
+                    }
+                    else if (tlv->switching_type <= LINK_IFSWCAP_PSC4)
+                        iscd = new ISCD_PSC((int)tlv->switching_type, bw, mtu);
+                    // TODO:  support for TMD and LSC
+                    assert(bw > 0 && iscd != NULL);
+                    link->GetSwCapDescriptors().push_back(iscd);
+                    link->SetMaxBandwidth(bw);
+                    link->SetMaxReservableBandwidth(bw);
+                    path.push_back(link);
+                }                    
+            }
+
+            //$$ create TReservation
+            assert(gri.length() > 0 && path.size() > 0);
+            TReservation* resv = new TReservation(gri);
+            resv->GetSchedules().push_back(new TSchedule(start, end));
+            TGraph* serviceTopo = new TGraph(gri);
+            serviceTopo->LoadPath(path); // TODO: catch exception
+            resv->SetServiceTopology(serviceTopo);
+            resv->SetStatus(status);
+
+            //$$ send result reservation back to resvMan
+            string queue = "RESV", topic = "TEDB_ADD_RESV_REPLY";
+            Message* fwdMsg = new Message(MSG_REQ, queue, topic);
+            TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
+            tlv->type = MSG_TLV_VOID_PTR;
+            tlv->length = sizeof(void*);
+            memcpy(tlv->value, (void*)&resv, sizeof(void*)); 
+            fwdMsg->AddTLV(tlv);
+            this->GetMessagePort()->PostMessage(fwdMsg);
         }
         delete msg; //msg consumed
     }

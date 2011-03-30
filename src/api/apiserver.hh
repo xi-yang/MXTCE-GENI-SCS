@@ -68,7 +68,6 @@ protected:
 public:
     APIServerThread(string name, int port):ThreadPortScheduler(name), apiServer(port, this) { }
     virtual ~APIServerThread() { }
-    MessagePort* GetMessagePort() { return msgPort; }
     virtual void* hookRun();
     virtual void hookHandleMessage();
 };

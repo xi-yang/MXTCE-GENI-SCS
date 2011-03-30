@@ -140,7 +140,7 @@ public:
     ThreadPortScheduler(string pn): portName(pn), eventMaster(NULL), msgPort(NULL) { }
     virtual ~ThreadPortScheduler();
     EventMaster* GetEventMaster() { return eventMaster; }
-    MessagePort* GeMessagePort() { return msgPort; }
+    MessagePort* GetMessagePort() { return msgPort; }
     virtual void* Run();
     virtual void* hookRun() {}
     virtual void hookHandleMessage() {}
