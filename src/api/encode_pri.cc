@@ -12,17 +12,26 @@ void Encode_Pri_Type::buff_rem_check(int req_size)
 	remain_size=this->current_cap-offset;
 	if(remain_size<=(req_size+8))
 	{
-		expand_buff();
+		expand_buff(req_size+8-remain_size);
 	}
 }
 
-void Encode_Pri_Type::expand_buff()
+void Encode_Pri_Type::expand_buff(int addition_size)
 {
-	u_int8_t* buff_tmp = new u_int8_t[this->current_cap*2];
+	int size=0;
+	if(addition_size < this->current_cap)
+	{
+		size = this->current_cap*2;
+	}
+	else
+	{
+		size = this->current_cap + addition_size;
+	}
+	u_int8_t* buff_tmp = new u_int8_t[size];
 	memcpy(buff_tmp, buff, offset);
 	delete[] buff;
 	buff = buff_tmp;
-	this->current_cap = this->current_cap*2;
+	this->current_cap = size;
 }
 
 void Encode_Pri_Type::buff_prune()

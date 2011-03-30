@@ -21,7 +21,7 @@ private:
 
 	void create_buff();
 	void buff_rem_check(int );
-	void expand_buff();
+	void expand_buff(int );
 	void buff_prune();
 
 

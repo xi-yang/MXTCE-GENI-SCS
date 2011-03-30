@@ -51,8 +51,8 @@ ARFLAGS = cru
 libapi_a_AR = $(AR) $(ARFLAGS)
 libapi_a_LIBADD =
 am_libapi_a_OBJECTS = api.$(OBJEXT) apiserver.$(OBJEXT) \
-	decode_pri.$(OBJEXT) decoder.$(OBJEXT) encode_pri.$(OBJEXT) \
-	encoder.$(OBJEXT)
+	decode_pri.$(OBJEXT) request_decoder.$(OBJEXT) \
+	encode_pri.$(OBJEXT) reply_encoder.$(OBJEXT)
 libapi_a_OBJECTS = $(am_libapi_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -195,8 +195,9 @@ INSTALL_SDATA = @INSTALL@ -m 600
 # -- Libraries Sources
 libapi_a_SOURCES = api.hh apiserver.hh api_constraint.hh decode_pri.hh \
 	reserved_constraint.hh tag_id.hh user_constraint.hh \
-	encode_pri.hh encoder.hh api.cc apiserver.cc decode_pri.cc \
-	decoder.cc encode_pri.cc encoder.cc
+	encode_pri.hh reply_encoder.hh request_decoder.hh api.cc \
+	apiserver.cc decode_pri.cc request_decoder.cc encode_pri.cc \
+	reply_encoder.cc
 all: all-am
 
 .SUFFIXES:
@@ -285,9 +286,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/api.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/apiserver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/decode_pri.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/decoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/encode_pri.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/encoder.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reply_encoder.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/request_decoder.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

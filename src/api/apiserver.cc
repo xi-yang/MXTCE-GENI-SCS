@@ -46,7 +46,7 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
         return -1;
     }
 
-    Apimsg_decoder* api_decoder = new Apimsg_decoder();
+    Apireqmsg_decoder* api_decoder = new Apireqmsg_decoder();
     Apimsg_user_constraint* user_cons = api_decoder->test_decode_msg(apiMsg->body);
     TLV* tlv_ptr = (TLV*)(new u_int8_t[TLV_HEAD_SIZE + sizeof(user_cons)]);
     tlv_ptr->type = 1;
@@ -94,7 +94,7 @@ void APIServerThread::hookHandleMessage()
         msg->LogDump();
 
         api_msg* apiMsg = new api_msg();
-        Apimsg_encoder* api_encoder = new Apimsg_encoder();
+        Apireplymsg_encoder* api_encoder = new Apireplymsg_encoder();
         msg_body_len = api_encoder->test_encode_msg(msg,apiMsg->body);
         api_encoder->encode_msg_header(apiMsg->header, msg_body_len);
 

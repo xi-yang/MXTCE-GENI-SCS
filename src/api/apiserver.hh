@@ -40,8 +40,8 @@
 #include "thread.hh"
 #include "api.hh"
 #include "resource.hh"
-#include "decoder.hh"
-#include "encoder.hh"
+#include "request_decoder.hh"
+#include "reply_encoder.hh"
 
 using namespace std;
 
