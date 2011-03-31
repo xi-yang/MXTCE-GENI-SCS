@@ -52,14 +52,6 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
     tlv_ptr->type = 1;
     tlv_ptr->length = sizeof(user_cons);
     memcpy(tlv_ptr->value, &user_cons, sizeof(user_cons));
-    
-
-    string queueName="CORE";
-    string topicName="API_REQUEST";
-    Message* tMsg = new Message(MSG_REQ, queueName, topicName);
-    tMsg->AddTLV(tlv_ptr);
-    apiThread->GetMessagePort()->PostMessage(tMsg);
-
     if (user_cons->getGri().empty())
     {
         char cstrClientConnId[32];
@@ -67,6 +59,11 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
         string gri = cstrClientConnId;
         user_cons->setGri(gri);
     }
+    string queueName="CORE";
+    string topicName="API_REQUEST";
+    Message* tMsg = new Message(MSG_REQ, queueName, topicName);
+    tMsg->AddTLV(tlv_ptr);
+    apiThread->GetMessagePort()->PostMessage(tMsg);
     apiClientConns[user_cons->getGri()] = apiReader;
 
     return 0;
