@@ -49,6 +49,7 @@ struct option longopts[] =
     { "config", required_argument, NULL, 'c'},
     { "host",   required_argument, NULL, 'h'},
     { "port",   required_argument, NULL, 'p'},
+    { "gri",   required_argument, NULL, 'gri'},
     { "src_urn",   required_argument, NULL, 'S'},
     { "dst_urn",   required_argument, NULL, 'D'},
     { "bandwidth",   required_argument, NULL, 'B'},
@@ -62,9 +63,8 @@ struct option longopts[] =
 void showUsage()
 {
     cout<<"MX-TCE Tester Usage:"<<endl;
-    cout<<"\t mxtce_test [-c test config file] [-h host) [-p port] -S src_urn -D dst_urn -B bandwidth [-s starttime] [-e endtime] -u src_vlan -d dst_vlan" <<endl;
-    cout<<"\t mxtce_test [-c test config file] [-h host) [-p port] -S src_urn -D dst_urn -B bandwidth [-s starttime] [-e endtime] -u src_vlan -d dst_vlan" <<endl;
-    cout<<"\t Example: mxtce_test -S \"urn:ogf:network:domain=testdomain-1.net:node=node-1:port=port-1:link=link-1\" -D \"urn:ogf:network:domain=testdomain-1.net:node=node-2:port=port-2:link=link-1\" -B 100M -s 1305601600 -e 1305801600 -u 1234 -d 2345" <<endl;
+    cout<<"\t mxtce_test [-c test config file] [-h host) [-p port] [-g gri] -S src_urn -D dst_urn -B bandwidth [-s starttime] [-e endtime] -u src_vlan -d dst_vlan" <<endl;
+    cout<<"\t Example: mxtce_test -g test1 -S \"urn:ogf:network:domain=testdomain-1.net:node=node-1:port=port-1:link=link-1\" -D \"urn:ogf:network:domain=testdomain-1.net:node=node-2:port=port-2:link=link-1\" -B 100M -s 1305601600 -e 1305801600 -u 1234 -d 2345" <<endl;
 }
 
 int main( int argc, char* argv[])
@@ -97,7 +97,7 @@ int main( int argc, char* argv[])
     {
         int opt;
 
-        opt = getopt_long (argc, argv, "c:h:p:s:e:u:v:B:S:D:", longopts, 0);
+        opt = getopt_long (argc, argv, "c:h:p:g:s:e:u:v:B:S:D:", longopts, 0);
         if (opt == EOF)
             break;
 

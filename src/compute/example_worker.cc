@@ -97,6 +97,8 @@ void ExampleComputeWorker::SetParameter(string& paramName, void* paramPtr)
         tewg = (TEWG*)paramPtr;
     else if (paramName == "KSP")
         ksp = (vector<TPath*>*)paramPtr;
+    else if (paramName == "USER_CONSTRAINT")
+        userConstraint = (Apimsg_user_constraint*)paramPtr;
 }
 
 void* ExampleComputeWorker::GetParameter(string& paramName)
@@ -105,6 +107,8 @@ void* ExampleComputeWorker::GetParameter(string& paramName)
         return tewg;    
     else if (paramName == "KSP")
         return ksp;
+    else if (paramName == "USER_CONSTRAINT")
+        return userConstraint;
     return NULL;
 }
 
