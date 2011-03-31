@@ -158,9 +158,13 @@ void MxTCEMessageHandler::Run()
     {
         msg->LogDump();
         if (msg->GetType() == MSG_REQ && msg->GetTopic() == "API_REQUEST") {
-            // creating computeWorkerThread
+            // creating computeWorkerThread and pass user request parameters
             string computeWorkerType = "exampleComputeWorker";
             ComputeWorker* computingThread = ComputeWorkerFactory::CreateComputeWorker(computeWorkerType); 
+            string paramName = "USER_CONSTRAINT";
+            Apimsg_user_constraint* userConstraint = (Apimsg_user_constraint*)(msg->GetTLVList().front()->value);
+            computingThread->SetParameter(paramName, userConstraint);
+            msg->GetTLVList().pop_front();
 
             // init computing thread port and routes on messge router and start thread
             string computeThreadPortName = computingThread->GetName();

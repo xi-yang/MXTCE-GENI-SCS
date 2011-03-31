@@ -202,41 +202,53 @@ void Action_ComputeKSP::Process()
     if (tewg == NULL)
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No TEWG available for computation!");
 
-    // TODO: should get the following params from API request
-    long bw = 1000000000; // 100M
-    TNode* srcNode = tewg->GetNodes().front();
-    TNode* dstNode = tewg->GetNodes().back();
-    //TNode* dstNode = *(++(++(++tewg->GetNodes().begin())));
-    u_int32_t vtag = 4001;
-    u_int32_t wave = 0;
+    //  the user request parameters
+    paramName = "USER_CONSTRAINT";
+    Apimsg_user_constraint* userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetParameter(paramName);
+    TNode* srcNode = tewg->LookupNodeByURN(userConstraint->getSrcendpoint());
+    TNode* dstNode = tewg->LookupNodeByURN(userConstraint->getDestendpoint());
+    long bw = (long)userConstraint->getBandwidth();
+    u_int32_t srcVtag, dstVtag; 
+    if (userConstraint->getSrcvlantag() == "any" || userConstraint->getSrcvlantag() == "ANY")
+        srcVtag = ANY_TAG;
+    else
+        sscanf(userConstraint->getSrcvlantag().c_str(), "%d", &srcVtag);
+    if (userConstraint->getDestvlantag() == "any" || userConstraint->getDestvlantag() == "ANY")
+        dstVtag = ANY_TAG;
+    else
+        sscanf(userConstraint->getDestvlantag().c_str(), "%d", &dstVtag);
+    u_int32_t wave = 0; // place holder
     TSpec tspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);
 
     // TODO: verify ingress/egress edge Tspec
 
-    // TODO: Judge whether this is an advacne schduling request. If so get startTime, endTime, bw = minBw then do the following
-    /*
-    time_t startTime = ?;
-    time_t endTime = ?;
-    list<TLink*>::iterator itL;
-    for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
-    {
-        TLink* L = *itL;
-        if (L->GetDeltaList().size() == 0)
-            continue;
-        AggregateDeltaSeries ads;
-        list<TDelta*>::iterator itD;
-        for (itD = L->GetDeltaList().begin(); itD != L->GetDeltaList().end(); itD++)
+    // reservations pruning
+    // for current OSCARS implementation, tcePCE should pass startTime==endTime==0
+    time_t startTime = userConstraint->getStarttime();
+    time_t endTime = userConstraint->getEndtime();
+    if (startTime > 0 && endTime > startTime) {
+        list<TLink*>::iterator itL;
+        for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
         {
-            TDelta* delta = *itD;
-            ads.AddDelta(delta);
+            TLink* L = *itL;
+            if (L->GetDeltaList().size() == 0)
+                continue;
+            AggregateDeltaSeries ads;
+            list<TDelta*>::iterator itD;
+            for (itD = L->GetDeltaList().begin(); itD != L->GetDeltaList().end(); itD++)
+            {
+                TDelta* delta = *itD;
+                ads.AddDelta(delta);
+            }
+            TDelta* conjDelta = ads.JoinADSInWindow(startTime, endTime);
+            conjDelta->SetTargetResource(L);
+            conjDelta->Apply();
         }
-        TDelta* conjDelta = ads.JoinADSInWindow(startTime, endTime);
-        conjDelta->SetTargetResource(L);
-        conjDelta->Apply();
     }
-    */
+
     // prune bandwidth
     tewg->PruneByBandwidth(bw);
+
     // compute KSP
     vector<TPath*>* KSP = new vector<TPath*>;
     try {
@@ -259,7 +271,8 @@ void Action_ComputeKSP::Process()
     vector<TPath*>::iterator itP = KSP->begin(); 
     while (itP != KSP->end())
     {
-        u_int32_t vtagResult = vtag;
+        // TODO: dstVtag
+        u_int32_t vtagResult = srcVtag;
         u_int32_t waveResult = wave;        
         if (!(*itP)->VerifyTEConstraints(vtagResult, waveResult, tspec))
         {
