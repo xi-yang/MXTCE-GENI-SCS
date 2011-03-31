@@ -37,6 +37,7 @@
 #include "exception.hh"
 #include "log.hh"
 #include "api.hh"
+#include "request_encoder.hh"
 
 #ifndef HAVE_DECL_GETOPT
   #define HAVE_DECL_GETOPT 1
@@ -94,10 +95,59 @@ int main( int argc, char* argv[])
     Log::Init(log_opt, "");
     Log::SetDebug(true);
 
+    Apimsg_user_constraint* user_cons = new Apimsg_user_constraint();
+
+    // for test only
+	string gri="0-1";
+	u_int32_t start_time=10;
+	u_int32_t end_time=20;
+	u_int32_t bandwidth=30;
+	string layer="3";
+	string path_setup_model="test1test1test1test1test1test1test1test1test1test1test1test1test1test1test1test1test1test1test1test1test1";
+	string path_type="test2";
+	string src_vlan_tag="test3";
+	string dest_vlan_tag="test4";
+	string src_end_point="test5";
+	string dest_end_point="test6";
+	u_int32_t src_ip_port=5;
+	u_int32_t dest_ip_port=9;
+	string protocol="test7";
+	string dscp="test8";
+	u_int32_t burst_limit=40;
+	string lsp_class="test9";
+
+
+	user_cons->setGri(gri);
+    user_cons->setStarttime(start_time);
+	user_cons->setEndtime(end_time);
+	user_cons->setBandwidth(bandwidth);
+	user_cons->setPathsetupmodel(path_setup_model);
+	user_cons->setPathtype(path_type);
+	user_cons->setLayer(layer);
+	user_cons->setSrcendpoint(src_end_point);
+	user_cons->setDestendpoint(dest_end_point);
+
+	if(layer=="2")
+	{
+		user_cons->setSrcvlantag(src_vlan_tag);
+		user_cons->setDestvlantag(dest_vlan_tag);
+
+	}
+	else if(layer=="3")
+	{
+		user_cons->setSrcipport(src_ip_port);
+		user_cons->setDestipport(dest_ip_port);
+		user_cons->setProtocol(protocol);
+		user_cons->setDscp(dscp);
+		user_cons->setBurstlimit(burst_limit);
+		user_cons->setLspclass(lsp_class);
+
+	}
+
+	Apireqmsg_encoder* encoder = new  Apireqmsg_encoder();
+	api_msg* msg = encoder->test_encode_msg(user_cons);
+    assert(msg != NULL);
     APIClient* client = new APIClient(api_host, api_port);
-    api_tlv_header* tlv = (api_tlv_header*)new char[8];
-    *(int*)(tlv+1) = 1234;
-    api_msg* msg = api_msg_new(API_MSG_REQUEST,8,tlv, 0x0001,0x0001,0);
     try {
         client->Connect();
         client->SendMessage(msg);
