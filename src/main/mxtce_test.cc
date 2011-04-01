@@ -49,7 +49,7 @@ struct option longopts[] =
     { "config", required_argument, NULL, 'c'},
     { "host",   required_argument, NULL, 'h'},
     { "port",   required_argument, NULL, 'p'},
-    { "gri",   required_argument, NULL, 'gri'},
+    { "gri",   required_argument, NULL, 'g'},
     { "src_urn",   required_argument, NULL, 'S'},
     { "dst_urn",   required_argument, NULL, 'D'},
     { "bandwidth",   required_argument, NULL, 'B'},
@@ -118,8 +118,7 @@ int main( int argc, char* argv[])
         case 'B':
             {
             string bw_str = optarg;
-            bw_str = StringToBandwidth(bw_str);
-            bandwidth = atoi(bw_str.c_str());
+            bandwidth = (u_int32_t)StringToBandwidth(bw_str);
             }
             break;
         case 'S':

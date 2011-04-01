@@ -206,7 +206,11 @@ void Action_ComputeKSP::Process()
     paramName = "USER_CONSTRAINT";
     Apimsg_user_constraint* userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetParameter(paramName);
     TNode* srcNode = tewg->LookupNodeByURN(userConstraint->getSrcendpoint());
+    if (srcNode == NULL)
+        throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown source URN!");
     TNode* dstNode = tewg->LookupNodeByURN(userConstraint->getDestendpoint());
+    if (dstNode == NULL)
+        throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown destination URN!");
     long bw = (long)userConstraint->getBandwidth();
     u_int32_t srcVtag, dstVtag; 
     if (userConstraint->getSrcvlantag() == "any" || userConstraint->getSrcvlantag() == "ANY")
