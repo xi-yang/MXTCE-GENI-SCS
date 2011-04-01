@@ -9,11 +9,11 @@ create:
 # source and destination are urn-style or dns-style friendly names.
 # Note ':' characters are significant in YAML,
 # so remember to enclose URNs in single quotes
-        src:            'urn:ogf:network:domain=testdomain-2:node=node-2-1:port=port1:link=link1'
-        dst:            'urn:ogf:network:domain=testdomain-2:node=node-2-2:port=port1:link=link2'
+        src:            'urn:ogf:network:domain=ion.internet2.edu:node=rtr.hous:port=xe-0/3/0:link=*'
+        dst:            'urn:ogf:network:domain=ion.internet2.edu:node=rtr.wash:port=xe-0/3/0:link=*'
 
 # bandwidth, in Mbps, integer
-        bandwidth:      50
+        bandwidth:      500
         
 # description, a string
         description:    'a reservation'

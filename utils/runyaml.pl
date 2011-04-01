@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use YAML::XS;
+use Time::ParseDate;
 
 my $test_cmd =  '../src/main/mxtce_test';
 my $yaml_file = shift;
@@ -19,8 +20,14 @@ my $dst_vlan   = $request->{'create'}{'dstvlan'};
 my $start_time   = $request->{'create'}{'start-time'};
 my $end_time   = $request->{'create'}{'end-time'};
 my $path_type   = $request->{'create'}{'path-type'};
-print "$test_cmd -g $gri -S \"$src_urn\" -D \"$dst_urn\" -B $bandwidth" . "M -s 0 -e 0 -u $src_vlan -v $dst_vlan\n";
-my $result = `$test_cmd -g $gri -S $src_urn -D $dst_urn -B $bandwidth . M -s 0 -e 0 -u $src_vlan -v $dst_vlan`;
+$start_time = parsedate($start_time);
+if ($end_time =~ /\+(\d+):(\d+):(\d+)/) {
+	$end_time = $start_time + $1*3600 + $2*60 + $3;
+} else {
+	$end_time = parsedate($end_time);
+}
+print "$test_cmd -g $gri -S \"$src_urn\" -D \"$dst_urn\" -B $bandwidth" . "M -s $start_time -e $end_time -u $src_vlan -v $dst_vlan\n";
+my $result = `$test_cmd -g $gri -S $src_urn -D $dst_urn -B $bandwidth . M -s $start_time -e $end_time -u $src_vlan -v $dst_vlan`;
 print $result;
 print "\n";
 
