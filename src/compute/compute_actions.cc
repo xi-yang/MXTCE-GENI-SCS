@@ -88,17 +88,32 @@ void Action_ProcessRequestTopology::Finish()
 {
     LOG(name<<"Finish() called"<<endl);
 
-    // TODO: send back COMPUTE_REPLY message to core thread
-    // TODO: if (status == _Failed)  send back failure/error message
+    string paramName = "USER_CONSTRAINT";
+    Apimsg_user_constraint* userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetParameter(paramName);
+    ComputeResult* result = new ComputeResult(userConstraint->getGri());
 
+    paramName = "KSP";
+    vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+    if (KSP && KSP->size() > 0)
+    {
+        TPath* resultPath = KSP->front()->Clone();
+        resultPath->SetIndependent(true); // path peeled off from TEWG: pointers to parenet ports and nodes are invalid
+        result->SetPathInfo(resultPath);
+    }
+    else
+    {
+        string paramName = "ERROR_MSG";
+        result->SetErrMessage(*(string*)(this->GetComputeWorker()->GetParameter(paramName)));
+    }
+    TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
+    memcpy(tlv->value, result, sizeof(void*));
     string queue = MxTCE::computeThreadPrefix + worker->GetName();
     string topic = "COMPUTE_REPLY";
-    list<TLV*> noTLVs;
-    SendMessage(MSG_REPLY, queue, topic, noTLVs);
-
-    // destroy stored data including tewg
-    string paramName = "KSP";
-    vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+    list<TLV*> tlvList;
+    tlvList.push_back(tlv);
+    SendMessage(MSG_REPLY, queue, topic, tlvList);
+   
+   // destroy stored data including tewg
     if (KSP)
     {
         delete KSP;

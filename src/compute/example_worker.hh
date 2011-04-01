@@ -40,7 +40,6 @@
 #include "thread.hh"
 #include "api.hh"
 #include "compute_worker.hh"
-#include "user_constraint.hh"
 #include "tewg.hh"
 
 using namespace std;
@@ -48,12 +47,10 @@ using namespace std;
 class ExampleComputeWorker: public ComputeWorker
 {
 protected:
-    Apimsg_user_constraint* userConstraint;
-    TEWG* tewg;
     vector<TPath*>* ksp;
 
 public:
-    ExampleComputeWorker(string n):ComputeWorker(n), userConstraint(NULL), tewg(NULL), ksp(NULL) { }
+    ExampleComputeWorker(string n):ComputeWorker(n), ksp(NULL) { }
     virtual ~ExampleComputeWorker() { }
     virtual void* hookRun();
     virtual void hookHandleMessage();

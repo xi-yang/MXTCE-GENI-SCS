@@ -41,6 +41,8 @@
 #include "thread.hh"
 #include "api.hh"
 #include "action.hh"
+#include "tewg.hh"
+#include "user_constraint.hh"
 
 using namespace std;
 
@@ -48,17 +50,20 @@ class ComputeWorker: public ThreadPortScheduler
 {
 protected:
     list<Action*> actions;//workflow-actions
+    Apimsg_user_constraint* userConstraint;
+    TEWG* tewg;
+    string errMsg;
 
 public:
-    ComputeWorker(string n):ThreadPortScheduler(n){ }
+    ComputeWorker(string n):ThreadPortScheduler(n), userConstraint(NULL), tewg(NULL) { }
     virtual ~ComputeWorker();
     string& GetName() { return portName;}
     list<Action*>& GetActions() { return actions; }
     void* Run();
     virtual void* hookRun();
     virtual void hookHandleMessage();
-    virtual void SetParameter(string& paramName, void* paramPtr) {}
-    virtual void* GetParameter(string& paramName) { return NULL; }
+    virtual void SetParameter(string& paramName, void* paramPtr);
+    virtual void* GetParameter(string& paramName);
 };
 
 
@@ -76,6 +81,24 @@ public:
     static ComputeWorker* CreateComputeWorker(string type);
     static ComputeWorker* LookupComputeWorker(string name);
     static void RemoveComputeWorker(string name);
+};
+
+class ComputeResult 
+{
+protected:
+    string gri;
+    TPath* pathInfo;
+    string errMsg;
+
+public:
+    ComputeResult(string& g): gri(g), pathInfo(NULL) { }
+    virtual ~ComputeResult() { delete pathInfo; }
+    string& GetGri() { return gri; }
+    void SetGri(string& g) { gri = g; }
+    TPath* GetPathInfo() { return pathInfo; }
+    void SetPathInfo(TPath* p) { pathInfo = p; }
+    string& GetErrMessage() { return errMsg; }
+    void SetErrMessage(string& s) {errMsg = s; }
 };
 
 #endif

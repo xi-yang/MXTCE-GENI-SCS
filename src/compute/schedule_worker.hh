@@ -48,13 +48,12 @@ using namespace std;
 class ScheduleComputeWorker: public ComputeWorker
 {
 protected:
-    TEWG* tewg;
     vector<TPath*>* ksp;
     vector<TPath*>* feasiblePaths;
     vector<time_t>* orderedATS;
 
 public:
-    ScheduleComputeWorker(string n):ComputeWorker(n), tewg(NULL), feasiblePaths(NULL), orderedATS(NULL) { }
+    ScheduleComputeWorker(string n):ComputeWorker(n), feasiblePaths(NULL), orderedATS(NULL) { }
     virtual ~ScheduleComputeWorker() { }
     virtual void* hookRun();
     virtual void hookHandleMessage();

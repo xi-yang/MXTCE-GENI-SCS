@@ -843,6 +843,13 @@ bool cmp_tpath(TPath* p1, TPath* p2)
 
 TPath::~TPath()
 {
+    if (independent)
+    {
+        list<TLink*>::iterator itL = path.begin();
+        for (; itL != path.end(); itL++)
+            delete *itL;
+        path.clear();
+    }
     list<TSchedule*>::iterator itS = schedules.begin();
     for (; itS != schedules.end(); itS++)
         delete *itS;
@@ -930,6 +937,26 @@ bool TPath::VerifyTEConstraints(u_int32_t& vtag, u_int32_t& wave, TSpec& tspec)
     return true;
 }
 
+TPath* TPath::Clone()
+{
+    TPath* P = new TPath;
+    P->SetCost(this->cost);
+    P->SetIndependent(this->independent);
+    list<TLink*>::iterator itL;
+    TLink* lastLink = NULL;
+    for (itL = this->path.begin(); itL != this->path.end(); itL++)
+    {
+        TLink* L = *itL;
+        P->GetPath().push_back((L)->Clone());
+        if (lastLink && L->GetPort()->GetNode() != lastLink->GetPort()->GetNode())
+        {
+            lastLink->SetRemoteLink(L);
+            L->SetRemoteLink(lastLink);
+        }
+        lastLink = L;
+    }
+    return P;
+}
 
 void TPath::LogDump()
 {

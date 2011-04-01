@@ -269,15 +269,18 @@ protected:
     list<TLink*> maskedLinkList; // links that have filteroff = true
     TNode* deviationNode;
     list<TSchedule*> schedules; // feasible schedules on the path
+    bool independent;
 
 public:
-    TPath(): cost(_INF_), deviationNode(NULL) {}
+    TPath(): cost(_INF_), deviationNode(NULL), independent(false){}
     ~TPath();
     list<TLink*>& GetPath() { return path; }
     void SetPath(list<TLink*>& p) { path.assign(p.begin(), p.end()); }
     double GetCost() { return cost; }
     void SetCost(double c) { cost = c; }
     list<TLink*>& GetMaskedLinkList() { return maskedLinkList; }
+    bool IsIndependent() { return independent; }
+    void SetIndependent(bool b) { independent = b; }
     void FilterOffMaskedLinks(bool bl) { 
             list<TLink*>::iterator itLink;
             for (itLink = maskedLinkList.begin(); itLink != maskedLinkList.end(); itLink++) {
@@ -317,6 +320,7 @@ public:
                 return false;
         return true;
     }
+    TPath* Clone();
     void LogDump();
 };
 

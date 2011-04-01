@@ -93,22 +93,17 @@ void ExampleComputeWorker::hookHandleMessage()
 
 void ExampleComputeWorker::SetParameter(string& paramName, void* paramPtr)
 {
-    if (paramName == "TEWG")
-        tewg = (TEWG*)paramPtr;
-    else if (paramName == "KSP")
+    if (paramName == "KSP")
         ksp = (vector<TPath*>*)paramPtr;
-    else if (paramName == "USER_CONSTRAINT")
-        userConstraint = (Apimsg_user_constraint*)paramPtr;
+    else 
+        ComputeWorker::SetParameter(paramName, paramPtr);
 }
 
 void* ExampleComputeWorker::GetParameter(string& paramName)
 {
-    if (paramName == "TEWG")
-        return tewg;    
-    else if (paramName == "KSP")
+    if (paramName == "KSP")
         return ksp;
-    else if (paramName == "USER_CONSTRAINT")
-        return userConstraint;
-    return NULL;
+    else 
+        return ComputeWorker::GetParameter(paramName);
 }
 

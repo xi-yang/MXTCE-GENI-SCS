@@ -72,7 +72,10 @@ void* ComputeWorker::Run()
     try {
         eventMaster->Run();
     } catch (ComputeThreadException e) {
-        //Tell mxTCE core to detach the pipes ?
+        string paramName = "ERRPR_MSG";
+        string& errMsg = e.GetMessage();
+        SetParameter(paramName,&errMsg);
+        // TODO: Tell mxTCE core to detach the pipes ?
     }
 
     return pReturn;
@@ -97,6 +100,28 @@ void ComputeWorker::hookHandleMessage()
         msg->LogDump();
         //delete msg; //msg consumed
     }
+}
+
+
+void ComputeWorker::SetParameter(string& paramName, void* paramPtr)
+{
+    if (paramName == "TEWG")
+        tewg = (TEWG*)paramPtr;
+    else if (paramName == "USER_CONSTRAINT")
+        userConstraint = (Apimsg_user_constraint*)paramPtr;
+    else if (paramName == "ERROR_MSG")
+        errMsg = *(string*)paramPtr;
+}
+
+void* ComputeWorker::GetParameter(string& paramName)
+{
+    if (paramName == "TEWG")
+        return tewg;    
+    else if (paramName == "USER_CONSTRAINT")
+        return userConstraint;
+    else if (paramName == "ERROR_MSG")
+        return &errMsg;
+    return NULL;
 }
 
 
