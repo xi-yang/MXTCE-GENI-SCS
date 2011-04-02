@@ -43,8 +43,9 @@ void* ResvManThread::hookRun()
     // init RData ?
 
     // init push APIServer which gets pushed-in reservation data from external proxy
-    ResvAPIServer revApiServer(MxTCE::resvApiServerPort, this);
-    eventMaster->Schedule(&revApiServer);
+    ResvAPIServer resvApiServer(MxTCE::resvApiServerPort, this);
+    resvApiServer.SetEventMaster(eventMaster);
+    resvApiServer.Start();
 
     // start event loop
     // eventMaster has been initiated in parent class ThreadPortScheduler::Run() method

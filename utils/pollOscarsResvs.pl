@@ -7,18 +7,8 @@ use Lib::APIClient;
 use Time::ParseDate;
 
 
-BEGIN {
-        use Exporter   ();
-        our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
-        $VERSION = sprintf "%d.%03d", q$Revision: 1.1 $ =~ /(\d+)/g;
-        @ISA         = qw(Exporter);
-        @EXPORT      = qw();
-        %EXPORT_TAGS = ();
-        @EXPORT_OK   = qw();
-}
-our @EXPORT_OK;
+use constant API_MSG_RESV_PUSH => 0x0011;
 
-use constant MSG_REQ => 0x0001;
 use constant MSG_TLV_RESV_INFO => 0x0011;
 use constant MSG_TLV_PATH_ELEM => 0x0012;
 
@@ -78,7 +68,7 @@ while(1) {
 			my $elem_tlv = new TLV(MSG_TLV_PATH_ELEM, $elem->{urn}, $elem->{swtype}, $elem->{enc}, $elem->{vlan});
 			push(@path_elem_tlvs, $elem_tlv);
 		}
-                $api_conn->queue_bin_msg(MSG_REQ, 0, $resv_info_tlv, @path_elem_tlvs);
+                $api_conn->queue_bin_msg(API_MSG_RESV_PUSH, 0, $resv_info_tlv, @path_elem_tlvs);
                 $api_conn->send_bin_msg();
 		print %{$resv};
 		print  "\n";

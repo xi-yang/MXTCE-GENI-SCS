@@ -123,10 +123,8 @@ sub send_bin_msg($) {
                 $$self{bin_queue}{out}{hdr}{tag2}
         );
 
-        my @witeable = $$self{select}->can_write();
         $bin .= $$self{bin_queue}{out}{data};
         $n = $$self{bin_queue}{fh}->syswrite($bin);
-        dump_data($$self{bin_queue}{out});
         if(defined($n)) {
                 $bin = substr($bin, $n);
                 $$self{bin_queue}{out}{data} = '';
@@ -187,7 +185,6 @@ sub get_bin_msg($) {
                 }
                 $$self{bin_queue}{in}{data} = $data;
         }
-        # dump_data($$self{bin_queue}{in});
 }
 
 1;

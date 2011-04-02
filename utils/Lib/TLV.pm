@@ -30,7 +30,8 @@ sub new {
         };
         # type(16) length(16) gri(8*64) start_time(32) end_time(32) bandwidth(32) status(8*16)
         if($a[0] == MSG_TLV_RESV_INFO) {
-                $$self{templ} .= 'C64NNNC16';
+                $$self{templ} .= 'a64LLLa16';
+                $$self{len} = 92;
                 $$self{gri} = $a[1];
                 $$self{start_time} = $a[2];
                 $$self{end_time} = $a[3];
@@ -38,23 +39,12 @@ sub new {
                 $$self{status} = $a[5];
         }
         elsif($a[0] == MSG_TLV_PATH_ELEM) {
-                $$self{templ} .= 'C128CCn';
+                $$self{templ} .= 'a128CCv';
+                $$self{len} = 132;
                 $$self{urn} = $a[1];
                 $$self{sw_type} = $a[2];
                 $$self{enc_type} = $a[3];
                 $$self{vlan} = $a[4];
-        }
-        # NOTE: this will calculate the correct length of the TLV as long as
-        # the template consists of the number templates only (in the multiple of 8-bit
-        # sizes) i.e. 'n', 'f', 'V13' will work,  'b', 'h', 'a*' etc. will not.
-        my $templ = $$self{templ};
-        $templ =~ s/(\D\d*)/$1 /g;
-        chop $templ;
-        my @l = split(/ /, $templ);
-        # NOTE: this will be the length as entered to the TLV len field (TLV size minus four bytes of the header)
-        $$self{len} = -(TLV_HDR_SIZE);
-        for(my $i=0; $i<@l; $i++) {
-                $$self{len} += length(pack($l[$i], 0));
         }
         bless $self;
         return $self;
