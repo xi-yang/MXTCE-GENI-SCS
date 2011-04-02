@@ -64,6 +64,7 @@ my $oscars_cmd =  "cd $ENV{OSCARS_DIST}/api; . bin/setclasspath.sh; java net.es.
 my $interval = 120; 
 
 my $api_conn = new APIClient('localhost', '2091', 10101);
+$api_conn->connect_server();
 
 while(1) {
 	my $resv_list_text = `$oscars_cmd`;

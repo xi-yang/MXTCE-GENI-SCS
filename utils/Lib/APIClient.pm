@@ -5,6 +5,7 @@ package APIClient;
 use strict;
 use warnings;
 use Socket;
+use IO::Socket::INET;
 use Errno;
 use Lib::TLV;
 
@@ -61,13 +62,21 @@ sub connect_server() {
         my $sock = IO::Socket::INET->new(
                 PeerAddr => $self->{server_host},
                 PeerPort => $self->{server_port},
-                Proto     => 'tcp') or die 'control socket '.$self->{server_host}.':'.$self->{server_port}.": $@\n";
+                Proto     => 'tcp') or die 'API connect to '.$self->{server_host}.':'.$self->{server_port}.": $@\n";
         if($sock) {
                 if($sock->connected()) {
                         $$self{bin_queue}{fh} = $sock;
-                }
+                } 
         }
         return $sock;
+}
+
+sub disconnect_server() {
+        my $self = shift;
+        my $sock = $$self{bin_queue}{fh}; 
+	if (defined($sock)) {
+		$sock->shutdown();
+	}
 }
 
 sub queue_bin_msg($$;$@) {
