@@ -168,7 +168,7 @@ void Message::Receive(int fd)
     this->flagUrgent = !((header->flags & MSG_FLAG_URGENT) == 0);
 
     int offset = sizeof(MessageHeader);
-    while (offset + sizeof(TLV) < msglen)
+    while (offset + TLV_HEAD_SIZE < msglen)
     {
         TLV* tlv = (TLV*)(buf + offset);
         TLV* newTlv = (TLV*) new char[TLV_HEAD_SIZE+tlv->length];

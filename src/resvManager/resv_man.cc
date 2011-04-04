@@ -78,7 +78,8 @@ void ResvManThread::hookHandleMessage()
             this->GetMessagePort()->PostMessage(replyMsg);
         } else if (msg->GetTopic() == "TEDB_ADD_RESV_REPLY") 
         {
-            TReservation* resv = (TReservation*)(msg->GetTLVList().front()->value);
+            TReservation* resv;
+            memcpy(&resv, msg->GetTLVList().front()->value, sizeof(void*));
             assert (resv->GetSchedules().size() > 0 && resv->GetServiceTopology() != NULL);
             RData.AddReservation(resv);
         }
