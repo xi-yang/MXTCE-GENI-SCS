@@ -106,6 +106,8 @@ void Action_ProcessRequestTopology::Finish()
         result->SetErrMessage(*(string*)(this->GetComputeWorker()->GetParameter(paramName)));
     }
     TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
+    tlv->type = MSG_TLV_VOID_PTR;
+    tlv->length = sizeof(void*);
     memcpy(tlv->value, result, sizeof(void*));
     string queue = MxTCE::computeThreadPrefix + worker->GetName();
     string topic = "COMPUTE_REPLY";
