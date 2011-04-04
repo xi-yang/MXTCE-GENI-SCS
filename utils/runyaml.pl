@@ -22,7 +22,7 @@ my $end_time   = $request->{'create'}{'end-time'};
 my $path_type   = $request->{'create'}{'path-type'};
 $start_time = parsedate($start_time);
 if ($end_time =~ /\+(\d+):(\d+):(\d+)/) {
-	$end_time = $start_time + $1*3600 + $2*60 + $3;
+	$end_time = $start_time + $1*3600*24 + $2*3600 + $3*60;
 } else {
 	$end_time = parsedate($end_time);
 }
