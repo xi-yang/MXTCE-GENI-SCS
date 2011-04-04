@@ -48,7 +48,7 @@ string MxTCE::policyManPortName = "MX-TCE_POLICY_MANAGER";
 string MxTCE::loopbackPortName = "MX-TCE_CORE_LOOPBACK";
 string MxTCE::computeThreadPrefix = "COMPUTE_THREAD_";
 string MxTCE::tmpFilesDir = "/var/tmp/mxtce/pipes/";
-string MxTCE::xmlTopoFilePath = "ion.xml";
+string MxTCE::xmlTopoFilePath = "testdomain1.xml";
 
 MxTCE::MxTCE( const string& configFile) 
 {

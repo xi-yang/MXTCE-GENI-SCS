@@ -10,6 +10,76 @@
 
 #include "api_constraint.hh"
 
+class Hop_req
+{
+protected:
+	string hop_id;
+	string link_id;
+	string switching_cap_type;
+	string encoding_type;
+	string vlan_range_availability;
+
+public:
+	Hop_req()
+	{
+		this->initVar();
+	}
+
+	void initVar()
+	{
+		this->hop_id="";
+		this->link_id="";
+		this->switching_cap_type="";
+		this->encoding_type="";
+		this->vlan_range_availability="";
+	}
+
+	void setHopid(string& t_hop_id) {this->hop_id = t_hop_id;}
+	string& getHopid() {return this->hop_id;}
+
+	void setLinkid(string& t_link_id) {this->link_id = t_link_id;}
+	string& getLinkid() {return this->link_id;}
+
+	void setSwitchingcaptype(string& t_switching_cap_type) {this->switching_cap_type = t_switching_cap_type;}
+	string& getSwitchingcaptype() {return this->switching_cap_type;}
+
+	void setEncodingtype(string& t_encoding_type) {this->encoding_type = t_encoding_type;}
+	string& getEncodingtype() {return this->encoding_type;}
+
+	void setVlanrangeavailability(string& t_vlan_range_availability) {this->vlan_range_availability = t_vlan_range_availability;}
+	string& getVlanrangeavailability() {return this->vlan_range_availability;}
+
+};
+
+class Path_req
+{
+protected:
+	string path_id;
+	int path_length;
+	Hop_req* hops_ptr;
+
+public:
+	Path_req()
+	{
+		this->initVar();
+	}
+	void initVar()
+	{
+		this->path_id="";
+		path_length=0;
+		hops_ptr=NULL;
+	}
+	void setPathid(string& t_path_id) {this->path_id = t_path_id;}
+	string& getPathid() {return this->path_id;}
+
+	void setPathlength(int t_length) {this->path_length = t_length;}
+	int getPathlength() {return this->path_length;}
+
+	void setHops(Hop_req* t_hops_ptr) {this->hops_ptr = t_hops_ptr;}
+	Hop_req* getHops() {return this->hops_ptr;}
+
+};
+
 class Apimsg_user_constraint:public Apimsg_constraint
 {
 protected:
@@ -30,6 +100,7 @@ protected:
 	string dscp;
 	u_int32_t burst_limit;
 	string lsp_class;
+	Path_req* path;
 
 public:
 	Apimsg_user_constraint()
@@ -57,6 +128,7 @@ public:
 		this->dscp = "";
 		this->burst_limit = 0;
 		this->lsp_class = "";
+		this->path = NULL;
 
 	}
 
@@ -110,6 +182,9 @@ public:
 
 	void setLspclass(string& t_lsp_class) {this->lsp_class = t_lsp_class;}
 	string& getLspclass() {return this->lsp_class;}
+
+	void setPath(Path_req* t_path) {this->path = t_path;}
+	Path_req* getPath() {return this->path;}
 
 
 };

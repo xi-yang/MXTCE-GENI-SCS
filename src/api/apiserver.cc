@@ -47,7 +47,7 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
     }
 
     Apireqmsg_decoder* api_decoder = new Apireqmsg_decoder();
-    Apimsg_user_constraint* user_cons = api_decoder->test_decode_msg(apiMsg->body);
+    Apimsg_user_constraint* user_cons = api_decoder->test_decode_msg(apiMsg->body, ntohs(apiMsg->header.length));
     TLV* tlv_ptr = (TLV*)(new u_int8_t[TLV_HEAD_SIZE + sizeof(user_cons)]);
     tlv_ptr->type = 1;
     tlv_ptr->length = sizeof(user_cons);

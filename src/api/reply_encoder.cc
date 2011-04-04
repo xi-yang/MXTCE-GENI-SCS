@@ -21,7 +21,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	double d=10000.1234;
 
 	pri_type_encoder->encodeInteger(PCE_GRI, a);
-	pri_type_encoder->encodeString(PCE_HOP, b);
+	pri_type_encoder->encodeString(PCE_TEST3, b);
 	pri_type_encoder->encodeFloat(PCE_TEST1, c);
 	pri_type_encoder->encodeDouble(PCE_TEST2, d);
 

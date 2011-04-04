@@ -20,8 +20,9 @@ protected:
 public:
 	Apireqmsg_decoder(){}
 
-	Apimsg_user_constraint* test_decode_msg(char* );
+	Apimsg_user_constraint* test_decode_msg(char*, int );
 	void decode_usercons(char* , int , Apimsg_user_constraint* );
+	void decode_resvcons(char* , int , Apimsg_user_constraint* );
 
 };
 
