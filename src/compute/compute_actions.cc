@@ -260,6 +260,8 @@ void Action_ComputeKSP::Process()
                 ads.AddDelta(delta);
             }
             TDelta* conjDelta = ads.JoinADSInWindow(startTime, endTime);
+            if (conjDelta == NULL)
+                continue;
             conjDelta->SetTargetResource(L);
             conjDelta->Apply();
         }

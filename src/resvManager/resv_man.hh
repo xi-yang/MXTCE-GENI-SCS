@@ -51,6 +51,7 @@ protected:
 public:
     ResvManThread(string name):ThreadPortScheduler(name){ }
     virtual ~ResvManThread() { }
+    RDatabase* GetRData() { return &RData; }
     virtual void* hookRun();
     virtual void hookHandleMessage();
 };

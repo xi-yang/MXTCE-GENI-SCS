@@ -81,6 +81,7 @@ void ResvManThread::hookHandleMessage()
             TReservation* resv;
             memcpy(&resv, msg->GetTLVList().front()->value, sizeof(void*));
             assert (resv->GetSchedules().size() > 0 && resv->GetServiceTopology() != NULL);
+            resv->BuildDeltaCache();
             RData.AddReservation(resv);
         }
 

@@ -56,6 +56,14 @@ public:
     virtual int HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter, api_msg* apiMsg);
 };
 
+
+typedef struct {
+    u_int16_t type;    // MSG_TLV_RESV_INFO  : ntohs for external to internal msg conversion
+    u_int16_t length; //ntohs for external to internal msg conversion
+    u_int32_t tag1;
+    u_int32_t tag2;
+} TLV_ApiTags;
+
 typedef struct {
     u_int16_t type;    // MSG_TLV_RESV_INFO  : ntohs for external to internal msg conversion
     u_int16_t length; //ntohs for external to internal msg conversion

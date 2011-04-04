@@ -1017,14 +1017,22 @@ void TEWG::AddResvDeltas(TReservation* resv)
             {
                 list<TDelta*> oldDeltaList = (*itl)->LookupDeltasByName(resv->GetName());
                 if (oldDeltaList.size() == 0)
-                    continue;
-                struct timeval lastGenTime = oldDeltaList.back()->GetGeneratedTime();
-                struct timeval thisGenTime =  delta->GetGeneratedTime();
-                if (oldDeltaList.size() > 0 && lastGenTime < thisGenTime)
                 {
                     delta = delta->Clone();
                     this->deltaList.push_back(delta);
                     (*itl)->AddDelta(delta);
+                } 
+                else
+                {
+                    struct timeval lastGenTime = oldDeltaList.back()->GetGeneratedTime();
+                    struct timeval thisGenTime =  delta->GetGeneratedTime();
+                    if (lastGenTime < thisGenTime)
+                    {
+                        // TODO: remove deltas in oldDeltaList from (*itl)->deltaList
+                        delta = delta->Clone();
+                        this->deltaList.push_back(delta);
+                        (*itl)->AddDelta(delta);
+                    }
                 }
             }
         }

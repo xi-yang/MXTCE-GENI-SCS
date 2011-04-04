@@ -203,7 +203,7 @@ public:
     virtual ~TReservation() {} // TODO: free memory of serviceTopology, schedules and deltas (deltas need to unlink from targetResources in TEDB)
     string& GetName() { return name; }
     void SetName(string& n) { name = n; }
-    string& GeStatus() { return status; }
+    string& GetStatus() { return status; }
     void SetStatus(string& s) { status = s; }
     TGraph* GetServiceTopology() { return serviceTopology; }
     void SetServiceTopology(TGraph* tg) { serviceTopology = tg; }

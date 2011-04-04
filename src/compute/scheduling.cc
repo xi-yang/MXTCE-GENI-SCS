@@ -88,6 +88,7 @@ TDelta* AggregateDeltaSeries::JoinADSInWindow(time_t start, time_t end)
                 deltaA->Join(delta);
         }
     }
+    return deltaA;
 }
 
 void AggregateDeltaSeries::AddDelta(TDelta* delta)

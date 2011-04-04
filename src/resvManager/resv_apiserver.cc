@@ -45,7 +45,43 @@ int ResvAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter,
             ntohs(apiMsg->header.type), ntohl(apiMsg->header.ucid), ntohl(apiMsg->header.seqnum));
         return -1;
     }
-    //$$ each api message contains a single reservation that should contain tlv_resv_info(gri, bandwidth, schedule) and list of tlv_path_info (urn, swcap, vlan)
+
+    string status = "DELETE";
+    if ((ntohl(apiMsg->header.options) & 0x0001) != 0)
+    {
+        //start of update burst --> mark all reservations as removal candidates
+        list<TReservation*>& resvs = resvManThread->GetRData()->GetReservations();
+        list<TReservation*>::iterator itR = resvs.begin();
+        for (; itR != resvs.end(); itR++)
+            (*itR)->SetStatus(status);
+    }
+    // unmark the reservation with same gri as this one, delete apiMsg and return 0 (without further message update);
+    TLV_ResvInfo* tlvResvInfo = (TLV_ResvInfo*)(apiMsg->body);
+    string gri = tlvResvInfo->gri;
+    status = tlvResvInfo->status;
+    TReservation* theResv = resvManThread->GetRData()->LookupReservation(gri);
+    if (theResv != NULL)
+    {
+        theResv->SetStatus(status);
+        delete apiMsg;
+        return 0;
+    }
+    if ((ntohl(apiMsg->header.options) & 0x0002) != 0)
+    {
+        //end of update burst --> remove all removal candidates
+        list<TReservation*>& resvs = resvManThread->GetRData()->GetReservations();
+        list<TReservation*>::iterator itR = resvs.begin();
+        for (; itR != resvs.end(); itR++)
+        {
+            if ((*itR)->GetStatus() == "DELETE")
+            {
+                delete (*itR);
+                itR = resvs.erase(itR);
+            }
+        }
+    }
+
+    // each api message contains a single reservation that should contain tlv_resv_info(gri, bandwidth, schedule) and list of tlv_path_info (urn, swcap, vlan)
     string queueName="RESV";
     string topicName="TEDB_ADD_RESV";
     Message* tedbMsg = new Message(MSG_REQ, queueName, topicName);
@@ -65,9 +101,6 @@ int ResvAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter,
     }
     delete  apiMsg; //apiMsg consumed
     resvManThread->GetMessagePort()->PostMessage(tedbMsg);
-
-    // TODO: update do not add if existing, just reset toDelete mark / / remove (header options --> indicate first and last msg (first: mark all reservations as toDelete; last: remove those with toDelete mark)
-
     return 0;
 }
 
