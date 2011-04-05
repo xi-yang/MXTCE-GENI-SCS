@@ -14,6 +14,29 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	u_int8_t* msg_sub_start_ptr;
 	u_int8_t* msg_body_ptr;
 	u_int8_t pceType=PCE_REPLY;
+	u_int16_t type;
+	u_int16_t length;
+	u_int8_t* value;
+
+	char print_buff[200];
+
+	list<TLV*> tlv_list = msg->GetTLVList();
+
+	for(list<TLV*>::iterator it=tlv_list.begin();it!=tlv_list.end();it++)
+	{
+		type=(*it)->type;
+		length=(*it)->length;
+		value = new u_int8_t[length];
+		memcpy(value, (*it)->value, length);
+
+		snprintf(print_buff, ((length<200)?length:200), "%s", value);
+		string temp_value = print_buff;
+		cout<<"type="<<type<<endl;
+		cout<<"length="<<length<<endl;
+		cout<<"value="<<temp_value<<endl;
+
+
+	}
 
 	int a=2000;
 	string b="test demo";
