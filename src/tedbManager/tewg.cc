@@ -994,7 +994,7 @@ bool TPath::VerifyTEConstraints(u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_
     return true;
 }
 
-// TODO: vlanRange instead of single tags ? 
+// TODO: vlanRange instead of single tags ?  -- (treat  availableVtagRange different ?)
 void TPath::UpdateLayer2Info(u_int32_t srcVtag, u_int32_t dstVtag)
 {
     TLink* L;
@@ -1015,9 +1015,13 @@ void TPath::UpdateLayer2Info(u_int32_t srcVtag, u_int32_t dstVtag)
         }
         if (!iscd)
             continue;
+        iscd->availableVlanTags.Clear();
         iscd->suggestedVlanTags.Clear();
         if (forwardContinued && iscd->availableVlanTags.HasTag(srcVtag))
+        {
+            iscd->availableVlanTags.AddTag(srcVtag);
             iscd->suggestedVlanTags.AddTag(srcVtag);
+        }
         else 
             forwardContinued = false;
     }
@@ -1039,9 +1043,11 @@ void TPath::UpdateLayer2Info(u_int32_t srcVtag, u_int32_t dstVtag)
         }
         if (!iscd)
             continue;
-        if (iscd->suggestedVlanTags.HasTag(srcVtag) || iscd->availableVlanTags.HasTag(dstVtag))
+        if (!iscd->suggestedVlanTags.IsEmpty()|| iscd->availableVlanTags.HasTag(dstVtag))
             break;
-    }        
+        iscd->availableVlanTags.AddTag(dstVtag);
+        iscd->suggestedVlanTags.AddTag(dstVtag);
+    }
 }
 
 TPath* TPath::Clone()
