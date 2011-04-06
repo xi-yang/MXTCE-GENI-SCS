@@ -109,7 +109,7 @@ void APIServerThread::hookHandleMessage()
                 apiMsgHeader->options = htonl(0);
                 apiMsgHeader->tag = htonl(0);
               */
-        //$$ get gri from the reply object
+        //$$ get gri from the reply object  <== ComputeResult
         //$$ map<string, APIReader*, strcmpless>::iterator itClientConn = apiClientConns.find(gri);
         //$$ APIReader* clientConn = (itClientConn !=  apiClientConns.end() ?  apiClientConns[gri] : NULL);
         //$$ if (!clientConn || !clientConn->GetWriter()) 

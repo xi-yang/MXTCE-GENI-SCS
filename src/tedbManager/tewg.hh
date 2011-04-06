@@ -205,7 +205,7 @@ public:
     bool VerifyEdgeLinkTSpec(TSpec& tspec);
     bool CanBeLastHopTrunk(TSpec& tspec);
     void ExcludeAllocatedVtags(ConstraintTagSet &vtagset);
-    void ProceedByUpdatingVtags(ConstraintTagSet &head_vtagset, ConstraintTagSet &next_vtagset);
+    void ProceedByUpdatingVtags(ConstraintTagSet &head_vtagset, ConstraintTagSet &next_vtagset, bool do_translation=false);
     void ProceedByUpdatingWaves(ConstraintTagSet &head_waveset, ConstraintTagSet &next_waveset);
     void ProceedByUpdatingTimeslots(ConstraintTagSet &head_timeslotset, ConstraintTagSet &next_timeslotset);
     bool CrossingRegionBoundary(TSpec& tspec);
@@ -302,7 +302,8 @@ public:
                 cost += (*itLink)->GetMetric();
             }
         }
-    bool VerifyTEConstraints(u_int32_t& vtag, u_int32_t& wave, TSpec& tspec);
+    bool VerifyTEConstraints(u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_t& wave, TSpec& tspec);
+    void UpdateLayer2Info(u_int32_t srcVtag, u_int32_t dstVtag);
     void Cleanup() {
         path.clear();
         cost = _INF_;

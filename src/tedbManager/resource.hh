@@ -374,14 +374,16 @@ public:
     int mtu;
     ConstraintTagSet availableVlanTags;
     ConstraintTagSet assignedVlanTags;
+    ConstraintTagSet suggestedVlanTags;
     bool vlanTranslation;
 
-    ISCD_L2SC(long bw, int m): ISCD(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw), mtu(m), availableVlanTags(MAX_VLAN_NUM), assignedVlanTags(MAX_VLAN_NUM), vlanTranslation(false) { }
+    ISCD_L2SC(long bw, int m): ISCD(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw), mtu(m), availableVlanTags(MAX_VLAN_NUM), assignedVlanTags(MAX_VLAN_NUM), suggestedVlanTags(MAX_VLAN_NUM), vlanTranslation(false) { }
     virtual ~ISCD_L2SC() { }
     virtual ISCD* Duplicate(){
         ISCD_L2SC* iscd = new ISCD_L2SC(this->capacity, this->mtu);
         iscd->availableVlanTags = this->availableVlanTags;
         iscd->assignedVlanTags = this->assignedVlanTags;
+        iscd->suggestedVlanTags = this->suggestedVlanTags;
         iscd->vlanTranslation = this->vlanTranslation;
         return iscd;
     }

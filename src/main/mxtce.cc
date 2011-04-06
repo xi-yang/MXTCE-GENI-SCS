@@ -112,7 +112,7 @@ void MxTCE::Start()
     // start PolicyMan thread
     policyManThread->Start(NULL);
 
-    // @@@@ tmp testing message routes
+    // core workflow message routes
     string routeQueue = "CORE", routeTopic1 = "API_REQUEST", routeTopic2 = "API_REPLY";
     messageRouter->AddRoute(routeQueue,routeTopic1, MxTCE::loopbackPortName);
     messageRouter->AddRoute(routeQueue,routeTopic2, MxTCE::apiServerPortName);

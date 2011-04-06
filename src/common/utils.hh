@@ -283,6 +283,23 @@ public:
                 }
             return 0;
         }
+    u_int32_t RandomTag()
+        {
+            srandom(time(NULL));
+            int start = (int)(random()% numBits);
+            int tag;
+            for (tag = start; tag < numBits; tag++)
+            {
+                if (HasTag(tag))
+                    return tag;
+            }
+            for (tag = start-1; tag >= 0; tag--)
+            {
+                if (HasTag(tag))
+                    return tag;
+            }
+            return 0;
+        }
     int Size() 
         {
             int num = 0;
@@ -315,10 +332,15 @@ public:
             string rangeStr = "";
             char buf[128];
             char buf2[16];
-            buf[0] = 0;
+            if (numBits == MAX_VLAN_NUM && HasTag(VTAG_UNTAGGED))
+                strcpy(buf, "0");
+            else
+                buf[0] = 0;
             int i, i_start, i_end;
             for (i = 1, i_start = 1, i_end = 0; i <= numBits; i++)
             {
+                if (numBits == MAX_VLAN_NUM && i == numBits)
+                    break;
                 if (HasTag(i))
                 {
                     if (i_end < i_start)

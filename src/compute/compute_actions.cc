@@ -114,7 +114,7 @@ void Action_ProcessRequestTopology::Finish()
     list<TLV*> tlvList;
     tlvList.push_back(tlv);
     SendMessage(MSG_REPLY, queue, topic, tlvList);
-   
+
    // destroy stored data including tewg
     if (KSP)
     {
@@ -238,7 +238,7 @@ void Action_ComputeKSP::Process()
         dstVtag = ANY_TAG;
     else
         sscanf(userConstraint->getDestvlantag().c_str(), "%d", &dstVtag);
-    u_int32_t wave = 0; // place holder
+    u_int32_t wavelength = 0; // place holder
     TSpec tspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);
 
     // TODO: verify ingress/egress edge Tspec
@@ -294,17 +294,23 @@ void Action_ComputeKSP::Process()
     vector<TPath*>::iterator itP = KSP->begin(); 
     while (itP != KSP->end())
     {
-        // TODO: dstVtag
-        u_int32_t vtagResult = srcVtag;
-        u_int32_t waveResult = wave;        
-        if (!(*itP)->VerifyTEConstraints(vtagResult, waveResult, tspec))
+        u_int32_t srcVtagResult = srcVtag;
+        u_int32_t dstVtagResult = dstVtag;
+        u_int32_t waveResult = wavelength;
+        // TODO: special handling for OSCARS L2SC --> PSC at edge : srcVtagResult/dstVtagResult will be tagSet combining edge link info
+        if (!(*itP)->VerifyTEConstraints(srcVtagResult, dstVtagResult, waveResult, tspec))
         {
             TPath* path2erase = *itP;
             itP = KSP->erase(itP);
             delete path2erase;
         }
         else
+        {
+            // TODO: add src and dst edge links (if any) into path
+            (*itP)->UpdateLayer2Info(srcVtagResult, dstVtagResult);
+            // TODO: fixe this -->  updateLayer2Info changes the same copy of TLink : clone path into feasiblePaths first ?
             itP++;
+        }
     }
     // store a list of ordered result paths 
     if (KSP->size() == 0)
@@ -560,8 +566,9 @@ void Action_ComputeSchedulesWithKSP::Process()
     long bw = 1000000000; // 100M
     TNode* srcNode = tewg->GetNodes().front();
     TNode* dstNode = tewg->GetNodes().back();
-    u_int32_t vtag = 4001;
-    u_int32_t wave = 0;
+    u_int32_t srcVtag = 4001;
+    u_int32_t dstVtag = 4001;
+    u_int32_t wavelength = 0;
     time_t duration = 3600;
     TSpec tspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);
     
@@ -601,9 +608,10 @@ void Action_ComputeSchedulesWithKSP::Process()
         vector<TPath*>::iterator itP = KSP.begin(); 
         while (itP != KSP.end())
         {
-            u_int32_t vtagResult = vtag;
-            u_int32_t waveResult = wave;        
-            if (!(*itP)->VerifyTEConstraints(vtagResult, waveResult, tspec))
+            u_int32_t srcVtagResult = srcVtag;
+            u_int32_t dstVtagResult = srcVtag;
+            u_int32_t waveResult = wavelength;        
+            if (!(*itP)->VerifyTEConstraints(srcVtagResult, dstVtagResult, waveResult, tspec))
             {
                 TPath* path2erase = *itP;
                 itP = KSP.erase(itP);

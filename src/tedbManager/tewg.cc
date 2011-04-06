@@ -296,8 +296,8 @@ void TLink::ExcludeAllocatedVtags(ConstraintTagSet &vtagset)
 
 
 //$$$$ Only constraining the forward direction (not checking the reverse; assuming symetric L2SC link configurations)
-// TODO: handle "untagged" vlans (VTAG_UNTAGGED == 4096)
-void TLink::ProceedByUpdatingVtags(ConstraintTagSet &head_vtagset, ConstraintTagSet &next_vtagset)
+// TODO: handle "untagged" vlans (VTAG_UNTAGGED bit-4096 (1-based))
+void TLink::ProceedByUpdatingVtags(ConstraintTagSet &head_vtagset, ConstraintTagSet &next_vtagset, bool do_translation)
 {
     next_vtagset.Clear();
     list<ISCD*>::iterator it;
@@ -316,9 +316,13 @@ void TLink::ProceedByUpdatingVtags(ConstraintTagSet &head_vtagset, ConstraintTag
             non_vlan_link = false;
             next_vtagset.AddTags(iscd->availableVlanTags.TagBitmask(), MAX_VLAN_NUM);
         }
+        // Do translation only if do_translation==true and iscd->vlanTranslation==true
+        do_translation = (do_translation && iscd->vlanTranslation);
+        // there should be only one ISCD_L2SC 
+        break;
     }
 
-    // Add VLAN tags used by any links on the local- or remote-end nodes of the link.
+    // Exclude VLAN tags used by any links on the local- or remote-end nodes of the link.
     list<TLink*>::iterator it_link;
     if (lclEnd)
     {
@@ -347,8 +351,10 @@ void TLink::ProceedByUpdatingVtags(ConstraintTagSet &head_vtagset, ConstraintTag
         
     if (non_vlan_link)
         next_vtagset = head_vtagset;
-    else if (!any_vlan_ok)
-        next_vtagset.Intersect(head_vtagset);
+    else if (do_translation)
+        ; //next_vtag unchanged after vlan translation, or
+    else if (!any_vlan_ok) // do intersect without vlan translation
+        next_vtagset.Intersect(head_vtagset); 
 }
 
 
@@ -858,12 +864,14 @@ TPath::~TPath()
 
 
 // verify constrains of vlantag, wavelength and cross-layer adapation (via Tspec) 
-// TODO: take api_request as input
-bool TPath::VerifyTEConstraints(u_int32_t& vtag, u_int32_t& wave, TSpec& tspec) 
+bool TPath::VerifyTEConstraints(u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_t& wave, TSpec& tspec) 
 {
     TLink* L;
     list<TLink*>::iterator iterL;
     ConstraintTagSet head_vtagset(MAX_VLAN_NUM), next_vtagset(MAX_VLAN_NUM);
+    ConstraintTagSet head_vtagset_trans(MAX_VLAN_NUM), next_vtagset_trans(MAX_VLAN_NUM);
+    ConstraintTagSet init_vtagset(MAX_VLAN_NUM);
+    bool no_vtag = false, no_vtag_trans = false;
     ConstraintTagSet head_waveset(MAX_WAVE_NUM, 190000, 100), next_waveset(MAX_WAVE_NUM, 190000, 100);
 
     if (path.size() == 0)
@@ -881,10 +889,12 @@ bool TPath::VerifyTEConstraints(u_int32_t& vtag, u_int32_t& wave, TSpec& tspec)
     }
 
     // initializing vtags and wavelengths
-    if (vtag != 0)
-        head_vtagset.AddTag(vtag);
+    if (srcVtag != 0)
+        head_vtagset.AddTag(srcVtag);
     else         
         head_vtagset.Clear();
+    head_vtagset_trans = head_vtagset;
+    init_vtagset.Clear();
     head_waveset.Clear();
 
     // verifying path constraints
@@ -896,14 +906,29 @@ bool TPath::VerifyTEConstraints(u_int32_t& vtag, u_int32_t& wave, TSpec& tspec)
 
         if (!L->IsAvailableForTspec(TWDATA(L->GetLocalEnd())->tspec))
             return false;
-
-        if (!head_vtagset.IsEmpty())
+        // check continous (common) vlan tags, skip if no_vtag has already been set true
+        if (!no_vtag && !head_vtagset.IsEmpty())
         {
-            L->ProceedByUpdatingVtags(head_vtagset, next_vtagset);
+            L->ProceedByUpdatingVtags(head_vtagset, next_vtagset, false);
             if (next_vtagset.IsEmpty())
-                return false;
-            head_vtagset = next_vtagset;
+                no_vtag = true;
+            else
+                head_vtagset = next_vtagset;
+            if (init_vtagset.IsEmpty())
+                init_vtagset = next_vtagset;
         }
+        // check vlan tags with translation, , skip if no_vtag_trans has already been set true
+        if (!no_vtag_trans && !head_vtagset_trans.IsEmpty())
+        {
+            L->ProceedByUpdatingVtags(head_vtagset_trans, next_vtagset_trans, true);
+            if (next_vtagset_trans.IsEmpty())
+                no_vtag_trans = true;
+            else
+                head_vtagset_trans = next_vtagset_trans;
+        }
+        if (no_vtag && no_vtag_trans)
+            return false;
+        // we currently do not consider wavelength translation
         if (!head_waveset.IsEmpty())
         {
             L->ProceedByUpdatingWaves(head_waveset, next_waveset);
@@ -932,9 +957,91 @@ bool TPath::VerifyTEConstraints(u_int32_t& vtag, u_int32_t& wave, TSpec& tspec)
         }
     }
 
-    vtag = next_vtagset.LowestTag();
-    wave = next_waveset.LowestTag();
+    // pick src and dst vtags from two sets of head_set and next_set (randomized by default)
+    // try using common (continuous) vlan tag if possible, otherwise (no_vtag==true) use translated diff vlan
+    if (no_vtag)
+    {
+        assert(!no_vtag_trans && next_vtagset_trans.Size() > 0);
+        if (srcVtag == ANY_TAG)
+        {
+            L = path.front();
+            if (init_vtagset.IsEmpty())
+                return false;
+            else if (init_vtagset.HasAnyTag())
+                srcVtag = next_vtagset_trans.RandomTag();
+            else
+                srcVtag = init_vtagset.RandomTag();
+        }
+        if (dstVtag == ANY_TAG)
+            dstVtag = next_vtagset_trans.RandomTag(); 
+        else if (!next_vtagset_trans.HasTag(dstVtag))
+            return false;
+    }
+    else
+    {
+        assert(next_vtagset.Size() > 0);    
+        if (dstVtag != ANY_TAG && !next_vtagset.HasTag(dstVtag))
+            return false;
+        else if (srcVtag == ANY_TAG && dstVtag != ANY_TAG)
+            srcVtag = dstVtag;
+        else if (srcVtag != ANY_TAG && dstVtag == ANY_TAG)
+            dstVtag = srcVtag;
+        else if (srcVtag == ANY_TAG && dstVtag == ANY_TAG)
+            dstVtag = srcVtag = next_vtagset.RandomTag(); 
+    }
+    // pick wavelength (randomized)
+    wave = next_waveset.RandomTag();
     return true;
+}
+
+// TODO: vlanRange instead of single tags ? 
+void TPath::UpdateLayer2Info(u_int32_t srcVtag, u_int32_t dstVtag)
+{
+    TLink* L;
+    list<TLink*>::iterator iterL;
+    bool forwardContinued = true;
+    // assign srcVtag to suggestedVlanTags along the path in foward direction
+    for (iterL = path.begin(); iterL != path.end(); iterL++)
+    {
+        L = *iterL;
+        list<ISCD*>::iterator it;
+        ISCD_L2SC* iscd = NULL;
+        for (it = L->GetSwCapDescriptors().begin(); it !=  L->GetSwCapDescriptors().end(); it++)
+        {
+            if ((*it)->switchingType != LINK_IFSWCAP_L2SC || (*it)->encodingType != LINK_IFSWCAP_ENC_ETH)
+                continue;
+            iscd = (ISCD_L2SC*)(*it);
+            break;
+        }
+        if (!iscd)
+            continue;
+        iscd->suggestedVlanTags.Clear();
+        if (forwardContinued && iscd->availableVlanTags.HasTag(srcVtag))
+            iscd->suggestedVlanTags.AddTag(srcVtag);
+        else 
+            forwardContinued = false;
+    }
+    if (dstVtag == srcVtag)
+        return;
+    // assign dstVtag to suggestedVlanTags along the path in reverse direction
+    list<TLink*>::reverse_iterator iterR;
+    for (iterR = path.rbegin(); iterR != path.rend(); iterR++)
+    {
+        L = *iterR;
+        list<ISCD*>::iterator it;
+        ISCD_L2SC* iscd = NULL;
+        for (it = L->GetSwCapDescriptors().begin(); it !=  L->GetSwCapDescriptors().end(); it++)
+        {
+            if ((*it)->switchingType != LINK_IFSWCAP_L2SC || (*it)->encodingType != LINK_IFSWCAP_ENC_ETH)
+                continue;
+            iscd = (ISCD_L2SC*)(*it);
+            break;
+        }
+        if (!iscd)
+            continue;
+        if (iscd->suggestedVlanTags.HasTag(srcVtag) || iscd->availableVlanTags.HasTag(dstVtag))
+            break;
+    }        
 }
 
 TPath* TPath::Clone()
@@ -988,6 +1095,20 @@ void TPath::LogDump()
                     L->GetRemoteLink()->GetName().c_str());
                 strcat(buf, str);
             }
+            list<ISCD*>::iterator it;
+            ISCD_L2SC* iscd = NULL;
+            for (it = L->GetSwCapDescriptors().begin(); it !=  L->GetSwCapDescriptors().end(); it++)
+            {
+                if ((*it)->switchingType != LINK_IFSWCAP_L2SC || (*it)->encodingType != LINK_IFSWCAP_ENC_ETH)
+                    continue;
+                iscd = (ISCD_L2SC*)(*it);
+                break;
+            }
+            if (iscd)
+            {
+                snprintf(str, 256, " (suggestedVlan:%s) ", iscd->suggestedVlanTags.GetRangeString().c_str());
+                strcat(buf, str);
+            }    
         }
         list<TSchedule*>::iterator itS = this->schedules.begin();
         if (itS != this->schedules.end())
