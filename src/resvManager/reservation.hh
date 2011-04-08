@@ -99,9 +99,23 @@ public:
     TSchedule* GetSchedule() { return schedule; }
     void SetSchedule(TSchedule* s) { schedule = s; }
     time_t GetStartTime() { if (schedule) return schedule->GetStartTime(); else return 0; }
-    void SetStartTime(time_t t) { if (schedule) schedule->SetStartTime(t); }
+    void SetStartTime(time_t t) { 
+        if (schedule) 
+        { 
+            assert(t <= schedule->GetEndTime()); 
+            schedule->SetStartTime(t); 
+            schedule->SetDuration(schedule->GetEndTime() - t);
+        } 
+    }
     time_t GetEndTime() { if (schedule) return schedule->GetEndTime(); else return 0; }
-    void SetEndTime(time_t t) { if (schedule) schedule->SetEndTime(t); }
+    void SetEndTime(time_t t) { 
+        if (schedule) 
+        {            
+            assert(t >= schedule->GetStartTime()); 
+            schedule->SetEndTime(t); 
+            schedule->SetDuration(t - schedule->GetStartTime());
+        }
+    }
     Resource* GetTargetResource() { return targetResource; }
     void SetTargetResource(Resource* t) { targetResource = t; }
     bool IsApplied() { return applied; }

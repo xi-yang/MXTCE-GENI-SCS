@@ -270,6 +270,7 @@ void Action_ComputeKSP::Process()
     }
 
     // prune bandwidth
+    tewg->LogDump();
     tewg->PruneByBandwidth(bw);
 
     // compute KSP

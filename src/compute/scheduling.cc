@@ -36,10 +36,13 @@
 
 AggregateDeltaSeries::~AggregateDeltaSeries()
 {
+    // TODO: uncomment and solve memory error
+    /*
     list<TDelta*>::iterator itd = ADS.begin();
     for (; itd != ADS.end(); itd++)
         delete (*itd);
     ADS.clear();
+    */
 }
 
 inline list<TDelta*> AggregateDeltaSeries::GetADSInWindow(time_t start, time_t end)

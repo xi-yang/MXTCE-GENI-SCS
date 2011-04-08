@@ -783,7 +783,7 @@ TGraph* TGraph::Clone()
 void TGraph::LogDump()
 {
     char buf[102400]; //up to 100K
-    char str[128];
+    char str[256];
     strcpy(buf, "TEWG Dump...\n");
     list<TDomain*>::iterator itd = this->tDomains.begin();
     for (; itd != this->tDomains.end(); itd++)
@@ -795,23 +795,23 @@ void TGraph::LogDump()
         for (; itn != td->GetNodes().end(); itn++)
         {
             TNode* tn = (TNode*)(*itn).second;
-            snprintf(str, 128, "\t<node id=%s>\n", tn->GetName().c_str());
+            snprintf(str, 256, "\t<node id=%s>\n", tn->GetName().c_str());
             strcat(buf, str);
             map<string, Port*, strcmpless>::iterator itp = tn->GetPorts().begin();
             for (; itp != tn->GetPorts().end(); itp++)
             {
                 TPort* tp = (TPort*)(*itp).second;
-                snprintf(str, 128, "\t\t<port id=%s>\n", tp->GetName().c_str());
+                snprintf(str, 256, "\t\t<port id=%s>\n", tp->GetName().c_str());
                 strcat(buf, str);
                 map<string, Link*, strcmpless>::iterator itl = tp->GetLinks().begin();
                 for (; itl != tp->GetLinks().end(); itl++) 
                 {
                     TLink* tl = (TLink*)(*itl).second;
-                    snprintf(str, 128, "\t\t\t<link id=%s>\n", tl->GetName().c_str());
+                    snprintf(str, 256, "\t\t\t<link id=%s>\n", tl->GetName().c_str());
                     strcat(buf, str);
                     if (tl->GetRemoteLink())
                     {
-                        snprintf(str, 128, "\t\t\t\t<remoteLinkId>domain=%s:node=%s:port=%s:link=%s</remoteLinkId>\n",  
+                        snprintf(str, 256, "\t\t\t\t<remoteLinkId>domain=%s:node=%s:port=%s:link=%s</remoteLinkId>\n",  
                             tl->GetRemoteLink()->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
                             tl->GetRemoteLink()->GetPort()->GetNode()->GetName().c_str(),
                             tl->GetRemoteLink()->GetPort()->GetName().c_str(), 
@@ -820,22 +820,33 @@ void TGraph::LogDump()
                     }
                     if (tl->GetTheISCD())
                     {
-                        snprintf(str, 128, "\t\t\t\t<SwitchingCapabilityDescriptors> <switchingcapType=%d><encodingType=%d><capacity=%ld> </SwitchingCapabilityDescriptors>\n",  
+                        snprintf(str, 256, "\t\t\t\t<SwitchingCapabilityDescriptors> <switchingcapType=%d><encodingType=%d><capacity=%ld> </SwitchingCapabilityDescriptors>\n",  
                             tl->GetTheISCD()->switchingType,
                             tl->GetTheISCD()->encodingType,
                             tl->GetTheISCD()->capacity);
                         strcat(buf, str);
                     }
-                    snprintf(str, 128, "\t\t\t</link>\n");
+                    if (tl->GetDeltaList().size() > 0)
+                    {
+                        strcat(buf, "\t\t\t\t<DeltaList>");
+                        list<TDelta*>::iterator itD = tl->GetDeltaList().begin();
+                        for (; itD != tl->GetDeltaList().end(); itD++)
+                        {
+                            snprintf(str, 256, "[bw=%ld:%d-%d] ", ((TLinkDelta*)(*itD))->GetBandwidth(), (int)(*itD)->GetStartTime(), (int)(*itD)->GetEndTime());
+                            strcat(buf, str);
+                        }
+                        strcat(buf, "</DeltaList>\n");
+                    }
+                    snprintf(str, 256, "\t\t\t</link>\n");
                     strcat(buf, str);
                 }
-                snprintf(str, 128, "\t\t</port>\n");
+                snprintf(str, 256, "\t\t</port>\n");
                 strcat(buf, str);
             }
-            snprintf(str, 128, "\t</node>\n");
+            snprintf(str, 256, "\t</node>\n");
             strcat(buf, str);
         }
-        snprintf(str, 128, "</domain>\n");
+        snprintf(str, 256, "</domain>\n");
         strcat(buf, str);
     }    
     LOG_DEBUG(buf);
