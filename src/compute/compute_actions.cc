@@ -174,7 +174,6 @@ bool Action_CreateTEWG::ProcessMessages()
             list<TLV*>& tlvList = msg->GetTLVList();
             TEWG* tewg; 
             memcpy(&tewg, (TEWG*)tlvList.front()->value, sizeof(void*));
-            tewg->LogDump();
             // store TEWG
             string paramName = "TEWG";
             this->GetComputeWorker()->SetParameter(paramName, (void*)tewg);
@@ -266,6 +265,7 @@ void Action_ComputeKSP::Process()
                 continue;
             conjDelta->SetTargetResource(L);
             conjDelta->Apply();
+            delete conjDelta;
         }
     }
 

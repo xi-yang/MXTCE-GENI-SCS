@@ -36,13 +36,12 @@
 
 AggregateDeltaSeries::~AggregateDeltaSeries()
 {
-    // TODO: uncomment and solve memory error
-    /*
     list<TDelta*>::iterator itd = ADS.begin();
     for (; itd != ADS.end(); itd++)
+    {
         delete (*itd);
-    ADS.clear();
-    */
+        itd = ADS.erase(itd);
+    }
 }
 
 inline list<TDelta*> AggregateDeltaSeries::GetADSInWindow(time_t start, time_t end)
@@ -53,7 +52,8 @@ inline list<TDelta*> AggregateDeltaSeries::GetADSInWindow(time_t start, time_t e
     {
         TDelta* delta = *itd;
         if ( (delta->GetStartTime() >= start && delta->GetStartTime() < end)
-            || (delta->GetEndTime() > start && delta->GetEndTime() <= end) )
+            || (delta->GetEndTime() > start && delta->GetEndTime() <= end)
+            || (delta->GetStartTime() <= start && delta->GetEndTime() >= end) )
             deltaList.push_back(delta);
     }
     return deltaList;
@@ -71,7 +71,8 @@ inline void AggregateDeltaSeries::Insert(TDelta* delta)
             break;
         }
     }
-    ADS.push_back(delta);
+    if (itd == ADS.end())
+        ADS.push_back(delta);
 }
 
 
@@ -83,7 +84,8 @@ TDelta* AggregateDeltaSeries::JoinADSInWindow(time_t start, time_t end)
     {
         TDelta* delta = *itd;
         if ( (delta->GetStartTime() >= start && delta->GetStartTime() < end)
-            || (delta->GetEndTime() > start && delta->GetEndTime() <= end) )
+            || (delta->GetEndTime() > start && delta->GetEndTime() <= end) 
+            || (delta->GetStartTime() <= start && delta->GetEndTime() >= end) )
         {
             if (deltaA == NULL) 
                 deltaA = delta->Clone();
@@ -130,11 +132,11 @@ void AggregateDeltaSeries::AddDelta(TDelta* delta)
             this->Insert(deltaA2);
             delta->SetStartTime(deltaA1->GetStartTime());
             //now delta start at same time with deltaA1
-            deltaA2 = deltaA1;
+            deltaA2 = deltaA1->Clone();
         }
         else // == 
         {
-            deltaA2 = deltaA1;
+            deltaA2 = deltaA1->Clone();
         }
         TDelta* deltaA3 = NULL;
         if (deltaA2->GetEndTime() > delta->GetEndTime())

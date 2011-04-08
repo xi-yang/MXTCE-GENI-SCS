@@ -91,7 +91,9 @@ public:
         appliedTime.tv_sec = appliedTime.tv_usec = 0;
         applied = false;
     }
-    virtual ~TDelta() { if (schedule) delete schedule; }
+    virtual ~TDelta() { 
+        if (schedule) delete schedule; 
+    }
     string& GetReservationName() { return resvName; }
     void SetReservationName(string& name) { resvName = name; }
     struct timeval GetGeneratedTime() { return generatedTime; }

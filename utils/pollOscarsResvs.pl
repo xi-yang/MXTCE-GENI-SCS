@@ -92,7 +92,6 @@ while(1) {
 		get_resv_path($resv);
 		my $resv_info_tlv = new TLV(MSG_TLV_RESV_INFO, $resv->{gri}, $resv->{start}, $resv->{end}, $resv->{bw}, $resv->{status}); 
 		my @path_elem_tlvs;
-		# TODO: bidirectional deltas!!
 		foreach my $elem (@{$resv->{path}}) {
 			my $elem_tlv = new TLV(MSG_TLV_PATH_ELEM, $elem->{urn}, $elem->{swtype}, $elem->{enc}, $elem->{vlan});
 			push(@path_elem_tlvs, $elem_tlv);
