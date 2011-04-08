@@ -31,21 +31,41 @@ sub parse_resv_list($)
 		} elsif ($line =~ /endTime:\s([^\s])+\s([^\s]+\s[^\s]+\s[^\s]+\s[^\s]+\s[^\s]+)/) {
 			$resv->{end} = parsedate($2);
 		} elsif ($line =~ /bandwidth:\s([^\s]+)/) {
-			$resv->{bw} = $1;
-		} elsif ($line =~ /(urn:ogf:[^\s]+)\s[^\s]+\s([^\s]+)/) {
-			if (!defined($resv->{path})) {
-				my @path;
-				$resv->{path} = \@path;
-			}
-			my %elem;
-			$elem{urn} = $1;
-			$elem{swtype} = 51;
-			$elem{enc} = 2;
-			$elem{vlan} = $2;
-			push(@{$resv->{path}}, \%elem);
+			$resv->{bw} = $1*1000000;
 		}
 	}
 	return @resvs;
+}
+
+sub get_resv_path($)
+{
+	my $resv = shift;
+	my $cmd = "cd $ENV{OSCARS_DIST}/api; . bin/setclasspath.sh; java net.es.oscars.api.test.IDCTest -v 0.6 -a x509 -c query --gri " . $resv->{gri};
+	my $query_result = `$cmd`;
+	my $start = 0;
+        foreach my $line (split(/\n/, $query_result)) {
+		if ($line =~ /Hops in reserved path are/) {
+			$start = 1;
+		} 
+		next unless ($start);
+		if ($line =~ /(urn:ogf:[^\s]+)\s[^\s]+\s([^\s]+)/) {
+                        if (!defined($resv->{path})) {
+                                my @path;
+                                $resv->{path} = \@path;
+                        }
+                        my %elem;
+                        $elem{urn} = $1;
+                        $elem{swtype} = 51;
+                        $elem{enc} = 2;
+                        $elem{vlan} = $2;
+			if ($2 eq "null") {
+                        	$elem{swtype} = 1;
+                        	$elem{enc} = 2;
+				$elem{vlan} = 0;
+			}
+                        push(@{$resv->{path}}, \%elem);
+                }
+        }
 }
 
 die 'Abort: env variable $OSCARS_DIST undefined...' unless (defined($ENV{OSCARS_DIST}));
@@ -69,8 +89,10 @@ while(1) {
 	foreach my $resv (@resvs) {
 		# skip resv of unqualified status
 		next unless ($resv->{status} eq "RESERVED" || $resv->{status} eq "ACTIVE");
+		get_resv_path($resv);
 		my $resv_info_tlv = new TLV(MSG_TLV_RESV_INFO, $resv->{gri}, $resv->{start}, $resv->{end}, $resv->{bw}, $resv->{status}); 
 		my @path_elem_tlvs;
+		# TODO: bidirectional deltas!!
 		foreach my $elem (@{$resv->{path}}) {
 			my $elem_tlv = new TLV(MSG_TLV_PATH_ELEM, $elem->{urn}, $elem->{swtype}, $elem->{enc}, $elem->{vlan});
 			push(@path_elem_tlvs, $elem_tlv);
