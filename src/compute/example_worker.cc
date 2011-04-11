@@ -93,17 +93,17 @@ void ExampleComputeWorker::hookHandleMessage()
 
 void ExampleComputeWorker::SetParameter(string& paramName, void* paramPtr)
 {
-    if (paramName == "KSP")
-        ksp = (vector<TPath*>*)paramPtr;
-    else 
+    //if (paramName == "KSP")
+    //    ksp = (vector<TPath*>*)paramPtr;
+    //else 
         ComputeWorker::SetParameter(paramName, paramPtr);
 }
 
 void* ExampleComputeWorker::GetParameter(string& paramName)
 {
-    if (paramName == "KSP")
-        return ksp;
-    else 
+    //if (paramName == "KSP")
+    //    return ksp;
+    //else 
         return ComputeWorker::GetParameter(paramName);
 }
 

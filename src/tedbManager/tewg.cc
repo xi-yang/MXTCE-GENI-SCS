@@ -930,6 +930,9 @@ bool TPath::VerifyTEConstraints(u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_
             if (init_vtagset.IsEmpty())
                 init_vtagset = next_vtagset;
         }
+        // some vlan tag must be avaible for the first link. Even vlan translation cannot help here
+        if (no_vtag && iterL == path.begin())
+            return false;
         // check vlan tags with translation, , skip if no_vtag_trans has already been set true
         if (!no_vtag_trans && !head_vtagset_trans.IsEmpty())
         {
@@ -949,24 +952,20 @@ bool TPath::VerifyTEConstraints(u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_
                 return false;
             head_waveset = next_waveset;
         }
-
+        // prepare Tspec for headnode of next link
+        list<TLink*>::iterator iterNext = iterL;
+        iterNext++;
+        if (iterNext == path.end())
+            continue;
+        TLink* nextL = *iterNext;
         if (L->CrossingRegionBoundary(TWDATA(L->GetLocalEnd())->tspec))
         {
-            L->GetNextRegionTspec(TWDATA(L->GetRemoteEnd())->tspec);
-            // TODO: WDM  special handling
-            /*
-            if (has_wdm_layer && (L->rmt_end->tspec.SWtype == LINK_IFSWCAP_SUBTLV_SWCAP_LSC || L->rmt_end->tspec.SWtype == MOVAZ_LSC))
-            {
-            }
-            else if (has_wdm_layer && (L->lcl_end->tspec.SWtype == LINK_IFSWCAP_SUBTLV_SWCAP_LSC || L->lcl_end->tspec.SWtype == MOVAZ_LSC))
-            {
-                head_waveset.Clear();
-            }
-            */
+            L->GetNextRegionTspec(TWDATA(nextL->GetLocalEnd())->tspec);
+            // TODO: TDM and WDM  special handling for cross-layer adaptation
         }       
         else
         {
-            TWDATA(L->GetRemoteEnd())->tspec = TWDATA(L->GetLocalEnd())->tspec;
+            TWDATA(nextL->GetLocalEnd())->tspec = TWDATA(L->GetLocalEnd())->tspec;
         }
     }
 
@@ -1072,8 +1071,8 @@ TPath* TPath::Clone()
     TLink* lastLink = NULL;
     for (itL = this->path.begin(); itL != this->path.end(); itL++)
     {
-        TLink* L = *itL;
-        P->GetPath().push_back((L)->Clone());
+        TLink* L = (*itL)->Clone();
+        P->GetPath().push_back(L);
         if (lastLink && L->GetPort()->GetNode() != lastLink->GetPort()->GetNode())
         {
             lastLink->SetRemoteLink(L);
@@ -1105,7 +1104,7 @@ void TPath::LogDump()
                 L->GetPort()->GetName().c_str(), 
                 L->GetName().c_str());
             strcat(buf, str);
-            if (L->GetRemoteLink())
+            if (L->GetRemoteLink() && !(*L == *((TLink*)L->GetRemoteLink())))
             {
                 snprintf(str, 256, " ->%s:%s:%s:%s",
                     L->GetRemoteLink()->GetPort()->GetNode()->GetDomain()->GetName().c_str(),

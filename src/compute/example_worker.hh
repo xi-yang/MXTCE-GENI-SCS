@@ -47,10 +47,9 @@ using namespace std;
 class ExampleComputeWorker: public ComputeWorker
 {
 protected:
-    vector<TPath*>* ksp;
 
 public:
-    ExampleComputeWorker(string n):ComputeWorker(n), ksp(NULL) { }
+    ExampleComputeWorker(string n):ComputeWorker(n){ }
     virtual ~ExampleComputeWorker() { }
     virtual void* hookRun();
     virtual void hookHandleMessage();

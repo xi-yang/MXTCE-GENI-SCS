@@ -109,7 +109,8 @@ void TEDBManThread::hookHandleMessage()
                     TLink* link = new TLink(seq, urn);
                     if (tlv->switching_type == LINK_IFSWCAP_L2SC) {
                         iscd = new ISCD_L2SC(bw, mtu);
-                        ((ISCD_L2SC*)iscd)->assignedVlanTags.AddTag(tlv->vlan);
+                        if (tlv->vlan != 0)
+                            ((ISCD_L2SC*)iscd)->assignedVlanTags.AddTag(tlv->vlan);
                     }
                     else if (tlv->switching_type <= LINK_IFSWCAP_PSC4)
                         iscd = new ISCD_PSC((int)tlv->switching_type, bw, mtu);

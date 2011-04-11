@@ -53,9 +53,11 @@ protected:
     Apimsg_user_constraint* userConstraint;
     TEWG* tewg;
     string errMsg;
+    vector<TPath*>* ksp;
+    vector<TPath*>* feasiblePaths;
 
 public:
-    ComputeWorker(string n):ThreadPortScheduler(n), userConstraint(NULL), tewg(NULL) { }
+    ComputeWorker(string n):ThreadPortScheduler(n), userConstraint(NULL), tewg(NULL), ksp(NULL), feasiblePaths(NULL) { }
     virtual ~ComputeWorker();
     string& GetName() { return portName;}
     list<Action*>& GetActions() { return actions; }

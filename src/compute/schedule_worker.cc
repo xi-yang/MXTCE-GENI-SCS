@@ -103,11 +103,7 @@ void ScheduleComputeWorker::hookHandleMessage()
 
 void ScheduleComputeWorker::SetParameter(string& paramName, void* paramPtr)
 {
-    if (paramName == "KSP")
-        ksp = (vector<TPath*>*)paramPtr;
-    else if (paramName == "FEASIBLE_PATHS")
-        feasiblePaths= (vector<TPath*>*)paramPtr;
-    else if (paramName == "ORDERED_ATS")
+    if (paramName == "ORDERED_ATS")
         orderedATS = (vector<time_t>*)paramPtr;
     else 
         ComputeWorker::SetParameter(paramName, paramPtr);
@@ -115,11 +111,7 @@ void ScheduleComputeWorker::SetParameter(string& paramName, void* paramPtr)
 
 void* ScheduleComputeWorker::GetParameter(string& paramName)
 {
-    if (paramName == "KSP")
-        return ksp;
-    else if (paramName == "FEASIBLE_PATHS")
-        return feasiblePaths;
-    else if (paramName == "ORDERED_ATS")
+    if (paramName == "ORDERED_ATS")
         return orderedATS;
     else 
         return ComputeWorker::GetParameter(paramName);

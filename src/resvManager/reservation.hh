@@ -152,6 +152,7 @@ class TLinkDelta_PSC: public TLinkDelta
 public:
     TLinkDelta_PSC(string& r, TSchedule* s, Resource* t, long bw): TLinkDelta(r, s, t, bw) { }
     virtual ~TLinkDelta_PSC() { }    
+    virtual TDelta* Clone(); 
     virtual void Apply();
     virtual void Revoke();
 };
@@ -162,11 +163,12 @@ protected:
     ConstraintTagSet vlanTags;
 
 public:
-    TLinkDelta_L2SC(string& r, TSchedule* s, Resource* t, long bw): TLinkDelta(r, s, t, bw), vlanTags(0) { }
+    TLinkDelta_L2SC(string& r, TSchedule* s, Resource* t, long bw): TLinkDelta(r, s, t, bw), vlanTags(MAX_VLAN_NUM) { }
     TLinkDelta_L2SC(string& r, TSchedule* s, Resource* t, long bw, const ConstraintTagSet& vtags): TLinkDelta(r, s, t, bw), vlanTags(vtags) { }
     virtual ~TLinkDelta_L2SC() { }    
     ConstraintTagSet& GetVlanTags() { return vlanTags; }
     void SetVlanTags(ConstraintTagSet& vtags) { vlanTags = vtags; }
+    virtual TDelta* Clone(); 
     virtual void Apply();
     virtual void Revoke();
     virtual void Combine(TDelta* delta);
@@ -185,6 +187,7 @@ public:
     virtual ~TLinkDelta_TDM() { }    
     ConstraintTagSet& GetTimeslots() { return timeslots; }
     void SetTimeslots(ConstraintTagSet& slots) { timeslots = slots; }
+    virtual TDelta* Clone(); 
     virtual void Apply();
     virtual void Revoke();
 };
@@ -200,6 +203,7 @@ public:
     virtual ~TLinkDelta_LSC() { }    
     ConstraintTagSet& GetWavelengths() { return wavelengths; }
     void SetWavelengths(ConstraintTagSet& waves) { wavelengths = waves; }
+    virtual TDelta* Clone(); 
     virtual void Apply();
     virtual void Revoke();
 };

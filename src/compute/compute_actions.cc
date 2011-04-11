@@ -238,9 +238,12 @@ void Action_ComputeKSP::Process()
     else
         sscanf(userConstraint->getDestvlantag().c_str(), "%d", &dstVtag);
     u_int32_t wavelength = 0; // place holder
-    TSpec tspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);
 
-    // TODO: verify ingress/egress edge Tspec
+    TSpec tspec;
+    if (userConstraint->getLayer() == "3")
+        tspec.Update(LINK_IFSWCAP_PSC1, LINK_IFSWCAP_ENC_PKT, bw);
+    else
+        tspec.Update(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);
 
     // reservations pruning
     // for current OSCARS implementation, tcePCE should pass startTime==endTime==0
@@ -273,6 +276,13 @@ void Action_ComputeKSP::Process()
     tewg->LogDump();
     tewg->PruneByBandwidth(bw);
 
+    TLink* ingressLink = tewg->LookupLinkByURN(userConstraint->getSrcendpoint());
+    if (!ingressLink || !ingressLink->IsAvailableForTspec(tspec))
+        throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Ingress Edge Link is not available for requested TSpec!");
+    TLink* egressLink = tewg->LookupLinkByURN(userConstraint->getDestendpoint());
+    if (!egressLink || !egressLink->IsAvailableForTspec(tspec))
+        throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Egress Edge Link is not available for requested TSpec!");
+
     // compute KSP
     vector<TPath*>* KSP = new vector<TPath*>;
     try {
@@ -291,6 +301,7 @@ void Action_ComputeKSP::Process()
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No KSP found after bandwidh pruning!");
     }
     this->GetComputeWorker()->SetParameter(paramName, KSP);
+
     // verify constraints with switchingType / layer adaptation / VLAN etc.
     vector<TPath*>::iterator itP = KSP->begin(); 
     while (itP != KSP->end())
@@ -298,7 +309,54 @@ void Action_ComputeKSP::Process()
         u_int32_t srcVtagResult = srcVtag;
         u_int32_t dstVtagResult = dstVtag;
         u_int32_t waveResult = wavelength;
-        // TODO: special handling for OSCARS L2SC --> PSC at edge : srcVtagResult/dstVtagResult will be tagSet combining edge link info
+        if (!(*ingressLink == *(*itP)->GetPath().front()))
+        {
+            // create artificial source node and link to hanlde edge ingress link
+            if (ingressLink->GetRemoteEnd() == NULL)
+            {
+                TLink* newSrcLink = ingressLink->Clone();
+                TNode* newSrcNode = ((TNode*)ingressLink->GetPort()->GetNode())->Clone();
+                newSrcNode->GetLocalLinks().push_back(newSrcLink);
+                newSrcNode->GetRemoteLinks().push_back(ingressLink);
+                ((TNode*)ingressLink->GetPort()->GetNode())->GetRemoteLinks().push_back(newSrcLink);
+                ingressLink->SetRemoteEnd(newSrcNode);
+                ingressLink->SetRemoteLink(newSrcLink);
+                newSrcLink->SetRemoteLink(ingressLink);
+                newSrcLink->SetLocalEnd(newSrcNode);
+                newSrcLink->SetRemoteEnd((TNode*)ingressLink->GetPort()->GetNode());
+                tewg->GetLinks().push_back(newSrcLink);
+                tewg->GetNodes().push_back(newSrcNode);
+                newSrcLink->SetWorkData(new TWorkData());
+                newSrcNode->SetWorkData(new TWorkData());
+            }
+            (*itP)->GetPath().push_front(ingressLink);
+        }
+        if (!(*egressLink == *(*itP)->GetPath().back()))
+        {
+            // create artificial destination node and link to hanlde edge ingress link
+            if (egressLink->GetRemoteEnd() == NULL)
+            {
+                TLink* newDstLink = egressLink->Clone();
+                TNode* newDstNode = ((TNode*)egressLink->GetPort()->GetNode())->Clone();
+                newDstNode->GetLocalLinks().push_back(newDstLink);
+                newDstNode->GetRemoteLinks().push_back(egressLink);
+                ((TNode*)egressLink->GetPort()->GetNode())->GetRemoteLinks().push_back(newDstLink);
+                egressLink->SetRemoteEnd(newDstNode);
+                egressLink->SetRemoteLink(newDstLink);
+                newDstLink->SetRemoteLink(egressLink);
+                newDstLink->SetLocalEnd(newDstNode);
+                newDstLink->SetRemoteEnd((TNode*)egressLink->GetPort()->GetNode());
+                tewg->GetLinks().push_back(newDstLink);
+                tewg->GetNodes().push_back(newDstNode);
+                newDstLink->SetWorkData(new TWorkData());
+                newDstNode->SetWorkData(new TWorkData());
+            }
+            (*itP)->GetPath().push_back(egressLink);
+        }
+
+        // TODO: special handling for OSCARS L2SC --> PSC edge adaptaion: add artificial IACD for  (ingress <-> 1st-hop and egress <-> last-hop)
+        // TODO: long-term solution --> regulate OSCARS topology description for cross-layer adaptation
+
         if (!(*itP)->VerifyTEConstraints(srcVtagResult, dstVtagResult, waveResult, tspec))
         {
             TPath* path2erase = *itP;
@@ -307,9 +365,16 @@ void Action_ComputeKSP::Process()
         }
         else
         {
-            // TODO: add src and dst edge links (if any) into path
-            (*itP)->UpdateLayer2Info(srcVtagResult, dstVtagResult);
-            // TODO: fixe this -->  updateLayer2Info changes the same copy of TLink : clone path into feasiblePaths first ?
+            paramName = "FEASIBLE_PATHS";
+            vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+            if (feasiblePaths == NULL)
+            {
+                feasiblePaths = new vector<TPath*>;
+                this->GetComputeWorker()->SetParameter(paramName, feasiblePaths);
+            }
+            TPath* feasiblePath = (*itP)->Clone();
+            feasiblePaths->push_back(feasiblePath);
+            feasiblePath->UpdateLayer2Info(srcVtagResult, dstVtagResult);
             itP++;
         }
     }
@@ -320,6 +385,7 @@ void Action_ComputeKSP::Process()
         this->GetComputeWorker()->SetParameter(paramName, NULL);
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No KSP found after being applied with TE constraints!");
     }
+    // debugging output
     sort(KSP->begin(), KSP->end(), cmp_tpath);
     for (itP = KSP->begin(); itP != KSP->end(); itP++)
         (*itP)->LogDump();
@@ -727,7 +793,7 @@ void Action_FinalizeServiceTopology::Process()
 
     vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
 
-    if (feasiblePaths != NULL) // TODO: change to computeWorker ID condition ?
+    if (feasiblePaths != NULL)
     {
         if (feasiblePaths->size() == 0)
             throw ComputeThreadException((char*)"Action_FinalizeServiceTopology::Process() No feasible path found!");
@@ -737,9 +803,9 @@ void Action_FinalizeServiceTopology::Process()
         {
             (*itP)->LogDump();
         }
-        // generate path BAG; pass to ... ?
-        BandwidthAggregateGraph* bag = CreatePathBAG(*itP);
-        bag->LogDump();
+        // generate path BAG; pass to ... (@@ check avail condition)
+        // BandwidthAggregateGraph* bag = CreatePathBAG(*itP);
+        // bag->LogDump();
     }
     else 
     {

@@ -111,6 +111,10 @@ void ComputeWorker::SetParameter(string& paramName, void* paramPtr)
         userConstraint = (Apimsg_user_constraint*)paramPtr;
     else if (paramName == "ERROR_MSG")
         errMsg = *(string*)paramPtr;
+    else if (paramName == "KSP")
+        ksp = (vector<TPath*>*)paramPtr;
+    else if (paramName == "FEASIBLE_PATHS")
+        feasiblePaths= (vector<TPath*>*)paramPtr;
 }
 
 void* ComputeWorker::GetParameter(string& paramName)
@@ -121,6 +125,10 @@ void* ComputeWorker::GetParameter(string& paramName)
         return userConstraint;
     else if (paramName == "ERROR_MSG")
         return &errMsg;
+    else if (paramName == "KSP")
+        return ksp;
+    else if (paramName == "FEASIBLE_PATHS")
+        return feasiblePaths;
     return NULL;
 }
 

@@ -173,7 +173,7 @@ public:
     void UnlockDB() { tedbLock.Unlock(); }
     TEWG* GetSnapshot(string& name); // full copy
 
-    // TODO: TGraph* LeaseTEWG(...);  //partial copy /leasing
+    // TODO: TGraph* LeaseTEWG(...);  //partial copy /leasing / search space partition
 
     // DB operations ( lookup / insert /delete/ update)
     DBDomain* LookupDomainByName(string& name);
