@@ -18,6 +18,20 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	u_int16_t length;
 	u_int8_t* value;
 
+	ComputeResult* compute_result;
+
+	string gri="";
+	string err_msg="";
+	TPath* path_info=NULL;
+	list<TLink*> path;
+
+	//TLink* link=NULL;
+	ISCD* sw_cap_descriptors=NULL;
+    u_char	switchingType;
+    u_char	encodingType;
+    ConstraintTagSet* availableVlanTags;
+    string rangStr="";
+
 	char print_buff[200];
 
 	list<TLV*> tlv_list = msg->GetTLVList();
@@ -29,14 +43,73 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 		value = new u_int8_t[length];
 		memcpy(value, (*it)->value, length);
 
-		snprintf(print_buff, ((length<200)?length:200), "%s", value);
-		string temp_value = print_buff;
+		//snprintf(print_buff, ((length<200)?length:200), "%s", value);
+		//string temp_value = print_buff;
 		cout<<"type="<<type<<endl;
 		cout<<"length="<<length<<endl;
-		cout<<"value="<<temp_value<<endl;
+		//cout<<"value="<<temp_value<<endl;
 
 
 	}
+
+	compute_result = (ComputeResult*) value;
+
+	gri = compute_result->GetGri();
+	err_msg = compute_result->GetErrMessage();
+	path_info = compute_result->GetPathInfo();
+
+	path = path_info->GetPath();
+
+
+	for(list<TLink*>::iterator it=path.begin();it!=path.end();it++)
+	{
+		sw_cap_descriptors=(*it)->GetTheISCD();
+
+		switchingType = sw_cap_descriptors->switchingType;
+		encodingType = sw_cap_descriptors->encodingType;
+
+
+	    switch (switchingType)
+	    {
+	        case LINK_IFSWCAP_L2SC:
+	        	availableVlanTags = &((ISCD_L2SC*)sw_cap_descriptors)->availableVlanTags;
+	        	if(!availableVlanTags->IsEmpty())
+	        	{
+	        		rangStr=availableVlanTags->GetRangeString();
+	        		pri_type_encoder->encodeString(PCE_SWITCHINGVLANRANGEAVAI, rangStr);
+	        	}
+
+	            //iscd = new ISCD_L2SC(capacity, mtu);
+	            //((ISCD_L2SC*)iscd)->availableVlanTags.LoadRangeString(vlanRange);
+	            //((ISCD_L2SC*)iscd)->vlanTranslation = vlanTranslation;
+	            break;
+	        case LINK_IFSWCAP_PSC1:
+	            //iscd = new ISCD_PSC(1, capacity, mtu);
+	            break;
+	        case LINK_IFSWCAP_TDM:
+	            //iscd = new ISCD_TDM(capacity, minBandwidth);
+	            //((ISCD_TDM*)iscd)->availableTimeSlots.LoadRangeString(timeslotRange);
+	            break;
+	        case LINK_IFSWCAP_LSC:
+	            //iscd = new ISCD_LSC(capacity);
+	            //((ISCD_LSC*)iscd)->availableWavelengths.LoadRangeString(wavelengthRange);
+	            //((ISCD_LSC*)iscd)->wavelengthTranslation = wavelengthTranslation;
+	            break;
+	        default:
+	            // type not supported
+	            return NULL;
+	    }
+
+
+
+
+
+	}
+
+
+
+
+
 
 	int a=2000;
 	string b="test demo";
@@ -145,7 +218,7 @@ void Apireplymsg_encoder::encode_msg_header(api_msg_header& apimsg_header, int m
 	apimsg_header.length = htons(len);
 	apimsg_header.ucid = htonl(0x0002);
 	apimsg_header.seqnum = htonl(msg_seq_num);
-	apimsg_header.chksum = htonl(MSG_CHKSUM(apimsg_header));
+	apimsg_header.chksum = MSG_CHKSUM(apimsg_header);
 	apimsg_header.options = htonl(0x0000);
 	apimsg_header.tag = htonl(0x0000);
 	msg_seq_num++;

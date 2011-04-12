@@ -52,7 +52,7 @@ public:
     void ParseYamlConfig();
     void ParseLevel2Config(char* key1, char* key2, char* val);
     void ParseLevel3Config(char* key1, char* key2, char* key3, char* val);
-    void ParseLevel4Config(char* key1, char* key2, char* key4, char* key4, char* val);
+    void ParseLevel4Config(char* key1, char* key2, char* key3, char* key4, char* val);
 };
 
     

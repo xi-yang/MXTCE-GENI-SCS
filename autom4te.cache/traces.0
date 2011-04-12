@@ -847,39 +847,40 @@ m4trace:configure.in:138: -1- m4_pattern_allow([^HAVE_LIBRESOLV$])
 m4trace:configure.in:139: -1- m4_pattern_allow([^HAVE_LIBM$])
 m4trace:configure.in:144: -1- m4_pattern_allow([^HAVE_LIBPTHREAD$])
 m4trace:configure.in:149: -1- m4_pattern_allow([^HAVE_LIBXML2$])
-m4trace:configure.in:154: -2- m4_pattern_allow([^HAVE_INET_NTOP$])
-m4trace:configure.in:155: -2- m4_pattern_allow([^HAVE_INET_PTON$])
-m4trace:configure.in:156: -2- m4_pattern_allow([^HAVE_INET_ATON$])
-m4trace:configure.in:171: -1- _m4_warn([obsolete], [The macro `AC_TRY_COMPILE' is obsolete.
+m4trace:configure.in:154: -1- m4_pattern_allow([^HAVE_LIBYAML$])
+m4trace:configure.in:160: -2- m4_pattern_allow([^HAVE_INET_NTOP$])
+m4trace:configure.in:161: -2- m4_pattern_allow([^HAVE_INET_PTON$])
+m4trace:configure.in:162: -2- m4_pattern_allow([^HAVE_INET_ATON$])
+m4trace:configure.in:177: -1- _m4_warn([obsolete], [The macro `AC_TRY_COMPILE' is obsolete.
 You should run autoupdate.], [../../lib/autoconf/general.m4:2602: AC_TRY_COMPILE is expanded from...
-configure.in:171: the top level])
-m4trace:configure.in:171: -1- m4_pattern_allow([^HAVE_SA_LEN$])
-m4trace:configure.in:182: -1- _m4_warn([obsolete], [The macro `AC_TRY_COMPILE' is obsolete.
+configure.in:177: the top level])
+m4trace:configure.in:177: -1- m4_pattern_allow([^HAVE_SA_LEN$])
+m4trace:configure.in:188: -1- _m4_warn([obsolete], [The macro `AC_TRY_COMPILE' is obsolete.
 You should run autoupdate.], [../../lib/autoconf/general.m4:2602: AC_TRY_COMPILE is expanded from...
-configure.in:182: the top level])
-m4trace:configure.in:182: -1- m4_pattern_allow([^HAVE_SIN_LEN$])
-m4trace:configure.in:193: -1- _m4_warn([obsolete], [The macro `AC_TRY_COMPILE' is obsolete.
+configure.in:188: the top level])
+m4trace:configure.in:188: -1- m4_pattern_allow([^HAVE_SIN_LEN$])
+m4trace:configure.in:199: -1- _m4_warn([obsolete], [The macro `AC_TRY_COMPILE' is obsolete.
 You should run autoupdate.], [../../lib/autoconf/general.m4:2602: AC_TRY_COMPILE is expanded from...
-configure.in:193: the top level])
-m4trace:configure.in:193: -1- m4_pattern_allow([^HAVE_SUN_LEN$])
-m4trace:configure.in:204: -1- _m4_warn([obsolete], [The macro `AC_TRY_COMPILE' is obsolete.
+configure.in:199: the top level])
+m4trace:configure.in:199: -1- m4_pattern_allow([^HAVE_SUN_LEN$])
+m4trace:configure.in:210: -1- _m4_warn([obsolete], [The macro `AC_TRY_COMPILE' is obsolete.
 You should run autoupdate.], [../../lib/autoconf/general.m4:2602: AC_TRY_COMPILE is expanded from...
-configure.in:204: the top level])
-m4trace:configure.in:204: -1- m4_pattern_allow([^HAVE_SOCKLEN_T$])
-m4trace:configure.in:216: -1- m4_pattern_allow([^HAVE_SOCKADDR_DL$])
-m4trace:configure.in:226: -1- _m4_warn([obsolete], [The macro `AC_TRY_LINK' is obsolete.
+configure.in:210: the top level])
+m4trace:configure.in:210: -1- m4_pattern_allow([^HAVE_SOCKLEN_T$])
+m4trace:configure.in:222: -1- m4_pattern_allow([^HAVE_SOCKADDR_DL$])
+m4trace:configure.in:232: -1- _m4_warn([obsolete], [The macro `AC_TRY_LINK' is obsolete.
 You should run autoupdate.], [../../lib/autoconf/general.m4:2675: AC_TRY_LINK is expanded from...
 ../../lib/m4sugar/m4sh.m4:598: AS_IF is expanded from...
 ../../lib/autoconf/general.m4:2019: AC_CACHE_VAL is expanded from...
-configure.in:226: the top level])
-m4trace:configure.in:241: -1- _m4_warn([obsolete], [AC_OUTPUT should be used without arguments.
+configure.in:232: the top level])
+m4trace:configure.in:247: -1- _m4_warn([obsolete], [AC_OUTPUT should be used without arguments.
 You should run autoupdate.], [])
-m4trace:configure.in:241: -1- m4_pattern_allow([^LIB@&t@OBJS$])
-m4trace:configure.in:241: -1- m4_pattern_allow([^LTLIBOBJS$])
-m4trace:configure.in:241: -1- AM_CONDITIONAL([am__EXEEXT], [test -n "$EXEEXT"])
-m4trace:configure.in:241: -1- m4_pattern_allow([^am__EXEEXT_TRUE$])
-m4trace:configure.in:241: -1- m4_pattern_allow([^am__EXEEXT_FALSE$])
-m4trace:configure.in:241: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_TRUE])
-m4trace:configure.in:241: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_FALSE])
-m4trace:configure.in:241: -1- _AC_AM_CONFIG_HEADER_HOOK(["$ac_file"])
-m4trace:configure.in:241: -1- _AM_OUTPUT_DEPENDENCY_COMMANDS
+m4trace:configure.in:247: -1- m4_pattern_allow([^LIB@&t@OBJS$])
+m4trace:configure.in:247: -1- m4_pattern_allow([^LTLIBOBJS$])
+m4trace:configure.in:247: -1- AM_CONDITIONAL([am__EXEEXT], [test -n "$EXEEXT"])
+m4trace:configure.in:247: -1- m4_pattern_allow([^am__EXEEXT_TRUE$])
+m4trace:configure.in:247: -1- m4_pattern_allow([^am__EXEEXT_FALSE$])
+m4trace:configure.in:247: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_TRUE])
+m4trace:configure.in:247: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_FALSE])
+m4trace:configure.in:247: -1- _AC_AM_CONFIG_HEADER_HOOK(["$ac_file"])
+m4trace:configure.in:247: -1- _AM_OUTPUT_DEPENDENCY_COMMANDS

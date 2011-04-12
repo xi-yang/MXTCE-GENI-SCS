@@ -29,17 +29,15 @@ Apimsg_user_constraint* Apireqmsg_decoder::test_decode_msg(char* apimsg_body, in
     	length=pri_type_decoder.getLen(decode_ptr, len_tag_len);
         //decode_ptr=decode_ptr+len_tag_len;
     	this->decode_usercons(decode_ptr,length,user_cons);
+    	cout<<"user constraint"<<endl;
     }
-    length_decoded=length_decoded+1+len_tag_len+length;
-    if(length_decoded!=msg_length)
+    else if(type==PCE_RESERVEDCONSTRAINT)
     {
-    	decode_ptr=decode_ptr+length; // point to the next field RESV_CONSTRAINT
-    	memcpy(&type, decode_ptr++, sizeof(char));
-    	if(type==PCE_RESVCONSTRAINT)
-    	{
-    		length=pri_type_decoder.getLen(decode_ptr, len_tag_len);
-    		this->decode_resvcons(decode_ptr,length,user_cons);
-    	}
+    	user_cons = new Apimsg_user_constraint();
+    	length=pri_type_decoder.getLen(decode_ptr, len_tag_len);
+        //decode_ptr=decode_ptr+len_tag_len;
+    	this->decode_usercons(decode_ptr,length,user_cons);
+    	cout<<"resv constraint"<<endl;
     }
 
 

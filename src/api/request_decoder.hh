@@ -3,7 +3,7 @@
 
 #include "tag_id.hh"
 #include "decode_pri.hh"
-//#include "reserved_constraint.hh"
+#include "reserved_constraint.hh"
 #include "user_constraint.hh"
 #include <string>
 

@@ -2,7 +2,7 @@
 #define _tag_id_hh_
 
 #define PCE_USERCONSTRAINT 0xF1
-//#define PCE_RESERVEDCONSTRAINT 0xF1
+#define PCE_RESERVEDCONSTRAINT 0xF2
 #define PCE_RESVCONSTRAINT 0xF2
 
 #define PCE_REPLY 0xF8

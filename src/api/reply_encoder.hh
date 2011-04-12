@@ -4,6 +4,7 @@
 #include "tag_id.hh"
 #include "encode_pri.hh"
 #include "apiserver.hh"
+#include "compute_worker.hh"
 
 using namespace std;
 
