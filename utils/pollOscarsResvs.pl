@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Lib::TLV;
 use Lib::APIClient;
+use YAML::XS;
 use Time::ParseDate;
 
 
@@ -11,6 +12,16 @@ use constant API_MSG_RESV_PUSH => 0x0011;
 
 use constant MSG_TLV_RESV_INFO => 0x0011;
 use constant MSG_TLV_PATH_ELEM => 0x0012;
+
+my $local_domain_id;
+
+sub get_local_domain()
+{
+        my $yaml_file = $ENV{OSCARS_HOME} . "/Utils/conf/config.yaml";
+        my $yaml = do{local(@ARGV,$/)=$yaml_file;<>};
+        my $config = Load $yaml;
+        return $config->{localDomain}{id};
+}
 
 sub parse_resv_list($)
 {
@@ -49,6 +60,7 @@ sub get_resv_path($)
 		} 
 		next unless ($start);
 		if ($line =~ /(urn:ogf:[^\s]+)\s[^\s]+\s([^\s]+)/) {
+			next if (index($line, $local_domain_id) == -1);
                         if (!defined($resv->{path})) {
                                 my @path;
                                 $resv->{path} = \@path;
@@ -59,8 +71,6 @@ sub get_resv_path($)
                         $elem{enc} = 2;
                         $elem{vlan} = $2;
 			if ($2 eq "null") {
-                        	$elem{swtype} = 1;
-                        	$elem{enc} = 2;
 				$elem{vlan} = 0;
 			}
                         push(@{$resv->{path}}, \%elem);
@@ -75,6 +85,8 @@ my $interval = 120;
 
 my $api_conn = new APIClient('sportster', '2091', 10101);
 $api_conn->connect_server();
+
+$local_domain_id = get_local_domain();
 
 while(1) {
 	my $resv_list_text = `$oscars_cmd`;
