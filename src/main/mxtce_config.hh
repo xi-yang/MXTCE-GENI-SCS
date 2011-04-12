@@ -4,7 +4,7 @@
  * University of Southern California/Information Sciences Institute.
  * All rights reserved.
  *
- * Created by Xi Yang 2010
+ * Created by Xi Yang 2011
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,64 +32,29 @@
  */
 
 
-#ifndef __MXTCE_HH__
-#define __MXTCE_HH__
+#ifndef __MXTCE_CONFIG_HH__
+#define __MXTCE_CONFIG_HH__
 
-#include "message.hh"
-#include "apiserver.hh"
-#include "tedb_man.hh"
-#include "resv_man.hh"
-#include "policy_man.hh"
+#include "mxtce.hh"
 
 using namespace std;
 
-class MxTCEConfig;
-class MxTCE
+class MxTCEConfig
 {
 private:
-    MxTCEConfig* configParser;
-    MessagePortLoopback* loopbackPort;
-    EventMaster* eventMaster;
-    MessageRouter* messageRouter;
-    APIServerThread* apiServerThread;
-    TEDBManThread* tedbManThread;
-    ResvManThread* resvManThread;
-    PolicyManThread* policyManThread;
+    MxTCE* mxtce;
+    string configFilePath;
     
-public:
-    static int apiServerPort;
-    static int resvApiServerPort;
-    static string loopbackPortName;
-    static string apiServerPortName;
-    static string tedbManPortName;
-    static string resvManPortName;
-    static string policyManPortName;
-    static string computeThreadPrefix;
-    static string defaultComputeWorkerType;
-    static list<string> xmlDomainFileList;
 
 public:
-	MxTCE( const string& configFile);
-	~MxTCE();
-    MxTCEConfig* GetConfigParser() { return configParser; }
-    MessagePortLoopback* GetLoopbackPort() { return loopbackPort; }
-    MessageRouter* GetMessageRouter() { return messageRouter; }
-    void Start();
-    void CheckMessage();
-};
-
-
-class MxTCEMessageHandler: public Event
-{
-private:
-    MxTCEMessageHandler();
-    MxTCE* mxTCE;
-
-public:
-    MxTCEMessageHandler(MxTCE* tce): mxTCE(tce) { }
-    ~MxTCEMessageHandler() { }
-    virtual void Run();
+	MxTCEConfig(MxTCE* m, const string& c): mxtce(m), configFilePath(c) { }
+	~MxTCEConfig() { }
+    void ParseYamlConfig();
+    void ParseLevel2Config(char* key1, char* key2, char* val);
+    void ParseLevel3Config(char* key1, char* key2, char* key3, char* val);
+    void ParseLevel4Config(char* key1, char* key2, char* key4, char* key4, char* val);
 };
 
     
 #endif
+

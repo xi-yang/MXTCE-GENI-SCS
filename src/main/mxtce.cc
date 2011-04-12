@@ -36,6 +36,7 @@
 #include "exception.hh"
 #include "utils.hh"
 #include "mxtce.hh"
+#include "mxtce_config.hh"
 #include "compute_worker.hh"
 
 
@@ -47,12 +48,13 @@ string MxTCE::resvManPortName = "MX-TCE_RESV_MANAGER";
 string MxTCE::policyManPortName = "MX-TCE_POLICY_MANAGER";
 string MxTCE::loopbackPortName = "MX-TCE_CORE_LOOPBACK";
 string MxTCE::computeThreadPrefix = "COMPUTE_THREAD_";
-string MxTCE::tmpFilesDir = "/var/tmp/mxtce/pipes/";
-string MxTCE::xmlTopoFilePath = "testdomain-1.net.xml";
+string MxTCE::defaultComputeWorkerType = "exampleComputeWorker";
+list<string> MxTCE::xmlDomainFileList;
+
 
 MxTCE::MxTCE( const string& configFile) 
 {
-    // $$$$ read and parse configure file from configFile path
+    configParser = new MxTCEConfig(this, configFile);
 
     eventMaster = new EventMaster;
     assert(eventMaster);
@@ -81,9 +83,9 @@ MxTCE::~MxTCE()
 
 void MxTCE::Start()
 {
-    mkpath((const char*)MxTCE::tmpFilesDir.c_str(), 0777);
-
-
+    // exception could be thrown here and program will abort as expected
+    configParser->ParseYamlConfig();
+        
     // init apiServer port and routes on messge router
     messageRouter->AddPort(MxTCE::apiServerPortName);
     
@@ -159,8 +161,7 @@ void MxTCEMessageHandler::Run()
         msg->LogDump();
         if (msg->GetType() == MSG_REQ && msg->GetTopic() == "API_REQUEST") {
             // creating computeWorkerThread and pass user request parameters
-            string computeWorkerType = "exampleComputeWorker";
-            ComputeWorker* computingThread = ComputeWorkerFactory::CreateComputeWorker(computeWorkerType); 
+            ComputeWorker* computingThread = ComputeWorkerFactory::CreateComputeWorker(MxTCE::defaultComputeWorkerType); 
             string paramName = "USER_CONSTRAINT";
             Apimsg_user_constraint* userConstraint;
             memcpy(&userConstraint, msg->GetTLVList().front()->value, sizeof(void*));

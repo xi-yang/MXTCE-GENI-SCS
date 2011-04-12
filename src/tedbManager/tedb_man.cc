@@ -44,7 +44,8 @@ void* TEDBManThread::hookRun()
     // thread specific init
     string tedbName = "Master-TEDB";
     tedb = new TEDB(tedbName);
-    xmlImporter = new TopologyXMLImporter(tedb, MxTCE::xmlTopoFilePath, 60);
+    assert(MxTCE::xmlDomainFileList.size() > 0);
+    xmlImporter = new TopologyXMLImporter(tedb, MxTCE::xmlDomainFileList.front(), 60);
     xmlImporter->Run();
     eventMaster->Schedule(xmlImporter);
     tedb->LogDump();

@@ -149,6 +149,12 @@ dnl ---------------------------------------------------
 AC_CHECK_LIB(xml2, xmlParseFile)
  
 dnl ---------------------------------------------------
+dnl Check existance of libyaml
+dnl ---------------------------------------------------
+AC_CHECK_LIB(yaml, yaml_get_version_string)
+
+
+dnl ---------------------------------------------------
 dnl BSD/OS 4.1 define inet_XtoY function as __inet_XtoY
 dnl ---------------------------------------------------
 AC_CHECK_FUNC(__inet_ntop, AC_DEFINE(HAVE_INET_NTOP))

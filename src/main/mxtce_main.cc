@@ -112,7 +112,7 @@ int main( int argc, char* argv[])
 {
     bool is_daemon = false;
     LogOption log_opt = LOG_ALL;
-	const char* configfile = "/usr/local/etc/mxtce.conf";
+    const char* configfile = "/usr/local/etc/mxtce.config.yaml";
 
     while (1)
     {
