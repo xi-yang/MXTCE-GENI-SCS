@@ -101,6 +101,7 @@ public:
     void SetPathInfo(TPath* p) { pathInfo = p; }
     string& GetErrMessage() { return errMsg; }
     void SetErrMessage(string& s) {errMsg = s; }
+    void RegulatePathInfo();
 };
 
 #endif

@@ -187,3 +187,28 @@ void ComputeWorkerFactory::RemoveComputeWorker(string name)
     ComputeWorkerFactory::cwfLock.Unlock();
 }
 
+
+void ComputeResult::RegulatePathInfo()
+{
+    if (pathInfo == NULL)
+        return;
+    // set link name to full qualified URN
+    TLink* L;
+    string urn;
+    char str[128];
+    list<TLink*>::iterator itL = pathInfo->GetPath().begin();
+    for (; itL != pathInfo->GetPath().end(); itL++)
+    {
+        L = *itL;
+        if (strstr(L->GetName().c_str(), "urn:ogf:network") != NULL)
+            continue;
+        sprintf(str, "urn:ogf:network:domain=%s:node=%s:port=%s:link=%s",
+            L->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
+            L->GetPort()->GetNode()->GetName().c_str(),
+            L->GetPort()->GetName().c_str(),
+            L->GetName().c_str());
+        urn = str;
+        L->SetName(urn);
+    }
+}
+    

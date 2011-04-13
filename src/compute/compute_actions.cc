@@ -99,6 +99,7 @@ void Action_ProcessRequestTopology::Finish()
         TPath* resultPath = KSP->front()->Clone();
         resultPath->SetIndependent(true); // path peeled off from TEWG: pointers to parenet ports and nodes are invalid
         result->SetPathInfo(resultPath);
+        result->RegulatePathInfo();
     }
     else
     {
