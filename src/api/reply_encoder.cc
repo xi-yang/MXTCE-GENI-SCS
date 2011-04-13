@@ -34,32 +34,13 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 
 	char print_buff[200];
 
-	list<TLV*> tlv_list = msg->GetTLVList();
-
-	for(list<TLV*>::iterator it=tlv_list.begin();it!=tlv_list.end();it++)
-	{
-		type=(*it)->type;
-		length=(*it)->length;
-		value = new u_int8_t[length];
-		memcpy(value, (*it)->value, length);
-
-		//snprintf(print_buff, ((length<200)?length:200), "%s", value);
-		//string temp_value = print_buff;
-		cout<<"type="<<type<<endl;
-		cout<<"length="<<length<<endl;
-		//cout<<"value="<<temp_value<<endl;
-
-
-	}
-
-	compute_result = (ComputeResult*) value;
+    memcpy(&compute_result, msg->GetTLVList().front()->value, sizeof(void*));
 
 	gri = compute_result->GetGri();
 	err_msg = compute_result->GetErrMessage();
 	path_info = compute_result->GetPathInfo();
 
 	path = path_info->GetPath();
-
 
 	for(list<TLink*>::iterator it=path.begin();it!=path.end();it++)
 	{

@@ -193,7 +193,6 @@ void MxTCEMessageHandler::Run()
             // start compute thread
             computingThread->Start(NULL);
 
-            //@@@@ Prototype Testing code
             // pass the workflow init message with request details to computingThread
             Message* msg_compute_request = msg->Duplicate();
             msg_compute_request->SetQueue(computeThreadQueueName);
@@ -202,7 +201,6 @@ void MxTCEMessageHandler::Run()
         } 
         else if (msg->GetType() == MSG_REPLY && msg->GetTopic() == "COMPUTE_REPLY") 
         {
-            //@@@@ Prototype Testing code
             string queue = "CORE";
             string topic = "API_REPLY";
             Message* msg_reply = msg->Duplicate();
