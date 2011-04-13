@@ -65,7 +65,7 @@ inline void AggregateDeltaSeries::Insert(TDelta* delta)
     for (; itd != ADS.end(); itd++)
     {
         TDelta* deltaInList = *itd;
-        if (deltaInList->GetStartTime() <= delta->GetEndTime())
+        if (deltaInList->GetStartTime() >= delta->GetEndTime())
         {
             ADS.insert(itd, delta);
             break;
@@ -96,7 +96,7 @@ TDelta* AggregateDeltaSeries::JoinADSInWindow(time_t start, time_t end)
     return deltaA;
 }
 
-void AggregateDeltaSeries::AddDelta(TDelta* delta)
+void AggregateDeltaSeries::AddDelta(TDelta* delta, bool doJoinInsteadOfCombine)
 {
     delta = delta->Clone();
     if (ADS.empty())
@@ -120,9 +120,10 @@ void AggregateDeltaSeries::AddDelta(TDelta* delta)
         if (deltaA1->GetStartTime() < delta->GetStartTime())
         {            
             // first delta in ADS list and split into deltaA1 and deltaA2
-            TDelta* deltaA2 = deltaA1->Clone();
+            deltaA2 = deltaA1->Clone();
             deltaA1->SetEndTime(delta->GetStartTime());
             deltaA2->SetStartTime(delta->GetStartTime());
+            this->Insert(deltaA2);
         }
         else if (deltaA1->GetStartTime() > delta->GetStartTime())
         {
@@ -132,11 +133,11 @@ void AggregateDeltaSeries::AddDelta(TDelta* delta)
             this->Insert(deltaA2);
             delta->SetStartTime(deltaA1->GetStartTime());
             //now delta start at same time with deltaA1
-            deltaA2 = deltaA1->Clone();
+            deltaA2 = deltaA1;
         }
         else // == 
         {
-            deltaA2 = deltaA1->Clone();
+            deltaA2 = deltaA1;
         }
         TDelta* deltaA3 = NULL;
         if (deltaA2->GetEndTime() > delta->GetEndTime())
@@ -150,8 +151,10 @@ void AggregateDeltaSeries::AddDelta(TDelta* delta)
         {
             delta->SetStartTime(deltaA2->GetEndTime());
         }
-        deltaA2->Combine(delta);
-        this->Insert(deltaA2);
+        if (doJoinInsteadOfCombine)
+            deltaA2->Join(delta);
+        else
+            deltaA2->Combine(delta);
         if (deltaA3)
         {
             this->Insert(deltaA3);
@@ -202,17 +205,17 @@ void AggregateDeltaSeries::Join(AggregateDeltaSeries& ads, time_t start, time_t 
         deltaList = ads.GetADS();
     list<TDelta*>::iterator itD = this->ADS.begin();
     for (; itD != this->ADS.end(); itD++)
-        this->AddDelta(*itD);
+        this->AddDelta(*itD, true); // add by join instead of combine (sum)
 }
 
 
 
-void BandwidthAggregateGraph::AddStep(time_t t, long bw)
+void BandwidthAvailabilityGraph::AddStep(time_t t, long bw)
 {
     this->TBSF[t] = bw;
 }
 
-void BandwidthAggregateGraph::LoadADS(AggregateDeltaSeries& ads, time_t start, time_t end, long capacity)
+void BandwidthAvailabilityGraph::LoadADS(AggregateDeltaSeries& ads, time_t start, time_t end, long capacity)
 {
     // get BAG by substracting ADS bandwidth from capacity for the time window
     list<TDelta*> deltaList = ads.GetADSInWindow(start, end);
@@ -240,7 +243,7 @@ void BandwidthAggregateGraph::LoadADS(AggregateDeltaSeries& ads, time_t start, t
     AddStep(end, 0);
 }
 
-void BandwidthAggregateGraph::LogDump()
+void BandwidthAvailabilityGraph::LogDump()
 {
     char buf[4096]; //up to 4K
     char str[64];

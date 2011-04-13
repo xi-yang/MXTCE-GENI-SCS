@@ -255,16 +255,19 @@ void Action_ComputeKSP::Process()
         for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
         {
             TLink* L = *itL;
+            AggregateDeltaSeries* ads = new AggregateDeltaSeries;
+            if (L->GetWorkData() == NULL)
+                L->SetWorkData(new TWorkData());
+            L->GetWorkData()->SetData("ADS", ads); // TODO: free ADS mem
             if (L->GetDeltaList().size() == 0)
                 continue;
-            AggregateDeltaSeries ads;
             list<TDelta*>::iterator itD;
             for (itD = L->GetDeltaList().begin(); itD != L->GetDeltaList().end(); itD++)
             {
                 TDelta* delta = *itD;
-                ads.AddDelta(delta);
+                ads->AddDelta(delta);
             }
-            TDelta* conjDelta = ads.JoinADSInWindow(startTime, endTime);
+            TDelta* conjDelta = ads->JoinADSInWindow(startTime, endTime);
             if (conjDelta == NULL)
                 continue;
             conjDelta->SetTargetResource(L);
@@ -374,6 +377,14 @@ void Action_ComputeKSP::Process()
                 this->GetComputeWorker()->SetParameter(paramName, feasiblePaths);
             }
             TPath* feasiblePath = (*itP)->Clone();
+            // TODO: check request condition for BAG
+            BandwidthAvailabilityGraph* bag = (*itP)->CreatePathBAG(startTime, endTime);
+            if (bag != NULL) 
+            {
+                feasiblePath->SetBAG(bag);
+                (*itP)->SetBAG(NULL);
+                bag->LogDump();
+            }
             feasiblePaths->push_back(feasiblePath);
             feasiblePath->UpdateLayer2Info(srcVtagResult, dstVtagResult);
             itP++;
@@ -764,28 +775,6 @@ void Action_ComputeSchedulesWithKSP::Finish()
 
 ///////////////////// class Action_FinalizeServiceTopology ///////////////////////////
 
-BandwidthAggregateGraph* Action_FinalizeServiceTopology::CreatePathBAG(TPath* path)
-{
-    assert(path->GetPath().size() > 0);
-    // get minmum link bandwidth/capacity on path
-    // combine link ADS into path ADS
-    // get BAG from path ADS
-    list<TLink*>::iterator itL = path->GetPath().begin();
-    AggregateDeltaSeries* ads = (AggregateDeltaSeries*)((*itL)->GetWorkData()->GetData("ADS"));
-    assert(ads != NULL);
-    ads = ads->Duplicate();
-    itL++;
-    for (; itL != path->GetPath().end(); itL++)
-    {
-        assert((*itL)->GetWorkData()->GetData("ADS") != NULL);
-        ads->Join(*(AggregateDeltaSeries*)((*itL)->GetWorkData()->GetData("ADS")));
-    }
-    BandwidthAggregateGraph* bag = new BandwidthAggregateGraph();
-    // TODO: Get parameters from API
-    //bag->LoadADS(*ads, start, end, bw_min);
-    return bag;
-}
-
 void Action_FinalizeServiceTopology::Process()
 {
     LOG(name<<"Process() called"<<endl);
@@ -804,9 +793,6 @@ void Action_FinalizeServiceTopology::Process()
         {
             (*itP)->LogDump();
         }
-        // generate path BAG; pass to ... (@@ check avail condition)
-        // BandwidthAggregateGraph* bag = CreatePathBAG(*itP);
-        // bag->LogDump();
     }
     else 
     {

@@ -52,20 +52,20 @@ public:
     inline list<TDelta*> GetADSInWindow(time_t start, time_t end);
     inline void Insert(TDelta* delta);
     TDelta* JoinADSInWindow(time_t start, time_t end);
-    void AddDelta(TDelta* delta);
+    void AddDelta(TDelta* delta, bool doJoinInsteadOfCombine=false);
     void RemoveDelta(TDelta* delta);
     AggregateDeltaSeries* Duplicate();
     void Join(AggregateDeltaSeries& ads, time_t start=0, time_t end=0);
 };
 
-class BandwidthAggregateGraph
+class BandwidthAvailabilityGraph
 {
 protected:
     map<time_t, long> TBSF; //Time-Bandwidth-Step-Function (first element is for startTime, last element always has BW value 0)
 
 public:
-    BandwidthAggregateGraph() { }
-    virtual ~BandwidthAggregateGraph() { }
+    BandwidthAvailabilityGraph() { }
+    virtual ~BandwidthAvailabilityGraph() { }
     void AddStep(time_t t, long bw);
     void LoadADS(AggregateDeltaSeries& ads, time_t start, time_t end, long capacity);
     void LogDump();

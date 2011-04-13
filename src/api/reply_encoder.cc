@@ -39,55 +39,49 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	gri = compute_result->GetGri();
 	err_msg = compute_result->GetErrMessage();
 	path_info = compute_result->GetPathInfo();
+    if (path_info != NULL) 
+    {
+    	path = path_info->GetPath();
+    	for(list<TLink*>::iterator it=path.begin();it!=path.end();it++)
+    	{
+    		sw_cap_descriptors=(*it)->GetTheISCD();
 
-	path = path_info->GetPath();
-
-	for(list<TLink*>::iterator it=path.begin();it!=path.end();it++)
-	{
-		sw_cap_descriptors=(*it)->GetTheISCD();
-
-		switchingType = sw_cap_descriptors->switchingType;
-		encodingType = sw_cap_descriptors->encodingType;
-
-
-	    switch (switchingType)
-	    {
-	        case LINK_IFSWCAP_L2SC:
-	        	availableVlanTags = &((ISCD_L2SC*)sw_cap_descriptors)->availableVlanTags;
-	        	if(!availableVlanTags->IsEmpty())
-	        	{
-	        		rangStr=availableVlanTags->GetRangeString();
-	        		pri_type_encoder->encodeString(PCE_SWITCHINGVLANRANGEAVAI, rangStr);
-	        	}
-
-	            //iscd = new ISCD_L2SC(capacity, mtu);
-	            //((ISCD_L2SC*)iscd)->availableVlanTags.LoadRangeString(vlanRange);
-	            //((ISCD_L2SC*)iscd)->vlanTranslation = vlanTranslation;
-	            break;
-	        case LINK_IFSWCAP_PSC1:
-	            //iscd = new ISCD_PSC(1, capacity, mtu);
-	            break;
-	        case LINK_IFSWCAP_TDM:
-	            //iscd = new ISCD_TDM(capacity, minBandwidth);
-	            //((ISCD_TDM*)iscd)->availableTimeSlots.LoadRangeString(timeslotRange);
-	            break;
-	        case LINK_IFSWCAP_LSC:
-	            //iscd = new ISCD_LSC(capacity);
-	            //((ISCD_LSC*)iscd)->availableWavelengths.LoadRangeString(wavelengthRange);
-	            //((ISCD_LSC*)iscd)->wavelengthTranslation = wavelengthTranslation;
-	            break;
-	        default:
-	            // type not supported
-	            return NULL;
-	    }
+    		switchingType = sw_cap_descriptors->switchingType;
+    		encodingType = sw_cap_descriptors->encodingType;
 
 
+    	    switch (switchingType)
+    	    {
+    	        case LINK_IFSWCAP_L2SC:
+    	        	availableVlanTags = &((ISCD_L2SC*)sw_cap_descriptors)->availableVlanTags;
+    	        	if(!availableVlanTags->IsEmpty())
+    	        	{
+    	        		rangStr=availableVlanTags->GetRangeString();
+    	        		pri_type_encoder->encodeString(PCE_SWITCHINGVLANRANGEAVAI, rangStr);
+    	        	}
 
-
-
-	}
-
-
+    	            //iscd = new ISCD_L2SC(capacity, mtu);
+    	            //((ISCD_L2SC*)iscd)->availableVlanTags.LoadRangeString(vlanRange);
+    	            //((ISCD_L2SC*)iscd)->vlanTranslation = vlanTranslation;
+    	            break;
+    	        case LINK_IFSWCAP_PSC1:
+    	            //iscd = new ISCD_PSC(1, capacity, mtu);
+    	            break;
+    	        case LINK_IFSWCAP_TDM:
+    	            //iscd = new ISCD_TDM(capacity, minBandwidth);
+    	            //((ISCD_TDM*)iscd)->availableTimeSlots.LoadRangeString(timeslotRange);
+    	            break;
+    	        case LINK_IFSWCAP_LSC:
+    	            //iscd = new ISCD_LSC(capacity);
+    	            //((ISCD_LSC*)iscd)->availableWavelengths.LoadRangeString(wavelengthRange);
+    	            //((ISCD_LSC*)iscd)->wavelengthTranslation = wavelengthTranslation;
+    	            break;
+    	        default:
+    	            // type not supported
+    	            return NULL;
+    	    }
+    	}
+    }
 
 
 

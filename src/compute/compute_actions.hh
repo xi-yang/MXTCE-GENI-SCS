@@ -131,11 +131,10 @@ public:
 
 
 class TPath;
-class BandwidthAggregateGraph;
+class BandwidthAvailabilityGraph;
 class Action_FinalizeServiceTopology: public Action
 {
 protected:
-    BandwidthAggregateGraph* CreatePathBAG(TPath*);
 
 public:
     Action_FinalizeServiceTopology(): Action(){ }

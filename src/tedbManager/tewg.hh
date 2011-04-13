@@ -262,6 +262,7 @@ public:
 
 
 class TSchedule;
+class BandwidthAvailabilityGraph;
 class TPath {
 protected:
     list<TLink*> path;
@@ -270,9 +271,10 @@ protected:
     TNode* deviationNode;
     list<TSchedule*> schedules; // feasible schedules on the path
     bool independent;
+    BandwidthAvailabilityGraph* bag;
 
 public:
-    TPath(): cost(_INF_), deviationNode(NULL), independent(false){}
+    TPath(): cost(_INF_), deviationNode(NULL), independent(false), bag(NULL) {}
     ~TPath();
     list<TLink*>& GetPath() { return path; }
     void SetPath(list<TLink*>& p) { path.assign(p.begin(), p.end()); }
@@ -281,6 +283,8 @@ public:
     list<TLink*>& GetMaskedLinkList() { return maskedLinkList; }
     bool IsIndependent() { return independent; }
     void SetIndependent(bool b) { independent = b; }
+    BandwidthAvailabilityGraph* GetBAG() { return bag; }
+    void SetBAG(BandwidthAvailabilityGraph* b) { bag = b; }
     void FilterOffMaskedLinks(bool bl) { 
             list<TLink*>::iterator itLink;
             for (itLink = maskedLinkList.begin(); itLink != maskedLinkList.end(); itLink++) {
@@ -304,6 +308,7 @@ public:
         }
     bool VerifyTEConstraints(u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_t& wave, TSpec& tspec);
     void UpdateLayer2Info(u_int32_t srcVtag, u_int32_t dstVtag);
+    BandwidthAvailabilityGraph* CreatePathBAG(time_t start, time_t end);
     void Cleanup() {
         path.clear();
         cost = _INF_;

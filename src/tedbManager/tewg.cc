@@ -35,6 +35,7 @@
 #include "log.hh"
 #include "tewg.hh"
 #include "reservation.hh"
+#include "scheduling.hh"
 #include <algorithm> 
 
 TDomain* TDomain::Clone(bool newSubLevels)
@@ -873,6 +874,8 @@ TPath::~TPath()
     for (; itS != schedules.end(); itS++)
         delete *itS;
     schedules.clear();
+    if (bag != NULL)
+        delete bag;
 }
 
 
@@ -1060,6 +1063,31 @@ void TPath::UpdateLayer2Info(u_int32_t srcVtag, u_int32_t dstVtag)
         iscd->availableVlanTags.AddTag(dstVtag);
         iscd->suggestedVlanTags.AddTag(dstVtag);
     }
+}
+
+BandwidthAvailabilityGraph* TPath::CreatePathBAG(time_t start, time_t end)
+{
+    assert(path.size() > 0);
+    list<TLink*>::iterator itL = path.begin();
+    AggregateDeltaSeries* ads = (AggregateDeltaSeries*)((*itL)->GetWorkData()->GetData("ADS"));
+    if (ads == NULL)
+    {
+        return NULL;
+    }
+    ads = ads->Duplicate();
+    itL++;
+    long capacity = (*itL)->GetMaxReservableBandwidth();
+    for (; itL != path.end(); itL++)
+    {
+        if ((*itL)->GetWorkData()->GetData("ADS") == NULL)
+            return NULL;
+        ads->Join(*(AggregateDeltaSeries*)((*itL)->GetWorkData()->GetData("ADS")));
+        if (capacity > (*itL)->GetMaxReservableBandwidth())
+            capacity = (*itL)->GetMaxReservableBandwidth();
+    }
+    BandwidthAvailabilityGraph* bag = new BandwidthAvailabilityGraph();
+    bag->LoadADS(*ads, start, end, capacity);
+    return bag;
 }
 
 TPath* TPath::Clone()
