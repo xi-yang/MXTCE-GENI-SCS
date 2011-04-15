@@ -974,7 +974,7 @@ bool TPath::VerifyTEConstraints(u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_
 
     // pick src and dst vtags from two sets of head_set and next_set (randomized by default)
     // try using common (continuous) vlan tag if possible, otherwise (no_vtag==true) use translated diff vlan
-    if (no_vtag)
+    if (no_vtag || (dstVtag != ANY_TAG && !next_vtagset.HasTag(dstVtag)))
     {
         assert(!no_vtag_trans && next_vtagset_trans.Size() > 0);
         if (srcVtag == ANY_TAG)
@@ -995,7 +995,7 @@ bool TPath::VerifyTEConstraints(u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_
     else
     {
         assert(next_vtagset.Size() > 0);    
-        if (dstVtag != ANY_TAG && !next_vtagset.HasTag(dstVtag))
+        if (dstVtag != ANY_TAG && !next_vtagset.HasTag(dstVtag)) 
             return false;
         else if (srcVtag == ANY_TAG && dstVtag != ANY_TAG)
             srcVtag = dstVtag;
@@ -1030,15 +1030,19 @@ void TPath::UpdateLayer2Info(u_int32_t srcVtag, u_int32_t dstVtag)
         }
         if (!iscd)
             continue;
-        iscd->availableVlanTags.Clear();
-        iscd->suggestedVlanTags.Clear();
         if (forwardContinued && iscd->availableVlanTags.HasTag(srcVtag))
         {
+            iscd->availableVlanTags.Clear();
+            iscd->suggestedVlanTags.Clear();
             iscd->availableVlanTags.AddTag(srcVtag);
             iscd->suggestedVlanTags.AddTag(srcVtag);
         }
         else 
+        {
+            iscd->availableVlanTags.Clear();
+            iscd->suggestedVlanTags.Clear();
             forwardContinued = false;
+        }
     }
     if (dstVtag == srcVtag)
         return;
@@ -1058,7 +1062,12 @@ void TPath::UpdateLayer2Info(u_int32_t srcVtag, u_int32_t dstVtag)
         }
         if (!iscd)
             continue;
-        if (!iscd->suggestedVlanTags.IsEmpty()|| iscd->availableVlanTags.HasTag(dstVtag))
+        if (iterR == path.rbegin())
+        {
+            iscd->availableVlanTags.Clear();
+            iscd->suggestedVlanTags.Clear();
+        }
+        else if (!iscd->suggestedVlanTags.IsEmpty()|| iscd->availableVlanTags.HasTag(dstVtag))
             break;
         iscd->availableVlanTags.AddTag(dstVtag);
         iscd->suggestedVlanTags.AddTag(dstVtag);

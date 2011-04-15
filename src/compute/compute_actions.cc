@@ -103,7 +103,7 @@ void Action_ProcessRequestTopology::Finish()
     }
     else
     {
-        string paramName = "ERROR_MSG";
+        paramName = "ERROR_MSG";
         result->SetErrMessage(*(string*)(this->GetComputeWorker()->GetParameter(paramName)));
     }
     TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
@@ -383,7 +383,6 @@ void Action_ComputeKSP::Process()
             {
                 feasiblePath->SetBAG(bag);
                 (*itP)->SetBAG(NULL);
-                bag->LogDump();
             }
             feasiblePaths->push_back(feasiblePath);
             feasiblePath->UpdateLayer2Info(srcVtagResult, dstVtagResult);
@@ -400,7 +399,9 @@ void Action_ComputeKSP::Process()
     // debugging output
     sort(KSP->begin(), KSP->end(), cmp_tpath);
     for (itP = KSP->begin(); itP != KSP->end(); itP++)
+    {
         (*itP)->LogDump();
+    }
 }
 
 

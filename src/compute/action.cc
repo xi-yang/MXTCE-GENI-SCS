@@ -42,7 +42,9 @@
 void Action::Run()
 {
     list<Action*>::iterator ita;
-    char buf[128];
+    char buf[256];
+    string paramName;
+    string errMsg;
 
     if (!worker->GetMessagePort()->IsUp())
     {
@@ -63,9 +65,14 @@ void Action::Run()
             //immediate execution of current action logic
             Process(); 
         } catch (ComputeThreadException e) {
-            LOG("Action::Run caught Exception:" << e.what() << endl);
             state = _Failed;
             CleanUp();
+            snprintf(buf, 256, "Action::Run caught Exception: %s", e.what());
+            LOG(buf << endl);
+            //throw ComputeThreadException(buf);
+            errMsg = buf;
+            paramName = "ERROR_MSG";
+            this->GetComputeWorker()->SetParameter(paramName, &errMsg);
             break;
         }
 
@@ -102,9 +109,14 @@ void Action::Run()
                 break;
             }
         } catch (ComputeThreadException e) {
-            LOG("Action::Run caught Exception:" << e.what() << endl);
             state = _Failed;
             CleanUp();
+            snprintf(buf, 256, "Action::Run caught Exception: %s", e.what());
+            LOG(buf << endl);
+            //throw ComputeThreadException(buf);
+            errMsg = buf;
+            paramName = "ERROR_MSG";
+            this->GetComputeWorker()->SetParameter(paramName, &errMsg);
         }
 
         //schedule children actions
@@ -121,9 +133,14 @@ void Action::Run()
                 break;
             }
         } catch (ComputeThreadException e) {
-            LOG("Action::Run caught Exception:" << e.what() << endl);
             state = _Failed;
             CleanUp();
+            snprintf(buf, 256, "Action::Run caught Exception: %s", e.what());
+            LOG(buf << endl);
+            //throw ComputeThreadException(buf);
+            errMsg = buf;
+            paramName = "ERROR_MSG";
+            this->GetComputeWorker()->SetParameter(paramName, &errMsg);
             break;
         }
         
@@ -142,7 +159,7 @@ void Action::Run()
         break;
 
     default:
-        snprintf(buf, 128, "Action::Run() gets into unknown state: %d\n", state);
+        snprintf(buf, 256, "Action::Run() gets into unknown state: %d\n", state);
         LOG(buf << endl);
         CleanUp();
         throw ComputeThreadException(buf);
