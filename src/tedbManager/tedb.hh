@@ -159,16 +159,17 @@ protected:
     list<DBNode*> dbNodes;
     list<DBPort*> dbPorts;
     list<DBLink*> dbLinks;
-    xmlDocPtr xmlTree;
+    list<xmlDocPtr> xmlDomainTrees;
     Lock tedbLock;
+    string GetXmlTreeDomainName(xmlDocPtr xmlTree);
 
 public:
-    TEDB(string& n): name(n), xmlTree(NULL) { }
+    TEDB(string& n): name(n){ }
     virtual ~TEDB() { }
-    xmlDocPtr GetXmlTree() { return xmlTree; }
-    void SetXmlTree(xmlDocPtr x) { xmlTree = x; }
-    void ClearXmlTree();
-    void PopulateXmlTree();
+    list<xmlDocPtr>& GetXmlDomainTrees() { return xmlDomainTrees; }
+    void AddXmlDomainTree(xmlDocPtr xmlTree);
+    void ClearXmlTrees();
+    void PopulateXmlTrees();
     void LockDB() { tedbLock.DoLock(); }
     void UnlockDB() { tedbLock.Unlock(); }
     TEWG* GetSnapshot(string& name); // full copy

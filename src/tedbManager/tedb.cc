@@ -597,12 +597,46 @@ DBLink::~DBLink()
         delete (*it);
 }
 
-
-void TEDB::ClearXmlTree()
+string TEDB::GetXmlTreeDomainName(xmlDocPtr xmlTree)
 {
-    if (xmlTree == NULL)
-        return;
-    xmlFreeDoc(xmlTree);
+    string domainName = "";
+    xmlNodePtr rootLevel;
+    xmlNodePtr domainLevel;
+    rootLevel = xmlDocGetRootElement(xmlTree);
+    if (rootLevel->type != XML_ELEMENT_NODE || strncasecmp((const char*)rootLevel->name, "topology", 8) != 0)
+    {
+        throw TEDBException((char*)"TEDB::PopulateXmlTree failed to locate root <topology> element");
+    }
+
+    for (domainLevel = rootLevel->children; domainLevel != NULL; domainLevel = domainLevel->next)
+    {
+        if (domainLevel->type != XML_ELEMENT_NODE || strncasecmp((const char*)domainLevel->name, "domain", 6) != 0)
+            continue;
+        // get first domain if multiple
+        domainName = (const char*)xmlGetProp(domainLevel, (const xmlChar*)"id");
+        return domainName;
+    }
+    return domainName;
+}
+
+void TEDB::AddXmlDomainTree(xmlDocPtr xmlTree)
+{
+    string newDomainName = GetXmlTreeDomainName(xmlTree);
+    list<xmlDocPtr>::iterator itX = xmlDomainTrees.begin();
+    for (; itX != xmlDomainTrees.end(); itX++)
+    {
+        if (GetXmlTreeDomainName(*itX) == newDomainName)
+        {
+            xmlFreeDoc(*itX);
+            itX = xmlDomainTrees.erase(itX);
+            break;
+        }
+    }
+    xmlDomainTrees.push_back(xmlTree);
+}
+
+void TEDB::ClearXmlTrees()
+{
     list<DBDomain*>::iterator itd = dbDomains.begin();
     for (; itd != dbDomains.end(); itd++)
     {
@@ -623,82 +657,85 @@ void TEDB::ClearXmlTree()
     {
         (*itl)->SetXmlElement(NULL);
     }    
-    xmlTree = NULL;
 }
 
 
-void TEDB::PopulateXmlTree()
+void TEDB::PopulateXmlTrees()
 {
-    assert(xmlTree != NULL);
+    assert(xmlDomainTrees.size() > 0);
 
     xmlNodePtr node;
     xmlNodePtr rootLevel;
     xmlNodePtr domainLevel;
-
-    rootLevel = xmlDocGetRootElement(xmlTree);
-    if (rootLevel->type != XML_ELEMENT_NODE || strncasecmp((const char*)rootLevel->name, "topology", 8) != 0)
+    xmlDocPtr xmlTree;
+    list<xmlDocPtr>::iterator itX = xmlDomainTrees.begin();
+    for (; itX != xmlDomainTrees.end(); itX++)
     {
-        throw TEDBException((char*)"TEDB::PopulateXmlTree failed to locate root <topology> element");
-    }
-
-    //match up Domain level elements
-    for (domainLevel = rootLevel->children; domainLevel != NULL; domainLevel = domainLevel->next)
-    {
-        if (domainLevel->type != XML_ELEMENT_NODE || strncasecmp((const char*)domainLevel->name, "domain", 6) != 0)
-            continue;
-        bool newDomain = false;
-        string domainName = (const char*)xmlGetProp(domainLevel, (const xmlChar*)"id");
-        if (strstr(domainName.c_str(), "domain=") != NULL)
-            domainName = GetUrnField(domainName, "domain");
-        DBDomain* domain = LookupDomainByName(domainName);
-        if (domain == NULL)
+        xmlTree = *itX;
+        rootLevel = xmlDocGetRootElement(xmlTree);
+        if (rootLevel->type != XML_ELEMENT_NODE || strncasecmp((const char*)rootLevel->name, "topology", 8) != 0)
         {
-            domain = new DBDomain(this, 0, domainName);
-            domain->SetXmlElement(domainLevel);            
-            dbDomains.push_back(domain);
-            newDomain = true;
+            throw TEDBException((char*)"TEDB::PopulateXmlTree failed to locate root <topology> element");
         }
 
-        domain->UpdateFromXML(true);
-    }
-
-    // cleanup domains that no longer exist in XML
-    list<DBDomain*>::iterator itd = dbDomains.begin();
-    for (; itd != dbDomains.end(); itd++)
-    {
-        if((*itd)->GetXmlElement() == NULL)
+        //match up Domain level elements
+        for (domainLevel = rootLevel->children; domainLevel != NULL; domainLevel = domainLevel->next)
         {
-            delete (*itd);
-            itd = dbDomains.erase(itd);
-        }
-    }
-
-    // clean up dbNodes, dbPorts and dbLinks lists
-    dbNodes.clear();
-    dbPorts.clear();
-    dbLinks.clear();    
-    // then re-add the updated elements to the lists
-    for (; itd != dbDomains.end(); itd++)
-    {
-        map<string, Node*, strcmpless>::iterator itn = (*itd)->GetNodes().begin();
-        for (; itn != (*itd)->GetNodes().end(); itn++)
-        {
-            dbNodes.push_back((DBNode*)(*itn).second);
-            map<string, Port*, strcmpless>::iterator itp = (*itn).second->GetPorts().begin();
-            for (; itp != (*itn).second->GetPorts().end(); itp++)
+            if (domainLevel->type != XML_ELEMENT_NODE || strncasecmp((const char*)domainLevel->name, "domain", 6) != 0)
+                continue;
+            bool newDomain = false;
+            string domainName = (const char*)xmlGetProp(domainLevel, (const xmlChar*)"id");
+            if (strstr(domainName.c_str(), "domain=") != NULL)
+                domainName = GetUrnField(domainName, "domain");
+            DBDomain* domain = LookupDomainByName(domainName);
+            if (domain == NULL)
             {
-                dbPorts.push_back((DBPort*)(*itp).second);
-                map<string, Link*, strcmpless>::iterator itl = (*itp).second->GetLinks().begin();
-                for (; itl != (*itp).second->GetLinks().end(); itl++)
-                {
-                    dbLinks.push_back((DBLink*)(*itl).second);
-                }
+                domain = new DBDomain(this, 0, domainName);
+                domain->SetXmlElement(domainLevel);            
+                dbDomains.push_back(domain);
+                newDomain = true;
             }
 
+            domain->UpdateFromXML(true);
+        }
+
+        // cleanup domains that no longer exist in XML
+        list<DBDomain*>::iterator itd = dbDomains.begin();
+        for (; itd != dbDomains.end(); itd++)
+        {
+            if((*itd)->GetXmlElement() == NULL)
+            {
+                delete (*itd);
+                itd = dbDomains.erase(itd);
+            }
+        }
+
+        // clean up dbNodes, dbPorts and dbLinks lists
+        dbNodes.clear();
+        dbPorts.clear();
+        dbLinks.clear();    
+        // then re-add the updated elements to the lists
+        for (; itd != dbDomains.end(); itd++)
+        {
+            map<string, Node*, strcmpless>::iterator itn = (*itd)->GetNodes().begin();
+            for (; itn != (*itd)->GetNodes().end(); itn++)
+            {
+                dbNodes.push_back((DBNode*)(*itn).second);
+                map<string, Port*, strcmpless>::iterator itp = (*itn).second->GetPorts().begin();
+                for (; itp != (*itn).second->GetPorts().end(); itp++)
+                {
+                    dbPorts.push_back((DBPort*)(*itp).second);
+                    map<string, Link*, strcmpless>::iterator itl = (*itp).second->GetLinks().begin();
+                    for (; itl != (*itp).second->GetLinks().end(); itl++)
+                    {
+                        dbLinks.push_back((DBLink*)(*itl).second);
+                    }
+                }
+
+            }
         }
     }
 }
-
 
 TEWG* TEDB::GetSnapshot(string& name)
 {

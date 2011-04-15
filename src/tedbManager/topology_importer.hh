@@ -43,12 +43,13 @@ class TopologyXMLImporter: public Timer
 {
 protected:
     TEDB* tedb;
-    string xmlFilePath;
-    time_t xmlFileModTime;
+    list<string> xmlFilePathList;
+    list<time_t> fileModTimeList;
+    void Init();
 
 public:
-    TopologyXMLImporter(TEDB* db, string& file): tedb(db), xmlFilePath(file), xmlFileModTime(0) { }
-    TopologyXMLImporter(TEDB* db, string& file, int interval): Timer(interval, 0, FOREVER), tedb(db), xmlFilePath(file), xmlFileModTime(0) { }
+    TopologyXMLImporter(TEDB* db, list<string>& fileList): tedb(db){ xmlFilePathList.assign(fileList.begin(), fileList.end()); Init(); }
+    TopologyXMLImporter(TEDB* db, list<string>& fileList, int interval): Timer(interval, 0, FOREVER), tedb(db) { xmlFilePathList.assign(fileList.begin(), fileList.end()); Init(); }
     virtual ~TopologyXMLImporter() { }
     virtual void Run();
 

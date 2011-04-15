@@ -35,31 +35,49 @@
 #include "topology_importer.hh"
 
 
+void TopologyXMLImporter::Init()
+{
+    list<string>::iterator itF = xmlFilePathList.begin();
+    for (; itF != xmlFilePathList.end(); itF++)
+    {
+        fileModTimeList.push_back((time_t)0);
+    }
+}
+
 void TopologyXMLImporter::Run()
 {
-    time_t lastModTime = get_mtime((const char *)xmlFilePath.c_str());
-    if (lastModTime == 0)
+    char buf[128];
+    list<string>::iterator itF = xmlFilePathList.begin();
+    list<time_t>::iterator itT = fileModTimeList.begin();
+    bool hasUpdate = false;
+    for (; itF != xmlFilePathList.end(); itF++, itT++)
     {
-        char buf[128];
-        snprintf(buf, 128, "TopologyXMLImporter::Run failed to open XML file: %s", xmlFilePath.c_str());
-        throw TEDBException(buf);
+        time_t lastModTime = get_mtime((const char *)(*itF).c_str());
+        if (lastModTime == 0)
+        {
+            snprintf(buf, 128, "TopologyXMLImporter::Run failed to open XML topology file: %s", (*itF).c_str());
+            throw TEDBException(buf);
+        }
+        if ((*itT) >= lastModTime)  // XML topology file has not been modified since last import. 
+            continue;
+        (*itT) = lastModTime;
+        hasUpdate = true;
+        xmlDocPtr xmlDoc = xmlParseFile((*itF).c_str());
+        if (xmlDoc == NULL)
+        {
+            snprintf(buf, 128, "TopologyXMLImporter::Run failed to parse XML topology file: %s", (*itF).c_str());
+            throw TEDBException(buf);
+        }
+        tedb->LockDB();
+        tedb->AddXmlDomainTree(xmlDoc);
+        tedb->UnlockDB();
     }
-    if (xmlFileModTime >= lastModTime)  // XML topology file has not been modified since last import. 
-        return;
-    xmlFileModTime = lastModTime;
-    tedb->LockDB();
-
-    xmlDocPtr xmlDoc = xmlParseFile(xmlFilePath.c_str());
-    if (xmlDoc == NULL)
+    if (hasUpdate)
     {
-        char buf[128];
-        snprintf(buf, 128, "TopologyXMLImporter::Run failed to parse XML file: %s", xmlFilePath.c_str());
-        throw TEDBException(buf);
+        tedb->LockDB();
+        tedb->ClearXmlTrees();
+        tedb->PopulateXmlTrees();
+        tedb->UnlockDB();
     }
-    tedb->ClearXmlTree();
-    tedb->SetXmlTree(xmlDoc);
-    tedb->PopulateXmlTree();
-
-    tedb->UnlockDB();
 };
 
