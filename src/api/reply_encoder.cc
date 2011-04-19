@@ -42,22 +42,42 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     if (path_info != NULL) 
     {
     	path = path_info->GetPath();
+
     	for(list<TLink*>::iterator it=path.begin();it!=path.end();it++)
     	{
+    		cout<<"id="<<(*it)->GetId()<<endl;
+    		cout<<"name="<<(*it)->GetName()<<endl;
     		sw_cap_descriptors=(*it)->GetTheISCD();
+
+
+
+    		cout<<"switchingtype="<<(int)sw_cap_descriptors->switchingType<<endl;
+    		cout<<"encodingtype="<<(int)sw_cap_descriptors->encodingType<<endl;
+    		cout<<"capacity="<<sw_cap_descriptors->capacity<<endl;
 
     		switchingType = sw_cap_descriptors->switchingType;
     		encodingType = sw_cap_descriptors->encodingType;
 
-
     	    switch (switchingType)
     	    {
     	        case LINK_IFSWCAP_L2SC:
+    	        	cout<<"mtu="<<((ISCD_L2SC*)sw_cap_descriptors)->mtu<<endl;
+    	        	cout<<"vlantranslation="<<((ISCD_L2SC*)sw_cap_descriptors)->vlanTranslation<<endl;
+    	        	if(!(((ISCD_L2SC*)sw_cap_descriptors)->assignedVlanTags).IsEmpty())
+    	        	{
+    	        		cout<<"assignedvlantags is not empty"<<endl;
+    	        	}
+    	        	if(!(((ISCD_L2SC*)sw_cap_descriptors)->suggestedVlanTags).IsEmpty())
+    	        	{
+    	        		cout<<"suggestedvalntags is not empty"<<endl;
+    	        	}
+
     	        	availableVlanTags = &((ISCD_L2SC*)sw_cap_descriptors)->availableVlanTags;
     	        	if(!availableVlanTags->IsEmpty())
     	        	{
     	        		rangStr=availableVlanTags->GetRangeString();
     	        		pri_type_encoder->encodeString(PCE_SWITCHINGVLANRANGEAVAI, rangStr);
+    	        		cout<<"temp str="<<rangStr<<endl;
     	        	}
 
     	            //iscd = new ISCD_L2SC(capacity, mtu);
@@ -66,22 +86,28 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     	            break;
     	        case LINK_IFSWCAP_PSC1:
     	            //iscd = new ISCD_PSC(1, capacity, mtu);
+    	        	cout<<"LINK_IFSWCAP_PSC1"<<endl;
     	            break;
     	        case LINK_IFSWCAP_TDM:
     	            //iscd = new ISCD_TDM(capacity, minBandwidth);
     	            //((ISCD_TDM*)iscd)->availableTimeSlots.LoadRangeString(timeslotRange);
+    	        	cout<<"LINK_IFSWCAP_TDM"<<endl;
     	            break;
     	        case LINK_IFSWCAP_LSC:
     	            //iscd = new ISCD_LSC(capacity);
     	            //((ISCD_LSC*)iscd)->availableWavelengths.LoadRangeString(wavelengthRange);
     	            //((ISCD_LSC*)iscd)->wavelengthTranslation = wavelengthTranslation;
+    	        	cout<<"LINK_IFSWCAP_LSC"<<endl;
     	            break;
     	        default:
     	            // type not supported
+    	        	cout<<"other"<<endl;
     	            return NULL;
     	    }
     	}
     }
+
+
 
 
 
