@@ -30,6 +30,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     u_char	switchingType;
     u_char	encodingType;
     ConstraintTagSet* availableVlanTags;
+    ConstraintTagSet* suggestedVlanTags;
     string rangStr="";
 
 	char print_buff[200];
@@ -47,6 +48,9 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     	{
     		cout<<"id="<<(*it)->GetId()<<endl;
     		cout<<"name="<<(*it)->GetName()<<endl;
+
+    		pri_type_encoder->encodeString(PCE_LINK_ID, (*it)->GetName());//encode link id (name)
+
     		sw_cap_descriptors=(*it)->GetTheISCD();
 
 
@@ -63,6 +67,11 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     	        case LINK_IFSWCAP_L2SC:
     	        	cout<<"mtu="<<((ISCD_L2SC*)sw_cap_descriptors)->mtu<<endl;
     	        	cout<<"vlantranslation="<<((ISCD_L2SC*)sw_cap_descriptors)->vlanTranslation<<endl;
+
+    	        	pri_type_encoder->encodeString(PCE_SWITCHINGCAPTYPE, "l2sc");
+
+
+
     	        	if(!(((ISCD_L2SC*)sw_cap_descriptors)->assignedVlanTags).IsEmpty())
     	        	{
     	        		cout<<"assignedvlantags is not empty"<<endl;
@@ -77,6 +86,13 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     	        	{
     	        		rangStr=availableVlanTags->GetRangeString();
     	        		pri_type_encoder->encodeString(PCE_SWITCHINGVLANRANGEAVAI, rangStr);
+    	        		cout<<"temp str="<<rangStr<<endl;
+    	        	}
+    	        	suggestedVlanTags = &((ISCD_L2SC*)sw_cap_descriptors)->suggestedVlanTags;
+    	        	if(!suggestedVlanTags->IsEmpty())
+    	        	{
+    	        		rangStr=suggestedVlanTags->GetRangeString();
+    	        		pri_type_encoder->encodeString(PCE_SWITCHINGVLANRANGESUGG, rangStr);
     	        		cout<<"temp str="<<rangStr<<endl;
     	        	}
 
@@ -104,6 +120,43 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     	        	cout<<"other"<<endl;
     	            return NULL;
     	    }
+
+
+    	    switch (encodingType)
+    	    {
+    	    	case LINK_IFSWCAP_ENC_PKT:
+    	    		break;
+    	    	case LINK_IFSWCAP_ENC_ETH:
+    	    		pri_type_encoder->encodeString(PCE_SWITCHINGENCTYPE, "ethernet");
+    	    		break;
+    	    	case LINK_IFSWCAP_ENC_PDH:
+    	    		break;
+    	    	case LINK_IFSWCAP_ENC_RESV1:
+    	    		break;
+    	    	case LINK_IFSWCAP_ENC_SONETSDH:
+    	    		break;
+    	    	case LINK_IFSWCAP_ENC_RESV2:
+    	    		break;
+    	    	case LINK_IFSWCAP_ENC_DIGIWRAP:
+    	    		break;
+    	    	case LINK_IFSWCAP_ENC_LAMBDA:
+    	    		break;
+    	    	case LINK_IFSWCAP_ENC_FIBER:
+    	    		break;
+    	    	case LINK_IFSWCAP_ENC_RESV3:
+    	    		break;
+    	    	case LINK_IFSWCAP_ENC_FIBRCHNL:
+    	    		break;
+    	    	case LINK_IFSWCAP_ENC_G709ODUK:
+    	    		break;
+    	    	case LINK_IFSWCAP_ENC_G709OCH:
+    	    		break;
+    	    	default:
+    	    		break;
+    	    }
+
+
+
     	}
     }
 
