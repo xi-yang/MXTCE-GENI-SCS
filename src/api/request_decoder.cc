@@ -47,7 +47,7 @@ Apimsg_user_constraint* Apireqmsg_decoder::test_decode_msg(char* apimsg_body, in
 }
 
 
-void Apireqmsg_decoder::decode_usercons(char* decode_ptr, int total_len, Apimsg_user_constraint* user_cons)
+void Apireqmsg_decoder::decode_usercons(char* & decode_ptr, int total_len, Apimsg_user_constraint* user_cons)
 {
 	int length=0;
 	int starttime=0;
@@ -240,6 +240,8 @@ void Apireqmsg_decoder::decode_usercons(char* decode_ptr, int total_len, Apimsg_
 
     outfile.close();
 
+    cout<<"decode user cons"<<endl;
+
 
 }
 
@@ -416,7 +418,7 @@ void Apireqmsg_decoder::decode_resvcons(char* decode_ptr, int total_len, Apimsg_
 
 
 
-
+	cout<<"decode resv cons"<<endl;
 
     //for debug issue output result to file
 	string debug_output_path = getenv("HOME");
