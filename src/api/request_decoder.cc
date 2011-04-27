@@ -10,7 +10,7 @@ Apimsg_user_constraint* Apireqmsg_decoder::test_decode_msg(char* apimsg_body, in
 {
     char* decode_ptr;
     u_int8_t type;
-    int len_tag_len;
+    int len_tag_len = 0;
     Apimsg_user_constraint* user_cons=NULL;
     int length=0;
     int length_decoded=0;
@@ -22,6 +22,7 @@ Apimsg_user_constraint* Apireqmsg_decoder::test_decode_msg(char* apimsg_body, in
     decode_ptr=apimsg_body;
     memcpy(&type, decode_ptr, sizeof(char));
     decode_ptr++;
+    length_decoded++;
 
     if(type==PCE_USERCONSTRAINT)
     {
@@ -30,19 +31,27 @@ Apimsg_user_constraint* Apireqmsg_decoder::test_decode_msg(char* apimsg_body, in
         //decode_ptr=decode_ptr+len_tag_len;
     	this->decode_usercons(decode_ptr,length,user_cons);
     	cout<<"user constraint"<<endl;
-    }
-    else if(type==PCE_RESERVEDCONSTRAINT)
-    {
-    	user_cons = new Apimsg_user_constraint();
-    	length=pri_type_decoder.getLen(decode_ptr, len_tag_len);
-        //decode_ptr=decode_ptr+len_tag_len;
-    	this->decode_usercons(decode_ptr,length,user_cons);
-    	cout<<"resv constraint"<<endl;
-    }
+    	length_decoded = length_decoded + len_tag_len + length;
 
+
+        if(length_decoded!=msg_length)
+        {
+        	memcpy(&type, decode_ptr, sizeof(char));
+            decode_ptr++;
+            length_decoded++;
+        	if(type==PCE_RESERVEDCONSTRAINT)
+    	    {
+    	    	length=pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    	        //decode_ptr=decode_ptr+len_tag_len;
+    	    	this->decode_resvcons(decode_ptr,length,user_cons);
+    	    	cout<<"resv constraint"<<endl;
+    	    }
+
+
+        }
+    }
 
     return user_cons;
-
 
 }
 

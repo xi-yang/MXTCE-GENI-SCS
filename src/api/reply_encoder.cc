@@ -70,8 +70,6 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 
     	        	pri_type_encoder->encodeString(PCE_SWITCHINGCAPTYPE, "l2sc");
 
-
-
     	        	if(!(((ISCD_L2SC*)sw_cap_descriptors)->assignedVlanTags).IsEmpty())
     	        	{
     	        		cout<<"assignedvlantags is not empty"<<endl;
@@ -162,9 +160,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 
 
 
-
-
-
+    /*
 	int a=2000;
 	string b="test demo";
 	float c=600.78;
@@ -174,6 +170,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	pri_type_encoder->encodeString(PCE_TEST3, b);
 	pri_type_encoder->encodeFloat(PCE_TEST1, c);
 	pri_type_encoder->encodeDouble(PCE_TEST2, d);
+    */
 
 	msg_sub_ptr=pri_type_encoder->get_buff();
 	msg_sublen=pri_type_encoder->get_length();
