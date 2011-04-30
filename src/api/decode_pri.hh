@@ -15,6 +15,7 @@ class Decode_Pri_Type
 public:
 
 	int getLen(char* &, int &);
+	bool decodeBoolean(char* &, int);
 	int decodeInt(char* &, int);
 	string decodeStr(char* &, int);
 	float decodeFlo(char* &, int);

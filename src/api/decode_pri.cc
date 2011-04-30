@@ -37,6 +37,26 @@ int Decode_Pri_Type::getLen(char* & decode_ptr, int & len_tag_len)
      return length;
 }
 
+bool Decode_Pri_Type::decodeBoolean(char* & decode_ptr, int length)
+{
+	bool result = 0;
+	u_int8_t bytevalue=0;
+
+	memcpy(&bytevalue, decode_ptr++, sizeof(char));
+
+	if(bytevalue==0)
+	{
+		result = false;
+	}
+	else
+	{
+		result = true;
+	}
+
+	return result;
+
+}
+
 int Decode_Pri_Type::decodeInt(char* & decode_ptr, int length)
 {
 	int intvalue = 0;
@@ -48,7 +68,7 @@ int Decode_Pri_Type::decodeInt(char* & decode_ptr, int length)
 	intvalue = bytevalue & 0xFF;
     if((intvalue & 0x80)>0)
 	{
-		result = -1;
+		result = -1;  //result is negative, use -1 (all bit set to 1) as initial value to shift left
 	}
 
 	while(length-- >0)

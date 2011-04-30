@@ -76,6 +76,24 @@ void Encode_Pri_Type::encodeHeader(u_int8_t pceType, u_int8_t priType, int lengt
 	}
 }
 
+void Encode_Pri_Type::encodeBoolean(u_int8_t pcetype, bool value)
+{
+	bool bool_val = value;
+	int boolsize = 1;
+	u_int8_t priType = BOOLEAN;
+
+	buff_rem_check(boolsize+6);
+	encodeHeader(pcetype, priType, boolsize);
+	if(bool_val==true)
+	{
+		buff[offset++] = (u_int8_t)0x01;
+	}
+	else
+	{
+		buff[offset++] = (u_int8_t)0x00;
+	}
+}
+
 void Encode_Pri_Type::encodeInteger(u_int8_t pcetype, int value)
 {
 	int int_val = value;
