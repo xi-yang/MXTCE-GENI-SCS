@@ -38,8 +38,15 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     memcpy(&compute_result, msg->GetTLVList().front()->value, sizeof(void*));
 
 	gri = compute_result->GetGri();
+	cout<<"gri="<<gri<<endl;
+	pri_type_encoder->encodeString(PCE_GRI, gri);
 	err_msg = compute_result->GetErrMessage();
+	cout<<"error msg="<<err_msg<<endl;
 	path_info = compute_result->GetPathInfo();
+	if(path_info == NULL)
+	{
+		cout<<"path info is null"<<endl;
+	}
     if (path_info != NULL) 
     {
     	path = path_info->GetPath();
@@ -84,14 +91,14 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     	        	{
     	        		rangStr=availableVlanTags->GetRangeString();
     	        		pri_type_encoder->encodeString(PCE_SWITCHINGVLANRANGEAVAI, rangStr);
-    	        		cout<<"temp str="<<rangStr<<endl;
+    	        		cout<<"availableVlanTags="<<rangStr<<endl;
     	        	}
     	        	suggestedVlanTags = &((ISCD_L2SC*)sw_cap_descriptors)->suggestedVlanTags;
     	        	if(!suggestedVlanTags->IsEmpty())
     	        	{
     	        		rangStr=suggestedVlanTags->GetRangeString();
     	        		pri_type_encoder->encodeString(PCE_SWITCHINGVLANRANGESUGG, rangStr);
-    	        		cout<<"temp str="<<rangStr<<endl;
+    	        		cout<<"suggestedVlanTags="<<rangStr<<endl;
     	        	}
 
     	            //iscd = new ISCD_L2SC(capacity, mtu);
