@@ -31,11 +31,17 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     u_char	encodingType;
     ConstraintTagSet* availableVlanTags;
     ConstraintTagSet* suggestedVlanTags;
+    ConstraintTagSet* assignedVlanTags;
+    bool vlanTranslation;
+    int mtu;
+    int capacity;
     string rangStr="";
 
 	char print_buff[200];
 
     memcpy(&compute_result, msg->GetTLVList().front()->value, sizeof(void*));
+
+    cout<<"int="<<sizeof(int)<<" long="<<sizeof(long)<<endl;
 
 	gri = compute_result->GetGri();
 	cout<<"gri="<<gri<<endl;
@@ -50,6 +56,9 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     if (path_info != NULL) 
     {
     	path = path_info->GetPath();
+    	cout<<"path length="<<path.size()<<endl;
+
+    	pri_type_encoder->encodeInteger(PCE_PATH_LENGTH, path.size());
 
     	for(list<TLink*>::iterator it=path.begin();it!=path.end();it++)
     	{
@@ -61,10 +70,13 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     		sw_cap_descriptors=(*it)->GetTheISCD();
 
 
-
     		cout<<"switchingtype="<<(int)sw_cap_descriptors->switchingType<<endl;
     		cout<<"encodingtype="<<(int)sw_cap_descriptors->encodingType<<endl;
     		cout<<"capacity="<<sw_cap_descriptors->capacity<<endl;
+
+    		capacity = sw_cap_descriptors->capacity;
+
+    		pri_type_encoder->encodeInteger(PCE_CAPACITY, capacity);
 
     		switchingType = sw_cap_descriptors->switchingType;
     		encodingType = sw_cap_descriptors->encodingType;
@@ -75,6 +87,14 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     	        	cout<<"mtu="<<((ISCD_L2SC*)sw_cap_descriptors)->mtu<<endl;
     	        	cout<<"vlantranslation="<<((ISCD_L2SC*)sw_cap_descriptors)->vlanTranslation<<endl;
 
+    	        	mtu = ((ISCD_L2SC*)sw_cap_descriptors)->mtu;
+
+    	        	pri_type_encoder->encodeInteger(PCE_MTU, mtu);
+
+    	        	vlanTranslation = ((ISCD_L2SC*)sw_cap_descriptors)->vlanTranslation;
+
+    	        	pri_type_encoder->encodeBoolean(PCE_VLANTRANSLATION, vlanTranslation);
+
     	        	pri_type_encoder->encodeString(PCE_SWITCHINGCAPTYPE, "l2sc");
 
     	        	if(!(((ISCD_L2SC*)sw_cap_descriptors)->assignedVlanTags).IsEmpty())
@@ -83,7 +103,11 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     	        	}
     	        	if(!(((ISCD_L2SC*)sw_cap_descriptors)->suggestedVlanTags).IsEmpty())
     	        	{
-    	        		cout<<"suggestedvalntags is not empty"<<endl;
+    	        		cout<<"suggestedvlantags is not empty"<<endl;
+    	        	}
+    	        	if(!(((ISCD_L2SC*)sw_cap_descriptors)->availableVlanTags).IsEmpty())
+    	        	{
+    	        		cout<<"availablevlantags is not empty"<<endl;
     	        	}
 
     	        	availableVlanTags = &((ISCD_L2SC*)sw_cap_descriptors)->availableVlanTags;
@@ -99,6 +123,13 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     	        		rangStr=suggestedVlanTags->GetRangeString();
     	        		pri_type_encoder->encodeString(PCE_SWITCHINGVLANRANGESUGG, rangStr);
     	        		cout<<"suggestedVlanTags="<<rangStr<<endl;
+    	        	}
+    	        	assignedVlanTags = &((ISCD_L2SC*)sw_cap_descriptors)->assignedVlanTags;
+    	        	if(!assignedVlanTags->IsEmpty())
+    	        	{
+    	        		rangStr=assignedVlanTags->GetRangeString();
+    	        		pri_type_encoder->encodeString(PCE_SWITCHINGVLANRANGEASSI, rangStr);
+    	        		cout<<"assignedVlanTags="<<rangStr<<endl;
     	        	}
 
     	            //iscd = new ISCD_L2SC(capacity, mtu);
@@ -182,10 +213,10 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	msg_sub_ptr=pri_type_encoder->get_buff();
 	msg_sublen=pri_type_encoder->get_length();
 
-	msg_sub_start_ptr=encode_msg_sub_start(pceType, msg_sublen, msg_sub_startlen);
+	msg_sub_start_ptr=encode_msg_sub_start(pceType, msg_sublen, msg_sub_startlen); //encode the subfield-header
 
-	msg_body_ptr=encode_merge_buff(msg_sub_start_ptr, msg_sub_startlen, msg_sub_ptr, msg_sublen);
-	msg_len=msg_sub_startlen + msg_sublen;
+	msg_body_ptr=encode_merge_buff(msg_sub_start_ptr, msg_sub_startlen, msg_sub_ptr, msg_sublen);  //merge subfield-header and body
+	msg_len=msg_sub_startlen + msg_sublen; //body length
 
 	delete[] msg_sub_start_ptr;
 	delete[] msg_sub_ptr;
