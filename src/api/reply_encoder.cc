@@ -44,6 +44,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     cout<<"int="<<sizeof(int)<<" long="<<sizeof(long)<<endl;
 
 	gri = compute_result->GetGri();
+	this->gri_value = gri;
 	cout<<"gri="<<gri<<endl;
 	pri_type_encoder->encodeString(PCE_GRI, gri);
 	err_msg = compute_result->GetErrMessage();
@@ -56,6 +57,9 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     if (path_info != NULL) 
     {
     	path = path_info->GetPath();
+
+    	pri_type_encoder->encodeString(PCE_PATH_ID, "path-1");
+
     	cout<<"path length="<<path.size()<<endl;
 
     	pri_type_encoder->encodeInteger(PCE_PATH_LENGTH, path.size());
@@ -223,6 +227,18 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 
 	body=(char*)msg_body_ptr;
 	this->length=msg_len;
+
+	/*
+    ofstream outfile("/home/wind/encodebin.txt", ios::binary);
+    if(! outfile)
+    {
+        cerr<<"open error!"<<endl;
+        exit(1);
+    }
+
+    outfile.write((char*)body, msg_len);
+    outfile.close();
+*/
 
 	return this->length;
 

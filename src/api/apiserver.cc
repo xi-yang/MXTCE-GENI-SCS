@@ -86,6 +86,8 @@ void APIServerThread::hookHandleMessage()
 {
     Message* msg = NULL;
     int msg_body_len = 0;
+    string gri;
+    char buf[128];
     while ((msg = msgPort->GetMessage()) != NULL)
     {
         msg->LogDump();
@@ -93,7 +95,22 @@ void APIServerThread::hookHandleMessage()
         api_msg* apiMsg = new api_msg();
         Apireplymsg_encoder* api_encoder = new Apireplymsg_encoder();
         msg_body_len = api_encoder->test_encode_msg(msg,apiMsg->body);
+
         api_encoder->encode_msg_header(apiMsg->header, msg_body_len);
+
+
+        ofstream outfile("/home/wind/encodebin.txt", ios::binary);
+        if(! outfile)
+        {
+            cerr<<"open error!"<<endl;
+            exit(1);
+        }
+
+        outfile.write((char*)apiMsg->body, msg_body_len);
+        outfile.close();
+
+
+        cout<<"test1"<<endl;
 
         //@@@@ Example code
         //$$ get reply object from msg 
@@ -116,6 +133,26 @@ void APIServerThread::hookHandleMessage()
         //$$          throw exception ...
         //$$ apiConn->GetWriter()->PostMessage(apiMsg);
         //$$ apiClientConns.erase(itClientConn);
+
+        gri = api_encoder->get_gri();
+        cout<<"test2"<<endl;
+        map<string, APIReader*, strcmpless>::iterator itClientConn = this->apiServer.apiClientConns.find(gri);
+        cout<<"test3"<<endl;
+        APIReader* clientConn = (itClientConn !=  this->apiServer.apiClientConns.end() ?  this->apiServer.apiClientConns[gri] : NULL);
+        cout<<"test4"<<endl;
+        if (!clientConn || !clientConn->GetWriter())
+        {
+        	cout<<"can not get APIReader"<<endl;
+            snprintf(buf, 128, "APIServerThread::hookHandleMessage() can't get APIReader");
+            LOG(buf<<endl);
+            throw APIException(buf);
+        }
+        cout<<"test5"<<endl;
+
+        clientConn->GetWriter()->PostMessage(apiMsg);
+        cout<<"test6"<<endl;
+        this->apiServer.apiClientConns.erase(itClientConn);
+        cout<<"test7"<<endl;
 
         //delete msg; //msg consumed ?
     }

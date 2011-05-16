@@ -16,6 +16,8 @@ protected:
 	int length;
 	static int msg_seq_num;
 
+	string gri_value;
+
 	u_int8_t* encode_msg_sub_start(u_int8_t , int , int& );
 	u_int8_t* encode_merge_buff(u_int8_t* , int , u_int8_t* , int );
 
@@ -35,6 +37,11 @@ public:
 	int test_encode_msg(Message*, char*&);
 
 	void encode_msg_header(api_msg_header&, int);
+
+	string get_gri()
+	{
+		return this->gri_value;
+	}
 
 };
 

@@ -50,9 +50,10 @@ class MxTCEAPIServer: public APIServer
 {
 protected:
     APIServerThread* apiThread;
-    map<string, APIReader*, strcmpless> apiClientConns;
+    //map<string, APIReader*, strcmpless> apiClientConns;
 
 public:
+    map<string, APIReader*, strcmpless> apiClientConns;
     MxTCEAPIServer(int port , APIServerThread* thread): APIServer(port, NULL), apiThread(thread) {
         assert (thread);
     }
