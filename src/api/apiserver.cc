@@ -98,7 +98,7 @@ void APIServerThread::hookHandleMessage()
 
         api_encoder->encode_msg_header(apiMsg->header, msg_body_len);
 
-
+        /*
         ofstream outfile("/home/wind/encodebin.txt", ios::binary);
         if(! outfile)
         {
@@ -108,9 +108,10 @@ void APIServerThread::hookHandleMessage()
 
         outfile.write((char*)apiMsg->body, msg_body_len);
         outfile.close();
+        */
 
 
-        cout<<"test1"<<endl;
+        //cout<<"test1"<<endl;
 
         //@@@@ Example code
         //$$ get reply object from msg 
@@ -135,11 +136,11 @@ void APIServerThread::hookHandleMessage()
         //$$ apiClientConns.erase(itClientConn);
 
         gri = api_encoder->get_gri();
-        cout<<"test2"<<endl;
+        //cout<<"test2"<<endl;
         map<string, APIReader*, strcmpless>::iterator itClientConn = this->apiServer.apiClientConns.find(gri);
-        cout<<"test3"<<endl;
+        //cout<<"test3"<<endl;
         APIReader* clientConn = (itClientConn !=  this->apiServer.apiClientConns.end() ?  this->apiServer.apiClientConns[gri] : NULL);
-        cout<<"test4"<<endl;
+        //cout<<"test4"<<endl;
         if (!clientConn || !clientConn->GetWriter())
         {
         	cout<<"can not get APIReader"<<endl;
@@ -147,12 +148,12 @@ void APIServerThread::hookHandleMessage()
             LOG(buf<<endl);
             throw APIException(buf);
         }
-        cout<<"test5"<<endl;
+        //cout<<"test5"<<endl;
 
         clientConn->GetWriter()->PostMessage(apiMsg);
-        cout<<"test6"<<endl;
+        //cout<<"test6"<<endl;
         this->apiServer.apiClientConns.erase(itClientConn);
-        cout<<"test7"<<endl;
+        //cout<<"test7"<<endl;
 
         //delete msg; //msg consumed ?
     }

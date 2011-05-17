@@ -356,8 +356,8 @@ void APIWriter::PostMessage (api_msg *msg, bool urgent)
 {
     assert (msg);
 
-    cout<<"test8"<<endl;
-    cout<<"msgqueue"<<this->msgQueue.size()<<endl;
+    //cout<<"test8"<<endl;
+    //cout<<"msgqueue"<<this->msgQueue.size()<<endl;
 
     if (urgent == URGENT_POST)
         this->msgQueue.push_front(msg);
@@ -365,11 +365,11 @@ void APIWriter::PostMessage (api_msg *msg, bool urgent)
         this->msgQueue.push_back(msg);
         cout<<"test tmp"<<endl;
     }
-    cout<<"test9"<<endl;
+    //cout<<"test9"<<endl;
 
     this->SetRepeats(0);
 
-    cout<<"test10"<<endl;
+    //cout<<"test10"<<endl;
 
     this->SetObsolete(false);
     if (msgQueue.size() == 1)
