@@ -20,6 +20,6 @@ DEFS = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)/\"
 INSTALL_SDATA=@INSTALL@ -m 600
 
 # -- Libraries Sources
-libapi_a_SOURCES = api.hh apiserver.hh api_constraint.hh decode_pri.hh reserved_constraint.hh tag_id.hh user_constraint.hh encode_pri.hh reply_encoder.hh request_decoder.hh request_encoder.hh
-libapi_a_SOURCES += api.cc apiserver.cc decode_pri.cc request_decoder.cc encode_pri.cc reply_encoder.cc request_encoder.cc
+libapi_a_SOURCES = api.hh apiserver.hh api_constraint.hh decode_pri.hh reserved_constraint.hh tag_id.hh user_constraint.hh encode_pri.hh reply_encoder.hh request_decoder.hh request_encoder.hh compute_result.hh reply_decoder.hh
+libapi_a_SOURCES += api.cc apiserver.cc decode_pri.cc request_decoder.cc encode_pri.cc reply_encoder.cc request_encoder.cc reply_decoder.cc
 
