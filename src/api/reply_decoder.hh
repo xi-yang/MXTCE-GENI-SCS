@@ -11,6 +11,7 @@
 #include "tag_id.hh"
 #include "decode_pri.hh"
 #include "compute_result.hh"
+#include "api.hh"
 #include <string>
 
 class Apireplymsg_decoder
@@ -22,6 +23,7 @@ public:
 
 	Compute_result* decode_reply_msg(char*, int);
 	void decode_compute_result(char* &, int , Compute_result* );
+
 
 
 
