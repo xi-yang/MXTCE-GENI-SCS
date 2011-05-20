@@ -41,7 +41,7 @@ Compute_result* Apireplymsg_decoder::decode_reply_msg(char* apimsg_body, int msg
 void Apireplymsg_decoder::decode_compute_result(char* & decode_ptr, int total_len, Compute_result* compute_res)
 {
 
-;
+
 	string gri="";
 	string path_name="";
 	int path_len=0;

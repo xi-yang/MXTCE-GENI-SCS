@@ -38,6 +38,7 @@
 #include "log.hh"
 #include "api.hh"
 #include "request_encoder.hh"
+#include "reply_decoder.hh"
 
 #ifndef HAVE_DECL_GETOPT
   #define HAVE_DECL_GETOPT 1
@@ -177,13 +178,16 @@ int main( int argc, char* argv[])
     }
 
     Apireqmsg_encoder* encoder = new  Apireqmsg_encoder();
+    Apireplymsg_decoder* decoder = new Apireplymsg_decoder();
     api_msg* msg = encoder->test_encode_msg(user_cons);
     assert(msg != NULL);
     APIClient* client = new APIClient(api_host, api_port);
+    Compute_result* compute_res = NULL;
     try {
         client->Connect();
         client->SendMessage(msg);
         msg = client->ReadMessage();
+        compute_res = decoder->decode_reply_msg(msg->body, ntohs(msg->header.length));
     } catch (TCEException e) {
         LOG("MxTCE Test API client caught APIException with errMsg: " << e.GetMessage() <<endl);
         return -1;
