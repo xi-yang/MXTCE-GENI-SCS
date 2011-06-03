@@ -188,6 +188,14 @@ int main( int argc, char* argv[])
         client->SendMessage(msg);
         msg = client->ReadMessage();
         compute_res = decoder->decode_reply_msg(msg->body, ntohs(msg->header.length));
+        if(compute_res->getErrorMsg()!="")
+        {
+        	//cout<<"compute fails with error: "<<compute_res->getErrorMsg()<<endl;
+        }
+        else
+        {
+        	//cout<<"compute succeed with result"<<endl;
+        }
     } catch (TCEException e) {
         LOG("MxTCE Test API client caught APIException with errMsg: " << e.GetMessage() <<endl);
         return -1;

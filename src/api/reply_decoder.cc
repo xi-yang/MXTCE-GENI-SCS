@@ -43,6 +43,7 @@ void Apireplymsg_decoder::decode_compute_result(char* & decode_ptr, int total_le
 
 
 	string gri="";
+	string error_msg="";
 	string path_name="";
 	int path_len=0;
 	Link_info* link=NULL;
@@ -78,6 +79,17 @@ void Apireplymsg_decoder::decode_compute_result(char* & decode_ptr, int total_le
 
 	memcpy(&type, decode_ptr++, sizeof(char));
 	decoded_len++;
+
+	if(type == PCE_COMPUTE_ERROR)
+	{
+		length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+		error_msg = pri_type_decoder.decodeStr(decode_ptr,length);
+		decoded_len = decoded_len + len_tag_len + length;
+		compute_res->setErrorMsg(error_msg);
+
+		return;
+	}
+
 	if(type == PCE_PATH_ID)
 	{
 		length = pri_type_decoder.getLen(decode_ptr, len_tag_len);

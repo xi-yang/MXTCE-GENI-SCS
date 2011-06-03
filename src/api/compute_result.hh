@@ -54,13 +54,21 @@ class Compute_result
 {
 protected:
 	string gri;
+	string error_msg;
 	list<Link_info*> path;
 
 public:
+	Compute_result()
+	{
+		error_msg="";
+	}
+
 	void setGri(string& t_gri) {this->gri = t_gri;}
 	string& getGri() {return this->gri;}
     list<Link_info*>& GetPath() { return path; }
     void SetPath(list<Link_info*>& t_path) { path.assign(t_path.begin(), t_path.end()); }
+    void setErrorMsg(string& t_error_msg) {this->error_msg = t_error_msg;}
+    string& getErrorMsg() {return this->error_msg; }
 
 };
 
