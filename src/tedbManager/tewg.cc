@@ -1591,7 +1591,7 @@ void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<T
 void TEWG::LogDumpWithFlags()
 {
     char buf[102400]; //up to 100K
-    char str[128];
+    char str[256];
     strcpy(buf, "TEWG Dump...\n");
     list<TDomain*>::iterator itd = this->tDomains.begin();
     for (; itd != this->tDomains.end(); itd++)
