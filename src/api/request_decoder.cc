@@ -463,7 +463,9 @@ void Apireqmsg_decoder::decode_resvcons(char* decode_ptr, int total_len, Apimsg_
     			outfile<<"switching capability type="<<hops->getSwitchingcaptype()<<endl;
     			outfile<<"encoding type="<<hops->getEncodingtype()<<endl;
     			outfile<<"vlan range availability="<<hops->getVlanrangeavailability()<<endl;
+    			hops = hops + 1;
     		}
+    		hops = NULL;
     	}
 
     }
