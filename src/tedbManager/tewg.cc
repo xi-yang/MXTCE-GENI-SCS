@@ -1099,7 +1099,7 @@ BandwidthAvailabilityGraph* TPath::CreatePathBAG(time_t start, time_t end)
     return bag;
 }
 
-TPath* TPath::Clone()
+TPath* TPath::Clone(bool doExpandRemoteLink)
 {
     TPath* P = new TPath;
     P->SetCost(this->cost);
@@ -1109,14 +1109,19 @@ TPath* TPath::Clone()
     for (itL = this->path.begin(); itL != this->path.end(); itL++)
     {
         TLink* L = (*itL)->Clone();
-        P->GetPath().push_back(L);
-        if (lastLink && L->GetPort()->GetNode() != lastLink->GetPort()->GetNode())
+        if (doExpandRemoteLink && lastLink 
+            && L->GetPort()->GetNode() != lastLink->GetPort()->GetNode() 
+            && lastLink->GetRemoteLink() && lastLink->GetRemoteLink() != L)
         {
-            lastLink->SetRemoteLink(L);
-            L->SetRemoteLink(lastLink);
+            TLink* rL = ((TLink*)lastLink->GetRemoteLink())->Clone();
+            lastLink->SetRemoteLink(rL);
+            rL->SetRemoteLink(lastLink);
+            P->GetPath().push_back(rL);
         }
         lastLink = L;
+        P->GetPath().push_back(L);
     }
+    // TODO: set all port, lclEnd and rmtEnd to NULL
     return P;
 }
 
@@ -1141,6 +1146,7 @@ void TPath::LogDump()
                 L->GetPort()->GetName().c_str(), 
                 L->GetName().c_str());
             strcat(buf, str);
+            /*
             if (L->GetRemoteLink() && !(*L == *((TLink*)L->GetRemoteLink())))
             {
                 snprintf(str, 256, " ->%s:%s:%s:%s",
@@ -1150,6 +1156,7 @@ void TPath::LogDump()
                     L->GetRemoteLink()->GetName().c_str());
                 strcat(buf, str);
             }
+            */
             list<ISCD*>::iterator it;
             ISCD_L2SC* iscd = NULL;
             for (it = L->GetSwCapDescriptors().begin(); it !=  L->GetSwCapDescriptors().end(); it++)

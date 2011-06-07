@@ -24,6 +24,9 @@ DST_LOGDIR=$OSCARS_HOME/logs
 mkdir -p $DST_LOGDIR
 mkdir -p $DST_DIR
 
+if [ ! -f $DST_DIR/$MANIFEST ] ; then
+    cp $SRC_DIR/$MANIFEST  $DST_DIR/$MANIFEST
+fi
 if [ ! -f $DST_DIR/$CONFIG_HTTP  ] ; then
     cp $SRC_DIR/$CONFIG_HTTP $DST_DIR/$CONFIG_HTTP 
 fi

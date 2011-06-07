@@ -22,7 +22,7 @@ create:
 # end time may be a date expression, or can start with a '+' sign
 # to specify a duration, the format is : '+DD:HH:mm'
 # Remember to enclose date expressions in single quotes
-        start-time:     '2010-06-14 18:00'
+        start-time:     '2011-06-14 18:00'
         end-time:       '+00:00:04'
 
 # this may be timer-automatic or signal-xml . generally leave at timer-automatic

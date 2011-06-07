@@ -20,7 +20,7 @@ import joptsimple.OptionSpec;
 
 
 public class Invoker {
-    private static ContextConfig cc = ContextConfig.getInstance();
+    private static ContextConfig cc = ContextConfig.getInstance(ServiceNames.SVC_PCE_TCE);
     private static String context = ConfigDefaults.CTX_PRODUCTION;
 
     /**
@@ -38,8 +38,7 @@ public class Invoker {
         cc.setContext(context);
         cc.setServiceName(ServiceNames.SVC_PCE_TCE);
         try {
-            System.out.println("loading manifest from ./config/"+ConfigDefaults.MANIFEST);
-            cc.loadManifest("./config/"+ConfigDefaults.MANIFEST); // manifest.yaml
+            cc.loadManifest(ServiceNames.SVC_PCE_TCE,  ConfigDefaults.MANIFEST);
             cc.setLog4j();
             // need to do this after the log4j.properties file has been set
             log = Logger.getLogger(Invoker.class);

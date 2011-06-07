@@ -326,7 +326,7 @@ public:
                 return false;
         return true;
     }
-    TPath* Clone();
+    TPath* Clone(bool doExpandRemoteLink=false);
     void LogDump();
 };
 

@@ -46,7 +46,7 @@ public class TcePCEServer extends SimplePCEServer{
     private Map rmConfig = null;
     
     public TcePCEServer() throws OSCARSServiceException {
-        super();
+        super(ServiceNames.SVC_PCE_TCE);
         String rmUrl =  null;
         String rmWsdl = null;
         //get the name of the module from netLogger.Use annotation to be 
@@ -56,6 +56,11 @@ public class TcePCEServer extends SimplePCEServer{
         OSCARSNetLogger netLogger = OSCARSNetLogger.getTlogger();
         this.log.info(netLogger.start("init"));
         try{
+            //String configAlias=
+            //    this.getClass().getAnnotation(OSCARSService.class).config();
+            //String configFilename = cc.getFilePath(configAlias);
+            //Map config = ConfigHelper.getConfiguration(configFilename);
+
             String configFilename = cc.getFilePath(ConfigDefaults.CONFIG);
             this.log.debug("configFilename is " + configFilename);
             config = ConfigHelper.getConfiguration(configFilename);

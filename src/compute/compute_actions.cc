@@ -94,10 +94,12 @@ void Action_ProcessRequestTopology::Finish()
 
     paramName = "KSP";
     vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+    // TODO: use feasiblePaths instead
     if (KSP && KSP->size() > 0)
     {
-        TPath* resultPath = KSP->front()->Clone();
-        resultPath->SetIndependent(true); // path peeled off from TEWG: pointers to parenet ports and nodes are invalid
+        TPath* resultPath = KSP->front()->Clone(true);
+        resultPath->LogDump();
+        resultPath->SetIndependent(true); 
         result->SetPathInfo(resultPath);
         result->RegulatePathInfo();
     }
