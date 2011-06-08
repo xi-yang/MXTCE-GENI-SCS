@@ -210,5 +210,7 @@ void ComputeResult::RegulatePathInfo()
         urn = str;
         L->SetName(urn);
     }
+    pathInfo->GetPath().front()->SetRemoteLink(NULL);
+    pathInfo->GetPath().back()->SetRemoteLink(NULL);
 }
     
