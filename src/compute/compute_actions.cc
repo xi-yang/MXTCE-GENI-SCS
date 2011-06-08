@@ -94,10 +94,15 @@ void Action_ProcessRequestTopology::Finish()
 
     paramName = "KSP";
     vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+    paramName = "FEASIBLE_PATHS";
     // TODO: use feasiblePaths instead
-    if (KSP && KSP->size() > 0)
+    vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+    if (feasiblePaths == NULL)
+        feasiblePaths = KSP;
+
+    if (feasiblePaths && feasiblePaths->size() > 0)
     {
-        TPath* resultPath = KSP->front()->Clone(true);
+        TPath* resultPath = feasiblePaths->front()->Clone(true);
         resultPath->LogDump();
         resultPath->SetIndependent(true); 
         result->SetPathInfo(resultPath);
@@ -118,7 +123,7 @@ void Action_ProcessRequestTopology::Finish()
     tlvList.push_back(tlv);
     SendMessage(MSG_REPLY, queue, topic, tlvList);
 
-   // destroy stored data including tewg
+    // destroy stored data including tewg
     if (KSP)
     {
         delete KSP;
@@ -131,6 +136,8 @@ void Action_ProcessRequestTopology::Finish()
         delete tewg;
         this->GetComputeWorker()->SetParameter(paramName, NULL);
     }
+
+    // destroy feasiblePaths ? 
 
     // stop out from event loop
     Action::Finish();
