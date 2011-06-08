@@ -4,6 +4,7 @@ public class ReplyLinkContent {
 	
 	protected String id;
 	protected String name;
+	protected String remoteLinkId;
 	protected String switchingType;
 	protected String encodingType;
 	protected String assignedVlanTags;
@@ -12,6 +13,10 @@ public class ReplyLinkContent {
 	protected int mtu;
 	protected boolean vlanTranslation;
 	protected int capacity;
+	protected int maximumReservableCapacity;
+	protected int minimumReservableCapacity;
+	protected int granularity;
+	protected int trafficEngineeringMetric;
 	
 	public String getId(){
 		return this.id;
@@ -91,6 +96,46 @@ public class ReplyLinkContent {
 	
 	public void setCapacity(int value){
 		this.capacity = value;
+	}
+	
+	public String getRemoteLinkId(){
+		return this.remoteLinkId;
+	}
+	
+	public void setRemoteLinkId(String value){
+		this.remoteLinkId = value;
+	}
+	
+	public int getMaximumReservableCapacity(){
+		return this.maximumReservableCapacity;
+	}
+	
+	public void setMaximumReservableCapacity(int value){
+		this.maximumReservableCapacity = value;
+	}
+	
+	public int getMinimumReservableCapacity(){
+		return this.minimumReservableCapacity;
+	}
+	
+	public void setMinimumReservableCapacity(int value){
+		this.minimumReservableCapacity = value;
+	}
+	
+	public int getGranularity(){
+		return this.granularity;
+	}
+	
+	public void setGranularity(int value){
+		this.granularity = value;
+	}
+	
+	public int getTrafficEngineeringMetric(){
+		return this.trafficEngineeringMetric;
+	}
+	
+	public void setTrafficEngineeringMetric(int value){
+		this.trafficEngineeringMetric = value;
 	}
 
 }

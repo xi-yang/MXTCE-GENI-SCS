@@ -168,6 +168,11 @@ public class RetrieveReply {
 		boolean vlanTranslation;
 		int capacity;
 		int mtu;
+		String remoteLinkId;
+		int maximumReservableCapacity;
+		int minimumReservableCapacity;
+		int granularity;
+		int trafficEngineeringMetric;
 		ReplyLinkContent replyLink = null;
 		List<ReplyLinkContent> linkSet = null;
 		int initialDecodeOffset = 0;
@@ -231,6 +236,15 @@ public class RetrieveReply {
 					offset = offset + length;
 					
 					replyLink.setName(linkName);
+								
+				}else if(type == CodeNumber.PCE_REMOTE_LINK){
+					length = this.decodeLength(priDecoder, buff);
+					remoteLinkId = priDecoder.decodeString(buff, offset, length);
+					
+					offset = offset + length;
+					
+					replyLink.setRemoteLinkId(remoteLinkId);
+					
 				}else if(type == CodeNumber.PCE_SWITCHINGCAPTYPE){
 					length = this.decodeLength(priDecoder, buff);
 					switchingCapType = priDecoder.decodeString(buff, offset, length);
@@ -295,9 +309,37 @@ public class RetrieveReply {
 					offset = offset + length;
 					
 					replyLink.setMtu(mtu);
+				}else if(type == CodeNumber.PCE_MAXRESVCAPACITY){
+					length = this.decodeLength(priDecoder, buff);
+					maximumReservableCapacity = priDecoder.decodeInteger(buff, offset, length);
+					
+					offset = offset + length;
+					
+					replyLink.setMaximumReservableCapacity(maximumReservableCapacity);					
+				}else if(type == CodeNumber.PCE_MINRESVCAPACITY){
+					length = this.decodeLength(priDecoder, buff);
+					minimumReservableCapacity = priDecoder.decodeInteger(buff, offset, length);
+					
+					offset = offset + length;
+					
+					replyLink.setMinimumReservableCapacity(minimumReservableCapacity);
+				}else if(type == CodeNumber.PCE_GRANULARITY){
+					length = this.decodeLength(priDecoder, buff);
+					granularity = priDecoder.decodeInteger(buff, offset, length);
+					
+					offset = offset + length;
+					
+					replyLink.setGranularity(granularity);
+				}else if(type == CodeNumber.PCE_TE_METRIC){
+					length = this.decodeLength(priDecoder, buff);
+					trafficEngineeringMetric = priDecoder.decodeInteger(buff, offset, length);
+					
+					offset = offset + length;
+					
+					replyLink.setTrafficEngineeringMetric(trafficEngineeringMetric);
 				}else{
 					
-				}				
+				}
 				
 			}
 			linkSet.add(replyLink); //last link			

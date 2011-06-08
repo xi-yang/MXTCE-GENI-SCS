@@ -25,8 +25,9 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	TPath* path_info=NULL;
 	list<TLink*> path;
 
-	//TLink* link=NULL;
+	TLink* link=NULL;
 	ISCD* sw_cap_descriptors=NULL;
+	Link* remoteLink=NULL;
     u_char	switchingType;
     u_char	encodingType;
     ConstraintTagSet* availableVlanTags;
@@ -36,6 +37,13 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     int mtu;
     int capacity;
     string rangStr="";
+    string remoteLinkName="";
+    int metric;
+    long maxBandwidth;
+    long maxReservableBandwidth;
+    long minReservableBandwidth;
+    long unreservedBandwidth[8];   // 8 priorities: use unreservedBandwidth[7] by default
+    long bandwidthGranularity;
 
 	char print_buff[200];
 
@@ -72,11 +80,32 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	    	{
 	    		cout<<"id="<<(*it)->GetId()<<endl;
 	    		cout<<"name="<<(*it)->GetName()<<endl;
-
 	    		pri_type_encoder->encodeString(PCE_LINK_ID, (*it)->GetName());//encode link id (name)
+	    		//cout<<"remote link="<<((*it)->GetRemoteLink())->GetName()<<endl;
+	    		remoteLink = (*it)->GetRemoteLink();
+	    		if(remoteLink != NULL)
+	    		{
+	    			remoteLinkName = remoteLink->GetName();
+	    			pri_type_encoder->encodeString(PCE_REMOTE_LINK, remoteLinkName);
+	    		}
+	    		//remoteLinkName = ((*it)->GetRemoteLink())->GetName();
+	    		cout<<"remote link="<<remoteLinkName<<endl;
+
+	    		//pri_type_encoder->encodeString(PCE_REMOTE_LINK, remoteLinkName);
+
+	    		maxReservableBandwidth = (*it)->GetMaxReservableBandwidth();
+	    		pri_type_encoder->encodeInteger(PCE_MAXRESVCAPACITY, (int)maxReservableBandwidth);
+
+	    		minReservableBandwidth = (*it)->GetMinReservableBandwidth();
+	    		pri_type_encoder->encodeInteger(PCE_MINRESVCAPACITY, (int)minReservableBandwidth);
+
+	    		bandwidthGranularity = (*it)->GetBandwidthGranularity();
+	    		pri_type_encoder->encodeInteger(PCE_GRANULARITY, bandwidthGranularity);
+
+	    		metric = (*it)->GetMetric();
+	    		pri_type_encoder->encodeInteger(PCE_TE_METRIC, metric);
 
 	    		sw_cap_descriptors=(*it)->GetTheISCD();
-
 
 	    		cout<<"switchingtype="<<(int)sw_cap_descriptors->switchingType<<endl;
 	    		cout<<"encodingtype="<<(int)sw_cap_descriptors->encodingType<<endl;

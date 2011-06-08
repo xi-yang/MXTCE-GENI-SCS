@@ -50,6 +50,11 @@ public class CodeNumber {
 	public static final byte PCE_CAPACITY = (byte)0x9F;
 	public static final byte PCE_MTU = (byte)0xA0;
 	public static final byte PCE_COMPUTE_ERROR = (byte)0xA1;
+	public static final byte PCE_REMOTE_LINK = (byte)0xA2;
+	public static final byte PCE_MAXRESVCAPACITY = (byte)0xA3;
+	public static final byte PCE_MINRESVCAPACITY = (byte)0xA4;
+	public static final byte PCE_GRANULARITY = (byte)0xA5;
+	public static final byte PCE_TE_METRIC = (byte)0xA6;
 
 	
 

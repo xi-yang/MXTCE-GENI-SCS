@@ -753,6 +753,13 @@ public class TcePCE {
         
     }
     
+    public PCEDataContent commitPath(PCEMessage query) throws OSCARSServiceException{
+
+        PCEDataContent pceData = query.getPCEDataContent();
+        
+        return pceData;
+    }
+    
 	private int getLength(byte[] buff){
 		int result = 0;
 		int value = 0;
