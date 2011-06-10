@@ -26,6 +26,7 @@ if ($end_time =~ /\+(\d+):(\d+):(\d+)/) {
 } else {
 	$end_time = parsedate($end_time);
 }
+$gri = 'test0123' unless $gri;
 my $cmd = "$test_cmd -g $gri -S \"$src_urn\" -D \"$dst_urn\" -B $bandwidth" . "M -s $start_time -e $end_time -u $src_vlan -v $dst_vlan\n";
 print "$cmd \n";
 my $result = `$cmd`;
