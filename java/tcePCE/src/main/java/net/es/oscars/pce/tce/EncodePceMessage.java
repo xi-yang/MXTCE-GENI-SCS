@@ -80,7 +80,7 @@ public class EncodePceMessage {
 		int buffLen;
 	    long startTime = userCons.getStartTime();
 	    long endTime = userCons.getEndTime();
-	    int bandwidth = userCons.getBandwidth();
+	    int bandwidth = (userCons.getBandwidth()) * 1000000; //convert from MB to Bytes
 	    PathInfo pathInf = userCons.getPathInfo();
 	    String pathSetupMode = pathInf.getPathSetupMode();
 	    String pathType = pathInf.getPathType();
@@ -359,7 +359,7 @@ public class EncodePceMessage {
 	    					 CtrlPlaneLinkContent link = oneHop.getLink();
 	    					 if(link.getId()!=null){
 	    						 String linkId = link.getId();
-	    						 //System.out.println("linkid="+linkId);
+	    						 System.out.println("linkid="+linkId);
 	    						 priEncoder.encodeString(PCE_LINK_ID, linkId);
 	    					 }
 	    					 //System.out.println("remoteLinkId:"+link.getRemoteLinkId()+" trafficEngineeringMetric:"+link.getTrafficEngineeringMetric()+" capacity:"+link.getCapacity());
