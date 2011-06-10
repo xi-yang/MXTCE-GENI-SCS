@@ -6,12 +6,12 @@ public class EncodeApiMsgHeader {
 	static int msg_seq_num = 1;
 	
 	EncodeApiMsgHeader(){
-		//msg_seq_num = 1;
+		
 	}
 	
 	byte[] encoderApiMsg(short type, short length, int ucid, int options, int tag){
 		byte[] header = new byte[API_MSG_HEADER_LEN];
-		//byte byteVal = 0;
+		
 		int offset=0;
 		
 		fillField_16b(header, offset, type);
@@ -81,9 +81,7 @@ public class EncodeApiMsgHeader {
 		
 		for(int i=0;i<4;i++){
 			header[offset+3-i] = (byte)(0xFF & (longval >> 8*(3-i)));
-		}
-		
-		//System.out.println("longval="+longval+"long1="+longValue1+"long2="+longValue2+"long3="+longValue3);
+		}		
 				
 	}
 

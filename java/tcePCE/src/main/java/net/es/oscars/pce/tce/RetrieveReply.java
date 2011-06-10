@@ -20,7 +20,7 @@ public class RetrieveReply {
 		int length = this.getTwoByte(apiMsg);
 		int ucid = this.getFourByte(apiMsg);
 		int sequenceNum = this.getFourByte(apiMsg);
-		//System.out.println("type="+type+" length="+length+" ucid="+ucid+" sequenceNumber="+sequenceNum);
+		
 		int checkSum = this.getFourByte(apiMsg);
 		int option = this.getFourByte(apiMsg);
 		int tag = this.getFourByte(apiMsg);
@@ -28,11 +28,11 @@ public class RetrieveReply {
 		boolean checkSumValid = this.verifyCheckSum(type, length, ucid, sequenceNum, checkSum);
 		
 		if(checkSumValid == false){
-			//System.out.println("Checksum error");
+			
 			throw new OSCARSServiceException("Checksum of API message error");
 		}
 		
-		//this.decodeReplyMessage(apiMsg);
+		
 		
 		
 	}
@@ -53,7 +53,7 @@ public class RetrieveReply {
 			fieldOne = (fieldOne << 8) | value;
 			length = length >> 8;			
 		}
-		//System.out.println("v1 a="+fieldOne);
+		
 		
 		for(int i=0;i<2;i++){
 			byteValue = (byte) (0xFF & type);
@@ -61,7 +61,7 @@ public class RetrieveReply {
 			fieldOne = (fieldOne << 8) | value;
 			type = type >> 8;
 		}
-		//System.out.println("v1 ="+fieldOne);
+		
 		
 		for(int i=0;i<4;i++){
 			byteValue = (byte) (0xFF & ucid);
@@ -69,7 +69,7 @@ public class RetrieveReply {
 			fieldTwo = (fieldTwo << 8) | value;
 			ucid = ucid >> 8;			
 		}
-		//System.out.println("v2="+fieldTwo);
+		
 		
 		for(int i=0;i<4;i++){
 			byteValue = (byte) (0xFF & seqNum);
@@ -77,13 +77,13 @@ public class RetrieveReply {
 			fieldThree = (fieldThree << 8) | value;
 			seqNum = seqNum >> 8;			
 		}
-		//System.out.println("v3="+fieldThree);
+		
 		
 		sum = fieldOne + fieldTwo + fieldThree;
 		sum = sum & ((long) 0xFFFFFFFF);
-		//checkSumValue = checkSum & ((long) 0xFFFFFFFF);
 		
-		//System.out.println("checksum="+checkSum);
+		
+		
 		
 		for(int i=0;i<4;i++){
 			byteValue = (byte) (0xFF & checkSum);
@@ -92,7 +92,7 @@ public class RetrieveReply {
 			checkSum = checkSum >> 8;
 		}
 		
-		//System.out.println("checksum ori="+checkSumValue+" sum="+sum);
+		
 		
 		if(sum == checkSumValue){
 			valid = true;
@@ -143,8 +143,6 @@ public class RetrieveReply {
 			this.decodeReplyPathContent(buff, length, replyMessage);
 		}
 			
-		//System.out.println("test-2");
-		
 		return replyMessage;
 		
 		
@@ -185,8 +183,7 @@ public class RetrieveReply {
 			length = priDecoder.getLength(buff, offset);
 			offset = offset + lengthTagSize;
 			gri = priDecoder.decodeString(buff, offset, length);
-			//System.out.println("gri="+gri);
-			
+						
 			offset = offset + length;
 			replyMessage.setGri(gri);
 		}
@@ -195,7 +192,7 @@ public class RetrieveReply {
 		if(type==CodeNumber.PCE_COMPUTE_ERROR){
 			length = this.decodeLength(priDecoder, buff);
 			errorMessage = priDecoder.decodeString(buff, offset, length);
-			//System.out.println("errormsg="+errorMessage);
+			
 			replyMessage.setErrorMessage(errorMessage);
 			return;
 		}
@@ -203,8 +200,7 @@ public class RetrieveReply {
 		if(type == CodeNumber.PCE_PATH_ID){
 			length = this.decodeLength(priDecoder, buff);
 			pathId = priDecoder.decodeString(buff, offset, length);
-			//System.out.println("pathid="+pathId);
-			
+						
 			offset = offset + length;
 			ReplyPathContent replyPath = new ReplyPathContent();
 			replyMessage.setReplyPathContent(replyPath);  //set replyPathContent to object variable
@@ -214,8 +210,7 @@ public class RetrieveReply {
 			if(type == CodeNumber.PCE_PATH_LENGTH){
 				length = this.decodeLength(priDecoder, buff);
 				pathLength = priDecoder.decodeInteger(buff, offset, length);
-				//System.out.println("pathlength="+pathLength);
-				
+								
 				offset = offset + length;
 				
 			}
@@ -231,8 +226,7 @@ public class RetrieveReply {
 					replyLink = new ReplyLinkContent();
 					length = this.decodeLength(priDecoder, buff);
 					linkName = priDecoder.decodeString(buff, offset, length);
-					//System.out.println("linkname="+linkName);
-					
+										
 					offset = offset + length;
 					
 					replyLink.setName(linkName);
@@ -248,64 +242,56 @@ public class RetrieveReply {
 				}else if(type == CodeNumber.PCE_SWITCHINGCAPTYPE){
 					length = this.decodeLength(priDecoder, buff);
 					switchingCapType = priDecoder.decodeString(buff, offset, length);
-					//System.out.println("switchingcaptype="+switchingCapType);
-					
+										
 					offset = offset + length;
 					
 					replyLink.setSwitchingType(switchingCapType);					
 				}else if(type == CodeNumber.PCE_SWITCHINGENCTYPE){
 					length = this.decodeLength(priDecoder, buff);
 					switchingEncType = priDecoder.decodeString(buff, offset, length);
-					//System.out.println("switchingenctype="+switchingEncType);
-					
+										
 					offset = offset + length;
 					
 					replyLink.setEncodingType(switchingEncType);
 				}else if(type == CodeNumber.PCE_SWITCHINGVLANRANGEAVAI){
 					length = this.decodeLength(priDecoder, buff);
 					availableVlanTags = priDecoder.decodeString(buff, offset, length);
-					//System.out.println("availablevlantags="+availableVlanTags);
-					
+										
 					offset = offset + length;
 					
 					replyLink.setAvailableVlanTags(availableVlanTags);
 				}else if(type == CodeNumber.PCE_SWITCHINGVLANRANGESUGG){
 					length = this.decodeLength(priDecoder, buff);
 					suggestedVlanTags = priDecoder.decodeString(buff, offset, length);
-					//System.out.println("suggestedvlantags="+suggestedVlanTags);
-					
+										
 					offset = offset + length;
 					
 					replyLink.setSuggestedVlanTags(suggestedVlanTags);
 				}else if(type == CodeNumber.PCE_SWITCHINGVLANRANGEASSI){
 					length = this.decodeLength(priDecoder, buff);
 					assignedVlanTags = priDecoder.decodeString(buff, offset, length);
-					//System.out.println("assignedvlantags="+assignedVlanTags);
-					
+										
 					offset = offset + length;
 					
 					replyLink.setAssignedVlanTags(assignedVlanTags);
 				}else if(type == CodeNumber.PCE_VLANTRANSLATION){
 					length = this.decodeLength(priDecoder, buff);
 					vlanTranslation = priDecoder.decodeBoolean(buff, offset, length);
-					//System.out.println("vlantranslation="+vlanTranslation);
-					
+										
 					offset = offset + length;
 					
 					replyLink.setVlanTranslation(vlanTranslation);
 				}else if(type == CodeNumber.PCE_CAPACITY){
 					length = this.decodeLength(priDecoder, buff);
 					capacity = priDecoder.decodeInteger(buff, offset, length);
-					//System.out.println("capacity="+capacity);
-					
+										
 					offset = offset + length;
 					
 					replyLink.setCapacity(capacity);
 				}else if(type == CodeNumber.PCE_MTU){
 					length = this.decodeLength(priDecoder, buff);
 					mtu = priDecoder.decodeInteger(buff, offset, length);
-					//System.out.println("mtu="+mtu);
-					
+										
 					offset = offset + length;
 					
 					replyLink.setMtu(mtu);
@@ -344,8 +330,7 @@ public class RetrieveReply {
 			}
 			linkSet.add(replyLink); //last link			
 			
-		}
-		//System.out.println("test-1");
+		}		
 		
 	}
 	

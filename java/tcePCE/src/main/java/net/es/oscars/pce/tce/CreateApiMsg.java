@@ -59,8 +59,7 @@ public class CreateApiMsg {
 		PCEDataContent pceData = query.getPCEDataContent();
 		byte[] apiMsg;
 		byte[] apiMsgHeader;
-		//byte[] userCons;
-		//byte[] resvCons;
+
 		byte[] requestCons;
 		String gri = query.getGri();
 		
@@ -76,20 +75,13 @@ public class CreateApiMsg {
 		encodePceMess.encodeUserConstraint(gri, userConType);
 		
 		if(resConType!=null){
-			//System.out.println("resCon y");
+			
 			encodePceMess.encodeResvConstraint(resConType);
 			
-		}
-	
-		
+		}		
 		
 		requestCons = encodePceMess.getPceEncodeArray();
-		
-		//System.out.println(requestCons.length);
-		
-		
-		
-		
+				
 		EncodeApiMsgHeader encoderApiMsgHeader = new EncodeApiMsgHeader();
 		apiMsgHeader = encoderApiMsgHeader.encoderApiMsg((short)1, (short)requestCons.length, 6, 0, 0);
 		apiMsg = encodePceMess.mergeBuff(apiMsgHeader, requestCons);

@@ -115,14 +115,9 @@ public class PrimitiveEncoder {
 		int intsize = 4;
 		byte priType = INTEGER_NUM;
 
-  /*
-   * Truncate "unnecessary" bytes off of the most significant end of this
-   * 2's complement integer.  There should be no sequence of 9
-   * consecutive 1's or 0's at the most significant end of the
-   * integer.
-   */
+
 		mask = 0x1FF << ((8 * 3) - 1);
-		/* mask is 0xFF800000 on a big-endian machine */
+		
 		while((((integer & mask) == 0) || ((integer & mask) == mask))
 				&& intsize > 1){
 			intsize--;
@@ -131,9 +126,9 @@ public class PrimitiveEncoder {
 		buffRemCheck(intsize+6);
 		encodeHeader(pceType, priType, intsize);
 		mask = 0xFF << (8 * 3);
-		/* mask is 0xFF000000 on a big-endian machine */
+		
 		while ((intsize--) > 0){
-			//os.write(((integer & mask) >> (8 * 3)));
+			
 			buff[offset++] = (byte) ((integer & mask) >> (8 * 3));
 			integer <<= 8;
 			}
@@ -148,18 +143,18 @@ public class PrimitiveEncoder {
 
 		mask = ((long)0x1FF) << ((8 * 7) - 1);
 		
-		//System.out.println(mask);
+		
 		while((((longInt & mask) == 0) || ((longInt & mask) == mask))
 				&& intsize > 1){
 			intsize--;
 			longInt <<= 8;
 			}
-		//System.out.println(intsize);
+		
 		buffRemCheck(intsize+6);
 		encodeHeader(pceType, priType, intsize);
 		mask = 0xFF << (8 * 7);		
 		while ((intsize--) > 0){
-			//os.write(((integer & mask) >> (8 * 3)));
+			
 			buff[offset++] = (byte) ((longInt & mask) >> (8 * 7));
 			longInt <<= 8;
 			}
@@ -201,7 +196,7 @@ public class PrimitiveEncoder {
 		byte[] doubleByte;
 		
 		doublesize = Double.SIZE/8;
-		//System.out.println("double="+doublesize);
+		
 		buffRemCheck(doublesize+6);
 		encodeHeader(pceType, priType, doublesize);
 		doubleEncode = Double.doubleToLongBits(doubleNum);
@@ -213,11 +208,7 @@ public class PrimitiveEncoder {
 		for(int i=0; i<arrSize; i++){
 			buff[offset++] = doubleByte[i];
 		}
-		/*
-		for(int i=0; i<arrSize; i++){
-			buff[offset++] = (byte) ((doubleEncode>>((arrSize-i-1)*8))&0xFF);
-		}
-		*/
+
 	}
 	
 	public void encodeFloat(byte pceType, float value){
@@ -229,7 +220,7 @@ public class PrimitiveEncoder {
 		byte[] floatByte;
 		
 		floatsize = Float.SIZE/8;
-		//System.out.println("float="+floatsize);
+		
 		buffRemCheck(floatsize+6);
 		encodeHeader(pceType, priType, floatsize);
 		floatEncode = Float.floatToIntBits(floatNum);
@@ -241,11 +232,7 @@ public class PrimitiveEncoder {
 		for(int i=0; i<arrSize; i++){
 			buff[offset++] = floatByte[i];
 		}
-		/*
-		for(int i=0; i<arrSize; i++){
-			buff[offset++] = (byte) ((floatEncode>>((arrSize-i-1)*8))&0xFF);
-		}
-		*/
+
 	}
 
 }
