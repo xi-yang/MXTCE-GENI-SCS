@@ -11,7 +11,13 @@ import net.es.oscars.utils.soap.OSCARSServiceException;
 
 import org.ogf.schema.network.topology.ctrlplane.*;
 
+import net.es.oscars.pce.tce.optionalConstraint.stornet.*;
 
+import javax.xml.transform.*;
+import javax.xml.transform.stream.*;
+import javax.xml.transform.dom.*;
+import org.w3c.dom.*;
+import javax.xml.parsers.*;
 
 public class EncodePceMessage {
 	
@@ -137,6 +143,7 @@ public class EncodePceMessage {
 	    encodeBuffBody = priEncoder.getBuff();
 	    buffLen = encodeBuffBody.length;
 	    
+	    //System.out.println("usr="+buffLen);
 	    encodeBuffHead = this.encodePceHeader(pceType, buffLen);
 	    encodeBuff = this.mergeBuff(encodeBuffHead, encodeBuffBody);
 	    
@@ -161,11 +168,15 @@ public class EncodePceMessage {
 	    	throw new OSCARSServiceException("The request has both layer2 and layer3 information");
 	    }
 
+	    /*
 	    priEncoder.encodeLong(PCE_STARTTIME, startTime);
 	    priEncoder.encodeLong(PCE_ENDTIME, endTime);
-	    priEncoder.encodeInteger(PCE_BANDWIDTH, bandwidth);	
+	    priEncoder.encodeInteger(PCE_BANDWIDTH, bandwidth);
+	    */	
 	    
 	    if(pathInf!=null){
+	    	//System.out.println("path info not empty");
+	    	/*
 		    if(pathInf.getPathSetupMode()!=null){
 		    	String pathSetupMode = pathInf.getPathSetupMode();
 		    	priEncoder.encodeString(PCE_PATHSETUPMODEL, pathSetupMode);
@@ -179,6 +190,8 @@ public class EncodePceMessage {
 		   
 		    if(pathInf.getLayer2Info()!=null){
 		    	
+		    	System.out.println("layer 2 not empty");
+		    	
 		    	Layer2Info layer2Info = pathInf.getLayer2Info();
 		    	
 		    	VlanTag srcVtag = layer2Info.getSrcVtag();
@@ -188,15 +201,24 @@ public class EncodePceMessage {
 		    	String srcVtagValue = srcVtag.getValue();
 		    	String destVtagValue = destVtag.getValue();
 		    	
+		    	//System.out.println("srcVtag"+srcVtag+" "+"destVtag"+destVtag);
+		    	System.out.println("srcEndPoint"+srcEndPoint+" "+"destEndPoint"+destEndPoint);
+		    	System.out.println("srcVtagValue"+srcVtagValue+" "+"destVtagValue"+destVtagValue);
+		    	
+		    	
 		    	priEncoder.encodeString(PCE_LAYER, "2");
 		    	priEncoder.encodeString(PCE_SOURCE, srcEndPoint);
 		    	priEncoder.encodeString(PCE_DESTINATION, destEndPoint);
 		    	priEncoder.encodeString(PCE_SRCVLAN, srcVtagValue);
 		    	priEncoder.encodeString(PCE_DESTVLAN, destVtagValue);
+		    	
 		    }
+		    
 		   
 		    
 		    if(pathInf.getLayer3Info() != null){
+		    	
+		    	System.out.println("layer 3 not empty");
 
 		    	Layer3Info layer3Info = pathInf.getLayer3Info();
 		    	String srcHost = layer3Info.getSrcHost();
@@ -218,6 +240,8 @@ public class EncodePceMessage {
 
 		    if(pathInf.getMplsInfo() != null){
 
+		    	System.out.println("mpls not empty");
+		    	
 		    	MplsInfo mplsInfo = pathInf.getMplsInfo();
 		    	int burstLimit = mplsInfo.getBurstLimit();
 		    	String lspClass = mplsInfo.getLspClass();
@@ -225,8 +249,12 @@ public class EncodePceMessage {
 		    	priEncoder.encodeInteger(PCE_MPLS_BURSTLIMIT, burstLimit);
 		    	priEncoder.encodeString(PCE_MPLS_LSPCLASS, lspClass);
 		    }
+	    	*/
+	    	
 	    	
 	    	if(pathInf.getPath()!=null){
+	    		
+	    		//System.out.println("path not empty");
 
 	    		CtrlPlanePathContent path = pathInf.getPath();
 	    		if(path.getId()!=null){
@@ -239,11 +267,14 @@ public class EncodePceMessage {
 	    		if(path.getHop()!=null){
 	    			List<CtrlPlaneHopContent> hop = path.getHop();
 	    			priEncoder.encodeInteger(PCE_PATH_LENGTH, hop.size());
+	    			//System.out.println("hop="+hop.size());
+	    			
 	    			CtrlPlaneHopContent oneHop;
 	    			for(int i=0;i<hop.size();i++){
 	    				 oneHop = hop.get(i);
 	    				 if(oneHop.getId()!=null){
 	    					 String hopId = oneHop.getId();
+	    					 //System.out.println("hop_id="+hopId);
 
 	    					 priEncoder.encodeString(PCE_HOP_ID, hopId);
 	    				 }
@@ -253,6 +284,7 @@ public class EncodePceMessage {
 	    					 CtrlPlaneLinkContent link = oneHop.getLink();
 	    					 if(link.getId()!=null){
 	    						 String linkId = link.getId();
+	    						 //System.out.println("link_id="+linkId);
 	    						 
 	    						 priEncoder.encodeString(PCE_LINK_ID, linkId);
 	    					 }
@@ -261,11 +293,13 @@ public class EncodePceMessage {
 	    						 CtrlPlaneSwcapContent switchingCapabilityDescriptors = link.getSwitchingCapabilityDescriptors();
 	    						 if(switchingCapabilityDescriptors.getSwitchingcapType()!=null){
 	    							 String switchingcapType = switchingCapabilityDescriptors.getSwitchingcapType();
+	    							 //System.out.println("switching_captype="+switchingcapType);
 	    							 
 	    							 priEncoder.encodeString(PCE_SWITCHINGCAPTYPE, switchingcapType);
 	    						 }
 	    						 if(switchingCapabilityDescriptors.getEncodingType()!=null){
 	    							 String encodingType = switchingCapabilityDescriptors.getEncodingType();
+	    							 //System.out.println("switching_enctype="+encodingType);
 	    							 
 	    							 priEncoder.encodeString(PCE_SWITCHINGENCTYPE, encodingType);
 	    						 }
@@ -274,21 +308,26 @@ public class EncodePceMessage {
 	    							 
 	    							 if(switchingCapabilitySpecificInfo.getVlanRangeAvailability()!=null){
 	    								 String vlanRangeAvailability = switchingCapabilitySpecificInfo.getVlanRangeAvailability();
+	    								 //System.out.println("switching_vlan_avai"+vlanRangeAvailability);
 	    								 
 	    								 priEncoder.encodeString(PCE_SWITCHINGVLANRANGEAVAI, vlanRangeAvailability);
 	    							 }
 	    							 
 	    							 if(switchingCapabilitySpecificInfo.getSuggestedVLANRange()!=null){
 	    								 String suggestedVLANRange = switchingCapabilitySpecificInfo.getSuggestedVLANRange();
+	    								 //System.out.println("switching_vlan_sugg"+suggestedVLANRange);
+	    								 
 	    								 priEncoder.encodeString(PCE_SWITCHINGVLANRANGESUGG, suggestedVLANRange);
 	    							 }
 	    							 
 	    							 
 	    							 if(switchingCapabilitySpecificInfo.isVlanTranslation()!=null){
 		    							 if(switchingCapabilitySpecificInfo.isVlanTranslation()==true){
+		    								 //System.out.println("vlan trans true");
 		    								 priEncoder.encodeBoolean(PCE_VLANTRANSLATION, true);
 		    							 }
 		    							 else{
+		    								 //System.out.println("vlan trans false");
 		    								 priEncoder.encodeBoolean(PCE_VLANTRANSLATION, false);	    								 
 		    							 }	    								 
 	    								 
@@ -297,6 +336,8 @@ public class EncodePceMessage {
 	    						 }//end if switchingCapabilityDescriptors
 	    					 }//end if link.getSwitchingCapabilityDescriptors
 	    				 }//end if oneHop.getLink
+	    				 priEncoder.encodeInteger(CodeNumber.PCE_HOP_END_TAG, 1); //dummy field for mark end of one hop
+	    				 
 	    			}//end for int i=0;
 	    		}//end if path.getHop
 	    		
@@ -308,12 +349,98 @@ public class EncodePceMessage {
 	    encodeBuffBody = priEncoder.getBuff();
 	    buffLen = encodeBuffBody.length;
 	    
+	    //System.out.println("res="+buffLen);
 	    encodeBuffHead = this.encodePceHeader(pceType, buffLen);
 	    encodeBuff = this.mergeBuff(encodeBuffHead, encodeBuffBody);
 	    
 	    this.combineField(encodeBuff);	    
 	    	   
 	}	
+	
+	public void encodeOptConstraint(OptionalConstraintType optCons)throws OSCARSServiceException{
+		OptionalConstraintValue value = optCons.getValue();
+		String category = optCons.getCategory();
+		
+		List<Object> any = value.getAny();
+		
+		if(any.size()==0){
+			throw new OSCARSServiceException("List size is zero in OptionalConstraintValue");
+		}
+		
+		if(any.size()>1){
+			throw new OSCARSServiceException("Only support one string in OptionalConstraintValue list now");
+		}
+		
+		//String optConsXml = (String)any.get(0);
+		Element optConsXml = (Element)any.get(0);
+		
+		ParseXml parseXmlTool = new ParseXml();
+		
+		CoScheduleRequestField coScheduleRequest= parseXmlTool.readInput(optConsXml);
+		
+		this.encodeCoScheduleRequest(coScheduleRequest);
+		
+	}
+	
+	protected void encodeCoScheduleRequest(CoScheduleRequestField coSchedReq){
+		byte[] encodeBuffHead;
+		byte[] encodeBuffBody;
+		byte[] encodeBuff;
+		byte pceType = CodeNumber.PCE_OPTICONSTRAINT_COSCHEDULEREQ;
+		PrimitiveEncoder priEncoder = new PrimitiveEncoder();
+		int buffLen;
+		
+		String coScheduleRequestId = coSchedReq.getCoScheduleRequestId();
+		long startTime = coSchedReq.getStartTime();
+		long endTime = coSchedReq.getEndTime();
+		long minBandwidth = coSchedReq.getMinBandwidth();
+		int maxNumOfAltPaths = coSchedReq.getMaxNumOfAltPaths();
+		boolean bandwidthAvailabilityGraph = coSchedReq.getBandwidthAvailabilityGraph(); 
+		Boolean contiguousVlan = coSchedReq.getContiguousVlan();
+		int maxDuration = coSchedReq.getMaxDuration();
+		long maxBandwidth = coSchedReq.getMaxBandwidth();
+		long dataSizeBytes = coSchedReq.getDataSizeBytes();
+		
+		priEncoder.encodeString(CodeNumber.PCE_OPT_COSCHEDREQID, coScheduleRequestId);
+		
+		priEncoder.encodeLong(CodeNumber.PCE_OPT_COSCHREQ_STARTTIME, startTime);
+		priEncoder.encodeLong(CodeNumber.PCE_OPT_COSCHREQ_ENDTIME, endTime);
+		
+		priEncoder.encodeLong(CodeNumber.PCE_OPT_COSCHREQ_MINBANDWIDTH, minBandwidth);
+		priEncoder.encodeInteger(CodeNumber.PCE_OPT_COSCHREQ_MAXNUMOFALTPATHS, maxNumOfAltPaths);
+		
+		priEncoder.encodeBoolean(CodeNumber.PCE_OPT_COSCHREQ_BANDWIDTHAVAIGRAPH, bandwidthAvailabilityGraph);
+		
+		if(contiguousVlan!=null){
+			priEncoder.encodeBoolean(CodeNumber.PCE_OPT_COSCHREQ_CONTIGUOUSVLAN, contiguousVlan);
+		}
+		
+		if(maxDuration>=0){
+			priEncoder.encodeInteger(CodeNumber.PCE_OPT_COSCHREQ_MAXDURATION, maxDuration);
+		}
+		
+		if(maxBandwidth>=0){
+			priEncoder.encodeLong(CodeNumber.PCE_OPT_COSCHREQ_MAXBANDWIDTH, maxBandwidth);
+		}
+		
+		if(dataSizeBytes>=0){
+			priEncoder.encodeLong(CodeNumber.PCE_OPT_COSCHREQ_DATASIZEBYTES, dataSizeBytes);
+		}
+		
+	    priEncoder.buffPrune();
+	    encodeBuffBody = priEncoder.getBuff();
+	    buffLen = encodeBuffBody.length;
+	    
+	    //System.out.println("opt="+buffLen);
+	    encodeBuffHead = this.encodePceHeader(pceType, buffLen);
+	    encodeBuff = this.mergeBuff(encodeBuffHead, encodeBuffBody);
+	    
+	    this.combineField(encodeBuff);
+
+		
+		
+	}
+	
 	
 	public byte[] encodePceHeader(byte pceType, int length){
 		int size = 0;

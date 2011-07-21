@@ -80,8 +80,23 @@ public class CreateApiMsg {
 			
 		}		
 		
-		requestCons = encodePceMess.getPceEncodeArray();
 				
+		//add for optional constraint
+		List<OptionalConstraintType> optionalConstraint = pceData.getOptionalConstraint();
+		if(optionalConstraint.size()!=0){
+			if(optionalConstraint.size()>1){
+				throw new OSCARSServiceException("Only support one optional constraint now");
+			}
+			OptionalConstraintType optConType = optionalConstraint.get(0);
+			encodePceMess.encodeOptConstraint(optConType);
+			
+			
+		}else{
+			
+		}
+		
+		requestCons = encodePceMess.getPceEncodeArray();
+		
 		EncodeApiMsgHeader encoderApiMsgHeader = new EncodeApiMsgHeader();
 		apiMsgHeader = encoderApiMsgHeader.encoderApiMsg((short)1, (short)requestCons.length, 6, 0, 0);
 		apiMsg = encodePceMess.mergeBuff(apiMsgHeader, requestCons);

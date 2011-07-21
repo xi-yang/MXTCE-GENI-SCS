@@ -46,6 +46,7 @@ elif [ "$Conf" == "config" ]; then
      port=$(awk -F: '$1~/publishTo/{print $4}' $OSCARS_DIST/$Service/$Conf/$Yaml)
 fi
 port=$(echo $port | sed "s/[^0-9]//g")
+echo "TcePCE port is $port"
 porttest16=`netstat -na | grep LISTEN | grep $port`
 if [ -z "$porttest16" ]; then
      echo "Tce PCE is not running";

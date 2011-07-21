@@ -12,8 +12,10 @@ public class CodeNumber {
 	
     public static final byte PCE_USERCONSTRAINT = (byte)0xF1;
     public static final byte PCE_RESVCONSTRAINT = (byte)0xF2;
-    
+    public static final byte PCE_OPTICONSTRAINT_COSCHEDULEREQ = (byte)0xF3;
+        
     public static final byte PCE_REPLY = (byte)0xF8;
+    
 	
 	public static final byte PCE_GRI = (byte)0x81;
 	public static final byte PCE_LOGIN = (byte)0x82;
@@ -55,6 +57,19 @@ public class CodeNumber {
 	public static final byte PCE_MINRESVCAPACITY = (byte)0xA4;
 	public static final byte PCE_GRANULARITY = (byte)0xA5;
 	public static final byte PCE_TE_METRIC = (byte)0xA6;
+	
+	public static final byte PCE_OPT_COSCHEDREQID = (byte)0xA7;
+	public static final byte PCE_OPT_COSCHREQ_STARTTIME = (byte)0xA8;
+	public static final byte PCE_OPT_COSCHREQ_ENDTIME = (byte)0xA9;
+	public static final byte PCE_OPT_COSCHREQ_MINBANDWIDTH = (byte)0xAA;
+	public static final byte PCE_OPT_COSCHREQ_MAXNUMOFALTPATHS = (byte)0xAB;
+	public static final byte PCE_OPT_COSCHREQ_BANDWIDTHAVAIGRAPH = (byte)0xAC;
+	public static final byte PCE_OPT_COSCHREQ_CONTIGUOUSVLAN = (byte)0xAD;
+	public static final byte PCE_OPT_COSCHREQ_MAXDURATION = (byte)0xAE;
+	public static final byte PCE_OPT_COSCHREQ_MAXBANDWIDTH = (byte)0xAF;
+	public static final byte PCE_OPT_COSCHREQ_DATASIZEBYTES = (byte)0xB0;
+	
+	public static final byte PCE_HOP_END_TAG = (byte)0xB1;
 
 	
 

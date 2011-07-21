@@ -9,6 +9,7 @@
 #define USER_CONSTRAINT_HH_
 
 #include "api_constraint.hh"
+#include "stornet_constraint.hh"
 
 class Hop_req
 {
@@ -18,6 +19,8 @@ protected:
 	string switching_cap_type;
 	string encoding_type;
 	string vlan_range_availability;
+	string suggested_vlan_range;
+	bool vlanTranslation;
 
 public:
 	Hop_req()
@@ -32,6 +35,8 @@ public:
 		this->switching_cap_type="";
 		this->encoding_type="";
 		this->vlan_range_availability="";
+		this->suggested_vlan_range="";
+		this->vlanTranslation=false;
 	}
 
 	void setHopid(string& t_hop_id) {this->hop_id = t_hop_id;}
@@ -48,6 +53,12 @@ public:
 
 	void setVlanrangeavailability(string& t_vlan_range_availability) {this->vlan_range_availability = t_vlan_range_availability;}
 	string& getVlanrangeavailability() {return this->vlan_range_availability;}
+
+	void setSuggestedvlanrange(string& t_suggested_vlan_range) {this->suggested_vlan_range = t_suggested_vlan_range;}
+	string& getSuggestedvlanrange() {return this->suggested_vlan_range;}
+
+	void setVlanTranslation(bool t_vlanTranslation) {this->vlanTranslation = t_vlanTranslation;}
+	bool getVlanTranslation() {return this->vlanTranslation;}
 
 };
 
@@ -102,6 +113,8 @@ protected:
 	string lsp_class;
 	Path_req* path;
 
+	Apimsg_stornet_constraint* co_schedule_request;
+
 public:
 	Apimsg_user_constraint()
 	{
@@ -129,6 +142,7 @@ public:
 		this->burst_limit = 0;
 		this->lsp_class = "";
 		this->path = NULL;
+		this->co_schedule_request = NULL;
 
 	}
 
@@ -185,6 +199,9 @@ public:
 
 	void setPath(Path_req* t_path) {this->path = t_path;}
 	Path_req* getPath() {return this->path;}
+
+	void setCoschedreq(Apimsg_stornet_constraint* t_co_schedule_request) {this->co_schedule_request = t_co_schedule_request;}
+	Apimsg_stornet_constraint* getCoschedreq() {return this->co_schedule_request;}
 
 
 };
