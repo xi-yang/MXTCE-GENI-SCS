@@ -345,6 +345,10 @@ void Apireqmsg_decoder::decode_resvcons(char* & decode_ptr, int total_len, Apims
 		//cout<<"length_offset="<<length_offset<<endl;
 		//printf("\n test_2= %d\n",decode_ptr);
 
+		//reset length and len_tag_len
+		length = 0;
+		len_tag_len = 0;
+
 		if(type==PCE_PATH_ID)
 		{
 			break;
