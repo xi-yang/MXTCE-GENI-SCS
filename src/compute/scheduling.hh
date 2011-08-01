@@ -69,6 +69,7 @@ public:
     void AddStep(time_t t, long bw);
     void LoadADS(AggregateDeltaSeries& ads, time_t start, time_t end, long capacity);
     void LogDump();
+    BandwidthAvailabilityGraph* Clone();
     
     //$$ methods to convert into other representation
 };

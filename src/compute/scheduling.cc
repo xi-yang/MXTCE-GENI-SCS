@@ -276,4 +276,12 @@ _output:
     LOG_DEBUG(buf);
 }
 
+BandwidthAvailabilityGraph* BandwidthAvailabilityGraph::Clone()
+{
+    BandwidthAvailabilityGraph* bag = new BandwidthAvailabilityGraph();
+    map<time_t, long>::iterator iter = this->TBSF.begin();
+    for (; iter != this->TBSF.end(); iter++)
+        bag->TBSF[(*iter).first] = (*iter).second;
+}
+
 
