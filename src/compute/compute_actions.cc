@@ -95,7 +95,6 @@ void Action_ProcessRequestTopology::Finish()
     paramName = "KSP";
     vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
     paramName = "FEASIBLE_PATHS";
-    // TODO: use feasiblePaths instead
     vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
     if (feasiblePaths == NULL)
         feasiblePaths = KSP;
@@ -105,8 +104,20 @@ void Action_ProcessRequestTopology::Finish()
         TPath* resultPath = feasiblePaths->front()->Clone(true);
         resultPath->LogDump();
         resultPath->SetIndependent(true); 
+        ComputeResult::RegulatePathInfo(resultPath);
         result->SetPathInfo(resultPath);
-        result->RegulatePathInfo();
+        if (userConstraint->getCoschedreq()&& feasiblePaths->size() > 1) 
+        {
+            result->GetAlterPaths().clear();
+            for (int k = 1; k < feasiblePaths->size() && k < userConstraint->getCoschedreq()->getMaxnumofaltpaths(); k++)
+            {
+                resultPath = (*feasiblePaths)[k]->Clone(true);
+                resultPath->LogDump();
+                resultPath->SetIndependent(true); 
+                ComputeResult::RegulatePathInfo(resultPath);
+                result->GetAlterPaths().push_back(resultPath);
+            }
+        }
     }
     else
     {
@@ -238,7 +249,9 @@ void Action_ComputeKSP::Process()
     if (dstNode == NULL)
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown destination URN!");
     long bw = (long)userConstraint->getBandwidth();
-    u_int32_t srcVtag, dstVtag; 
+    if (userConstraint->getCoschedreq()&& userConstraint->getCoschedreq()->getMinbandwidth() > bw)
+        bw = userConstraint->getCoschedreq()->getMinbandwidth();
+    u_int32_t srcVtag, dstVtag;
     if (userConstraint->getSrcvlantag() == "any" || userConstraint->getSrcvlantag() == "ANY")
         srcVtag = ANY_TAG;
     else
@@ -386,12 +399,16 @@ void Action_ComputeKSP::Process()
                 this->GetComputeWorker()->SetParameter(paramName, feasiblePaths);
             }
             TPath* feasiblePath = (*itP)->Clone();
-            // TODO: check request condition for BAG
-            BandwidthAvailabilityGraph* bag = (*itP)->CreatePathBAG(startTime, endTime);
-            if (bag != NULL) 
+            // check whether BAG is requested
+            if (userConstraint->getCoschedreq() && userConstraint->getCoschedreq()->getBandwidthavaigraph()) 
             {
-                feasiblePath->SetBAG(bag);
-                (*itP)->SetBAG(NULL);
+                BandwidthAvailabilityGraph* bag = (*itP)->CreatePathBAG(userConstraint->getCoschedreq()->getStarttime(), 
+                    userConstraint->getCoschedreq()->getEndtime());
+                if (bag != NULL) 
+                {
+                    feasiblePath->SetBAG(bag);
+                    (*itP)->SetBAG(NULL);
+                }
             }
             feasiblePaths->push_back(feasiblePath);
             feasiblePath->UpdateLayer2Info(srcVtagResult, dstVtagResult);

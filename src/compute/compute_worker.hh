@@ -90,6 +90,7 @@ class ComputeResult
 protected:
     string gri;
     TPath* pathInfo;
+    list<TPath*> alterPaths;
     string errMsg;
 
 public:
@@ -99,9 +100,10 @@ public:
     void SetGri(string& g) { gri = g; }
     TPath* GetPathInfo() { return pathInfo; }
     void SetPathInfo(TPath* p) { pathInfo = p; }
+    list<TPath*>& GetAlterPaths() { return alterPaths; }
     string& GetErrMessage() { return errMsg; }
     void SetErrMessage(string& s) {errMsg = s; }
-    void RegulatePathInfo();
+    static void RegulatePathInfo(TPath* path);
 };
 
 #endif

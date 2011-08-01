@@ -188,16 +188,16 @@ void ComputeWorkerFactory::RemoveComputeWorker(string name)
 }
 
 
-void ComputeResult::RegulatePathInfo()
+void ComputeResult::RegulatePathInfo(TPath* path)
 {
-    if (pathInfo == NULL)
+    if (path == NULL)
         return;
     // set link name to full qualified URN
     TLink* L;
     string urn;
     char str[128];
-    list<TLink*>::iterator itL = pathInfo->GetPath().begin();
-    for (; itL != pathInfo->GetPath().end(); itL++)
+    list<TLink*>::iterator itL = path->GetPath().begin();
+    for (; itL != path->GetPath().end(); itL++)
     {
         L = *itL;
         if (strstr(L->GetName().c_str(), "urn:ogf:network") != NULL)
@@ -210,7 +210,7 @@ void ComputeResult::RegulatePathInfo()
         urn = str;
         L->SetName(urn);
     }
-    pathInfo->GetPath().front()->SetRemoteLink(NULL);
-    pathInfo->GetPath().back()->SetRemoteLink(NULL);
+    path->GetPath().front()->SetRemoteLink(NULL);
+    path->GetPath().back()->SetRemoteLink(NULL);
 }
     
