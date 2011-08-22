@@ -7,6 +7,7 @@
 #define PCE_OPTICONSTRAINT_COSCHEDULEREQ 0xF3
 
 #define PCE_REPLY 0xF8
+#define PCE_OPTI_REPLY 0xF9
 
 	
 #define PCE_GRI   0x81
@@ -64,6 +65,7 @@
 #define PCE_OPT_COSCHREQ_DATASIZEBYTES 0xB0
 
 #define PCE_HOP_END_TAG 0xB1
+#define PCE_ALT_PATH_NUM 0xB2
 
 
 #define PCE_TEST1 0xE0
