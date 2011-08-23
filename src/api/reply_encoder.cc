@@ -13,6 +13,8 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	u_int8_t* msg_sub_ptr;
 	u_int8_t* msg_sub_start_ptr;
 	u_int8_t* msg_body_ptr;
+	u_int8_t* msg_pre_part_ptr;
+	u_int8_t* msg_new_part_ptr;
 	u_int8_t pceType=PCE_REPLY;
 	u_int16_t type;
 	u_int16_t length;
@@ -48,6 +50,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 
     list<TPath*> alterPaths;
 
+    //Encode_Pri_Type* pri_type_encoder = new Encode_Pri_Type();
 
 	char print_buff[200];
 
@@ -75,11 +78,25 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	    	encode_path(path_info, pri_type_encoder);
 	    }
 
+		msg_sub_ptr=pri_type_encoder->get_buff();
+		msg_sublen=pri_type_encoder->get_length();
+
+		msg_sub_start_ptr=encode_msg_sub_start(PCE_REGU_REPLY, msg_sublen, msg_sub_startlen); //encode the subfield-header
+
+		msg_body_ptr=encode_merge_buff(msg_sub_start_ptr, msg_sub_startlen, msg_sub_ptr, msg_sublen);  //merge subfield-header and body
+		msg_len=msg_sub_startlen + msg_sublen; //body length
+
+		delete[] msg_sub_start_ptr;
+
+		msg_pre_part_ptr=msg_body_ptr;
+		this->length+=msg_len;
+
+		pri_type_encoder->reset_length(); //reset encoder offset
 
 	    if(optional_cons_flag == true)
 	    {
 	    	cout<<"optional constraint below"<<endl;
-	    	pri_type_encoder->encodeString(PCE_OPTI_REPLY, "opti");
+	    	//pri_type_encoder->encodeString(PCE_OPTI_REPLY, "opti");
 	    	if(path_info != NULL)
 	    	{
 	    		encode_path(path_info, pri_type_encoder);
@@ -105,27 +122,64 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	    			}
 	    		}
 	    	}
+
+	    	msg_sub_ptr=pri_type_encoder->get_buff();
+	    	msg_sublen=pri_type_encoder->get_length();
+	    	msg_sub_startlen=0;
+
+	    	msg_sub_start_ptr=encode_msg_sub_start(PCE_OPTI_REPLY, msg_sublen, msg_sub_startlen); //encode the subfield-header
+
+	    	msg_body_ptr=encode_merge_buff(msg_sub_start_ptr, msg_sub_startlen, msg_sub_ptr, msg_sublen);  //merge subfield-header and body
+	    	msg_len=msg_sub_startlen + msg_sublen; //body length
+
+	    	delete[] msg_sub_start_ptr;
+
+	    	msg_new_part_ptr=encode_merge_buff(msg_pre_part_ptr, this->length, msg_body_ptr, msg_len);  //merge the previous part and the new part
+
+	    	delete[] msg_body_ptr;
+	    	delete[] msg_pre_part_ptr;
+
+	    	msg_pre_part_ptr=msg_new_part_ptr;
+	    	this->length+=msg_len;
+
+	    	pri_type_encoder->reset_length(); //reset encoder offset
 	    }
 	}
 	else
 	{
 		cout<<"error msg="<<err_msg<<endl;
 		pri_type_encoder->encodeString(PCE_COMPUTE_ERROR, err_msg);
+
+		msg_sub_ptr=pri_type_encoder->get_buff();
+		msg_sublen=pri_type_encoder->get_length();
+
+		msg_pre_part_ptr = new u_int8_t[msg_sublen];
+		memcpy(msg_pre_part_ptr, msg_sub_ptr, msg_sublen);
+
+		this->length+=msg_sublen;
+
+		pri_type_encoder->reset_length(); //reset encoder offset
 	}
 
-	msg_sub_ptr=pri_type_encoder->get_buff();
-	msg_sublen=pri_type_encoder->get_length();
+	msg_sub_startlen=0;
 
-	msg_sub_start_ptr=encode_msg_sub_start(pceType, msg_sublen, msg_sub_startlen); //encode the subfield-header
+	msg_sub_start_ptr=encode_msg_sub_start(PCE_REPLY, this->length, msg_sub_startlen); //encode the subfield-header
 
-	msg_body_ptr=encode_merge_buff(msg_sub_start_ptr, msg_sub_startlen, msg_sub_ptr, msg_sublen);  //merge subfield-header and body
-	msg_len=msg_sub_startlen + msg_sublen; //body length
+	msg_new_part_ptr=encode_merge_buff(msg_sub_start_ptr, msg_sub_startlen, msg_pre_part_ptr, this->length);  //merge subfield-header and body
+	this->length=this->length+msg_sub_startlen;
 
 	delete[] msg_sub_start_ptr;
-	delete[] msg_sub_ptr;
+	delete[] msg_pre_part_ptr;
 
-	body=(char*)msg_body_ptr;
-	this->length=msg_len;
+	//memory revoke for the buff in pri encoder
+	//now move the function to deconstructor of pri encoder itself
+	//msg_sub_ptr=pri_type_encoder->get_buff();
+	//delete[] msg_sub_ptr;
+
+	msg_pre_part_ptr=msg_new_part_ptr;
+
+	body=(char*)msg_pre_part_ptr;
+
 
 	/*
     ofstream outfile("/home/wind/encodebin.txt", ios::binary);

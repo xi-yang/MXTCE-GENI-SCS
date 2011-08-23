@@ -23,6 +23,7 @@ private:
 	void buff_rem_check(int );
 	void expand_buff(int );
 	void buff_prune();
+	void destroy_buff();
 
 
 public:
@@ -31,6 +32,11 @@ public:
 	{
 		create_buff();
 		offset=0;
+	}
+
+	~Encode_Pri_Type()
+	{
+		destroy_buff();
 	}
 
 	void encodeHeader(u_int8_t , u_int8_t , int );
@@ -49,6 +55,11 @@ public:
 	int get_length()
 	{
 		return offset;
+	}
+
+	void reset_length()
+	{
+		offset = 0;
 	}
 
 

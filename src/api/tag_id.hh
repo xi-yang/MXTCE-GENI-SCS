@@ -7,7 +7,8 @@
 #define PCE_OPTICONSTRAINT_COSCHEDULEREQ 0xF3
 
 #define PCE_REPLY 0xF8
-#define PCE_OPTI_REPLY 0xF9
+#define PCE_REGU_REPLY 0xF9
+#define PCE_OPTI_REPLY 0xFA
 
 	
 #define PCE_GRI   0x81

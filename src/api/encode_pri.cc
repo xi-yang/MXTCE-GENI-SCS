@@ -43,6 +43,11 @@ void Encode_Pri_Type::buff_prune()
 	this->current_cap = offset;
 }
 
+void Encode_Pri_Type::destroy_buff()
+{
+	delete[] buff;
+}
+
 void Encode_Pri_Type::encodeHeader(u_int8_t pceType, u_int8_t priType, int length)
 {
 	buff[offset++] = pceType;
