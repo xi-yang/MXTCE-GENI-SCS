@@ -49,6 +49,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     bool optional_cons_flag=true;
 
     list<TPath*> alterPaths;
+    BandwidthAvailabilityGraph* bag=NULL;
 
     //Encode_Pri_Type* pri_type_encoder = new Encode_Pri_Type();
 
@@ -75,7 +76,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 		}
 	    if (path_info != NULL)
 	    {
-	    	encode_path(path_info, pri_type_encoder);
+	    	encode_path(path_info, pri_type_encoder, 0);
 	    }
 
 		msg_sub_ptr=pri_type_encoder->get_buff();
@@ -99,7 +100,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	    	//pri_type_encoder->encodeString(PCE_OPTI_REPLY, "opti");
 	    	if(path_info != NULL)
 	    	{
-	    		encode_path(path_info, pri_type_encoder);
+	    		encode_path(path_info, pri_type_encoder, 1);
 	    	}
 
 	    	alterPaths = compute_result->GetAlterPaths();
@@ -117,7 +118,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	    		{
 	    			if((*it_path)!=NULL)
 	    			{
-	    				encode_path((*it_path), pri_type_encoder);
+	    				encode_path((*it_path), pri_type_encoder, 1);
 
 	    			}
 	    		}
@@ -284,7 +285,7 @@ void Apireplymsg_encoder::encode_msg_header(api_msg_header& apimsg_header, int m
 
 }
 
-void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_type_encoder_ptr)
+void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_type_encoder_ptr, int opti_flag)
 {
 
 	int msg_sublen=0;
@@ -325,6 +326,7 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 
 	list<TPath*> alterPaths;
 
+	BandwidthAvailabilityGraph* bag=NULL;
 
 	char print_buff[200];
 
@@ -487,4 +489,12 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 			break;
 		}
 	}
+
+	if(opti_flag==1)
+	{
+		bag=path_info->GetBAG();
+
+	}
+
+
 }
