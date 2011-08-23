@@ -66,6 +66,7 @@ protected:
 public:
     BandwidthAvailabilityGraph() { }
     virtual ~BandwidthAvailabilityGraph() { }
+    map<time_t, long>& GetTBSF() { return TBSF; }
     void AddStep(time_t t, long bw);
     void LoadADS(AggregateDeltaSeries& ads, time_t start, time_t end, long capacity);
     void LogDump();
