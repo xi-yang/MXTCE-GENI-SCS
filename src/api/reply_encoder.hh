@@ -5,6 +5,7 @@
 #include "encode_pri.hh"
 #include "apiserver.hh"
 #include "compute_worker.hh"
+#include "scheduling.hh"
 
 using namespace std;
 

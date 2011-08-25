@@ -69,6 +69,13 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 		cout<<"error msg is empty string"<<endl;
 		cout<<"error msg="<<err_msg<<endl;
 
+		msg_sub_ptr=pri_type_encoder->get_buff();
+		msg_sublen=pri_type_encoder->get_length();
+		msg_pre_part_ptr = new u_int8_t[msg_sublen];
+		memcpy(msg_pre_part_ptr, msg_sub_ptr, msg_sublen);
+		this->length+=msg_sublen;
+		pri_type_encoder->reset_length(); //reset encoder offset
+
 		path_info = compute_result->GetPathInfo();
 		if(path_info == NULL)
 		{
@@ -81,18 +88,18 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 
 		msg_sub_ptr=pri_type_encoder->get_buff();
 		msg_sublen=pri_type_encoder->get_length();
-
+		msg_sub_startlen=0;
 		msg_sub_start_ptr=encode_msg_sub_start(PCE_REGU_REPLY, msg_sublen, msg_sub_startlen); //encode the subfield-header
-
 		msg_body_ptr=encode_merge_buff(msg_sub_start_ptr, msg_sub_startlen, msg_sub_ptr, msg_sublen);  //merge subfield-header and body
 		msg_len=msg_sub_startlen + msg_sublen; //body length
-
 		delete[] msg_sub_start_ptr;
-
-		msg_pre_part_ptr=msg_body_ptr;
+		msg_new_part_ptr=encode_merge_buff(msg_pre_part_ptr, this->length, msg_body_ptr, msg_len);  //merge the previous part and the new part
+		delete[] msg_body_ptr;
+		delete[] msg_pre_part_ptr;
+		msg_pre_part_ptr=msg_new_part_ptr;
 		this->length+=msg_len;
-
 		pri_type_encoder->reset_length(); //reset encoder offset
+
 
 	    if(optional_cons_flag == true)
 	    {
@@ -127,22 +134,15 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	    	msg_sub_ptr=pri_type_encoder->get_buff();
 	    	msg_sublen=pri_type_encoder->get_length();
 	    	msg_sub_startlen=0;
-
 	    	msg_sub_start_ptr=encode_msg_sub_start(PCE_OPTI_REPLY, msg_sublen, msg_sub_startlen); //encode the subfield-header
-
 	    	msg_body_ptr=encode_merge_buff(msg_sub_start_ptr, msg_sub_startlen, msg_sub_ptr, msg_sublen);  //merge subfield-header and body
 	    	msg_len=msg_sub_startlen + msg_sublen; //body length
-
 	    	delete[] msg_sub_start_ptr;
-
 	    	msg_new_part_ptr=encode_merge_buff(msg_pre_part_ptr, this->length, msg_body_ptr, msg_len);  //merge the previous part and the new part
-
 	    	delete[] msg_body_ptr;
 	    	delete[] msg_pre_part_ptr;
-
 	    	msg_pre_part_ptr=msg_new_part_ptr;
 	    	this->length+=msg_len;
-
 	    	pri_type_encoder->reset_length(); //reset encoder offset
 	    }
 	}
@@ -153,31 +153,24 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 
 		msg_sub_ptr=pri_type_encoder->get_buff();
 		msg_sublen=pri_type_encoder->get_length();
-
 		msg_pre_part_ptr = new u_int8_t[msg_sublen];
 		memcpy(msg_pre_part_ptr, msg_sub_ptr, msg_sublen);
-
 		this->length+=msg_sublen;
-
 		pri_type_encoder->reset_length(); //reset encoder offset
 	}
 
 	msg_sub_startlen=0;
-
 	msg_sub_start_ptr=encode_msg_sub_start(PCE_REPLY, this->length, msg_sub_startlen); //encode the subfield-header
-
 	msg_new_part_ptr=encode_merge_buff(msg_sub_start_ptr, msg_sub_startlen, msg_pre_part_ptr, this->length);  //merge subfield-header and body
 	this->length=this->length+msg_sub_startlen;
-
 	delete[] msg_sub_start_ptr;
 	delete[] msg_pre_part_ptr;
+	msg_pre_part_ptr=msg_new_part_ptr;
 
 	//memory revoke for the buff in pri encoder
 	//now move the function to deconstructor of pri encoder itself
 	//msg_sub_ptr=pri_type_encoder->get_buff();
 	//delete[] msg_sub_ptr;
-
-	msg_pre_part_ptr=msg_new_part_ptr;
 
 	body=(char*)msg_pre_part_ptr;
 
@@ -327,6 +320,10 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 	list<TPath*> alterPaths;
 
 	BandwidthAvailabilityGraph* bag=NULL;
+
+	//map<time_t, long> TBSF;
+
+	map<time_t, long>::iterator it;
 
 	char print_buff[200];
 
@@ -490,11 +487,41 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 		}
 	}
 
+
+
 	if(opti_flag==1)
 	{
+		time_t new_time = 0;
+		time_t last_time = 0;
+		long bandwidth;
 		bag=path_info->GetBAG();
+		map<time_t, long> TBSF=bag->GetTBSF();
+
+		cout<<"size of bag="<<TBSF.size()<<endl;
+
+		for(it=TBSF.begin();it!=TBSF.end();it++)
+		{
+			if(it!=TBSF.begin())
+			{
+				pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_ENDTIME, last_time);
+				cout<<"bag endtime="<<last_time<<endl;
+			}
+			new_time = (*it).first;
+			bandwidth = (*it).second;
+			pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_BANDWIDTH, bandwidth);
+			pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_STARTTIME, new_time);
+			last_time = new_time;
+			cout<<"bag bandwith="<<bandwidth<<endl;
+			cout<<"bag starttime="<<new_time<<endl;
+
+		}
+
+		//encode the last endtime for bag segment
+		pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_ENDTIME, last_time);
+		cout<<"bag endtime="<<last_time<<endl;
 
 	}
 
+	pri_type_encoder_ptr->encodeString(PCE_PATH_END_TAG, "pathend");
 
 }
