@@ -282,6 +282,7 @@ BandwidthAvailabilityGraph* BandwidthAvailabilityGraph::Clone()
     map<time_t, long>::iterator iter = this->TBSF.begin();
     for (; iter != this->TBSF.end(); iter++)
         bag->TBSF[(*iter).first] = (*iter).second;
+    return bag;
 }
 
 
