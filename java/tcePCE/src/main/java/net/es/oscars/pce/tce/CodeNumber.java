@@ -15,6 +15,8 @@ public class CodeNumber {
     public static final byte PCE_OPTICONSTRAINT_COSCHEDULEREQ = (byte)0xF3;
         
     public static final byte PCE_REPLY = (byte)0xF8;
+    public static final byte PCE_REGU_REPLY = (byte)0xF9;
+    public static final byte PCE_OPTI_REPLY = (byte)0xFA;
     
 	
 	public static final byte PCE_GRI = (byte)0x81;
@@ -70,6 +72,11 @@ public class CodeNumber {
 	public static final byte PCE_OPT_COSCHREQ_DATASIZEBYTES = (byte)0xB0;
 	
 	public static final byte PCE_HOP_END_TAG = (byte)0xB1;
+	public static final byte PCE_ALT_PATH_NUM = (byte)0xB2;
+	public static final byte PCE_OPT_BAG_BANDWIDTH = (byte)0xB3;
+	public static final byte PCE_OPT_BAG_STARTTIME = (byte)0xB4;
+	public static final byte PCE_OPT_BAG_ENDTIME = (byte)0xB5;
+	public static final byte PCE_PATH_END_TAG = (byte)0xB6;
 
 	
 

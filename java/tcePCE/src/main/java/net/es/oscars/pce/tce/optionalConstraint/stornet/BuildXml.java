@@ -23,7 +23,7 @@ public class BuildXml {
 			TransformerFactory transFactory = TransformerFactory.newInstance();
 			Transformer transformer = transFactory.newTransformer();
 			DOMSource domSource = new DOMSource(document);
-			File file = new File("E:\\test_out.xml");
+			File file = new File("/home/dell/test_out.xml");
 			FileOutputStream out = new FileOutputStream(file);
 			//StringWriter outStr = new StringWriter();
 			StreamResult xmlResult = new StreamResult(out);

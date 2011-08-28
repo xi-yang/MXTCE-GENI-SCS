@@ -12,6 +12,8 @@ import net.es.oscars.utils.topology.NMWGTopoBuilder;
 
 import org.ogf.schema.network.topology.ctrlplane.*;
 
+import net.es.oscars.pce.tce.optionalConstraint.stornet.*;
+
 public class WriteResult {
 	
 	private PCEMessage query;
@@ -29,6 +31,7 @@ public class WriteResult {
 		PCEDataContent pceData = query.getPCEDataContent();
 		String gri = query.getGri();		
 		ReservedConstraintType resConType = pceData.getReservedConstraint();
+		CoScheduleReplyField coScheduleReply = new CoScheduleReplyField();
 
 		String replyGri = replyMessage.getGri();
 		String errorMsg = replyMessage.getErrorMessage();
@@ -38,6 +41,10 @@ public class WriteResult {
 				
 				this.writeResvConstraint(replyMessage, resConType);
 				this.writeTopology(replyMessage, pceData);
+				if(replyMessage.getCoSchedulePath()!=null){
+					this.writeOptiConstraint(replyMessage, coScheduleReply);
+					new BuildXml().generateXml(coScheduleReply);					
+				}				
 			}else{
 				
 				throw new OSCARSServiceException("Path computation fails with message: " + errorMsg);
@@ -170,6 +177,139 @@ public class WriteResult {
 		
 		pceData.setTopology(topoBuilder.getTopology());
 		
+	}
+	
+	protected void writeOptiConstraint(ReplyMessageContent replyMessage, CoScheduleReplyField coScheduleReply){
+		ReplyCoSchedulePathContent coSchedulePathReply = replyMessage.getCoSchedulePath();
+		ReplyPathContent pathReply = coSchedulePathReply.getPath();		
+		
+		List<CoSchedulePathField> coSchedulePathResult = coScheduleReply.getCoSchedulePath();
+		
+		CoSchedulePathField coSchedulePathField = new CoSchedulePathField();
+		
+		writePath(pathReply, coSchedulePathField);
+		
+		coSchedulePathResult.add(coSchedulePathField);
+		
+		List<ReplyPathContent> altPaths = coSchedulePathReply.getAltPathContent();
+	
+		for(int i=0;i<altPaths.size();i++){
+			pathReply = altPaths.get(i);
+			coSchedulePathField = new CoSchedulePathField();
+			writePath(pathReply, coSchedulePathField);
+			coSchedulePathResult.add(coSchedulePathField);			
+		}		
+		
+	}
+	
+	protected void writePath(ReplyPathContent pathReply, CoSchedulePathField coSchedulePathField){
+		String CoSchedulePathId = UUID.randomUUID().toString();
+		
+		coSchedulePathField.setId(CoSchedulePathId);
+		
+		PathInfoField pathInfo = null;		
+		BagInfoField bagInfo = null;
+		
+		List<ReplyLinkContent> linksReply = pathReply.getReplyLinkContent();
+		List<ReplyBagSegmentContent> bagsReply = pathReply.getReplyBagSegmentContent();
+		
+		if(linksReply.size()!=0){
+			pathInfo = new PathInfoField();
+			writeLink(linksReply, pathInfo);
+		}
+		
+		if(bagsReply.size()!=0){
+			bagInfo = new BagInfoField();
+			writeBag(bagsReply, bagInfo);
+			
+		}
+		
+		coSchedulePathField.setPathInfoField(pathInfo);
+		
+		coSchedulePathField.setBagInfoField(bagInfo);		
+		
+	}
+	
+	protected void writeLink(List<ReplyLinkContent> linksReply, PathInfoField pathInfo){
+		String pathId = UUID.randomUUID().toString();
+		
+		pathInfo.setPathId(pathId);
+		
+		ReplyLinkContent linkContentReply = null;
+		
+		List<HopField> hop = pathInfo.getHop();
+		
+		for(int i=0;i<linksReply.size();i++){
+			linkContentReply = linksReply.get(i);
+			HopField hopField = new HopField();
+			String hopId = new String(UUID.randomUUID().toString());
+			hopField.setHopId(hopId);
+			LinkField linkResult = new LinkField();			
+			writeLinkDetail(linkContentReply, linkResult);
+			hopField.setLink(linkResult);
+			
+			hop.add(hopField);			
+		}		
+		
+	}
+	
+	protected void writeBag(List<ReplyBagSegmentContent> bagsReply, BagInfoField bagInfo){
+		
+		List<BagSegmentField> bagSegment = bagInfo.getBagSegment();
+		
+		ReplyBagSegmentContent bagSegmentContentReply = null;
+		
+		for(int i=0;i<bagsReply.size();i++){
+			bagSegmentContentReply = bagsReply.get(i);
+			BagSegmentField bagSegmentField = new BagSegmentField();
+			writeBagDetail(bagSegmentContentReply, bagSegmentField);
+			
+			bagSegment.add(bagSegmentField);
+		}
+	}
+	
+	protected void writeLinkDetail(ReplyLinkContent linkContentReply, LinkField linkResult){
+		String id;
+		String name;
+		String remoteLinkId;
+		String switchingType;
+		String encodingType;
+		String assignedVlanTags;
+		String availableVlanTags;
+		String suggestedVlanTags;
+		int mtu;
+		boolean vlanTranslation;
+		int capacity;
+		int maximumReservableCapacity;
+		int minimumReservableCapacity;
+		int granularity;
+		int trafficEngineeringMetric;
+		
+		name = linkContentReply.getName();
+		linkResult.setLinkId(name);
+		
+		switchingType = linkContentReply.getSwitchingType();
+		linkResult.setSwitchingcapType(switchingType);
+		
+		encodingType = linkContentReply.getEncodingType();
+		linkResult.setEncodingType(encodingType);
+		
+		availableVlanTags = linkContentReply.getAvailableVlanTags();
+		linkResult.setVlanRangeAvailability(availableVlanTags);
+		
+		
+	}
+	
+	protected void writeBagDetail(ReplyBagSegmentContent bagSegmentContentReply, BagSegmentField bagSegmentField){
+		int bandwidth;
+		int startTime;
+		int endTime;
+		bandwidth = bagSegmentContentReply.getBandwidth();
+		startTime = bagSegmentContentReply.getStartTime();
+		endTime = bagSegmentContentReply.getEndTime();
+		bagSegmentField.setSegmentBandwidth(bandwidth);
+		bagSegmentField.setSegmentStartTime(startTime);
+		bagSegmentField.setSegmentEndTime(endTime);		
 	}
 
 }

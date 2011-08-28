@@ -127,20 +127,64 @@ public class RetrieveReply {
 		return result;
 	}
 	
-	public ReplyMessageContent decodeReplyMessage(byte[] buff){
+	public ReplyMessageContent decodeReplyMessage(byte[] buff) throws OSCARSServiceException{
 		PrimitiveDecoder priDecoder = new PrimitiveDecoder();
 		byte type = 0;
 		int lengthTagSize = 0;
+		int totalMsgLength = 0;
+		int regFieldLength = 0;
+		int optFieldLength = 0;
+		int decodedLength = 0;
 		int length = 0;
+		int initialDecodeOffset = 0;
+		String gri;
+		String errorMessage;
 		ReplyMessageContent replyMessage = new ReplyMessageContent();
 		
 		type = buff[offset++];
 		
 		if(type == CodeNumber.PCE_REPLY){
 			lengthTagSize = priDecoder.getLengthTagSize(buff, offset);
-			length = priDecoder.getLength(buff, offset);
+			totalMsgLength = priDecoder.getLength(buff, offset);
 			offset = offset + lengthTagSize;
-			this.decodeReplyPathContent(buff, length, replyMessage);
+			
+			initialDecodeOffset = offset;
+			
+			type = buff[offset++];
+
+			if(type == CodeNumber.PCE_GRI){
+				length = this.decodeLength(priDecoder, buff);
+				gri = priDecoder.decodeString(buff, offset, length);
+							
+				offset = offset + length;
+				replyMessage.setGri(gri);
+			}
+			
+			type = buff[offset++];
+			if(type==CodeNumber.PCE_COMPUTE_ERROR){
+				length = this.decodeLength(priDecoder, buff);
+				errorMessage = priDecoder.decodeString(buff, offset, length);
+				
+				offset = offset + length;			
+				replyMessage.setErrorMessage(errorMessage);
+				return replyMessage;
+			}
+			
+			if(type == CodeNumber.PCE_REGU_REPLY){
+				regFieldLength = this.decodeLength(priDecoder, buff);
+				this.decodeReplyPathContent(buff, regFieldLength, replyMessage);
+				decodedLength = offset - initialDecodeOffset;
+				
+				if(decodedLength < totalMsgLength){
+					type = buff[offset++];
+					if(type == CodeNumber.PCE_OPTI_REPLY){
+						optFieldLength = this.decodeLength(priDecoder, buff);
+						this.decodeOptiContent(buff, replyMessage);
+						
+												
+					}
+				}				
+			}			
 		}
 			
 		return replyMessage;
@@ -148,7 +192,40 @@ public class RetrieveReply {
 		
 	}
 	
-	void decodeReplyPathContent(byte[] buff, int totalLength, ReplyMessageContent replyMessage){
+	void decodeOptiContent(byte[] buff, ReplyMessageContent replyMessage) throws OSCARSServiceException{
+		PrimitiveDecoder priDecoder = new PrimitiveDecoder();
+		ReplyPathContent replyPath = null;
+		ReplyCoSchedulePathContent coSchedulePath = null;
+		List<ReplyPathContent> altPaths = null;
+		int altPathsNumber = 0;
+		byte type = 0;	
+		int length = 0;
+		
+		coSchedulePath = new ReplyCoSchedulePathContent();
+		replyMessage.setCoScheduleReply(coSchedulePath);  //set coSchedulePath to reply message
+		
+		replyPath = this.decodePath(buff);
+		
+		coSchedulePath.setPath(replyPath);
+		
+		altPaths = coSchedulePath.getAltPathContent();
+		
+		type = buff[offset++];
+		if(type == CodeNumber.PCE_ALT_PATH_NUM){
+			length = this.decodeLength(priDecoder, buff);
+			altPathsNumber = priDecoder.decodeInteger(buff, offset, length);
+			offset = offset + length;			
+		}
+		
+		
+		for(int i=0;i<altPathsNumber;i++){
+			replyPath = this.decodePath(buff);
+			altPaths.add(replyPath);
+		}		
+		
+	}
+
+	void decodeReplyPathContent(byte[] buff, int totalLength, ReplyMessageContent replyMessage) throws OSCARSServiceException{
 		PrimitiveDecoder priDecoder = new PrimitiveDecoder();
 		byte type = 0;
 		int lengthTagSize = 0;
@@ -174,9 +251,20 @@ public class RetrieveReply {
 		ReplyLinkContent replyLink = null;
 		List<ReplyLinkContent> linkSet = null;
 		int initialDecodeOffset = 0;
+		int regularReplyLength = 0;
+		int optionalReplyLength = 0;
+		ReplyPathContent replyPath = null;
+		ReplyCoSchedulePathContent coSchedulePath = null;
+		List<ReplyPathContent> altPaths = null;
+		int altPathsNumber = 0;
 		
+		
+		replyPath = this.decodePath(buff);
+		replyMessage.setReplyPathContent(replyPath);
+		/*
 		initialDecodeOffset = this.offset;		
 		
+				
 		type = buff[offset++];
 		if(type == CodeNumber.PCE_GRI){
 			lengthTagSize = priDecoder.getLengthTagSize(buff, offset);
@@ -192,11 +280,48 @@ public class RetrieveReply {
 		if(type==CodeNumber.PCE_COMPUTE_ERROR){
 			length = this.decodeLength(priDecoder, buff);
 			errorMessage = priDecoder.decodeString(buff, offset, length);
-			
+			offset = offset + length;			
 			replyMessage.setErrorMessage(errorMessage);
 			return;
 		}
 		
+		if(type==CodeNumber.PCE_REGU_REPLY){
+			regularReplyLength = this.decodeLength(priDecoder, buff);
+			replyPath = this.decodePath(buff);
+			replyMessage.setReplyPathContent(replyPath);
+		}else{
+			
+		}
+		
+		if((this.offset - initialDecodeOffset) < totalLength)
+		{
+			type = buff[offset++];
+			if(type==CodeNumber.PCE_OPTI_REPLY){
+				optionalReplyLength = this.decodeLength(priDecoder, buff);
+				coSchedulePath = new ReplyCoSchedulePathContent();
+				replyMessage.setCoScheduleReply(coSchedulePath);  //set coSchedulePath to reply message
+				
+				replyPath = this.decodePath(buff);
+				
+				coSchedulePath.setPath(replyPath);
+				
+				altPaths = coSchedulePath.getAltPathContent();
+				
+				type = buff[offset++];
+				length = this.decodeLength(priDecoder, buff);
+				altPathsNumber = priDecoder.decodeInteger(buff, offset, length);
+				offset = offset + length;
+				
+				for(int i=0;i<altPathsNumber;i++){
+					replyPath = this.decodePath(buff);
+					altPaths.add(replyPath);
+				}				
+			}else{
+				
+			}
+		}
+		*/
+		/*
 		if(type == CodeNumber.PCE_PATH_ID){
 			length = this.decodeLength(priDecoder, buff);
 			pathId = priDecoder.decodeString(buff, offset, length);
@@ -330,9 +455,234 @@ public class RetrieveReply {
 			}
 			linkSet.add(replyLink); //last link			
 			
-		}		
+		}
+		*/
 		
 	}
+	
+	
+	ReplyPathContent decodePath(byte[] buff) throws OSCARSServiceException{		
+		PrimitiveDecoder priDecoder = new PrimitiveDecoder();
+		byte type = 0;
+		int lengthTagSize = 0;
+		int length = 0;
+		String gri;
+		String errorMessage;
+		String pathId = null;
+		int pathLength = 0;
+		String linkName;
+		String switchingCapType;
+		String switchingEncType;
+		String assignedVlanTags;
+		String suggestedVlanTags;
+		String availableVlanTags;
+		boolean vlanTranslation;
+		int capacity;
+		int mtu;
+		String remoteLinkId;
+		int maximumReservableCapacity;
+		int minimumReservableCapacity;
+		int granularity;
+		int trafficEngineeringMetric;
+		ReplyLinkContent replyLink = null;
+		List<ReplyLinkContent> linkSet = null;
+		int initialDecodeOffset = 0;
+		boolean pathEndFlag = false;
+		List<ReplyBagSegmentContent> bags = null;
+		ReplyBagSegmentContent bagSegment = null;
+		int bagBandwidth;
+		int bagStartTime;
+		int bagEndTime;
+		
+		
+		ReplyPathContent replyPath = new ReplyPathContent();
+		
+		type = buff[offset++];
+		if(type == CodeNumber.PCE_PATH_ID){
+			length = this.decodeLength(priDecoder, buff);
+			pathId = priDecoder.decodeString(buff, offset, length);
+
+			offset = offset + length;
+			
+			pathEndFlag = true;
+		}
+		
+		replyPath.setId(pathId);
+		
+
+		type = buff[offset++];			
+		if(type == CodeNumber.PCE_PATH_LENGTH){
+			length = this.decodeLength(priDecoder, buff);
+			pathLength = priDecoder.decodeInteger(buff, offset, length);
+
+			offset = offset + length;
+
+		}
+
+		linkSet = replyPath.getReplyLinkContent();
+		bags = replyPath.getReplyBagSegmentContent();
+
+		while(pathEndFlag){
+			type = buff[offset++];
+			if(type == CodeNumber.PCE_LINK_ID){
+				if(replyLink != null){
+					linkSet.add(replyLink);
+				}
+				replyLink = new ReplyLinkContent();
+				length = this.decodeLength(priDecoder, buff);
+				linkName = priDecoder.decodeString(buff, offset, length);
+
+				offset = offset + length;
+
+				replyLink.setName(linkName);
+
+			}else if(type == CodeNumber.PCE_REMOTE_LINK){
+				length = this.decodeLength(priDecoder, buff);
+				remoteLinkId = priDecoder.decodeString(buff, offset, length);
+
+				offset = offset + length;
+
+				replyLink.setRemoteLinkId(remoteLinkId);
+
+			}else if(type == CodeNumber.PCE_SWITCHINGCAPTYPE){
+				length = this.decodeLength(priDecoder, buff);
+				switchingCapType = priDecoder.decodeString(buff, offset, length);
+
+				offset = offset + length;
+
+				replyLink.setSwitchingType(switchingCapType);					
+			}else if(type == CodeNumber.PCE_SWITCHINGENCTYPE){
+				length = this.decodeLength(priDecoder, buff);
+				switchingEncType = priDecoder.decodeString(buff, offset, length);
+
+				offset = offset + length;
+
+				replyLink.setEncodingType(switchingEncType);
+			}else if(type == CodeNumber.PCE_SWITCHINGVLANRANGEAVAI){
+				length = this.decodeLength(priDecoder, buff);
+				availableVlanTags = priDecoder.decodeString(buff, offset, length);
+
+				offset = offset + length;
+
+				replyLink.setAvailableVlanTags(availableVlanTags);
+			}else if(type == CodeNumber.PCE_SWITCHINGVLANRANGESUGG){
+				length = this.decodeLength(priDecoder, buff);
+				suggestedVlanTags = priDecoder.decodeString(buff, offset, length);
+
+				offset = offset + length;
+
+				replyLink.setSuggestedVlanTags(suggestedVlanTags);
+			}else if(type == CodeNumber.PCE_SWITCHINGVLANRANGEASSI){
+				length = this.decodeLength(priDecoder, buff);
+				assignedVlanTags = priDecoder.decodeString(buff, offset, length);
+
+				offset = offset + length;
+
+				replyLink.setAssignedVlanTags(assignedVlanTags);
+			}else if(type == CodeNumber.PCE_VLANTRANSLATION){
+				length = this.decodeLength(priDecoder, buff);
+				vlanTranslation = priDecoder.decodeBoolean(buff, offset, length);
+
+				offset = offset + length;
+
+				replyLink.setVlanTranslation(vlanTranslation);
+			}else if(type == CodeNumber.PCE_CAPACITY){
+				length = this.decodeLength(priDecoder, buff);
+				capacity = priDecoder.decodeInteger(buff, offset, length);
+
+				offset = offset + length;
+
+				replyLink.setCapacity(capacity);
+			}else if(type == CodeNumber.PCE_MTU){
+				length = this.decodeLength(priDecoder, buff);
+				mtu = priDecoder.decodeInteger(buff, offset, length);
+
+				offset = offset + length;
+
+				replyLink.setMtu(mtu);
+			}else if(type == CodeNumber.PCE_MAXRESVCAPACITY){
+				length = this.decodeLength(priDecoder, buff);
+				maximumReservableCapacity = priDecoder.decodeInteger(buff, offset, length);
+
+				offset = offset + length;
+
+				replyLink.setMaximumReservableCapacity(maximumReservableCapacity);					
+			}else if(type == CodeNumber.PCE_MINRESVCAPACITY){
+				length = this.decodeLength(priDecoder, buff);
+				minimumReservableCapacity = priDecoder.decodeInteger(buff, offset, length);
+
+				offset = offset + length;
+
+				replyLink.setMinimumReservableCapacity(minimumReservableCapacity);
+			}else if(type == CodeNumber.PCE_GRANULARITY){
+				length = this.decodeLength(priDecoder, buff);
+				granularity = priDecoder.decodeInteger(buff, offset, length);
+
+				offset = offset + length;
+
+				replyLink.setGranularity(granularity);
+			}else if(type == CodeNumber.PCE_TE_METRIC){
+				length = this.decodeLength(priDecoder, buff);
+				trafficEngineeringMetric = priDecoder.decodeInteger(buff, offset, length);
+
+				offset = offset + length;
+
+				replyLink.setTrafficEngineeringMetric(trafficEngineeringMetric);
+			}else if(type == CodeNumber.PCE_OPT_BAG_BANDWIDTH){				
+				length = this.decodeLength(priDecoder, buff);
+				bagBandwidth = priDecoder.decodeInteger(buff, offset, length);
+				
+				offset = offset + length;
+				
+				if(bagSegment == null){
+					bagSegment = new ReplyBagSegmentContent();
+				}
+				
+				bagSegment.setBandwidth(bagBandwidth);					
+			}else if(type == CodeNumber.PCE_OPT_BAG_STARTTIME){
+				length = this.decodeLength(priDecoder, buff);
+				bagStartTime = priDecoder.decodeInteger(buff, offset, length);
+				
+				offset = offset + length;
+				
+				if(bagSegment == null){
+					throw new OSCARSServiceException("BagSegment should start with bandwidth in API encoded message");
+				}
+				bagSegment.setStartTime(bagStartTime);					
+			}else if(type == CodeNumber.PCE_OPT_BAG_ENDTIME){
+				length = this.decodeLength(priDecoder, buff);
+				bagEndTime = priDecoder.decodeInteger(buff, offset, length);
+				
+				offset = offset + length;
+				
+				if(bagSegment == null){
+					throw new OSCARSServiceException("BagSegment should start with bandwidth in API encoded message");
+				}				
+				bagSegment.setEndTime(bagEndTime);
+				bags.add(bagSegment);
+			}else if(type == CodeNumber.PCE_PATH_END_TAG){
+				length = this.decodeLength(priDecoder, buff);
+				String tempStr = priDecoder.decodeString(buff, offset, length);
+				
+				offset = offset + length;
+				
+				linkSet.add(replyLink); //last link	
+				pathEndFlag = false;
+
+			}else{
+				
+			}
+
+		}
+		//linkSet.add(replyLink); //last link			
+
+		return replyPath;
+
+		
+		
+	}
+	
+
 	
 	int decodeLength(PrimitiveDecoder priDecoder, byte[] buff){
 		int lengthTagSize = 0;

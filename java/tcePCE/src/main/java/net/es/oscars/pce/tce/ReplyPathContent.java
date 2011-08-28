@@ -7,6 +7,7 @@ public class ReplyPathContent {
 	
 	protected List<ReplyLinkContent> links;
 	protected String id;
+	protected List<ReplyBagSegmentContent> bags;
 	
 	public List<ReplyLinkContent> getReplyLinkContent(){
 		if(links==null){
@@ -23,5 +24,11 @@ public class ReplyPathContent {
 		this.id = value;
 	}
 	
+	public List<ReplyBagSegmentContent> getReplyBagSegmentContent(){
+		if(bags==null){
+			bags = new ArrayList<ReplyBagSegmentContent>();
+		}
+		return this.bags;
+	}
 
 }
