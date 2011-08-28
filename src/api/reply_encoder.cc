@@ -130,6 +130,11 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	    			}
 	    		}
 	    	}
+	    	else
+	    	{
+	    		pri_type_encoder->encodeInteger(PCE_ALT_PATH_NUM,0); //set to 0 for decode side convenience
+
+	    	}
 
 	    	msg_sub_ptr=pri_type_encoder->get_buff();
 	    	msg_sublen=pri_type_encoder->get_length();
@@ -492,33 +497,45 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 	if(opti_flag==1)
 	{
 		time_t new_time = 0;
-		time_t last_time = 0;
+		//time_t last_time = 0;
 		long bandwidth;
+		int bag_size;
+		int counter=0;
 		bag=path_info->GetBAG();
 		map<time_t, long> TBSF=bag->GetTBSF();
 
+		bag_size=TBSF.size();
 		cout<<"size of bag="<<TBSF.size()<<endl;
 
 		for(it=TBSF.begin();it!=TBSF.end();it++)
 		{
-			if(it!=TBSF.begin())
-			{
-				pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_ENDTIME, last_time);
-				cout<<"bag endtime="<<last_time<<endl;
-			}
+
 			new_time = (*it).first;
 			bandwidth = (*it).second;
-			pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_BANDWIDTH, bandwidth);
-			pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_STARTTIME, new_time);
-			last_time = new_time;
-			cout<<"bag bandwith="<<bandwidth<<endl;
-			cout<<"bag starttime="<<new_time<<endl;
+
+			if(it!=TBSF.begin())
+			{
+				pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_ENDTIME, new_time);
+				cout<<"bag endtime="<<new_time<<endl;
+			}
+
+			if(counter!=(bag_size-1))
+			{
+				pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_BANDWIDTH, bandwidth);
+				pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_STARTTIME, new_time);
+
+				cout<<"bag bandwith="<<bandwidth<<endl;
+				cout<<"bag starttime="<<new_time<<endl;
+			}
+
+			//last_time = new_time;
+			counter++;
 
 		}
 
 		//encode the last endtime for bag segment
-		pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_ENDTIME, last_time);
-		cout<<"bag endtime="<<last_time<<endl;
+		//pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_ENDTIME, last_time);
+		//cout<<"bag endtime="<<last_time<<endl;
 
 	}
 
