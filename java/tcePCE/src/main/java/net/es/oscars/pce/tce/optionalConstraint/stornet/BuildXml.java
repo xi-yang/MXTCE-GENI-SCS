@@ -38,6 +38,36 @@ public class BuildXml {
 		}
 	}
 	
+	public String generateXmlString(CoScheduleReplyField coScheduleReply){
+		String result = null;
+		
+		try{
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder builder = factory.newDocumentBuilder();
+			Document document = builder.newDocument();
+			generateDocument(document, coScheduleReply);
+			
+			
+			TransformerFactory transFactory = TransformerFactory.newInstance();
+			Transformer transformer = transFactory.newTransformer();
+			DOMSource domSource = new DOMSource(document);
+			//File file = new File("/home/dell/test_out.xml");
+			//FileOutputStream out = new FileOutputStream(file);
+			StringWriter outStr = new StringWriter();
+			//StreamResult xmlResult = new StreamResult(out);
+			StreamResult xmlResult = new StreamResult(outStr);
+			transformer.transform(domSource, xmlResult);
+			
+			outStr.close();
+			result = outStr.toString();
+			//System.out.println("xml string="+result);
+			
+		}catch(Exception e){
+			System.out.println(e);
+		}
+		return result;
+	}
+	
 	protected void generateDocument(Document document, CoScheduleReplyField coScheduleReply){
 		document.setXmlVersion("1.0");
 		Element optionalConstraintNode = document.createElement("optionalConstraint");

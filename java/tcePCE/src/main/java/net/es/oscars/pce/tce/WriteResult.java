@@ -14,6 +14,12 @@ import org.ogf.schema.network.topology.ctrlplane.*;
 
 import net.es.oscars.pce.tce.optionalConstraint.stornet.*;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 public class WriteResult {
 	
 	private PCEMessage query;
@@ -35,6 +41,7 @@ public class WriteResult {
 
 		String replyGri = replyMessage.getGri();
 		String errorMsg = replyMessage.getErrorMessage();
+		
 		if(gri.equals(replyGri)){
 			
 			if(errorMsg==null){
@@ -43,7 +50,29 @@ public class WriteResult {
 				this.writeTopology(replyMessage, pceData);
 				if(replyMessage.getCoSchedulePath()!=null){
 					this.writeOptiConstraint(replyMessage, coScheduleReply);
-					new BuildXml().generateXml(coScheduleReply);					
+					//new BuildXml().generateXml(coScheduleReply);
+					String resultXml = new BuildXml().generateXmlString(coScheduleReply);
+					if(resultXml==null){
+						throw new OSCARSServiceException("XML string returned is none");
+					}
+					DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+			        dbf.setNamespaceAware(true);
+			        DocumentBuilder db = null;
+			        try {
+			            db = dbf.newDocumentBuilder();
+			        } catch (ParserConfigurationException e) {
+			             e.printStackTrace();
+			             System.exit(-1);
+			        }
+					Document xmlDoc = db.newDocument();
+			        Element xmlElem = xmlDoc.createElementNS("##other", "xml");
+			        xmlElem.setTextContent(resultXml);
+			        OptionalConstraintValue optValue = new OptionalConstraintValue();
+			        optValue.getAny().add(xmlElem);
+			        OptionalConstraintType optType = new OptionalConstraintType();
+			        optType.setValue(optValue);
+			        optType.setCategory("api-experiment-stornet");
+			        pceData.getOptionalConstraint().add(optType);
 				}				
 			}else{
 				
