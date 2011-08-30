@@ -72,7 +72,9 @@ public class WriteResult {
 			        OptionalConstraintType optType = new OptionalConstraintType();
 			        optType.setValue(optValue);
 			        optType.setCategory("api-experiment-stornet");
+			        pceData.getOptionalConstraint().clear(); //delete optional constraint request
 			        pceData.getOptionalConstraint().add(optType);
+			        //System.out.println("opt list size="+pceData.getOptionalConstraint().size());
 				}				
 			}else{
 				
