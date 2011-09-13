@@ -783,7 +783,7 @@ TGraph* TGraph::Clone()
 
 void TGraph::LogDump()
 {
-    char buf[102400]; //up to 100K
+    char buf[1024000]; //up to 1000K
     char str[256];
     strcpy(buf, "TEWG Dump...\n");
     list<TDomain*>::iterator itd = this->tDomains.begin();

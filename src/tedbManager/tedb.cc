@@ -291,6 +291,14 @@ void DBPort::UpdateFromXML(bool populateSubLevels)
             this->bandwidthGranularity = StringToBandwidth(bwStr);
         }
     }
+
+    if (this->maxReservableBandwidth == 0) 
+    {
+        this->maxReservableBandwidth = this->maxBandwidth;
+        for (int i = 0; i < 8; i++)
+            this->unreservedBandwidth[i] = this->maxReservableBandwidth;
+    }
+
     // cleanup links that no longer exist in XML
     map<string, Link*, strcmpless>::iterator itl = links.begin();
     while (itl != links.end())
@@ -412,7 +420,26 @@ void DBLink::UpdateFromXML(bool populateSubLevels)
             if (iscd != NULL)
                 swCapDescriptors.push_back(iscd); 
         }
+
         // TODO: parse IACD?
+
+        // use info from port level if not found at link level
+        if (this->port != NULL) 
+        {
+            if (this->maxBandwidth == 0)
+                this->maxBandwidth = this->port->GetMaxBandwidth();
+            if (this->maxReservableBandwidth == 0)
+            {
+                this->maxReservableBandwidth = this->port->GetMaxBandwidth();
+                for (int i = 0; i < 8; i++)
+                    this->unreservedBandwidth[i] = this->maxReservableBandwidth;
+            }
+            if (this->minReservableBandwidth == 0)
+                this->minReservableBandwidth = this->port->GetMinReservableBandwidth();
+            if (this->bandwidthGranularity == 0)
+                this->bandwidthGranularity = this->port->GetBandwidthGranularity();
+        }
+            
     }
 }
 
@@ -513,8 +540,6 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
             }
         }
     }
-    if (capacity == 0)
-        capacity = this->GetAvailableBandwidth();
     switch (swType)
     {
         case LINK_IFSWCAP_L2SC:
@@ -535,9 +560,15 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
             ((ISCD_LSC*)iscd)->wavelengthTranslation = wavelengthTranslation;
             break;
         default:
-            // type not supported 
-            return NULL;
+            //  default: L2SC / Ethernet
+            swType = LINK_IFSWCAP_L2SC;
+            encType = LINK_IFSWCAP_ENC_ETH;
+            iscd = new ISCD_L2SC(capacity, mtu);
+            ((ISCD_L2SC*)iscd)->availableVlanTags.LoadRangeString(vlanRange);
+            ((ISCD_L2SC*)iscd)->vlanTranslation = vlanTranslation;
     }
+    if (capacity == 0)
+        capacity = this->GetAvailableBandwidth();
     iscd->switchingType = swType;
     iscd->encodingType = encType;
     iscd->capacity = capacity;
@@ -816,58 +847,62 @@ DBLink* TEDB::LookupLinkByURN(string& urn)
 
 void TEDB::LogDump()
 {
-    char buf[102400]; //up to 100K
-    char str[128];
+    char buf[1024000]; //up to 1000K
+    char str[256];
+    
+    int nD = dbDomains.size();
+    int nN = dbNodes.size();
+    
     strcpy(buf, "TEDB Dump...\n");
     list<DBDomain*>::iterator itd = this->dbDomains.begin();
     for (; itd != this->dbDomains.end(); itd++)
     {
         DBDomain* td = (*itd);
-        snprintf(str, 128, "<domain id=%s>\n", td->GetName().c_str());
+        snprintf(str, 256, "<domain id=%s>\n", td->GetName().c_str());
         strcat(buf, str);
         map<string, Node*, strcmpless>::iterator itn = td->GetNodes().begin();
         for (; itn != td->GetNodes().end(); itn++)
         {
             DBNode* tn = (DBNode*)(*itn).second;
-            snprintf(str, 128, "\t<node id=%s>\n", tn->GetName().c_str());
+            snprintf(str, 256, "\t<node id=%s>\n", tn->GetName().c_str());
             strcat(buf, str);
             map<string, Port*, strcmpless>::iterator itp = tn->GetPorts().begin();
             for (; itp != tn->GetPorts().end(); itp++)
             {
                 DBPort* tp = (DBPort*)(*itp).second;
-                snprintf(str, 128, "\t\t<port id=%s>\n", tp->GetName().c_str());
+                snprintf(str, 256, "\t\t<port id=%s>\n", tp->GetName().c_str());
                 strcat(buf, str);
                 map<string, Link*, strcmpless>::iterator itl = tp->GetLinks().begin();
                 for (; itl != tp->GetLinks().end(); itl++) 
                 {
                     DBLink* tl = (DBLink*)(*itl).second;
-                    snprintf(str, 128, "\t\t\t<link id=%s>\n", tl->GetName().c_str());
+                    snprintf(str, 256, "\t\t\t<link id=%s>\n", tl->GetName().c_str());
                     strcat(buf, str);
                     if (tl->GetRemoteLink())
                     {
-                        snprintf(str, 128, "\t\t\t\t<remoteLinkId>domain=%s:node=%s:port=%s:link=%s</remoteLinkId>\n",  
+                        snprintf(str, 256, "\t\t\t\t<remoteLinkId>domain=%s:node=%s:port=%s:link=%s</remoteLinkId>\n",  
                             tl->GetRemoteLink()->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
                             tl->GetRemoteLink()->GetPort()->GetNode()->GetName().c_str(),
                             tl->GetRemoteLink()->GetPort()->GetName().c_str(), 
                             tl->GetRemoteLink()->GetName().c_str());
                         strcat(buf, str);
                     }
-                    snprintf(str, 128, "\t\t\t\t<MaxBandwidth>%ld</MaxBandwidth>\n", tl->GetMaxBandwidth());
+                    snprintf(str, 256, "\t\t\t\t<MaxBandwidth>%ld</MaxBandwidth>\n", tl->GetMaxBandwidth());
                     strcat(buf, str);
-                    snprintf(str, 128, "\t\t\t\t<MaxReservableBandwidth>%ld</MaxReservableBandwidth>\n", tl->GetMaxReservableBandwidth());
+                    snprintf(str, 256, "\t\t\t\t<MaxReservableBandwidth>%ld</MaxReservableBandwidth>\n", tl->GetMaxReservableBandwidth());
                     strcat(buf, str);
-                    snprintf(str, 128, "\t\t\t\t<Granularity>%ld</Granularity>\n", tl->GetBandwidthGranularity());
+                    snprintf(str, 256, "\t\t\t\t<Granularity>%ld</Granularity>\n", tl->GetBandwidthGranularity());
                     strcat(buf, str);
-                    snprintf(str, 128, "\t\t\t</link>\n");
+                    snprintf(str, 256, "\t\t\t</link>\n");
                     strcat(buf, str);
                 }
-                snprintf(str, 128, "\t\t</port>\n");
+                snprintf(str, 256, "\t\t</port>\n");
                 strcat(buf, str);
             }
-            snprintf(str, 128, "\t</node>\n");
+            snprintf(str, 256, "\t</node>\n");
             strcat(buf, str);
         }
-        snprintf(str, 128, "</domain>\n");
+        snprintf(str, 256, "</domain>\n");
         strcat(buf, str);
     }    
     LOG_DEBUG(buf);
