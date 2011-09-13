@@ -660,6 +660,7 @@ public class RetrieveReply {
 				}				
 				bagSegment.setEndTime(bagEndTime);
 				bags.add(bagSegment);
+				bagSegment = null; //set back to null
 			}else if(type == CodeNumber.PCE_PATH_END_TAG){
 				length = this.decodeLength(priDecoder, buff);
 				String tempStr = priDecoder.decodeString(buff, offset, length);
