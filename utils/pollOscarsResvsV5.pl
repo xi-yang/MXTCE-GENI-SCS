@@ -44,6 +44,8 @@ sub parse_resvs($)
             $resv->{path} = \@path;
         }
 
+        next if (defined($resv->{path}[-1]) && $resv->{path}[-1]{urn} eq $row[5]); 
+
         my %elemMem;
         my $elem = \%elemMem;
         $elem->{urn} = $row[5];
@@ -64,30 +66,31 @@ while(1) {
     my @resvs = parse_resvs($sth);
     my $ct = 1;
     foreach my $resv (@resvs) {
-            my $resv_info_tlv = new TLV(MSG_TLV_RESV_INFO, $resv->{gri}, $resv->{start}, $resv->{end}, $resv->{bw}, $resv->{status});
-            my @path_elem_tlvs;
-            foreach my $elem (@{$resv->{path}}) {
-                    my $elem_tlv = new TLV(MSG_TLV_PATH_ELEM, $elem->{urn}, $elem->{swtype}, $elem->{enc}, $elem->{vlan});
-                    push(@path_elem_tlvs, $elem_tlv);
-            }
-            my $opts = 0;
-            # indicate start of update burst
-            if ($ct == 1) {
-                    $opts = ($opts | 0x0001);
-            }
-            # indicate end of update burst
-            if ($ct == $#resvs) {
-                    $opts = ($opts | 0x0002);
-            }
-            $api_conn->queue_bin_msg(API_MSG_RESV_PUSH, $opts, $resv_info_tlv, @path_elem_tlvs);
-            $ct++;
-            $api_conn->send_bin_msg();
-            print %{$resv};
-            foreach my $elem (@{$resv->{path}}) {
-                print "\t";
-                print %$elem;
-                print "\n";
-            }
+        my $resv_info_tlv = new TLV(MSG_TLV_RESV_INFO, $resv->{gri}, $resv->{start}, $resv->{end}, $resv->{bw}, $resv->{status});
+        my @path_elem_tlvs;
+        foreach my $elem (@{$resv->{path}}) {
+                my $elem_tlv = new TLV(MSG_TLV_PATH_ELEM, $elem->{urn}, $elem->{swtype}, $elem->{enc}, $elem->{vlan});
+                push(@path_elem_tlvs, $elem_tlv);
+        }
+        my $opts = 0;
+        # indicate start of update burst
+        if ($ct == 1) {
+                $opts = ($opts | 0x0001);
+        }
+        # indicate end of update burst
+        if ($ct == $#resvs) {
+                $opts = ($opts | 0x0002);
+        }
+        $api_conn->queue_bin_msg(API_MSG_RESV_PUSH, $opts, $resv_info_tlv, @path_elem_tlvs);
+        $ct++;
+        $api_conn->send_bin_msg();
+        print %{$resv};
+        print "\n";
+        foreach my $elem (@{$resv->{path}}) {
+            print "\t";
+            print %$elem;
+            print "\n";
+        }
         print  "\n";
     }
     print "sleep $interval seconds\n";

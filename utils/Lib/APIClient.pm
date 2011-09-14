@@ -54,7 +54,7 @@ sub chksum($$@) {
         my ($ppat, $upat, @d) = @_;
         my $block = pack($ppat, @d);
         my $chksum = unpack($upat, $block);
-        return $chksum;
+        return unpack("N", pack("V", $chksum));
 }
 
 sub connect_server() {
@@ -96,7 +96,8 @@ sub queue_bin_msg($$;$@) {
                 }
         }
         $$self{bin_queue}{out}{data} .= $dq;
-        my $chksum = chksum("nnNN", "%32N3", $type, $len, $ucid, $sn);
+        my $chksum = chksum("nnNN", "%32V3", $type, $len, $ucid, $sn);
+        printf("type =0x%x, len =0x%x, ucid = 0x%x, sn= 0x%x, chksum=0x%x\n", $type, $len, $ucid, $sn, $chksum);
         $$self{bin_queue}{out}{hdr} = {
                 "type" => $type,
                 "length" => $len,
