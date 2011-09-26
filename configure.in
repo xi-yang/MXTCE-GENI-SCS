@@ -151,8 +151,10 @@ AC_CHECK_LIB(xml2, xmlParseFile)
 dnl ---------------------------------------------------
 dnl Check existance of libyaml
 dnl ---------------------------------------------------
-AC_CHECK_LIB(yaml, yaml_get_version_string)
-
+AC_CHECK_LIB(yaml, yaml_get_version_string, [] [
+    echo "Error! You need to install LibYAML." 
+    exit -1
+    ])
 
 dnl ---------------------------------------------------
 dnl BSD/OS 4.1 define inet_XtoY function as __inet_XtoY
