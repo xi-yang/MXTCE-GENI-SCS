@@ -10,24 +10,8 @@ public static final String SVC_PCE_TCE      = "TcePCE";
 
 4. modify startServers.sh, testServers.sh and stopServers.sh in $OSCARS_DIST/bin
 -------------------startServers.sh------------------------
-startTcePCE() {
-    Config=$(sh $OSCARS_DIST/bin/parseManifest.sh TcePCE $CONTEXT tcePCE)
-    Service=$(echo $Config | awk -F/ '$1~//{print $2}')
-    Conf=$(echo $Config | awk -F/ '$1~//{print $3}')
-    Yaml=$(echo $Config | awk -F/ '$1~//{print $4}' | sed "s/'//g")
-    if [ "$Conf" == "conf" ]; then
-        port=$(awk -F: '$1~/publishTo/{print $4}' $OSCARS_HOME/$Service/$Conf/$Yaml)
-    elif [ "$Conf" == "config" ]; then
-        port=$(awk -F: '$1~/publishTo/{print $4}' $OSCARS_DIST/$Service/$Conf/$Yaml)
-    fi
-    port=$(echo $port | sed "s/[^0-9]//g")
-    porttest=`netstat -na | grep tcp | grep LISTEN | grep $port`
-    if [ ! -z "$porttest" ]; then
-        echo tcePCE already running
-    else
-        echo starting tcePCE on port $port
-        (cd $OSCARS_DIST/tcePCE; bin/startServer.sh $CONTEXT > $currDir/tcePCE.out 2>&1 & )
-    fi
+startTcePCE () {
+    startService "TcePCE" "TcePCE" "tcePCE" "tcePCE"
 }
 
 --------------------------------
@@ -35,40 +19,11 @@ startTcePCE
 
 tcePCE)   startTcePCE;;
 
--------------------testServers.sh--------------------------
-Config=$(sh $OSCARS_DIST/bin/parseManifest.sh tcePCE $CONTEXT tcePCE)
-Service=$(echo $Config | awk -F/ '$1~//{print $2}')
-Conf=$(echo $Config | awk -F/ '$1~//{print $3}')
-Yaml=$(echo $Config | awk -F/ '$1~//{print $4}' | sed "s/'//g")
-if [ "$Conf" == "conf" ]; then
-      port=$(awk -F: '$1~/publishTo/{print $4}' $OSCARS_HOME/$Service/$Conf/$Yaml)
-elif [ "$Conf" == "config" ]; then
-     port=$(awk -F: '$1~/publishTo/{print $4}' $OSCARS_DIST/$Service/$Conf/$Yaml)
-fi
-port=$(echo $port | sed "s/[^0-9]//g")
-echo "TcePCE port is $port"
-porttest16=`netstat -na | grep LISTEN | grep $port`
-if [ -z "$porttest16" ]; then
-     echo "Tce PCE is not running";
-     echo "Please restart tce PCE using startServers.sh $CONTEXT tcePCE";
-     echo "-----------------------------------------------------------";
-else
-     echo "Tce PCE is running";
-     echo "-----------------------------------------------------------";
-fi
-
 ------------------stopServers.sh---------------------------
-stopTcePCE() {
- PID_FILE=$DEFAULT_PID_DIR/tcePCE.pid
-if [ -f $PID_FILE ]
-then
-   PID=`cat $PID_FILE`
-   echo killing tce PCE
-   `kill -9 $PID`
-    rm $PID_FILE
-else
-    echo "TcePCE is not running"
-fi
+stopTcePCE () {
+    Service="TcePCE"
+    ShortName="tcePCE"
+    stopService
 }
 
 ---------------------------
