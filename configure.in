@@ -151,7 +151,7 @@ AC_CHECK_LIB(xml2, xmlParseFile)
 dnl ---------------------------------------------------
 dnl Check existance of libyaml
 dnl ---------------------------------------------------
-AC_CHECK_LIB(yaml, yaml_get_version_string, [] [
+AC_CHECK_LIB(yaml, yaml_get_version_string, [], [
     echo "Error! You need to install LibYAML." 
     exit -1
     ])
