@@ -11,10 +11,8 @@ use constant MSG_TLV_RESV_INFO => 0x0011;
 use constant MSG_TLV_PATH_ELEM => 0x0012;
 
 my $host = shift;
-my $domain = shift;
 
 $host = 'localhost' unless defined($host);
-$domain = 'local' unless defined($domain);
 
 
 my $dbh = DBI->connect('dbi:mysql:bss','oscars','oscars') or die "Connection Error: $DBI::errstr\n";
@@ -35,7 +33,7 @@ sub parse_resvs($)
         if (!defined($resv) || $resv->{gri} ne $row[0]) {
             my %resvMem;
             $resv = \%resvMem;
-            $resv->{gri} = $row[0] . '-' . $domain;
+            $resv->{gri} = $row[0];
             $resv->{status} = $row[1];
             $resv->{start} = $row[2];
             $resv->{end} = $row[3];
