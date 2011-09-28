@@ -45,7 +45,7 @@ Message::~Message()
 {
     list<TLV*>::iterator itlv;
     for (itlv = tlvList.begin(); itlv != tlvList.end(); itlv++)
-        delete (*itlv);
+        delete[] (u_int8_t*)(*itlv);
 }
 
 Message* Message::Duplicate()

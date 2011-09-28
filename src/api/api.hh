@@ -40,7 +40,7 @@
 
 using namespace std;
 
-#define API_MAX_MSG_SIZE 6000
+#define API_MAX_MSG_SIZE 102400
 
 enum api_msg_type
 {

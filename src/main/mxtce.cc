@@ -217,6 +217,7 @@ void MxTCEMessageHandler::Run()
                 snprintf(buf, 128, "Unknown computeWorkerThread: %s", msg->GetPort()->GetName().c_str());
                 throw TCEException(buf);
             }
+            //TODO: fix dup free by DeletePort
             mxTCE->GetMessageRouter()->DeletePort(computingThread->GetName());
             computingThread->GetEventMaster()->Stop();
             computingThread->Join();

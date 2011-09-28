@@ -43,16 +43,16 @@ public class TCETestClient {
             TCEApiClient apiClient = TCEApiClient.getClient(hostUrl, wsdlUrl, "MyTCEClient");
             TCEExampleReplyHandler replyHandler = new TCEExampleReplyHandler();
             apiClient.initClient(replyHandler);
-            String srcUrn = "urn:ogf:network:domain=testdomain-1.net:node=node-1:port=port-1:link=link-1";
-            String dstUrn = "urn:ogf:network:domain=testdomain-1.net:node=node-3:port=port-4:link=link-1";
-            long startTimeFromNow = 0;
-            long duration = 1800;
+            String srcUrn = "urn:ogf:network:domain=es.net:node=bnl-mr3:port=xe-1/2/0:link=*";
+            String dstUrn = "urn:ogf:network:domain=ion.internet2.edu:node=rtr.chic:port=xe-6/0/0:link=*";
+            long startTimeFromNow = 1317427200-1317234004;
+            long duration = 100000;
             int bandwidth = 100; // in Mbps
             String vlan = "any"; 
             String descr = "my test path computation run";
             String optionalConstraint = "<coScheduleRequest id=\"schedule-124423245-option-1\">"
-                + "<startTime>1313331764</startTime>"
-                + "<endTime> 1313367764</endTime>"
+                + "<startTime>1317427200</startTime>"
+                + "<endTime> 1317527200</endTime>"
                 + "<minBandwidth>100</minBandwidth>"
                 + "<maxNumOfAltPaths>3</maxNumOfAltPaths>"
                 + "<bandwidthAvailabilityGraph>true</bandwidthAvailabilityGraph>"
