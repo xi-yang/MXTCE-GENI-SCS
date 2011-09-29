@@ -12,16 +12,16 @@ use constant MSG_TLV_PATH_ELEM => 0x0012;
 
 my $host = shift;
 my $domain = shift;
+my $interval = shift;
 
 $host = 'localhost' unless defined($host);
 $domain = '' unless defined($domain);
+$interval = 60 unless defined($interval);
 
 
 my $dbh = DBI->connect('dbi:mysql:bss','oscars','oscars') or die "Connection Error: $DBI::errstr\n";
 
 my $sql = "select R.globalReservationId,R.status,R.startTime,R.endTime,R.bandwidth,E.urn,V.swcap,V.value from reservations as R,paths as P,pathElems as E,pathElemParams as V where (R.status='ACTIVE' or R.status='PENDING' or R.status='INSETUP') and P.pathType='local' and V.type='suggestedVlan' and P.reservationId=R.id and E.pathId=P.id and V.pathElemId=E.id order by R.id, E.id";
-
-my $interval = 120;
 
 my $api_conn = new APIClient($host, '2091', 10101);
 $api_conn->connect_server();
@@ -81,7 +81,7 @@ while(1) {
                 $opts = ($opts | 0x0001);
         }
         # indicate end of update burst
-        if ($ct == $#resvs) {
+        if ($ct == $#resvs+1) {
                 $opts = ($opts | 0x0002);
         }
         $api_conn->queue_bin_msg(API_MSG_RESV_PUSH, $opts, $resv_info_tlv, @path_elem_tlvs);
