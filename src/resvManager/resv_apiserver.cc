@@ -54,14 +54,14 @@ int ResvAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter,
     string status = "DELETE";
     if ((ntohl(apiMsg->header.options) & API_MSG_OPT_RESV_BURSTHEAD) != 0)
     {
-        //start of update burst --> mark all reservations as removal candidates
-        list<TReservation*> resvs = resvManThread->GetRData()->GetReservationsInDomain(domain);
-        list<TReservation*>::iterator itR = resvs.begin();
-        for (; itR != resvs.end(); itR++)
+        //start of update burst --> mark all reservations in the domain as removal candidates
+        list<TReservation*>* domainResvs = resvManThread->GetRData()->GetReservationsInDomain(domain);
+        list<TReservation*>::iterator itR = domainResvs->begin();
+        for (; itR != domainResvs->end(); itR++)
             (*itR)->SetStatus(status);
+        delete domainResvs;
     }
-    
-    // undelete the reservation with same gri as this one
+    // update status of the current reservation
     status = tlvResvInfo->status;
     if (theResv != NULL)
     {
@@ -71,7 +71,7 @@ int ResvAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter,
     if ((ntohl(apiMsg->header.options) & API_MSG_OPT_RESV_BURSTLAST) != 0)
     {
         //end of update burst --> remove all removal candidates
-        list<TReservation*> resvs = resvManThread->GetRData()->GetReservationsInDomain(domain);
+        list<TReservation*>& resvs = resvManThread->GetRData()->GetReservations();
         list<TReservation*>::iterator itR = resvs.begin();
         for (; itR != resvs.end(); itR++)
         {

@@ -247,15 +247,13 @@ public:
     RDatabase(){ }
     virtual ~RDatabase() {}
     list<TReservation*>& GetReservations() { return reservations; }
-    list<TReservation*> GetReservationsInDomain(string& domain) {
-        if (domain.empty())
-            return reservations;
-        list<TReservation*> listResvs;
+    list<TReservation*>* GetReservationsInDomain(string& domain) {
+        list<TReservation*> * listResvs = new list<TReservation*>;
         list<TReservation*>::iterator itr = reservations.begin();
         for (; itr != reservations.end(); itr++) {
             TGraph *tg = (*itr)->GetServiceTopology();
             if (tg && tg->LookupDomainByName(domain))
-                    listResvs.push_back(*itr);
+                    listResvs->push_back(*itr);
         }
         return listResvs;
     }
