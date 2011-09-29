@@ -28,15 +28,16 @@ sub new {
                 'len' => undef,
                 'templ' => 'nn' #the header
         };
-        # type(16) length(16) gri(8*64) start_time(32) end_time(32) bandwidth(32) status(8*16)
+        # type(16) length(16) gri(8*64) domain(8*32) start_time(32) end_time(32) bandwidth(32) status(8*16)
         if($a[0] == MSG_TLV_RESV_INFO) {
-                $$self{templ} .= 'a64LLLa16';
-                $$self{len} = 92;
+                $$self{templ} .= 'a64a32LLLa16';
+                $$self{len} = 124;
                 $$self{gri} = $a[1];
-                $$self{start_time} = $a[2];
-                $$self{end_time} = $a[3];
-                $$self{bw} = $a[4];
-                $$self{status} = $a[5];
+                $$self{domain} = $a[2];
+                $$self{start_time} = $a[3];
+                $$self{end_time} = $a[4];
+                $$self{bw} = $a[5];
+                $$self{status} = $a[6];
         }
         elsif($a[0] == MSG_TLV_PATH_ELEM) {
                 $$self{templ} .= 'a128CCv';
@@ -58,7 +59,7 @@ sub get_len() {
 sub get_bin() {
         my $self = shift;
         if($$self{type} == MSG_TLV_RESV_INFO) {
-                return pack($$self{templ}, $$self{type}, $$self{len}, $$self{gri}, $$self{start_time},
+                return pack($$self{templ}, $$self{type}, $$self{len}, $$self{gri}, $$self{domain}, $$self{start_time},
                         $$self{end_time}, $$self{bw}, $$self{status});
         }
         elsif($$self{type} == MSG_TLV_PATH_ELEM) {

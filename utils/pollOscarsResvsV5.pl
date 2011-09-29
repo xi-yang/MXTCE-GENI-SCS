@@ -11,8 +11,10 @@ use constant MSG_TLV_RESV_INFO => 0x0011;
 use constant MSG_TLV_PATH_ELEM => 0x0012;
 
 my $host = shift;
+my $domain = shift;
 
 $host = 'localhost' unless defined($host);
+$domain = '' unless defined($domain);
 
 
 my $dbh = DBI->connect('dbi:mysql:bss','oscars','oscars') or die "Connection Error: $DBI::errstr\n";
@@ -67,7 +69,7 @@ while(1) {
     my @resvs = parse_resvs($sth);
     my $ct = 1;
     foreach my $resv (@resvs) {
-        my $resv_info_tlv = new TLV(MSG_TLV_RESV_INFO, $resv->{gri}, $resv->{start}, $resv->{end}, $resv->{bw}, $resv->{status});
+        my $resv_info_tlv = new TLV(MSG_TLV_RESV_INFO, $resv->{gri}, $domain, $resv->{start}, $resv->{end}, $resv->{bw}, $resv->{status});
         my @path_elem_tlvs;
         foreach my $elem (@{$resv->{path}}) {
                 my $elem_tlv = new TLV(MSG_TLV_PATH_ELEM, $elem->{urn}, $elem->{swtype}, $elem->{enc}, $elem->{vlan});

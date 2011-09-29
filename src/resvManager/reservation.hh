@@ -247,11 +247,35 @@ public:
     RDatabase(){ }
     virtual ~RDatabase() {}
     list<TReservation*>& GetReservations() { return reservations; }
+    list<TReservation*> GetReservationsInDomain(string& domain) {
+        if (domain.empty())
+            return reservations;
+        list<TReservation*> listResvs;
+        list<TReservation*>::iterator itr = reservations.begin();
+        for (; itr != reservations.end(); itr++) {
+            TGraph *tg = (*itr)->GetServiceTopology();
+            if (tg && tg->LookupDomainByName(domain))
+                    listResvs.push_back(*itr);
+        }
+        return listResvs;
+    }
     TReservation* LookupReservation(string& name) {
         list<TReservation*>::iterator itr = reservations.begin();
         for (; itr != reservations.end(); itr++)
             if ((*itr)->GetName() == name)
                 return (*itr);
+        return NULL;
+    }
+    TReservation* LookupReservationInDomain(string& name, string& domain) {
+        list<TReservation*>::iterator itr = reservations.begin();
+        for (; itr != reservations.end(); itr++)
+            if ((*itr)->GetName() == name) {
+                if (domain.empty())
+                    return (*itr);
+                TGraph *tg = (*itr)->GetServiceTopology();
+                if (tg && tg->LookupDomainByName(domain))
+                        return (*itr);
+            }
         return NULL;
     }
     void AddReservation(TReservation* resv) {

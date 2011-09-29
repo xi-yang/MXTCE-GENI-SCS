@@ -46,30 +46,32 @@ int ResvAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter,
         return -1;
     }
 
+    TLV_ResvInfo* tlvResvInfo = (TLV_ResvInfo*)(apiMsg->body);
+    string gri = tlvResvInfo->gri;
+    string domain = tlvResvInfo->domain;
+    TReservation* theResv = resvManThread->GetRData()->LookupReservationInDomain(gri, domain);
+
     string status = "DELETE";
-    if ((ntohl(apiMsg->header.options) & 0x0001) != 0)
+    if ((ntohl(apiMsg->header.options) & API_MSG_OPT_RESV_BURSTHEAD) != 0)
     {
         //start of update burst --> mark all reservations as removal candidates
-        list<TReservation*>& resvs = resvManThread->GetRData()->GetReservations();
+        list<TReservation*> resvs = resvManThread->GetRData()->GetReservationsInDomain(domain);
         list<TReservation*>::iterator itR = resvs.begin();
         for (; itR != resvs.end(); itR++)
             (*itR)->SetStatus(status);
     }
-    // unmark the reservation with same gri as this one, delete apiMsg and return 0 (without further message update);
-    TLV_ResvInfo* tlvResvInfo = (TLV_ResvInfo*)(apiMsg->body);
-    string gri = tlvResvInfo->gri;
+    
+    // undelete the reservation with same gri as this one
     status = tlvResvInfo->status;
-    TReservation* theResv = resvManThread->GetRData()->LookupReservation(gri);
     if (theResv != NULL)
     {
         theResv->SetStatus(status);
-        delete apiMsg;
-        return 0;
     }
-    if ((ntohl(apiMsg->header.options) & 0x0002) != 0)
+    // erase all reservations that are marked as 'DELETE' at the end of burst
+    if ((ntohl(apiMsg->header.options) & API_MSG_OPT_RESV_BURSTLAST) != 0)
     {
         //end of update burst --> remove all removal candidates
-        list<TReservation*>& resvs = resvManThread->GetRData()->GetReservations();
+        list<TReservation*> resvs = resvManThread->GetRData()->GetReservationsInDomain(domain);
         list<TReservation*>::iterator itR = resvs.begin();
         for (; itR != resvs.end(); itR++)
         {
@@ -80,8 +82,15 @@ int ResvAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter,
             }
         }
     }
+    // delete apiMsg and return 0 for existing and continuing reservation
+    if (theResv != NULL)
+    {
+        delete apiMsg;
+        return 0;
+    }
 
-    // each api message contains a single reservation that should contain tlv_resv_info(gri, bandwidth, schedule) and list of tlv_path_info (urn, swcap, vlan)
+    // each api message contains a single reservation that should contain 
+    // tlv_resv_info(gri, bandwidth, schedule) and list of tlv_path_info (urn, swcap, vlan)
     string queueName="RESV";
     string topicName="TEDB_ADD_RESV";
     Message* tedbMsg = new Message(MSG_REQ, queueName, topicName);

@@ -56,6 +56,8 @@ public:
     virtual int HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter, api_msg* apiMsg);
 };
 
+#define API_MSG_OPT_RESV_BURSTHEAD 0x0001
+#define API_MSG_OPT_RESV_BURSTLAST 0x0002
 
 typedef struct {
     u_int16_t type;    // MSG_TLV_RESV_INFO  : ntohs for external to internal msg conversion
@@ -68,6 +70,7 @@ typedef struct {
     u_int16_t type;    // MSG_TLV_RESV_INFO  : ntohs for external to internal msg conversion
     u_int16_t length; //ntohs for external to internal msg conversion
     char gri[64]; //c_str
+    char domain[32]; //c_str
     u_int32_t start_time;
     u_int32_t end_time;
     u_int32_t bandwidth;

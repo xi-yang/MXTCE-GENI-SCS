@@ -82,6 +82,7 @@ void ResvManThread::hookHandleMessage()
             memcpy(&resv, msg->GetTLVList().front()->value, sizeof(void*));
             assert (resv->GetSchedules().size() > 0 && resv->GetServiceTopology() != NULL);
             resv->BuildDeltaCache();
+            // TODO: merge reservations of same GRI from multiple domains!
             RData.AddReservation(resv);
         }
 
