@@ -240,7 +240,7 @@ protected:
     long bandwidthGranularity;
     Link* remoteLink;
     list<ISCD*> swCapDescriptors;
-    list<IACD*> swAdaptDescriptors;
+    list<IACD*> adjCapDescriptors;
     list<Link*> containerLinks;      // the lower-layer links that this (virtual) link depends on (optional)
     list<Link*> componentLinks;     // the upper-layer (virtual) links that depends on this link (optional)
     void _Init() {
@@ -274,7 +274,7 @@ public:
     Link* GetRemoteLink() {return remoteLink;}
     void SetRemoteLink(Link* rmt) { remoteLink = rmt;}
     list<ISCD*>& GetSwCapDescriptors() { return swCapDescriptors; }
-    list<IACD*>& GetSwAdaptDescriptors() { return swAdaptDescriptors; }
+    list<IACD*>& GetAdjCapDescriptors() { return adjCapDescriptors; }
     list<Link*>& GetContainerLinks() { return containerLinks; }
     list<Link*>& GetComponentLinks() { return componentLinks; }
     bool operator==(Link& aLink) {
@@ -343,9 +343,11 @@ public:
     u_char	switchingType;
     u_char	encodingType;
     long capacity;
-    ISCD (u_char swType, u_char enc, long bw): switchingType(swType), encodingType(enc), capacity(bw)  { }
+    xmlNodePtr vendorSpecInfoXml; 
+    ISCD (u_char swType, u_char enc, long bw): switchingType(swType), encodingType(enc), capacity(bw), vendorSpecInfoXml(NULL) { }
     virtual ~ISCD() { }
-    virtual ISCD* Duplicate() { }
+    virtual ISCD* Duplicate() { return NULL; }
+    virtual void* VendorSpecInfo() { return NULL; }
 };
 
 
@@ -395,19 +397,30 @@ public:
 #define MAX_TIMESLOTS_NUM 192
 #endif
 
+typedef enum {
+    STS1 = 1,
+    STS3C = 3
+} TDMConcatenationType;
+
 class ISCD_TDM: public ISCD
 {
 public:
-    long minReservableBandwidth;
+    TDMConcatenationType concatenationType;
     ConstraintTagSet availableTimeSlots;
     ConstraintTagSet assignedTimeSlots;
+    bool tsiEnabled;
+    bool vcatEnabled;
 
-    ISCD_TDM(long bw, long min): ISCD(LINK_IFSWCAP_TDM, LINK_IFSWCAP_ENC_SONETSDH, bw), minReservableBandwidth(min), availableTimeSlots(MAX_TIMESLOTS_NUM), assignedTimeSlots(MAX_TIMESLOTS_NUM) { }
-    ~ISCD_TDM() { }
+    ISCD_TDM(long bw): ISCD(LINK_IFSWCAP_TDM, LINK_IFSWCAP_ENC_SONETSDH, bw), concatenationType(STS1), availableTimeSlots(MAX_TIMESLOTS_NUM), 
+        assignedTimeSlots(MAX_TIMESLOTS_NUM), tsiEnabled(true), vcatEnabled(true) { }
+    virtual ~ISCD_TDM() { }
     virtual ISCD* Duplicate(){
-        ISCD_TDM* iscd = new ISCD_TDM(this->capacity, this->minReservableBandwidth);
+        ISCD_TDM* iscd = new ISCD_TDM(this->capacity);
         iscd->availableTimeSlots = this->availableTimeSlots;
         iscd->assignedTimeSlots = this->assignedTimeSlots;
+        iscd->concatenationType = this->concatenationType;
+        iscd->tsiEnabled = this->tsiEnabled;
+        iscd->vcatEnabled = this->vcatEnabled;
         return iscd;
     }
 
@@ -418,28 +431,36 @@ public:
 #define MAX_WAVE_NUM 256 //64: 10G with OPVCX; 40: WDM 
 #endif
 
+typedef enum {
+    ITU_CHANNEL_GRID = 1,
+    FREQUENCY_GHZ = 2,
+    WAVELENGTH_NM = 3
+} WDMChannelRepresentationType;
+
 class ISCD_LSC: public ISCD
 {
 public:
+    WDMChannelRepresentationType channelRepresentation;
     ConstraintTagSet availableWavelengths;
     ConstraintTagSet assignedWavelengths;
-    bool wavelengthTranslation;
+    bool wavelengthConversion;
 
-    ISCD_LSC(long bw): ISCD(LINK_IFSWCAP_LSC, LINK_IFSWCAP_ENC_LAMBDA, bw), availableWavelengths(MAX_WAVE_NUM), assignedWavelengths(MAX_WAVE_NUM), wavelengthTranslation(false) { }
-    ~ISCD_LSC() { }
+    ISCD_LSC(long bw): ISCD(LINK_IFSWCAP_LSC, LINK_IFSWCAP_ENC_LAMBDA, bw), channelRepresentation(ITU_CHANNEL_GRID), availableWavelengths(MAX_WAVE_NUM), 
+        assignedWavelengths(MAX_WAVE_NUM), wavelengthConversion(false) { }
+    virtual ~ISCD_LSC() { }
     virtual ISCD* Duplicate(){
         ISCD_LSC* iscd = new ISCD_LSC(this->capacity);
+        iscd->channelRepresentation = this->channelRepresentation;
         iscd->availableWavelengths = this->availableWavelengths;
         iscd->assignedWavelengths = this->assignedWavelengths;
-        iscd->wavelengthTranslation = this->wavelengthTranslation;
+        iscd->wavelengthConversion = this->wavelengthConversion;
         return iscd;
     }
 };
 
 
 
-// Interface Switching Adaptoation Descriptor
-
+// Interface Adjustment Capability Descriptor
 class IACD
 {
 public:
@@ -448,8 +469,18 @@ public:
     u_char  upperLayerSwitchingType;
     u_char	upperLayerEncodingType;
     long maxAdaptBandwidth;
+    xmlNodePtr vendorSpecInfoXml;
+    IACD(u_char lowerSwType, u_char lowerEnc, u_char upperSwType, u_char upperEnc, long bw): lowerLayerSwitchingType(lowerSwType), lowerLayerEncodingType(lowerEnc), 
+        upperLayerSwitchingType(upperSwType), upperLayerEncodingType(upperEnc), maxAdaptBandwidth(bw), vendorSpecInfoXml(NULL) { }
+    virtual ~IACD() { }
+    virtual IACD* Duplicate() {
+        IACD* iacd = new IACD(this->lowerLayerSwitchingType, this->lowerLayerEncodingType, this->upperLayerSwitchingType, this->upperLayerEncodingType, this->maxAdaptBandwidth);
+        return iacd;
+    }
+    virtual void* VendorSpecificInfo() { return NULL; }
 };
 
+// TODO: derive layer-specific IACDs
 
 // Node-Interface Switching Maxtrix
 

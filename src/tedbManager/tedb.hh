@@ -145,6 +145,7 @@ public:
     xmlNodePtr GetXmlElement() { return xmlElem; }
     void SetXmlElement(xmlNodePtr x) { xmlElem = x; }            
     ISCD* GetISCDFromXML(xmlNodePtr xmlNode);
+    IACD* GetIACDFromXML(xmlNodePtr xmlNode);
     void UpdateToXML(bool populateSubLevels=false);
     void UpdateFromXML(bool populateSubLevels=false);
     TLink* Checkout(TGraph* tg);

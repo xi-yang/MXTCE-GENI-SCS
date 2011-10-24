@@ -414,14 +414,20 @@ void DBLink::UpdateFromXML(bool populateSubLevels)
                 rmtLink->SetRemoteLink(this);
             }
         }
-        else if (sublinkLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)sublinkLevel->name, "switchingCapabilityDescriptors", 30) == 0)
+		// compatible with both switchingCapabilityDescriptors (NML old) and switchingCapabilityDescriptor (NML 20110826)
+        else if (sublinkLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)sublinkLevel->name, "switchingCapabilityDescriptor", 29) == 0)
         {
             ISCD* iscd = GetISCDFromXML(sublinkLevel);
             if (iscd != NULL)
                 swCapDescriptors.push_back(iscd); 
         }
-
-        // TODO: parse IACD?
+        // adjustmentCapabilityDescriptor (NML 20110826)
+        else if (sublinkLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)sublinkLevel->name, "adjustmentCapabilityDescriptor", 30) == 0)
+        {
+            IACD* iacd = GetIACDFromXML(sublinkLevel);
+            if (iacd != NULL)
+                this->adjCapDescriptors.push_back(iacd);
+        }
 
         // use info from port level if not found at link level
         if (this->port != NULL) 
@@ -449,14 +455,18 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
     ISCD* iscd = NULL;
     u_char swType = 0, encType = 0;
     xmlNodePtr specLevel = NULL;
+    xmlNodePtr specSubLevel = NULL;
     int mtu = 0;
     string vlanRange = "";
     bool vlanTranslation = false;
     long capacity = 0;
+    TDMConcatenationType concatenationType = STS1;
     string timeslotRange = "";
-    long minBandwidth = 0;
+    bool tsiEnabled = true;
+    bool vcatEnabled = true;
+    WDMChannelRepresentationType channelRepresentation = ITU_CHANNEL_GRID;
     string wavelengthRange = "";
-    bool wavelengthTranslation = false;
+    bool wavelengthConversion = false;
     for (xmlNode = xmlNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
     {
         if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "switchingcapType", 16) == 0)
@@ -489,7 +499,8 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
         {
             for (specLevel = xmlNode->children; specLevel != NULL; specLevel = specLevel->next)
             {
-                if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "capacity", 12) == 0)
+                //// compatible with old NML switchingCapabilitySpecificInfo parameters
+                if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "capacity", 8) == 0)
                 {
                     string bwStr;
                     StripXmlString(bwStr, xmlNodeGetContent(specLevel));
@@ -514,29 +525,95 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
                     else
                         vlanTranslation = false;
                 }
-                if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "minimumReservableBandwidth", 12) == 0)
+
+                //// switchingCapabilitySpecificInfo for NML 20110826 revision 
+                // simplified handling for TDM and LSC layers
+                // 1. switchingCapabilitySpecificInfo / tdmSpecificInfo / concatenationType & timeslotRangeSet
+                if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "tdmSpecificInfo", 15) == 0)
                 {
-                    string bwStr;
-                    StripXmlString(bwStr, xmlNodeGetContent(specLevel));
-                    minBandwidth = StringToBandwidth(bwStr);
+                    for (specSubLevel = specLevel->children; specSubLevel != NULL; specSubLevel = specSubLevel->next)
+                    {
+                        if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "concatenationType", 17) == 0)
+                        {
+                            string typeStr;
+                            StripXmlString(typeStr, xmlNodeGetContent(specSubLevel));
+                            if (strncasecmp(typeStr.c_str(), "sts3c", 4) == 0 || strncasecmp(typeStr.c_str(), "150mbps", 4) == 0)
+                                concatenationType = STS3C;
+                            else
+                                concatenationType = STS1;
+                        }
+                        else if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "timeslotRangeSet", 16) == 0)
+                        {
+                            StripXmlString(timeslotRange, xmlNodeGetContent(specSubLevel));
+                        }
+                        else if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "tsiEnabled", 10) == 0)
+                        {
+                            string enabledStr;
+                            StripXmlString(enabledStr, xmlNodeGetContent(specSubLevel));
+                            if (strncasecmp(enabledStr.c_str(), "true", 4))
+                                tsiEnabled = true;
+                            else
+                                tsiEnabled = false;
+                        }
+                        else if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "vcatEnabled", 10) == 0)
+                        {
+                            string enabledStr;
+                            StripXmlString(enabledStr, xmlNodeGetContent(specSubLevel));
+                            if (strncasecmp(enabledStr.c_str(), "true", 4))
+                                vcatEnabled = true;
+                            else
+                                vcatEnabled = false;
+                        }
+                    }
                 }
-                else if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "timeslotRangeAvailability", 12) == 0)
+                // 2. switchingCapabilitySpecificInfo / lscSpecificInfo /channelRepresentation & wavelengthRangeSet & wavelengthConversionEnabled
+                else if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "lscSpecificInfo", 15) == 0)
                 {
-                    StripXmlString(timeslotRange, xmlNodeGetContent(specLevel));
+                    for (specSubLevel = specLevel->children; specSubLevel != NULL; specSubLevel = specSubLevel->next)
+                    {
+                        if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "channelRepresentation", 20) == 0)
+                        {
+                            string typeStr;
+                            StripXmlString(typeStr, xmlNodeGetContent(specSubLevel));
+                            if (strncasecmp(typeStr.c_str(), "itu-channel-grid", 3) == 0)
+                                channelRepresentation = ITU_CHANNEL_GRID;
+                            else if (strncasecmp(typeStr.c_str(), "frequency-ghz", 3) == 0)
+                                channelRepresentation = FREQUENCY_GHZ;
+                            else if (strncasecmp(typeStr.c_str(), "wavelength-nm", 3) == 0)
+                                channelRepresentation = WAVELENGTH_NM;
+                        }
+                        else if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "wavelengthRangeSet", 18) == 0)
+                        {
+                            StripXmlString(wavelengthRange, xmlNodeGetContent(specSubLevel));
+                        }
+                        else if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "wavelengthConversionEnabled", 25) == 0)
+                        {
+                            string translationStr;
+                            StripXmlString(translationStr, xmlNodeGetContent(specSubLevel));
+                            if (strncasecmp(translationStr.c_str(), "true", 4))
+                                wavelengthConversion = true;
+                            else
+                                wavelengthConversion = false;
+                        }
+
+                    }
                 }
-                else if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "wavelengthRangeAvailability", 12) == 0)
+                // 3. TODO switchingCapabilitySpecificInfo / openflowSpecificInfo 
+                else if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "openflowSpecificInfo", 15) == 0)
                 {
-                    StripXmlString(wavelengthRange, xmlNodeGetContent(specLevel));
+                    //
                 }
-                else if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "wavelengthTranslation", 12) == 0)
-                {
-                    string translationStr;
-                    StripXmlString(translationStr, xmlNodeGetContent(specLevel));
-                    if (strncasecmp(translationStr.c_str(), "true", 4))
-                        wavelengthTranslation = true;
-                    else
-                        wavelengthTranslation = false;
-                }
+                // 4. Will we actually use the PSC, L2SC specific info in the sub-level? If so, add parsing here.
+            }
+        }        
+        else if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "vendorSpecificInfo", 18) == 0)
+        {
+            //// vendorSpecificInfo for NML 20110826 revision 
+            // unified handling: xmlDocPointer + vendorString + specificDataParser (overriden)
+            for (specLevel = xmlNode->children; specLevel != NULL; specLevel = specLevel->next)
+            {
+                // 1. vendorSpecificInfo / cienaOTNSpecificInfo
+                // 2. vendorSpecificInfo / infineraDTNSpecificInfo
             }
         }
     }
@@ -547,17 +624,24 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
             ((ISCD_L2SC*)iscd)->availableVlanTags.LoadRangeString(vlanRange);
             ((ISCD_L2SC*)iscd)->vlanTranslation = vlanTranslation;
             break;
-        case LINK_IFSWCAP_PSC1:
+        case LINK_IFSWCAP_PSC1: //use PSC1 by default
             iscd = new ISCD_PSC(1, capacity, mtu);
             break;
+        case LINK_IFSWCAP_PSC4: //PSC4 not used
+            iscd = new ISCD_PSC(4, capacity, mtu);
+            break;
         case LINK_IFSWCAP_TDM:
-            iscd = new ISCD_TDM(capacity, minBandwidth);
+            iscd = new ISCD_TDM(capacity);
+            ((ISCD_TDM*)iscd)->concatenationType = concatenationType;
             ((ISCD_TDM*)iscd)->availableTimeSlots.LoadRangeString(timeslotRange);
+            ((ISCD_TDM*)iscd)->tsiEnabled = tsiEnabled;
+            ((ISCD_TDM*)iscd)->vcatEnabled = vcatEnabled;
             break;
         case LINK_IFSWCAP_LSC:
             iscd = new ISCD_LSC(capacity);
+            ((ISCD_LSC*)iscd)->channelRepresentation = channelRepresentation;
             ((ISCD_LSC*)iscd)->availableWavelengths.LoadRangeString(wavelengthRange);
-            ((ISCD_LSC*)iscd)->wavelengthTranslation = wavelengthTranslation;
+            ((ISCD_LSC*)iscd)->wavelengthConversion = wavelengthConversion;
             break;
         default:
             //  default: L2SC / Ethernet
@@ -567,12 +651,86 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
             ((ISCD_L2SC*)iscd)->availableVlanTags.LoadRangeString(vlanRange);
             ((ISCD_L2SC*)iscd)->vlanTranslation = vlanTranslation;
     }
-    if (capacity == 0)
-        capacity = this->GetAvailableBandwidth();
     iscd->switchingType = swType;
     iscd->encodingType = encType;
-    iscd->capacity = capacity;
+    iscd->capacity = (capacity == 0 ? this->GetAvailableBandwidth() : capacity);
     return iscd;
+}
+
+IACD* DBLink::GetIACDFromXML(xmlNodePtr xmlNode)
+{
+    IACD* iacd = NULL;
+    u_char swTypeLower = 0, encTypeLower = 0, swTypeUpper = 0, encTypeUpper = 0;
+    long capacity = 0;
+    xmlNodePtr specLevel = NULL;
+    for (xmlNode = xmlNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
+    {
+        if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "lowerSwcap", 10) == 0)
+        {
+            string swTypeStr;
+            StripXmlString(swTypeStr, xmlNodeGetContent(xmlNode));
+            if (strncasecmp((const char*)swTypeStr.c_str(), "l2sc", 4) == 0)
+                swTypeLower = LINK_IFSWCAP_L2SC;
+            else if (strncasecmp((const char*)swTypeStr.c_str(), "psc", 3) == 0)
+                swTypeLower = LINK_IFSWCAP_PSC1;
+            else if (strncasecmp((const char*)swTypeStr.c_str(), "tdm", 4) == 0)
+                swTypeLower = LINK_IFSWCAP_TDM;
+            else if (strncasecmp((const char*)swTypeStr.c_str(), "lsc", 4) == 0)
+                swTypeLower = LINK_IFSWCAP_LSC;
+        }
+        else if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "lowerEncType", 12) == 0)
+        {
+            string encTypeStr;
+            StripXmlString(encTypeStr, xmlNodeGetContent(xmlNode));
+            if (strncasecmp((const char*)encTypeStr.c_str(), "ethernet", 6) == 0)
+                encTypeLower = LINK_IFSWCAP_ENC_ETH;
+            else if (strncasecmp((const char*)encTypeStr.c_str(), "packet", 6) == 0)
+                encTypeLower = LINK_IFSWCAP_ENC_PKT;
+            else if (strncasecmp((const char*)encTypeStr.c_str(), "sonet", 5) == 0 || strncasecmp((const char*)encTypeStr.c_str(), "sdh", 3) == 0)
+                encTypeLower = LINK_IFSWCAP_ENC_SONETSDH;
+            else if (strncasecmp((const char*)encTypeStr.c_str(), "lambda", 6) == 0)
+                encTypeLower = LINK_IFSWCAP_ENC_LAMBDA;
+        }
+        else if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "upperSwcap", 10) == 0)
+        {
+            string swTypeStr;
+            StripXmlString(swTypeStr, xmlNodeGetContent(xmlNode));
+            if (strncasecmp((const char*)swTypeStr.c_str(), "l2sc", 4) == 0)
+                swTypeUpper = LINK_IFSWCAP_L2SC;
+            else if (strncasecmp((const char*)swTypeStr.c_str(), "psc", 3) == 0)
+                swTypeUpper = LINK_IFSWCAP_PSC1;
+            else if (strncasecmp((const char*)swTypeStr.c_str(), "tdm", 4) == 0)
+                swTypeUpper = LINK_IFSWCAP_TDM;
+            else if (strncasecmp((const char*)swTypeStr.c_str(), "lsc", 4) == 0)
+                swTypeUpper = LINK_IFSWCAP_LSC;
+        }
+        else if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "upperEncType", 12) == 0)
+        {
+            string encTypeStr;
+            StripXmlString(encTypeStr, xmlNodeGetContent(xmlNode));
+            if (strncasecmp((const char*)encTypeStr.c_str(), "ethernet", 6) == 0)
+                encTypeUpper = LINK_IFSWCAP_ENC_ETH;
+            else if (strncasecmp((const char*)encTypeStr.c_str(), "packet", 6) == 0)
+                encTypeUpper = LINK_IFSWCAP_ENC_PKT;
+            else if (strncasecmp((const char*)encTypeStr.c_str(), "sonet", 5) == 0 || strncasecmp((const char*)encTypeStr.c_str(), "sdh", 3) == 0)
+                encTypeUpper = LINK_IFSWCAP_ENC_SONETSDH;
+            else if (strncasecmp((const char*)encTypeStr.c_str(), "lambda", 6) == 0)
+                encTypeUpper = LINK_IFSWCAP_ENC_LAMBDA;
+        }
+        else if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "maximumAdjustableCapacity", 25) == 0)
+        {
+            string bwStr;
+            StripXmlString(bwStr, xmlNodeGetContent(xmlNode));
+            capacity = StringToBandwidth(bwStr);
+        }
+        else if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "adjustmentCapabilitySpecificInfo", 30) == 0)
+        {
+            // TODO: create layer-specific IACD and fill in specific Info parameters
+        }
+    }
+    if (iacd == NULL)
+        iacd = new IACD(swTypeLower, encTypeLower, swTypeLower, encTypeLower, (capacity == 0 ? this->GetAvailableBandwidth() : capacity));
+    return iacd;
 }
 
 
@@ -589,9 +747,9 @@ TLink* DBLink::Checkout(TGraph* tg)
     list<ISCD*>::iterator its = this->GetSwCapDescriptors().begin();
     for (; its != this->GetSwCapDescriptors().end(); its++)
         tl->GetSwCapDescriptors().push_back((*its)->Duplicate());
-    list<IACD*>::iterator ita = this->GetSwAdaptDescriptors().begin();
-    for (; ita != this->GetSwAdaptDescriptors().end(); ita++)
-        tl->GetSwAdaptDescriptors().push_back(*ita);
+    list<IACD*>::iterator ita = this->GetAdjCapDescriptors().begin();
+    for (; ita != this->GetAdjCapDescriptors().end(); ita++)
+        tl->GetAdjCapDescriptors().push_back(*ita);
     list<Link*>::iterator itl = this->GetContainerLinks().begin();
     //$$$$ update pointers to copy version?
     for (; itl != this->GetContainerLinks().end(); itl++)

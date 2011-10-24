@@ -188,9 +188,9 @@ TLink* TLink::Clone()
     list<ISCD*>::iterator its = swCapDescriptors.begin();
     for (; its != swCapDescriptors.end(); its++)
         tl->swCapDescriptors.push_back((*its)->Duplicate());
-    list<IACD*>::iterator ita = swAdaptDescriptors.begin();
-    for (; ita != swAdaptDescriptors.end(); ita++)
-        tl->swAdaptDescriptors.push_back(*ita);
+    list<IACD*>::iterator ita = adjCapDescriptors.begin();
+    for (; ita != adjCapDescriptors.end(); ita++)
+        tl->adjCapDescriptors.push_back(*ita);
     list<Link*>::iterator itl = this->containerLinks.begin();
     for (; itl != this->containerLinks.end(); itl++)
         tl->containerLinks.push_back(*itl);
@@ -227,8 +227,9 @@ bool TLink::IsAvailableForTspec(TSpec& tspec)
             {
                //if (tspec.ENCtype == LINK_IFSWCAP_ENC_G709ODUK && !this->GetOTNXInterfaceISCD(LINK_IFSWCAP_SUBTLV_SWCAP_TDM))
                //    return true; // no need for timeslots checking as that will be done by ::ProceedByUpdatingTimeslots
-               if (((ISCD_TDM*)iscd)->minReservableBandwidth == 0 || tspec.Bandwidth % ((ISCD_TDM*)iscd)->minReservableBandwidth == 0)
-                    return true;
+               //if ((((ISCD_TDM*)iscd)->concatenationType == STS1 && tspec.Bandwidth % 50 == 0)
+               //    || (((ISCD_TDM*)iscd)->concatenationType == STS3C && tspec.Bandwidth % 150 == 0))
+                   return true;
             }
             else if (tspec.SWtype >= LINK_IFSWCAP_PSC1 && 
                     tspec.SWtype <=  LINK_IFSWCAP_PSC4 ||
@@ -262,7 +263,8 @@ bool TLink::VerifyEdgeLinkTSpec(TSpec& tspec)
         {
             if (tspec.SWtype == LINK_IFSWCAP_TDM)
             {
-                if (((ISCD_TDM*)iscd)->minReservableBandwidth == 0 || tspec.Bandwidth % ((ISCD_TDM*)iscd)->minReservableBandwidth == 0)
+                //if ((((ISCD_TDM*)iscd)->concatenationType == STS1 && tspec.Bandwidth % 50 == 0)
+                //    || (((ISCD_TDM*)iscd)->concatenationType == STS3C && tspec.Bandwidth % 150 == 0))
                     return true;
             }
             else if (tspec.SWtype >= LINK_IFSWCAP_PSC1 && tspec.SWtype <=  LINK_IFSWCAP_PSC4 || tspec.SWtype == LINK_IFSWCAP_L2SC)
@@ -392,7 +394,7 @@ bool TLink::CrossingRegionBoundary(TSpec& tspec)
 {
     // Check adaptation defined by IACD(s)
     list<IACD*>::iterator it_iacd;
-    for (it_iacd = swAdaptDescriptors.begin(); it_iacd != swAdaptDescriptors.end(); it_iacd++)
+    for (it_iacd = adjCapDescriptors.begin(); it_iacd != adjCapDescriptors.end(); it_iacd++)
     {
         //crossing from lower layer to upper layer
         if ((*it_iacd)->lowerLayerSwitchingType == tspec.SWtype && (*it_iacd)->lowerLayerEncodingType == tspec.ENCtype)
@@ -421,7 +423,7 @@ bool TLink::GetNextRegionTspec(TSpec& tspec)
 {
     // Check adaptation defined by IACD(s)
     list<IACD*>::iterator it_iacd;
-    for (it_iacd = swAdaptDescriptors.begin(); it_iacd != swAdaptDescriptors.end(); it_iacd++)
+    for (it_iacd = adjCapDescriptors.begin(); it_iacd != adjCapDescriptors.end(); it_iacd++)
     {
         //crossing from lower layer to upper layer
         if ((*it_iacd)->lowerLayerSwitchingType == tspec.SWtype && (*it_iacd)->lowerLayerEncodingType == tspec.ENCtype)
@@ -485,9 +487,9 @@ bool TLink::GetNextRegionTspec(TSpec& tspec)
     if (this->remoteLink)
     {
         ISCD* iscd_adapted = NULL;         
-        if (this->swAdaptDescriptors.size() == 1 && remoteLink->GetSwAdaptDescriptors().size() == 1 && this->GetTheISCD()->switchingType != ((TLink*)remoteLink)->GetTheISCD()->switchingType)
+        if (this->adjCapDescriptors.size() == 1 && remoteLink->GetAdjCapDescriptors().size() == 1 && this->GetTheISCD()->switchingType != ((TLink*)remoteLink)->GetTheISCD()->switchingType)
             iscd_adapted = ((TLink*)remoteLink)->GetTheISCD();
-        else if (this->swAdaptDescriptors.size()*remoteLink->GetSwAdaptDescriptors().size() > 1)
+        else if (this->adjCapDescriptors.size()*remoteLink->GetAdjCapDescriptors().size() > 1)
         {
             list<ISCD*>::iterator iter_iscd = this->remoteLink->GetSwCapDescriptors().begin();
             for (; iter_iscd != this->remoteLink->GetSwCapDescriptors().end(); iter_iscd++)
@@ -879,7 +881,7 @@ TPath::~TPath()
 }
 
 
-// verify constrains of vlantag, wavelength and cross-layer adapation (via Tspec) 
+// verify constrains of vlantag, wavelength and cross-layer adaptation (via TSpec) 
 bool TPath::VerifyTEConstraints(u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_t& wave, TSpec& tspec) 
 {
     TLink* L;

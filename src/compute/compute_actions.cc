@@ -337,7 +337,7 @@ void Action_ComputeKSP::Process()
         u_int32_t waveResult = wavelength;
         if (!(*ingressLink == *(*itP)->GetPath().front()))
         {
-            // create artificial source node and link to hanlde edge ingress link
+            // create artificial source node and link to handle edge ingress link
             if (ingressLink->GetRemoteEnd() == NULL)
             {
                 TLink* newSrcLink = ingressLink->Clone();
@@ -359,7 +359,7 @@ void Action_ComputeKSP::Process()
         }
         if (!(*egressLink == *(*itP)->GetPath().back()))
         {
-            // create artificial destination node and link to hanlde edge ingress link
+            // create artificial destination node and link to handle edge ingress link
             if (egressLink->GetRemoteEnd() == NULL)
             {
                 TLink* newDstLink = egressLink->Clone();
@@ -380,7 +380,7 @@ void Action_ComputeKSP::Process()
             (*itP)->GetPath().push_back(egressLink);
         }
 
-        // TODO: special handling for OSCARS L2SC --> PSC edge adaptaion: add artificial IACD for  (ingress <-> 1st-hop and egress <-> last-hop)
+        // TODO: special handling for OSCARS L2SC --> PSC edge adaptation: add artificial IACD for  (ingress <-> 1st-hop and egress <-> last-hop)
         // TODO: long-term solution --> regulate OSCARS topology description for cross-layer adaptation
 
         if (!(*itP)->VerifyTEConstraints(srcVtagResult, dstVtagResult, waveResult, tspec))
