@@ -467,6 +467,7 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
     WDMChannelRepresentationType channelRepresentation = ITU_CHANNEL_GRID;
     string wavelengthRange = "";
     bool wavelengthConversion = false;
+    xmlNodePtr vendorSpecInfo = NULL;
     for (xmlNode = xmlNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
     {
         if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "switchingcapType", 16) == 0)
@@ -613,7 +614,15 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
             for (specLevel = xmlNode->children; specLevel != NULL; specLevel = specLevel->next)
             {
                 // 1. vendorSpecificInfo / cienaOTNSpecificInfo
+                if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "cienaOTNSpecificInfo", 23) == 0)
+                {
+                    vendorSpecInfo = specLevel;
+                }
                 // 2. vendorSpecificInfo / infineraDTNSpecificInfo
+                else if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "infineraDTNSpecificInfo", 23) == 0)
+                {
+                    vendorSpecInfo = specLevel;
+                }
             }
         }
     }
@@ -654,6 +663,7 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
     iscd->switchingType = swType;
     iscd->encodingType = encType;
     iscd->capacity = (capacity == 0 ? this->GetAvailableBandwidth() : capacity);
+    iscd->vendorSpecInfoXml = vendorSpecInfo;
     return iscd;
 }
 

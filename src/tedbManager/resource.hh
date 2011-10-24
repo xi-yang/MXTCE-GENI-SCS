@@ -347,7 +347,14 @@ public:
     ISCD (u_char swType, u_char enc, long bw): switchingType(swType), encodingType(enc), capacity(bw), vendorSpecInfoXml(NULL) { }
     virtual ~ISCD() { }
     virtual ISCD* Duplicate() { return NULL; }
-    virtual void* VendorSpecInfo() { return NULL; }
+    virtual void * VendorSpecificInfo() {
+        if (vendorSpecInfoXml != NULL) 
+        {
+            VendorSpecificInfoParser* parser = VendorSpecificInfoParserFactory::CreateParser(vendorSpecInfoXml);
+            return parser->Parse();
+        }
+        return NULL;
+    }
 };
 
 
@@ -389,7 +396,6 @@ public:
         iscd->vlanTranslation = this->vlanTranslation;
         return iscd;
     }
-            
 };
 
 
@@ -423,7 +429,6 @@ public:
         iscd->vcatEnabled = this->vcatEnabled;
         return iscd;
     }
-
 };
 
 
@@ -459,7 +464,6 @@ public:
 };
 
 
-
 // Interface Adjustment Capability Descriptor
 class IACD
 {
@@ -469,7 +473,7 @@ public:
     u_char  upperLayerSwitchingType;
     u_char	upperLayerEncodingType;
     long maxAdaptBandwidth;
-    xmlNodePtr vendorSpecInfoXml;
+    xmlNodePtr vendorSpecInfoXml; 
     IACD(u_char lowerSwType, u_char lowerEnc, u_char upperSwType, u_char upperEnc, long bw): lowerLayerSwitchingType(lowerSwType), lowerLayerEncodingType(lowerEnc), 
         upperLayerSwitchingType(upperSwType), upperLayerEncodingType(upperEnc), maxAdaptBandwidth(bw), vendorSpecInfoXml(NULL) { }
     virtual ~IACD() { }
@@ -491,6 +495,7 @@ struct portcmpless {
     {   return (lp->GetName().compare(rp->GetName()) < 0); }
 };
 
+// TODO: comply with NML rev20110826
 class NodeIfAdaptMatrix
 {
 private:
@@ -520,6 +525,5 @@ public:
     list<Port*> GetAdaptToPorts(Port* port, long bw=0);
     list<Port*> GetAdaptFromPorts(Port* port, long bw=0);
 };
-
 
 #endif

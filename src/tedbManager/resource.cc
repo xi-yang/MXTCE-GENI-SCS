@@ -115,6 +115,7 @@ void Port::AddLink(Link* link)
     this->links[link->GetName()] = link;
 }
 
+
 list<Port*> NodeIfAdaptMatrix::GetAdaptToPorts(Port* fromPort, long bw)
 {
     list<Port*> portList;
