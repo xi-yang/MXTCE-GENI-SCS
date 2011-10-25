@@ -348,15 +348,7 @@ public:
     ISCD (u_char swType, u_char enc, long bw): switchingType(swType), encodingType(enc), capacity(bw), vendorSpecInfoXml(NULL) { }
     virtual ~ISCD() { }
     virtual ISCD* Duplicate() { return NULL; }
-    virtual void * VendorSpecificInfo() {
-        if (vendorSpecInfoXml != NULL) 
-        {
-            VendorSpecificInfoParser* parser = VendorSpecificInfoParserFactory::CreateParser(vendorSpecInfoXml);
-            parser->Parse();  // TODO: Exception handling
-            return parser;
-        }
-        return NULL;
-    }
+    virtual void * VendorSpecificInfo();
 };
 
 

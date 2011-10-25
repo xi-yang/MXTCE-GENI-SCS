@@ -67,6 +67,18 @@ list<TDelta*> Resource::LookupDeltasByName(string resvName)
     return deltaListNew;
 }
 
+void * ISCD::VendorSpecificInfo() 
+{
+    if (vendorSpecInfoXml != NULL) 
+    {
+        VendorSpecificInfoParser* parser = VendorSpecificInfoParserFactory::CreateParser(vendorSpecInfoXml);
+        if (parser == NULL)
+            throw TEDBException((char*)"VendorSpecificInfo for VendorSpecificInfoParserFactory - cannot create a parser.");
+        parser->Parse();
+        return parser;
+    }
+    return NULL;
+}
 
 void Domain::AddNode(Node* node)
 {

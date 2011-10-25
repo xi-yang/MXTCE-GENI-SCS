@@ -36,35 +36,110 @@
 
 #include "types.hh"
 #include "utils.hh"
+#include <vector>
 
-// TODO: Exception handling
+using namespace std;
 
 class VendorSpecificInfoParser
 {
 protected:
+    xmlNodePtr vendorSpecXmlNode;
+
 public:
+    VendorSpecificInfoParser(xmlNodePtr xmlNode): vendorSpecXmlNode(xmlNode) { }
+    virtual ~VendorSpecificInfoParser() { }
     virtual void Parse()=0;
+    // TODO: clone method
 };
 
 class VendorSpecificInfoParserFactory
 {
+protected:
+    // TODO: maintain a map between xmlNode (or link urn?) =and parser
 public:
     VendorSpecificInfoParserFactory() { }
     virtual ~VendorSpecificInfoParserFactory() { }
-    static VendorSpecificInfoParser* CreateParser(xmlNodePtr vendorSpecXmlNode);
+    static VendorSpecificInfoParser* CreateParser(xmlNodePtr xmlNode);
 };
 
-class VendorSpecificInfoParser_CienaOTN: public VendorSpecificInfoParser
-{
-private:
-public:
-    virtual void Parse();
-};
 
 class VendorSpecificInfoParser_InfineraDTN: public VendorSpecificInfoParser
 {
-private:
+protected:
+    string type;
+    string id;
+    string model;
+    string containType;
+    int containCount;
+
 public:
+    VendorSpecificInfoParser_InfineraDTN(xmlNodePtr xmlNode): VendorSpecificInfoParser(xmlNode), containCount(0) { }
+    virtual ~VendorSpecificInfoParser_InfineraDTN() { }
+    string& GetType() {return type;}
+    string& GetId() {return id;}
+    string& GetModel() {return model;}
+    string& GetContainsType() {return containType;}
+    int GetContainsCount() {return containCount;}
+    virtual void Parse();
+};
+
+class OTNObject
+{
+protected:
+    string type;
+    string id;
+    string model;
+    string containType;
+    vector<OTNObject*> containObjects; // size 0: no lower hierarchy (base OTUx or payload type) 
+    xmlNodePtr vendorSpecXmlNode;
+
+public:
+    OTNObject(): vendorSpecXmlNode(NULL) { }
+    OTNObject(xmlNodePtr xmlNode): vendorSpecXmlNode(xmlNode) { }
+    OTNObject(string t): type(t), vendorSpecXmlNode(NULL) { }
+    virtual ~OTNObject();
+    string& GetType() {return type;}
+    string& GetId() {return id;}
+    string& GetModel() {return model;}
+    string& GetContainType() {return containType;}
+    vector<OTNObject*>& GetContainObjects() {return containObjects;}
+    virtual void Parse();
+    // TODO: clone method
+};
+
+class VendorSpecificInfoParser_InfineraDTN_TributaryInfo: public VendorSpecificInfoParser_InfineraDTN
+{
+private:
+    OTNObject* tribOTU;
+
+public:
+    VendorSpecificInfoParser_InfineraDTN_TributaryInfo(xmlNodePtr xmlNode): VendorSpecificInfoParser_InfineraDTN(xmlNode), tribOTU(NULL) { }
+    virtual ~VendorSpecificInfoParser_InfineraDTN_TributaryInfo() { delete tribOTU; }
+    virtual void Parse();
+};
+
+class VendorSpecificInfoParser_InfineraDTN_WavebandMuxInfo: public VendorSpecificInfoParser_InfineraDTN
+{
+private:
+    vector<OTNObject*> ocgVector;
+
+public:
+        VendorSpecificInfoParser_InfineraDTN_WavebandMuxInfo(xmlNodePtr xmlNode): VendorSpecificInfoParser_InfineraDTN(xmlNode) { }
+        virtual ~VendorSpecificInfoParser_InfineraDTN_WavebandMuxInfo() {
+            for (int i = 0; i < ocgVector.size(); i++)
+                delete ocgVector[i];
+            ocgVector.clear();
+        }
+    virtual void Parse();
+};
+
+// TODO: 
+class VendorSpecificInfoParser_CienaOTN: public VendorSpecificInfoParser
+{
+protected:
+public:
+    VendorSpecificInfoParser_CienaOTN(xmlNodePtr xmlNode): VendorSpecificInfoParser(xmlNode) { }
+    virtual ~VendorSpecificInfoParser_CienaOTN() { }
     virtual void Parse();
 };
 

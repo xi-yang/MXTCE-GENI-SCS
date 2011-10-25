@@ -32,18 +32,191 @@
  */
 
 #include "vendor_specific.hh"
+#include "exception.hh"
 
 VendorSpecificInfoParser* VendorSpecificInfoParserFactory::CreateParser(xmlNodePtr vendorSepcXmlNode)
 {
+    if (vendorSepcXmlNode == NULL || vendorSepcXmlNode->type != XML_ELEMENT_NODE || strncasecmp((const char*)vendorSepcXmlNode->name, "vendorSpecificInfo", 18) != 0)
+        return NULL;
 
-}
-
-void VendorSpecificInfoParser_CienaOTN::Parse()
-{
-
+    xmlNodePtr xmlNode = NULL;
+    for (xmlNode = vendorSepcXmlNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
+    {
+        if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "infineraDTNSpecificInfo", 23) == 0)
+        {
+            return (new VendorSpecificInfoParser_InfineraDTN(xmlNode));
+        }
+        else if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "cienaOTNSpecificInfo", 20) == 0)
+        {
+            return (new VendorSpecificInfoParser_CienaOTN(xmlNode));
+        }
+    }
+    return NULL;
 }
 
 void VendorSpecificInfoParser_InfineraDTN::Parse()
 {
+    xmlNodePtr xmlNode = NULL;
+    xmlChar* attr;
+    for (xmlNode = vendorSpecXmlNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
+    {
+        if (xmlNode->type == XML_ELEMENT_NODE && (strncasecmp((const char*)xmlNode->name, "tributaryInfo", 13) == 0
+            || strncasecmp((const char*)xmlNode->name, "wavebandMuxInfo", 15) == 0))
+        {
+            this->type = (const char*)xmlNode->name;
+            attr  = xmlGetProp(xmlNode, (const xmlChar*)"id");
+            if (attr != NULL)
+                this->id = (const char*)attr;
+            attr  = xmlGetProp(xmlNode, (const xmlChar*)"model");
+            if (attr != NULL)
+                this->model = (const char*)attr;
+            attr  = xmlGetProp(xmlNode, (const xmlChar*)"contain");
+            if (attr != NULL)
+            {
+                int count; char type[16];
+                int num = sscanf((const char*)attr, "%dx%s", &count, type);
+                if (num == 2)
+                {
+                    this->containType = (const char*)type;
+                    this->containCount = count;
+                }
+                else
+                {
+                    this->containType = (const char*)attr;
+                    this->containCount = 1;
+                }
+            }
+            vendorSpecXmlNode = xmlNode;
+            return;
+        }
+    }
+    throw TEDBException((char*)"No valid data contained in 'infineraDTNSpecificInfo' -- require either 'tributaryInfo' or 'wavebandMuxInfo'");   
+}
 
+
+OTNObject::~OTNObject()
+{
+    for (int i = 0; i < this->containObjects.size(); i++)
+        delete containObjects[i];
+    containObjects.clear();
+}
+
+void OTNObject::Parse()
+{
+    xmlNodePtr xmlNode;
+    xmlChar* attr;
+    if (vendorSpecXmlNode->type == XML_ELEMENT_NODE)
+    {
+        this->containObjects.clear();
+        if (strncasecmp((const char*)vendorSpecXmlNode->name, "OTU", 3) != 0 &&
+            strncasecmp((const char*)vendorSpecXmlNode->name, "OCh", 3) != 0 &&
+            strncasecmp((const char*)vendorSpecXmlNode->name, "OCG", 3) != 0)
+        {
+            char buf[128];
+            snprintf(buf, 128, "Unrecognized OTNObject type: %s", (const char*)vendorSpecXmlNode->name);
+            throw TEDBException(buf);   
+        }
+        this->type = (const char*)vendorSpecXmlNode->name;
+        attr  = xmlGetProp(vendorSpecXmlNode, (const xmlChar*)"id");
+        if (attr != NULL)
+            this->id = (const char*)attr;
+        attr  = xmlGetProp(vendorSpecXmlNode, (const xmlChar*)"model");
+        if (attr != NULL)
+            this->model = (const char*)attr;
+        attr  = xmlGetProp(vendorSpecXmlNode, (const xmlChar*)"contain");
+        if (attr != NULL)
+        {
+            int count; char type[16];
+            int num = sscanf((const char*)attr, "%dx%s", &count, type);
+            if (num == 2)
+            {
+                this->containType = (const char*)type;
+            }
+            else
+            {
+                this->containType = (const char*)attr;
+                count = 0;
+            }
+            for (xmlNode = vendorSpecXmlNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
+            {
+                if (xmlNode->type == XML_ELEMENT_NODE )
+                {
+                    if (strncasecmp((const char*)vendorSpecXmlNode->name, "OTU", 3) != 0 &&
+                        strncasecmp((const char*)vendorSpecXmlNode->name, "OCh", 3) != 0 &&
+                        strncasecmp((const char*)vendorSpecXmlNode->name, "OCG", 3) != 0)
+                    {
+                        OTNObject* oobj = new OTNObject(xmlNode);
+                        oobj->Parse();
+                        this->containObjects.push_back(oobj);
+                    }
+                }
+            }
+            if (this->containObjects.size() == 0 && count == 1)
+            {
+                OTNObject* oobj = new OTNObject(this->containType);
+                this->containObjects.push_back(oobj);
+            }
+            else if (this->containObjects.size() != count)
+            {
+                char buf[128];
+                snprintf(buf, 128, "Malformed '%s' data structure: requires %d '%s' objects, actually contains %d", 
+                    this->type.c_str(), count, this->containObjects[0]->GetType().c_str(), (int)this->containObjects.size());
+                throw TEDBException(buf);
+            }
+        }
+        return;
+    }
+    throw TEDBException((char*)"Parsing OTNObject: not a valid XML node");   
+}
+
+void VendorSpecificInfoParser_InfineraDTN_TributaryInfo::Parse()
+{
+    VendorSpecificInfoParser_InfineraDTN::Parse();
+    xmlNodePtr xmlNode;
+    for (xmlNode = vendorSpecXmlNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
+    {
+        if (xmlNode->type == XML_ELEMENT_NODE )
+        {
+            if (strncasecmp((const char*)vendorSpecXmlNode->name, "OTU", 3) != 0)
+            {
+                tribOTU = new OTNObject(xmlNode);
+                tribOTU->Parse();
+                return;
+               }
+        }
+    }
+    throw TEDBException((char*)"Parsing InfineraDTN_TributaryInfo: XML not containing an OTUx type OTNObject");   
+}
+
+void VendorSpecificInfoParser_InfineraDTN_WavebandMuxInfo::Parse()
+{
+    VendorSpecificInfoParser_InfineraDTN::Parse();
+    if (strncasecmp(this->containType.c_str(), "OCG", 3) != 0)
+        throw TEDBException((char*)"Parsing InfineraDTN_WavebandMuxInfo: requires 'NxOCG' as 'contain' atribute");
+    xmlNodePtr xmlNode;
+    for (xmlNode = vendorSpecXmlNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
+    {
+        if (xmlNode->type == XML_ELEMENT_NODE )
+        {
+            if (strncasecmp((const char*)vendorSpecXmlNode->name, "OCG", 3) != 0)
+            {
+                OTNObject* ocg = new OTNObject(xmlNode);
+                ocg->Parse();
+                this->ocgVector.push_back(ocg);
+            }
+        }
+    }
+    if (this->ocgVector.size() != this->containCount)
+    {
+        char buf[128];
+        snprintf(buf, 128, "Malformed InfineraDTN_WavebandMuxInfo data structure: requires %d OCG objects, actually contains %d", 
+            this->containCount, (int)this->ocgVector.size());
+        throw TEDBException(buf);
+    }
+}
+
+
+void VendorSpecificInfoParser_CienaOTN::Parse()
+{    
+    // TODO: 
 }
