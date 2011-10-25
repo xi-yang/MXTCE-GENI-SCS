@@ -43,11 +43,13 @@ using namespace std;
 class VendorSpecificInfoParser
 {
 protected:
+    string type;
     xmlNodePtr vendorSpecXmlNode;
 
 public:
     VendorSpecificInfoParser(xmlNodePtr xmlNode): vendorSpecXmlNode(xmlNode) { }
     virtual ~VendorSpecificInfoParser() { }
+    string& GetType() {return type;}
     virtual void Parse()=0;
     // TODO: clone method
 };
@@ -66,7 +68,6 @@ public:
 class VendorSpecificInfoParser_InfineraDTN: public VendorSpecificInfoParser
 {
 protected:
-    string type;
     string id;
     string model;
     string containType;
@@ -75,7 +76,6 @@ protected:
 public:
     VendorSpecificInfoParser_InfineraDTN(xmlNodePtr xmlNode): VendorSpecificInfoParser(xmlNode), containCount(0) { }
     virtual ~VendorSpecificInfoParser_InfineraDTN() { }
-    string& GetType() {return type;}
     string& GetId() {return id;}
     string& GetModel() {return model;}
     string& GetContainsType() {return containType;}

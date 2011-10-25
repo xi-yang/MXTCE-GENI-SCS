@@ -344,8 +344,10 @@ public:
     u_char	switchingType;
     u_char	encodingType;
     long capacity;
-    xmlNodePtr vendorSpecInfoXml; 
-    ISCD (u_char swType, u_char enc, long bw): switchingType(swType), encodingType(enc), capacity(bw), vendorSpecInfoXml(NULL) { }
+    xmlNodePtr vendorSpecInfoXml;
+    VendorSpecificInfoParser* vendorSpecInfoParser;
+    ISCD (u_char swType, u_char enc, long bw): switchingType(swType), encodingType(enc), capacity(bw), 
+        vendorSpecInfoXml(NULL), vendorSpecInfoParser(NULL) { }
     virtual ~ISCD() { }
     virtual ISCD* Duplicate() { return NULL; }
     virtual void * VendorSpecificInfo();
@@ -453,6 +455,7 @@ public:
         iscd->availableWavelengths = this->availableWavelengths;
         iscd->assignedWavelengths = this->assignedWavelengths;
         iscd->wavelengthConversion = this->wavelengthConversion;
+        iscd->vendorSpecInfoParser = (VendorSpecificInfoParser*)this->VendorSpecificInfo();
         return iscd;
     }
 };

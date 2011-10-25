@@ -36,59 +36,58 @@
 
 VendorSpecificInfoParser* VendorSpecificInfoParserFactory::CreateParser(xmlNodePtr vendorSepcXmlNode)
 {
-    if (vendorSepcXmlNode == NULL || vendorSepcXmlNode->type != XML_ELEMENT_NODE || strncasecmp((const char*)vendorSepcXmlNode->name, "vendorSpecificInfo", 18) != 0)
+    if (vendorSepcXmlNode == NULL || vendorSepcXmlNode->type != XML_ELEMENT_NODE)
         return NULL;
 
     xmlNodePtr xmlNode = NULL;
-    for (xmlNode = vendorSepcXmlNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
+    if (vendorSepcXmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)vendorSepcXmlNode->name, "infineraDTNSpecificInfo", 23) == 0)
     {
-        if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "infineraDTNSpecificInfo", 23) == 0)
+        for (xmlNode = vendorSepcXmlNode->children;  xmlNode != NULL; xmlNode = xmlNode->next)
         {
-            return (new VendorSpecificInfoParser_InfineraDTN(xmlNode));
-        }
-        else if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "cienaOTNSpecificInfo", 20) == 0)
-        {
-            return (new VendorSpecificInfoParser_CienaOTN(xmlNode));
+            if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "tributaryInfo", 13) == 0)
+                return (new VendorSpecificInfoParser_InfineraDTN_TributaryInfo(xmlNode));
+            else if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "wavebandMuxInfo", 15) == 0)
+                return (new VendorSpecificInfoParser_InfineraDTN_WavebandMuxInfo(xmlNode));
         }
     }
+    else if (vendorSepcXmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)vendorSepcXmlNode->name, "cienaOTNSpecificInfo", 20) == 0)
+    {
+        return (new VendorSpecificInfoParser_CienaOTN(xmlNode));
+    }
+
     return NULL;
 }
 
 void VendorSpecificInfoParser_InfineraDTN::Parse()
 {
-    xmlNodePtr xmlNode = NULL;
     xmlChar* attr;
-    for (xmlNode = vendorSpecXmlNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
+    if (vendorSpecXmlNode->type == XML_ELEMENT_NODE && (strncasecmp((const char*)vendorSpecXmlNode->name, "tributaryInfo", 13) == 0
+        || strncasecmp((const char*)vendorSpecXmlNode->name, "wavebandMuxInfo", 15) == 0))
     {
-        if (xmlNode->type == XML_ELEMENT_NODE && (strncasecmp((const char*)xmlNode->name, "tributaryInfo", 13) == 0
-            || strncasecmp((const char*)xmlNode->name, "wavebandMuxInfo", 15) == 0))
+        this->type = (const char*)vendorSpecXmlNode->name;
+        attr  = xmlGetProp(vendorSpecXmlNode, (const xmlChar*)"id");
+        if (attr != NULL)
+            this->id = (const char*)attr;
+        attr  = xmlGetProp(vendorSpecXmlNode, (const xmlChar*)"model");
+        if (attr != NULL)
+            this->model = (const char*)attr;
+        attr  = xmlGetProp(vendorSpecXmlNode, (const xmlChar*)"contain");
+        if (attr != NULL)
         {
-            this->type = (const char*)xmlNode->name;
-            attr  = xmlGetProp(xmlNode, (const xmlChar*)"id");
-            if (attr != NULL)
-                this->id = (const char*)attr;
-            attr  = xmlGetProp(xmlNode, (const xmlChar*)"model");
-            if (attr != NULL)
-                this->model = (const char*)attr;
-            attr  = xmlGetProp(xmlNode, (const xmlChar*)"contain");
-            if (attr != NULL)
+            int count; char type[16];
+            int num = sscanf((const char*)attr, "%dx%s", &count, type);
+            if (num == 2)
             {
-                int count; char type[16];
-                int num = sscanf((const char*)attr, "%dx%s", &count, type);
-                if (num == 2)
-                {
-                    this->containType = (const char*)type;
-                    this->containCount = count;
-                }
-                else
-                {
-                    this->containType = (const char*)attr;
-                    this->containCount = 1;
-                }
+                this->containType = (const char*)type;
+                this->containCount = count;
             }
-            vendorSpecXmlNode = xmlNode;
-            return;
+            else
+            {
+                this->containType = (const char*)attr;
+                this->containCount = 1;
+            }
         }
+        return;
     }
     throw TEDBException((char*)"No valid data contained in 'infineraDTNSpecificInfo' -- require either 'tributaryInfo' or 'wavebandMuxInfo'");   
 }
@@ -141,14 +140,15 @@ void OTNObject::Parse()
             {
                 if (xmlNode->type == XML_ELEMENT_NODE )
                 {
-                    if (strncasecmp((const char*)vendorSpecXmlNode->name, "OTU", 3) != 0 &&
-                        strncasecmp((const char*)vendorSpecXmlNode->name, "OCh", 3) != 0 &&
-                        strncasecmp((const char*)vendorSpecXmlNode->name, "OCG", 3) != 0)
+                    if (strncasecmp((const char*)xmlNode->name, "OTU", 3) != 0 &&
+                        strncasecmp((const char*)xmlNode->name, "OCh", 3) != 0 &&
+                        strncasecmp((const char*)xmlNode->name, "OCG", 3) != 0)
                     {
-                        OTNObject* oobj = new OTNObject(xmlNode);
-                        oobj->Parse();
-                        this->containObjects.push_back(oobj);
+                        continue;
                     }
+                    OTNObject* oobj = new OTNObject(xmlNode);
+                    oobj->Parse();
+                    this->containObjects.push_back(oobj);
                 }
             }
             if (this->containObjects.size() == 0 && count == 1)
@@ -159,8 +159,8 @@ void OTNObject::Parse()
             else if (this->containObjects.size() != count)
             {
                 char buf[128];
-                snprintf(buf, 128, "Malformed '%s' data structure: requires %d '%s' objects, actually contains %d", 
-                    this->type.c_str(), count, this->containObjects[0]->GetType().c_str(), (int)this->containObjects.size());
+                snprintf(buf, 128, "Malformed '%s' data structure: requires %d sub-level objects, actually contains %d", 
+                    this->type.c_str(), count, (int)this->containObjects.size());
                 throw TEDBException(buf);
             }
         }

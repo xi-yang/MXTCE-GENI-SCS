@@ -739,7 +739,7 @@ IACD* DBLink::GetIACDFromXML(xmlNodePtr xmlNode)
         }
     }
     if (iacd == NULL)
-        iacd = new IACD(swTypeLower, encTypeLower, swTypeLower, encTypeLower, (capacity == 0 ? this->GetAvailableBandwidth() : capacity));
+        iacd = new IACD(swTypeLower, encTypeLower, swTypeUpper, encTypeUpper, (capacity == 0 ? this->GetAvailableBandwidth() : capacity));
     return iacd;
 }
 
