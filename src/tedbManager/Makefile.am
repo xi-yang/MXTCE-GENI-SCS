@@ -26,5 +26,5 @@ INSTALL_SDATA=@INSTALL@ -m 600
 #tedb_test_SOURCES = tedb_test.cc
 
 # -- Library Sources
-libtedb_a_SOURCES  = resource.hh tedb.hh tewg.hh tedb_man.hh topology_importer.hh
-libtedb_a_SOURCES  += resource.cc tedb.cc tewg.cc tedb_man.cc topology_importer.cc
+libtedb_a_SOURCES  = resource.hh tedb.hh tewg.hh tedb_man.hh topology_importer.hh vendor_specific.hh
+libtedb_a_SOURCES  += resource.cc tedb.cc tewg.cc tedb_man.cc topology_importer.cc vendor_specific.cc

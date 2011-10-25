@@ -36,6 +36,7 @@
 
 #include "types.hh"
 #include "utils.hh"
+#include "vendor_specific.hh"
 #include <list>
 #include <map>
 
@@ -351,7 +352,8 @@ public:
         if (vendorSpecInfoXml != NULL) 
         {
             VendorSpecificInfoParser* parser = VendorSpecificInfoParserFactory::CreateParser(vendorSpecInfoXml);
-            return parser->Parse();
+            parser->Parse();  // TODO: Exception handling
+            return parser;
         }
         return NULL;
     }

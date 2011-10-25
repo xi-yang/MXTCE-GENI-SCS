@@ -51,7 +51,8 @@ ARFLAGS = cru
 libtedb_a_AR = $(AR) $(ARFLAGS)
 libtedb_a_LIBADD =
 am_libtedb_a_OBJECTS = resource.$(OBJEXT) tedb.$(OBJEXT) \
-	tewg.$(OBJEXT) tedb_man.$(OBJEXT) topology_importer.$(OBJEXT)
+	tewg.$(OBJEXT) tedb_man.$(OBJEXT) topology_importer.$(OBJEXT) \
+	vendor_specific.$(OBJEXT)
 libtedb_a_OBJECTS = $(am_libtedb_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -199,8 +200,8 @@ INSTALL_SDATA = @INSTALL@ -m 600
 
 # -- Library Sources
 libtedb_a_SOURCES = resource.hh tedb.hh tewg.hh tedb_man.hh \
-	topology_importer.hh resource.cc tedb.cc tewg.cc tedb_man.cc \
-	topology_importer.cc
+	topology_importer.hh vendor_specific.hh resource.cc tedb.cc \
+	tewg.cc tedb_man.cc topology_importer.cc vendor_specific.cc
 all: all-am
 
 .SUFFIXES:
@@ -291,6 +292,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tedb_man.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tewg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/topology_importer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vendor_specific.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
