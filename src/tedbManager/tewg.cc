@@ -882,7 +882,8 @@ TPath::~TPath()
 
 
 // verify constrains of vlantag, wavelength and cross-layer adaptation (via TSpec) 
-bool TPath::VerifyTEConstraints(u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_t& wave, TSpec& tspec) 
+// TODO: support for MLN request types (currently only Ethernet-over-WDM altough other cross-layers are computed but not accounted in results)
+bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_t& wave, TSpec& tspec) 
 {
     TLink* L;
     list<TLink*>::iterator iterL;
@@ -900,15 +901,19 @@ bool TPath::VerifyTEConstraints(u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_
     {
         L = *iterL;
         if (L->GetLocalEnd())
-            TWDATA(L->GetLocalEnd())->tspec.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+            TWDATA(L->GetLocalEnd())->tspec.Update(ingTSS.SWtype, ingTSS.ENCtype, ingTSS.Bandwidth);
         if (L->GetRemoteEnd())
-            TWDATA(L->GetRemoteEnd())->tspec.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
-        TWDATA(L)->tspec.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+            TWDATA(L->GetRemoteEnd())->tspec.Update(ingTSS.SWtype, ingTSS.ENCtype, ingTSS.Bandwidth);
+        TWDATA(L)->tspec.Update(ingTSS.SWtype, ingTSS.ENCtype, ingTSS.Bandwidth);
     }
 
     // initializing vtags and wavelengths
-    if (srcVtag != 0)
-        head_vtagset.AddTag(srcVtag);
+    u_int32_t srcVtag = ANY_TAG;
+    if (ingTSS.SWtype == LINK_IFSWCAP_L2SC && ingTSS.ENCtype == LINK_IFSWCAP_ENC_ETH)
+    {
+        head_vtagset = ingTSS.GetTagSet();
+        srcVtag = ingTSS.GetTagSet().LowestTag();
+    }
     else         
         head_vtagset.Clear();
     head_vtagset_trans = head_vtagset;
@@ -974,6 +979,9 @@ bool TPath::VerifyTEConstraints(u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_
         }
     }
 
+    u_int32_t dstVtag = ANY_TAG;
+    if (egrTSS.SWtype == LINK_IFSWCAP_L2SC && egrTSS.ENCtype == LINK_IFSWCAP_ENC_ETH)
+        dstVtag = egrTSS.GetTagSet().LowestTag();
     // pick src and dst vtags from two sets of head_set and next_set (randomized by default)
     // try using common (continuous) vlan tag if possible, otherwise (no_vtag==true) use translated diff vlan
     if (no_vtag || (dstVtag != ANY_TAG && !next_vtagset.HasTag(dstVtag)))
@@ -1006,8 +1014,20 @@ bool TPath::VerifyTEConstraints(u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_
         else if (srcVtag == ANY_TAG && dstVtag == ANY_TAG)
             dstVtag = srcVtag = next_vtagset.RandomTag(); 
     }
+    //finalize vlans
+    ingTSS.GetVlanSet().Clear();
+    if (ingTSS.SWtype == LINK_IFSWCAP_L2SC && ingTSS.ENCtype == LINK_IFSWCAP_ENC_ETH)
+        ingTSS.GetVlanSet().AddTag(srcVtag);
+    egrTSS.GetVlanSet().Clear();
+    if (egrTSS.SWtype == LINK_IFSWCAP_L2SC && egrTSS.ENCtype == LINK_IFSWCAP_ENC_ETH)
+        egrTSS.GetVlanSet().AddTag(dstVtag);
     // pick wavelength (randomized)
-    wave = next_waveset.RandomTag();
+    if (!next_waveset.IsEmpty())
+    {
+        u_int32_t wavelength = next_waveset.RandomTag();
+        ingTSS.GetWavelengthSet().AddTag(wavelength);
+        egrTSS.GetWavelengthSet().AddTag(wavelength);
+    }
     return true;
 }
 

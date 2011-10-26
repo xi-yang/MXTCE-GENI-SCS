@@ -63,6 +63,46 @@ public:
     }
 };
 
+class TServiceSpec: public TSpec
+{
+public:
+    ConstraintTagSet vlanSet;
+    ConstraintTagSet timeslotSet;
+    ConstraintTagSet wavelengthSet;
+    TServiceSpec(): TSpec(), vlanSet(MAX_VLAN_NUM), timeslotSet(MAX_TIMESLOTS_NUM), wavelengthSet(MAX_WAVE_NUM) { }
+    TServiceSpec(u_int8_t sw, u_int8_t enc, long bw, string& tagRange): TSpec(sw, enc, bw),
+        vlanSet(MAX_VLAN_NUM), timeslotSet(MAX_TIMESLOTS_NUM), wavelengthSet(MAX_WAVE_NUM) {
+        switch (sw) {
+            case LINK_IFSWCAP_L2SC:
+                vlanSet.LoadRangeString(tagRange);
+                break;
+            case LINK_IFSWCAP_TDM:
+                timeslotSet.LoadRangeString(tagRange);
+                break;
+            case LINK_IFSWCAP_LSC:
+                wavelengthSet.LoadRangeString(tagRange);
+                break;
+        }
+    }
+    ConstraintTagSet& GetVlanSet() { return vlanSet; }
+    ConstraintTagSet& GetTImeslotSet() { return timeslotSet; }
+    ConstraintTagSet& GetWavelengthSet() { return wavelengthSet; }
+    ConstraintTagSet& GetTagSet() {
+        switch (SWtype) {
+            case LINK_IFSWCAP_L2SC:
+                return vlanSet;
+                break;
+            case LINK_IFSWCAP_TDM:
+                return timeslotSet;
+                break;
+            case LINK_IFSWCAP_LSC:
+                return wavelengthSet;
+                break;
+        }
+        return vlanSet;
+    }
+};
+
 
 // TODO: use map<string, void*> for additional storage
 class TWorkData: public WorkData
@@ -306,7 +346,7 @@ public:
                 cost += (*itLink)->GetMetric();
             }
         }
-    bool VerifyTEConstraints(u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_t& wave, TSpec& tspec);
+    bool VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS);
     void UpdateLayer2Info(u_int32_t srcVtag, u_int32_t dstVtag);
     BandwidthAvailabilityGraph* CreatePathBAG(time_t start, time_t end);
     void Cleanup() {

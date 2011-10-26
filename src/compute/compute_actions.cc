@@ -260,7 +260,6 @@ void Action_ComputeKSP::Process()
         dstVtag = ANY_TAG;
     else
         sscanf(userConstraint->getDestvlantag().c_str(), "%d", &dstVtag);
-    u_int32_t wavelength = 0; // place holder
 
     TSpec tspec;
     if (userConstraint->getLayer() == "3")
@@ -332,9 +331,6 @@ void Action_ComputeKSP::Process()
     vector<TPath*>::iterator itP = KSP->begin(); 
     while (itP != KSP->end())
     {
-        u_int32_t srcVtagResult = srcVtag;
-        u_int32_t dstVtagResult = dstVtag;
-        u_int32_t waveResult = wavelength;
         if (!(*ingressLink == *(*itP)->GetPath().front()))
         {
             // create artificial source node and link to handle edge ingress link
@@ -382,8 +378,12 @@ void Action_ComputeKSP::Process()
 
         // TODO: special handling for OSCARS L2SC --> PSC edge adaptation: add artificial IACD for  (ingress <-> 1st-hop and egress <-> last-hop)
         // TODO: long-term solution --> regulate OSCARS topology description for cross-layer adaptation
-
-        if (!(*itP)->VerifyTEConstraints(srcVtagResult, dstVtagResult, waveResult, tspec))
+        TServiceSpec ingTSS, egrTSS;
+        ingTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+        ingTSS.GetVlanSet().AddTag(srcVtag);
+        egrTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+        egrTSS.GetVlanSet().AddTag(dstVtag);
+        if (!(*itP)->VerifyTEConstraints(ingTSS, egrTSS))
         {
             TPath* path2erase = *itP;
             itP = KSP->erase(itP);
@@ -411,7 +411,7 @@ void Action_ComputeKSP::Process()
                 }
             }
             feasiblePaths->push_back(feasiblePath);
-            feasiblePath->UpdateLayer2Info(srcVtagResult, dstVtagResult);
+            feasiblePath->UpdateLayer2Info(ingTSS.GetVlanSet().LowestTag(), egrTSS.GetVlanSet().LowestTag());
             itP++;
         }
     }
@@ -672,11 +672,13 @@ void Action_ComputeSchedulesWithKSP::Process()
     long bw = 1000000000; // 100M
     TNode* srcNode = tewg->GetNodes().front();
     TNode* dstNode = tewg->GetNodes().back();
-    u_int32_t srcVtag = 4001;
-    u_int32_t dstVtag = 4001;
-    u_int32_t wavelength = 0;
     time_t duration = 3600;
-    TSpec tspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);
+    TServiceSpec ingTSS, egrTSS;
+    ingTSS.Update(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);
+    ingTSS.GetVlanSet().AddTag(4001); //placeholder
+    egrTSS.Update(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);
+    egrTSS.GetVlanSet().AddTag(4001); // placeholder
+
     
     // TODO: verify ingress/egress edge Tspec
 
@@ -714,10 +716,7 @@ void Action_ComputeSchedulesWithKSP::Process()
         vector<TPath*>::iterator itP = KSP.begin(); 
         while (itP != KSP.end())
         {
-            u_int32_t srcVtagResult = srcVtag;
-            u_int32_t dstVtagResult = srcVtag;
-            u_int32_t waveResult = wavelength;        
-            if (!(*itP)->VerifyTEConstraints(srcVtagResult, dstVtagResult, waveResult, tspec))
+            if (!(*itP)->VerifyTEConstraints(ingTSS, egrTSS))
             {
                 TPath* path2erase = *itP;
                 itP = KSP.erase(itP);
@@ -725,7 +724,7 @@ void Action_ComputeSchedulesWithKSP::Process()
             }
             else
             {
-                // $$ collect results into feasible paths
+                // TODO: collect results into feasible paths
                 TSchedule* schedule = new TSchedule(startTime, endTime);
                 vector<TPath*>::iterator itFP = feasiblePaths->begin();
                 for (; itFP != feasiblePaths->end(); itFP++)
