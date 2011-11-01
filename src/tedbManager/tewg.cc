@@ -390,15 +390,41 @@ void TLink::ProceedByUpdatingTimeslots(ConstraintTagSet &head_timeslotset, Const
 }
 
 
-bool TLink::CrossingRegionBoundary(TSpec& tspec)
+bool TLink::CrossingRegionBoundary(TSpec& tspec, TLink* next_link)
 {
+    // link may have multiple ISCDs. But as long as both link and next links can accomodarte the spec, no crossing is required on this link.
+    if (next_link)
+    {
+        bool compatibleTspec = false;
+        list<ISCD*>::iterator it_iscd;
+        for (it_iscd = this->swCapDescriptors.begin(); it_iscd != this->swCapDescriptors.end(); it_iscd++)
+        {
+            if ((*it_iscd)->switchingType == tspec.SWtype && (*it_iscd)->encodingType == tspec.ENCtype)
+            {
+                compatibleTspec = true;
+                break;
+            }
+        }
+        if (compatibleTspec)
+        {
+            compatibleTspec = false;
+            for (it_iscd = next_link->GetSwCapDescriptors().begin(); it_iscd != next_link->GetSwCapDescriptors().end(); it_iscd++)
+                if ((*it_iscd)->switchingType == tspec.SWtype && (*it_iscd)->encodingType == tspec.ENCtype)
+                    compatibleTspec = true;
+            if (compatibleTspec)
+                return false;
+        }
+    }
+
     // Check adaptation defined by IACD(s)
     list<IACD*>::iterator it_iacd;
     for (it_iacd = adjCapDescriptors.begin(); it_iacd != adjCapDescriptors.end(); it_iacd++)
     {
         //crossing from lower layer to upper layer
         if ((*it_iacd)->lowerLayerSwitchingType == tspec.SWtype && (*it_iacd)->lowerLayerEncodingType == tspec.ENCtype)
+        {
             return true;
+        }
         //crossing from upper layer to lower layer
         if ((*it_iacd)->upperLayerSwitchingType == tspec.SWtype && (*it_iacd)->upperLayerEncodingType == tspec.ENCtype)
             return true;
@@ -454,7 +480,7 @@ bool TLink::GetNextRegionTspec(TSpec& tspec)
         }
         
         //crossing from upper layer to lower layer
-        if ((*it_iacd)->upperLayerSwitchingType == tspec.SWtype && (*it_iacd)->upperLayerSwitchingType == tspec.ENCtype)
+        if ((*it_iacd)->upperLayerSwitchingType == tspec.SWtype && (*it_iacd)->upperLayerEncodingType == tspec.ENCtype)
         {
             tspec.SWtype = (*it_iacd)->lowerLayerSwitchingType;
             tspec.ENCtype = (*it_iacd)->lowerLayerEncodingType;
@@ -968,7 +994,7 @@ bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_in
         if (iterNext == path.end())
             continue;
         TLink* nextL = *iterNext;
-        if (L->CrossingRegionBoundary(TWDATA(L->GetLocalEnd())->tspec))
+        if (L->CrossingRegionBoundary(TWDATA(L->GetLocalEnd())->tspec, nextL))
         {
             L->GetNextRegionTspec(TWDATA(nextL->GetLocalEnd())->tspec);
             // TODO: TDM and WDM  special handling for cross-layer adaptation
@@ -1131,11 +1157,15 @@ TPath* TPath::Clone(bool doExpandRemoteLink)
     for (itL = this->path.begin(); itL != this->path.end(); itL++)
     {
         TLink* L = (*itL)->Clone();
+        L->SetLocalEnd((*itL)->GetLocalEnd());
+        L->SetRemoteEnd((*itL)->GetRemoteEnd());
         if (doExpandRemoteLink && lastLink 
             && L->GetPort()->GetNode() != lastLink->GetPort()->GetNode() 
             && lastLink->GetRemoteLink() && lastLink->GetRemoteLink() != L)
         {
             TLink* rL = ((TLink*)lastLink->GetRemoteLink())->Clone();
+            rL->SetLocalEnd(((TLink*)lastLink->GetRemoteLink())->GetLocalEnd());
+            rL->SetRemoteEnd(((TLink*)lastLink->GetRemoteLink())->GetRemoteEnd());
             lastLink->SetRemoteLink(rL);
             rL->SetRemoteLink(lastLink);
             P->GetPath().push_back(rL);

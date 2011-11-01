@@ -383,6 +383,7 @@ void Action_ComputeKSP::Process()
         ingTSS.GetVlanSet().AddTag(srcVtag);
         egrTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
         egrTSS.GetVlanSet().AddTag(dstVtag);
+        (*itP)->ExpandWithRemoteLinks();
         if (!(*itP)->VerifyTEConstraints(ingTSS, egrTSS))
         {
             TPath* path2erase = *itP;

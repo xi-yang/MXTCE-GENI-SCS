@@ -248,7 +248,7 @@ public:
     void ProceedByUpdatingVtags(ConstraintTagSet &head_vtagset, ConstraintTagSet &next_vtagset, bool do_translation=false);
     void ProceedByUpdatingWaves(ConstraintTagSet &head_waveset, ConstraintTagSet &next_waveset);
     void ProceedByUpdatingTimeslots(ConstraintTagSet &head_timeslotset, ConstraintTagSet &next_timeslotset);
-    bool CrossingRegionBoundary(TSpec& tspec);
+    bool CrossingRegionBoundary(TSpec& tspec, TLink* next_link=NULL);
     bool GetNextRegionTspec(TSpec& tspec);
     // operators
     bool operator==(TLink& aLink) {
