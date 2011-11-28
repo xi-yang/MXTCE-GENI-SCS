@@ -153,7 +153,7 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
         pceDataContent.setTopology(makeTopology(pceDataContent.getReservedConstraint()));
         if (pceDataContent.getOptionalConstraint() != null && optionalConstraint != null) {
             OptionalConstraintValue optValue = new OptionalConstraintValue();
-            optValue.getAny().add(optionalConstraint);
+            optValue.setStringValue(optionalConstraint);
             OptionalConstraintType optType = new OptionalConstraintType();
             optType.setValue(optValue);
             optType.setCategory("api-experiment-stornet");
@@ -199,7 +199,7 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
         pceDataContent.setTopology(makeTopology(pceDataContent.getReservedConstraint()));
         if (pceDataContent.getOptionalConstraint() != null && optionalConstraint != null) {
             OptionalConstraintValue optValue = new OptionalConstraintValue();
-            optValue.getAny().add(optionalConstraint);
+            optValue.setStringValue(optionalConstraint);
             OptionalConstraintType optType = new OptionalConstraintType();
             optType.setValue(optValue);
             optType.setCategory("api-experiment-stornet");
@@ -277,21 +277,8 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
         pathInfo.setPath(pathContent);
         reservedConstraint.setPathInfo(pathInfo);        
         query.setReservedConstraint(reservedConstraint);
-
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setNamespaceAware(true);
-        DocumentBuilder db = null;
-        try {
-            db = dbf.newDocumentBuilder();
-        } catch (ParserConfigurationException e) {
-             e.printStackTrace();
-             System.exit(-1);
-        }
-        Document xmlDoc = db.newDocument();
-        Element xmlElem = xmlDoc.createElementNS("##other", "xml");
-        xmlElem.setTextContent(optionalConstraint);
         OptionalConstraintValue optValue = new OptionalConstraintValue();
-        optValue.getAny().add(xmlElem);
+        optValue.setStringValue(optionalConstraint);
         OptionalConstraintType optType = new OptionalConstraintType();
         optType.setValue(optValue);
         optType.setCategory("api-experiment-stornet");

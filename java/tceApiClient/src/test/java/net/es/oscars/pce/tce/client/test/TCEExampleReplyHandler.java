@@ -27,9 +27,9 @@ public class TCEExampleReplyHandler extends TCECallbackHandler {
         // retrieve optionalConstraint as String
         if (pceDataContent != null && pceDataContent.getOptionalConstraint() != null 
                && !pceDataContent.getOptionalConstraint().isEmpty()
-               && !pceDataContent.getOptionalConstraint().get(0).getValue().getAny().isEmpty()) {
-            Element xmlElem = (Element)pceDataContent.getOptionalConstraint().get(0).getValue().getAny().get(0);
-            String optionalConstraint = xmlElem.getTextContent();
+               && pceDataContent.getOptionalConstraint().get(0).getValue().getStringValue() != null
+               && !pceDataContent.getOptionalConstraint().get(0).getValue().getStringValue().isEmpty()) {
+            String optionalConstraint = pceDataContent.getOptionalConstraint().get(0).getValue().getStringValue();
             System.out.println( "PCEErroptionalConstraint = "+optionalConstraint);
         }
 
