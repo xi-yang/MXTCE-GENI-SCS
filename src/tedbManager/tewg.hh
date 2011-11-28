@@ -249,7 +249,7 @@ public:
     void ProceedByUpdatingWaves(ConstraintTagSet &head_waveset, ConstraintTagSet &next_waveset);
     void ProceedByUpdatingTimeslots(ConstraintTagSet &head_timeslotset, ConstraintTagSet &next_timeslotset);
     bool CrossingRegionBoundary(TSpec& tspec, TLink* next_link=NULL);
-    bool GetNextRegionTspec(TSpec& tspec);
+    bool GetNextRegionTspec(TSpec& tspec, TLink* next_link=NULL);
     // operators
     bool operator==(TLink& aLink) {
         if (this->port == NULL && aLink.port != NULL 
@@ -346,6 +346,7 @@ public:
                 cost += (*itLink)->GetMetric();
             }
         }
+    void ExpandWithRemoteLinks();
     bool VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS);
     void UpdateLayer2Info(u_int32_t srcVtag, u_int32_t dstVtag);
     BandwidthAvailabilityGraph* CreatePathBAG(time_t start, time_t end);

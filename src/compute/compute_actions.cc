@@ -101,7 +101,7 @@ void Action_ProcessRequestTopology::Finish()
 
     if (feasiblePaths && feasiblePaths->size() > 0)
     {
-        TPath* resultPath = feasiblePaths->front()->Clone(true);
+        TPath* resultPath = feasiblePaths->front()->Clone();
         resultPath->LogDump();
         resultPath->SetIndependent(true); 
         ComputeResult::RegulatePathInfo(resultPath);
@@ -111,7 +111,7 @@ void Action_ProcessRequestTopology::Finish()
             result->GetAlterPaths().clear();
             for (int k = 1; k < feasiblePaths->size() && k < userConstraint->getCoschedreq()->getMaxnumofaltpaths(); k++)
             {
-                resultPath = (*feasiblePaths)[k]->Clone(true);
+                resultPath = (*feasiblePaths)[k]->Clone();
                 resultPath->LogDump();
                 resultPath->SetIndependent(true); 
                 ComputeResult::RegulatePathInfo(resultPath);

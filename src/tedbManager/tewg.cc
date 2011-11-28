@@ -445,48 +445,42 @@ bool TLink::CrossingRegionBoundary(TSpec& tspec, TLink* next_link)
     return false;
 }
 
-bool TLink::GetNextRegionTspec(TSpec& tspec)
+bool TLink::GetNextRegionTspec(TSpec& tspec, TLink* next_link)
 {
+    TSpec &tspec_link = TWDATA(this->GetLocalEnd())->tspec;
+
     // Check adaptation defined by IACD(s)
     list<IACD*>::iterator it_iacd;
     for (it_iacd = adjCapDescriptors.begin(); it_iacd != adjCapDescriptors.end(); it_iacd++)
     {
-        //crossing from lower layer to upper layer
-        if ((*it_iacd)->lowerLayerSwitchingType == tspec.SWtype && (*it_iacd)->lowerLayerEncodingType == tspec.ENCtype)
+        // crossing from lower layer to upper layer
+        if ((*it_iacd)->lowerLayerSwitchingType == tspec_link.SWtype && (*it_iacd)->lowerLayerEncodingType == tspec_link.ENCtype)
         {
-            tspec.SWtype = (*it_iacd)->upperLayerSwitchingType;
-            tspec.ENCtype = (*it_iacd)->upperLayerEncodingType;
-            // TODO: Bandwidth adaptation for lower->upper layer
-            switch (tspec.SWtype)
+            bool doAdjust = false;
+            // adjust to tspec that must be compatible to nex_link 
+            if (next_link == NULL)
             {
-            case LINK_IFSWCAP_PSC1:
-            case LINK_IFSWCAP_PSC2:
-            case LINK_IFSWCAP_PSC3:
-            case LINK_IFSWCAP_PSC4:
-            case LINK_IFSWCAP_L2SC:
-                //bandwidth constraint unchanged
-                break;
-            case LINK_IFSWCAP_TDM:
-                // TODO: ... (unchanged for now)
-                break;
-            case LINK_IFSWCAP_LSC:
-                // TODO: ... (unchanged for now)
-                break;
-            case LINK_IFSWCAP_FSC:
-                // TODO: ... (unchanged for now)
-                break;
+                doAdjust = true;
             }
-            return true;
-        }
-        
-        //crossing from upper layer to lower layer
-        if ((*it_iacd)->upperLayerSwitchingType == tspec.SWtype && (*it_iacd)->upperLayerEncodingType == tspec.ENCtype)
-        {
-            tspec.SWtype = (*it_iacd)->lowerLayerSwitchingType;
-            tspec.ENCtype = (*it_iacd)->lowerLayerEncodingType;
-            // TODO: Bandwidth adaptation for upper->lower layer
-            switch (tspec.SWtype)
+            else
+            {        
+                list<ISCD*>::iterator it_iscd;
+                for (it_iscd = next_link->GetSwCapDescriptors().begin(); it_iscd != next_link->GetSwCapDescriptors().end(); it_iscd++)
+                {
+                    if ((*it_iscd)->switchingType == (*it_iacd)->upperLayerSwitchingType && (*it_iscd)->encodingType == (*it_iacd)->upperLayerEncodingType)
+                    {
+                        doAdjust = true;
+                        break;
+                    }
+                }
+            }
+            if (doAdjust)
             {
+                tspec.SWtype = (*it_iacd)->upperLayerSwitchingType;
+                tspec.ENCtype = (*it_iacd)->upperLayerEncodingType;
+                // TODO: Bandwidth adaptation for lower->upper layer
+                switch (tspec.SWtype)
+                {
                 case LINK_IFSWCAP_PSC1:
                 case LINK_IFSWCAP_PSC2:
                 case LINK_IFSWCAP_PSC3:
@@ -503,8 +497,58 @@ bool TLink::GetNextRegionTspec(TSpec& tspec)
                 case LINK_IFSWCAP_FSC:
                     // TODO: ... (unchanged for now)
                     break;
+                }
+                return true;
             }
-            return true;
+        }
+        
+        //crossing from upper layer to lower layer
+        if ((*it_iacd)->upperLayerSwitchingType == tspec_link.SWtype && (*it_iacd)->upperLayerEncodingType == tspec_link.ENCtype)
+        {
+            bool doAdjust = false;
+            // adjust to tspec that must be compatible to nex_link 
+            if (next_link == NULL)
+            {
+                doAdjust = true;
+            }
+            else
+            {        
+                list<ISCD*>::iterator it_iscd;
+                for (it_iscd = next_link->GetSwCapDescriptors().begin(); it_iscd != next_link->GetSwCapDescriptors().end(); it_iscd++)
+                {
+                    if ((*it_iscd)->switchingType == (*it_iacd)->lowerLayerSwitchingType && (*it_iscd)->encodingType == (*it_iacd)->lowerLayerEncodingType)
+                    {
+                        doAdjust = true;
+                        break;
+                    }
+                }
+            }
+            if (doAdjust)
+            {
+                tspec.SWtype = (*it_iacd)->lowerLayerSwitchingType;
+                tspec.ENCtype = (*it_iacd)->lowerLayerEncodingType;
+                // TODO: Bandwidth adaptation for upper->lower layer
+                switch (tspec.SWtype)
+                {
+                    case LINK_IFSWCAP_PSC1:
+                    case LINK_IFSWCAP_PSC2:
+                    case LINK_IFSWCAP_PSC3:
+                    case LINK_IFSWCAP_PSC4:
+                    case LINK_IFSWCAP_L2SC:
+                        //bandwidth constraint unchanged
+                        break;
+                    case LINK_IFSWCAP_TDM:
+                        // TODO: ... (unchanged for now)
+                        break;
+                    case LINK_IFSWCAP_LSC:
+                        // TODO: ... (unchanged for now)
+                        break;
+                    case LINK_IFSWCAP_FSC:
+                        // TODO: ... (unchanged for now)
+                        break;
+                }
+                return true;
+            }
         }
     }
 
@@ -906,6 +950,27 @@ TPath::~TPath()
         delete bag;
 }
 
+void TPath::ExpandWithRemoteLinks()
+{
+    TLink *L, *remoteL;
+    if (path.size() == 0)
+        return;
+    list<TLink*>::iterator iterL = path.begin();
+    while(iterL != path.end())
+    {
+        L = *iterL;
+        list<TLink*>::iterator iterNextL = iterL; 
+        ++iterNextL;
+        remoteL = (TLink*)L->GetRemoteLink();
+        if (iterNextL == path.end())
+            break;
+        if ((*iterNextL) != remoteL && L->GetLocalEnd() != (*iterNextL)->GetLocalEnd())
+        {
+            path.insert(iterNextL, (TLink*)L->GetRemoteLink());
+        }
+        iterL = iterNextL;
+    }
+}
 
 // verify constrains of vlantag, wavelength and cross-layer adaptation (via TSpec) 
 // TODO: support for MLN request types (currently only Ethernet-over-WDM altough other cross-layers are computed but not accounted in results)
@@ -938,7 +1003,8 @@ bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_in
     if (ingTSS.SWtype == LINK_IFSWCAP_L2SC && ingTSS.ENCtype == LINK_IFSWCAP_ENC_ETH)
     {
         head_vtagset = ingTSS.GetTagSet();
-        srcVtag = ingTSS.GetTagSet().LowestTag();
+        if (!head_vtagset.IsEmpty() && !head_vtagset.HasAnyTag())
+            srcVtag = ingTSS.GetTagSet().LowestTag();
     }
     else         
         head_vtagset.Clear();
@@ -996,8 +1062,7 @@ bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_in
         TLink* nextL = *iterNext;
         if (L->CrossingRegionBoundary(TWDATA(L->GetLocalEnd())->tspec, nextL))
         {
-            L->GetNextRegionTspec(TWDATA(nextL->GetLocalEnd())->tspec);
-            // TODO: TDM and WDM  special handling for cross-layer adaptation
+            L->GetNextRegionTspec(TWDATA(nextL->GetLocalEnd())->tspec, nextL);
         }       
         else
         {
@@ -1006,7 +1071,8 @@ bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_in
     }
 
     u_int32_t dstVtag = ANY_TAG;
-    if (egrTSS.SWtype == LINK_IFSWCAP_L2SC && egrTSS.ENCtype == LINK_IFSWCAP_ENC_ETH)
+    if (egrTSS.SWtype == LINK_IFSWCAP_L2SC && egrTSS.ENCtype == LINK_IFSWCAP_ENC_ETH
+        && !egrTSS.GetTagSet().IsEmpty() && !egrTSS.GetTagSet().HasAnyTag())
         dstVtag = egrTSS.GetTagSet().LowestTag();
     // pick src and dst vtags from two sets of head_set and next_set (randomized by default)
     // try using common (continuous) vlan tag if possible, otherwise (no_vtag==true) use translated diff vlan

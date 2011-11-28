@@ -63,47 +63,48 @@ void showUsage()
 
 int runAsDaemon (int nochdir, int noclose)
 {
-  pid_t pid;
+  pid_t pid = 0;
 
-  pid = fork ();
+  if ((pid = fork()) == 0)
+    {
+      pid = setsid();
 
-  if (pid < 0)
+      if (pid < -1)
+        {
+          perror ("setsid");
+          return -1;
+        }
+      
+      if (! nochdir)
+        chdir ("/");
+      
+      if (! noclose)
+        {
+          int fd;
+      
+          fd = open ("/dev/null", O_RDWR, 0);
+          if (fd != -1)
+        {
+          dup2 (fd, STDIN_FILENO);
+          dup2 (fd, STDOUT_FILENO);
+          dup2 (fd, STDERR_FILENO);
+          if (fd > 2)
+            close (fd);
+        }
+        }
+      
+      umask (0027);
+    }
+  else if (pid < 0)
 	{
 	  perror ("fork");
 	  return -1;
 	}
-
-  if (pid != 0)
-	exit (0);
-
-  pid = setsid();
-
-  if (pid < -1)
-	{
-	  perror ("setsid");
-	  return -1;
-	}
-
-  if (! nochdir)
-	chdir ("/");
-
-  if (! noclose)
-	{
-	  int fd;
-
-	  fd = open ("/dev/null", O_RDWR, 0);
-	  if (fd != -1)
-	{
-	  dup2 (fd, STDIN_FILENO);
-	  dup2 (fd, STDOUT_FILENO);
-	  dup2 (fd, STDERR_FILENO);
-	  if (fd > 2)
-		close (fd);
-	}
-	}
-
-  umask (0027);
-
+  else
+    {
+    	exit (0);
+    }
+  
   return 0;
 }
 
@@ -154,7 +155,7 @@ int main( int argc, char* argv[])
 
     // init daemon mode
     if (is_daemon)
-        runAsDaemon(0, 0);
+        runAsDaemon(1, 0);
 
     // $$$$  Start core MxTCE thread
     MxTCE* mxTCECore = new MxTCE(configfile);
