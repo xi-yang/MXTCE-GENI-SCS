@@ -55,6 +55,7 @@ public class WriteResult {
 					if(resultXml==null){
 						throw new OSCARSServiceException("XML string returned is none");
 					}
+					/*old version OptionalConstraintValue
 					DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			        dbf.setNamespaceAware(true);
 			        DocumentBuilder db = null;
@@ -67,8 +68,12 @@ public class WriteResult {
 					Document xmlDoc = db.newDocument();
 			        Element xmlElem = xmlDoc.createElementNS("##other", "xml");
 			        xmlElem.setTextContent(resultXml);
+			        */
 			        OptionalConstraintValue optValue = new OptionalConstraintValue();
+			        /*old version OptionalConstraintValue
 			        optValue.getAny().add(xmlElem);
+			        */
+			        optValue.setStringValue(resultXml);
 			        OptionalConstraintType optType = new OptionalConstraintType();
 			        optType.setValue(optValue);
 			        optType.setCategory("api-experiment-stornet");

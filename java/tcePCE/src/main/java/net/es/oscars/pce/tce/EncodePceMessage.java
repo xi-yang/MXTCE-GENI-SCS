@@ -361,6 +361,12 @@ public class EncodePceMessage {
 		OptionalConstraintValue value = optCons.getValue();
 		String category = optCons.getCategory();
 		
+		String stringValue = value.getStringValue();
+		if(stringValue==null){
+			throw new OSCARSServiceException("String Value in OptionalConstraintValue is null");
+		}
+		
+		/* Old version of OptionalConstraintValue
 		List<Object> any = value.getAny();
 		
 		if(any.size()==0){
@@ -370,13 +376,14 @@ public class EncodePceMessage {
 		if(any.size()>1){
 			throw new OSCARSServiceException("Only support one string in OptionalConstraintValue list now");
 		}
-		
+		*/
 		//String optConsXml = (String)any.get(0);
-		Element optConsXml = (Element)any.get(0);
+		//Element optConsXml = (Element)any.get(0);
 		
 		ParseXml parseXmlTool = new ParseXml();
 		
-		CoScheduleRequestField coScheduleRequest= parseXmlTool.readInput(optConsXml);
+		//CoScheduleRequestField coScheduleRequest= parseXmlTool.readInput(optConsXml);
+		CoScheduleRequestField coScheduleRequest= parseXmlTool.readInput(stringValue);
 		
 		this.encodeCoScheduleRequest(coScheduleRequest);
 		
