@@ -128,30 +128,33 @@ public class BuildXml {
 				switchingCapabilitySpecificInfoNode.appendChild(vlanRangeAvailabilityNode);				
 			}
 			
-			Element bagInfoNode = document.createElement("bagInfo");
-			coSchedulePathNode.appendChild(bagInfoNode);
 			BagInfoField bagInfo = coSchedulePathField.getBagInfoField();
-			List<BagSegmentField> bagSegment = bagInfo.getBagSegment();
-			int bagSize = bagSegment.size();
-			for(int k=0;k<bagSize;k++){
-				BagSegmentField bagSegmentField = bagSegment.get(k);
-				Element bagSegmentNode = document.createElement("bagSegment");
-				bagInfoNode.appendChild(bagSegmentNode);
-				
-				Element segmentBandwidthNode = document.createElement("segmentBandwidth");
-				Text segmentBandwidthValue = document.createTextNode(Integer.toString(bagSegmentField.getSegmentBandwidth()));
-				segmentBandwidthNode.appendChild(segmentBandwidthValue);
-				bagSegmentNode.appendChild(segmentBandwidthNode);
-				
-				Element segmentStartTimeNode = document.createElement("segmentStartTime");
-				Text segmentStartTimeValue = document.createTextNode(Integer.toString(bagSegmentField.getSegmentStartTime()));
-				segmentStartTimeNode.appendChild(segmentStartTimeValue);
-				bagSegmentNode.appendChild(segmentStartTimeNode);
-				
-				Element segmentEndTimeNode = document.createElement("segmentEndTime");
-				Text segmentEndTimeValue = document.createTextNode(Integer.toString(bagSegmentField.getSegmentEndTime()));
-				segmentEndTimeNode.appendChild(segmentEndTimeValue);
-				bagSegmentNode.appendChild(segmentEndTimeNode);
+			if(bagInfo!=null){
+				Element bagInfoNode = document.createElement("bagInfo");
+				coSchedulePathNode.appendChild(bagInfoNode);
+
+				List<BagSegmentField> bagSegment = bagInfo.getBagSegment();
+				int bagSize = bagSegment.size();
+				for(int k=0;k<bagSize;k++){
+					BagSegmentField bagSegmentField = bagSegment.get(k);
+					Element bagSegmentNode = document.createElement("bagSegment");
+					bagInfoNode.appendChild(bagSegmentNode);
+
+					Element segmentBandwidthNode = document.createElement("segmentBandwidth");
+					Text segmentBandwidthValue = document.createTextNode(Integer.toString(bagSegmentField.getSegmentBandwidth()));
+					segmentBandwidthNode.appendChild(segmentBandwidthValue);
+					bagSegmentNode.appendChild(segmentBandwidthNode);
+
+					Element segmentStartTimeNode = document.createElement("segmentStartTime");
+					Text segmentStartTimeValue = document.createTextNode(Integer.toString(bagSegmentField.getSegmentStartTime()));
+					segmentStartTimeNode.appendChild(segmentStartTimeValue);
+					bagSegmentNode.appendChild(segmentStartTimeNode);
+
+					Element segmentEndTimeNode = document.createElement("segmentEndTime");
+					Text segmentEndTimeValue = document.createTextNode(Integer.toString(bagSegmentField.getSegmentEndTime()));
+					segmentEndTimeNode.appendChild(segmentEndTimeValue);
+					bagSegmentNode.appendChild(segmentEndTimeNode);
+				}
 			}
 			
 		}

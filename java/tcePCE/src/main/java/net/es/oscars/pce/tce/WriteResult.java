@@ -50,7 +50,7 @@ public class WriteResult {
 				this.writeTopology(replyMessage, pceData);
 				if(replyMessage.getCoSchedulePath()!=null){
 					this.writeOptiConstraint(replyMessage, coScheduleReply);
-					//new BuildXml().generateXml(coScheduleReply);
+					//new BuildXml().generateXml(coScheduleReply);					
 					String resultXml = new BuildXml().generateXmlString(coScheduleReply);
 					if(resultXml==null){
 						throw new OSCARSServiceException("XML string returned is none");
