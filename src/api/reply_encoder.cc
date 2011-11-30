@@ -349,7 +349,7 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 		remoteLink = (*it)->GetRemoteLink();
 		if(remoteLink != NULL)
 		{
-			remoteLinkName = remoteLink->GetName();
+			remoteLinkName = remoteLink->GetFullUrn();
 			pri_type_encoder_ptr->encodeString(PCE_REMOTE_LINK, remoteLinkName);
 		}
 		//remoteLinkName = ((*it)->GetRemoteLink())->GetName();

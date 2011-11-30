@@ -286,6 +286,15 @@ public:
             return false;
         return (this->name == aLink.name);
     }
+	string GetFullUrn() {
+		char cstr[256];
+		sprintf(cstr, "urn:ogf:network:domain=%s:node=%s:port=%s:link=%s",
+					this->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
+					this->GetPort()->GetNode()->GetName().c_str(),
+					this->GetPort()->GetName().c_str(), 
+					this->GetName().c_str());
+		return cstr;
+	}
 };
 
 
