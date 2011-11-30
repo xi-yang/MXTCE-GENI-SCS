@@ -80,7 +80,7 @@ public class BuildXml {
 		valueNode.appendChild(coScheduleReplyNode);
 		List<CoSchedulePathField> coSchedulePath = coScheduleReply.getCoSchedulePath();
 		int pathSize = coSchedulePath.size();
-		System.out.println("test1");
+		
 		for(int i=0;i<pathSize;i++){
 			CoSchedulePathField coSchedulePathField = coSchedulePath.get(i);
 			Element coSchedulePathNode = document.createElement("coSchedulePath");
@@ -92,7 +92,7 @@ public class BuildXml {
 			Element pathNode = document.createElement("path");
 			pathNode.setAttribute("id", pathInfo.getPathId());
 			pathInfoNode.appendChild(pathNode);
-			System.out.println("test2");			
+						
 			List<HopField> hop = pathInfo.getHop();
 			int hopSize = hop.size();
 			for(int j=0;j<hopSize;j++){
@@ -107,28 +107,33 @@ public class BuildXml {
 				Element SwitchingCapabilityDescriptorsNode = document.createElement("SwitchingCapabilityDescriptors");
 				linkNode.appendChild(SwitchingCapabilityDescriptorsNode);
 				
-				Element switchingcapTypeNode = document.createElement("switchingcapType");
-				Text switchingcapTypeValue = document.createTextNode(link.getSwitchingcapType());
-				switchingcapTypeNode.appendChild(switchingcapTypeValue);
+				if(link.getSwitchingcapType()!=null){
+					Element switchingcapTypeNode = document.createElement("switchingcapType");
+					Text switchingcapTypeValue = document.createTextNode(link.getSwitchingcapType());
+					switchingcapTypeNode.appendChild(switchingcapTypeValue);
+					
+					SwitchingCapabilityDescriptorsNode.appendChild(switchingcapTypeNode);
+				}
 				
-				SwitchingCapabilityDescriptorsNode.appendChild(switchingcapTypeNode);
+				if(link.getEncodingType()!=null){
+					Element encodingTypeNode = document.createElement("encodingType");
+					Text encodingTypeValue = document.createTextNode(link.getEncodingType());
+					encodingTypeNode.appendChild(encodingTypeValue);
+					
+					SwitchingCapabilityDescriptorsNode.appendChild(encodingTypeNode);
+				}
 				
-				Element encodingTypeNode = document.createElement("encodingType");
-				Text encodingTypeValue = document.createTextNode(link.getEncodingType());
-				encodingTypeNode.appendChild(encodingTypeValue);
-				
-				SwitchingCapabilityDescriptorsNode.appendChild(encodingTypeNode);
-				
-				Element switchingCapabilitySpecificInfoNode = document.createElement("switchingCapabilitySpecificInfo");
-				SwitchingCapabilityDescriptorsNode.appendChild(switchingCapabilitySpecificInfoNode);
-				
-				Element vlanRangeAvailabilityNode = document.createElement("vlanRangeAvailability");
-				Text vlanRangeAvailabilityValue = document.createTextNode(link.getVlanRangeAvailability());
-				vlanRangeAvailabilityNode.appendChild(vlanRangeAvailabilityValue);
-				
-				switchingCapabilitySpecificInfoNode.appendChild(vlanRangeAvailabilityNode);				
+				if(link.getVlanRangeAvailability()!=null){
+					Element switchingCapabilitySpecificInfoNode = document.createElement("switchingCapabilitySpecificInfo");
+					SwitchingCapabilityDescriptorsNode.appendChild(switchingCapabilitySpecificInfoNode);
+					Element vlanRangeAvailabilityNode = document.createElement("vlanRangeAvailability");
+					Text vlanRangeAvailabilityValue = document.createTextNode(link.getVlanRangeAvailability());
+					vlanRangeAvailabilityNode.appendChild(vlanRangeAvailabilityValue);
+					
+					switchingCapabilitySpecificInfoNode.appendChild(vlanRangeAvailabilityNode);
+				}
 			}
-			System.out.println("test3");
+			
 			BagInfoField bagInfo = coSchedulePathField.getBagInfoField();
 			if(bagInfo!=null){
 				Element bagInfoNode = document.createElement("bagInfo");
