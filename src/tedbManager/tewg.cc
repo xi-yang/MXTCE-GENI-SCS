@@ -1162,7 +1162,7 @@ void TPath::UpdateLayerSpecInfo(u_int32_t srcVtag, u_int32_t dstVtag)
                 break;
             }
         }
-        assert (iscdL == NULL);
+        assert (iscdL != NULL);
         L->GetSwCapDescriptors().clear(); // mem leak
         L->GetAdjCapDescriptors().clear(); // mem leak
         // no adjust or implicit adjust case
