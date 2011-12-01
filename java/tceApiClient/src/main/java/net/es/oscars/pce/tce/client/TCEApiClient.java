@@ -16,11 +16,7 @@ import org.apache.log4j.Logger;
 import java.net.URL;
 import java.net.MalformedURLException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import org.apache.cxf.jaxws.EndpointImpl;
 
 import net.es.oscars.utils.config.ConfigDefaults;
 import net.es.oscars.utils.config.ConfigException;
@@ -81,14 +77,14 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
         return client;
     }
 
-    public void initClient(TCECallbackHandler replyHandler) throws OSCARSServiceException {
+    public EndpointImpl initClient(TCECallbackHandler replyHandler) throws OSCARSServiceException {
         runtimeServer = TCERuntimeSoapServer.getInstance();
         runtimeServer.setCallbackHandler(replyHandler);
-        runtimeServer.startServer(false);
+        EndpointImpl epImpl = (EndpointImpl)runtimeServer.startServer(false);
         Map soap = (Map)runtimeServer.getConfig().get("soap");
         if (soap != null && soap.get("publishTo") != null)
             CallBackEndpoint = (String)soap.get("publishTo");
-        
+        return epImpl;
     }
 
     private String getAutoGRI() {
