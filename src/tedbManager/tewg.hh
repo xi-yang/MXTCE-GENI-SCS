@@ -348,7 +348,7 @@ public:
         }
     void ExpandWithRemoteLinks();
     bool VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS);
-    void UpdateLayer2Info(u_int32_t srcVtag, u_int32_t dstVtag);
+    void UpdateLayerSpecInfo(u_int32_t srcVtag, u_int32_t dstVtag);
     BandwidthAvailabilityGraph* CreatePathBAG(time_t start, time_t end);
     void Cleanup() {
         path.clear();

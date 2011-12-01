@@ -376,8 +376,8 @@ void Action_ComputeKSP::Process()
             (*itP)->GetPath().push_back(egressLink);
         }
 
-        // TODO: special handling for OSCARS L2SC --> PSC edge adaptation: add artificial IACD for  (ingress <-> 1st-hop and egress <-> last-hop)
-        // TODO: long-term solution --> regulate OSCARS topology description for cross-layer adaptation
+        // TODO: need special handling for old OSCARS L2SC --> PSC edge adaptation: add artificial IACD for  (ingress <-> 1st-hop and egress <-> last-hop)
+
         TServiceSpec ingTSS, egrTSS;
         ingTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
         ingTSS.GetVlanSet().AddTag(srcVtag);
@@ -414,8 +414,7 @@ void Action_ComputeKSP::Process()
                 }
             }
             feasiblePaths->push_back(feasiblePath);
-            feasiblePath->UpdateLayer2Info(ingTSS.GetVlanSet().LowestTag(), egrTSS.GetVlanSet().LowestTag());
-			// TODO: feasiblePath->UpdateMLNInfo()
+            feasiblePath->UpdateLayerSpecInfo(ingTSS.GetVlanSet().LowestTag(), egrTSS.GetVlanSet().LowestTag());
             itP++;
         }
     }

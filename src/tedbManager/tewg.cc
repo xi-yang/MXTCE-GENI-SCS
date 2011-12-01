@@ -1123,11 +1123,63 @@ bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_in
     return true;
 }
 
-// TODO: vlanRange instead of single tags ?  -- (treat  availableVtagRange different ?)
-void TPath::UpdateLayer2Info(u_int32_t srcVtag, u_int32_t dstVtag)
+void TPath::UpdateLayerSpecInfo(u_int32_t srcVtag, u_int32_t dstVtag)
 {
     TLink* L;
     list<TLink*>::iterator iterL;
+
+    //// update cross-layer info -- strip unused ISCD(s) and IACD(s) from final path hops
+    for (iterL = path.begin(); iterL != path.end(); iterL++)
+    {
+        L = *iterL;
+        list<TLink*>::iterator iterN = iterL; ++iterN;
+        if (iterN == path.end())
+            break;
+        TLink* nextL = *iterN;
+        TSpec& tspecL = TWDATA(L->GetRemoteEnd())->tspec;
+        TSpec& tspecN = TWDATA(nextL->GetRemoteEnd())->tspec;
+        if (tspecL.SWtype == tspecN.SWtype && tspecL.ENCtype == tspecN.ENCtype)
+            continue;
+        list<ISCD*>::iterator it;
+        ISCD* iscdL = NULL; ISCD* iscdN = NULL;
+        for (it = L->GetSwCapDescriptors().begin(); it !=  L->GetSwCapDescriptors().end(); it++)
+        {
+            if ((*it)->switchingType == tspecL.SWtype && (*it)->encodingType == tspecL.ENCtype)
+                iscdL = *it;
+            if ((*it)->switchingType == tspecN.SWtype && (*it)->encodingType == tspecN.ENCtype)
+                iscdN = *it;
+        }
+        list<IACD*>::iterator ita;
+        IACD* iacd = NULL;
+        for (ita = L->GetAdjCapDescriptors().begin(); ita !=  L->GetAdjCapDescriptors().end(); ita++)
+        {
+            if (((*ita)->lowerLayerSwitchingType == tspecL.SWtype && (*ita)->lowerLayerEncodingType == tspecL.ENCtype
+                && (*ita)->upperLayerSwitchingType == tspecN.SWtype && (*ita)->upperLayerEncodingType == tspecN.ENCtype)
+                ||((*ita)->lowerLayerSwitchingType == tspecN.SWtype && (*ita)->lowerLayerEncodingType == tspecN.ENCtype
+                && (*ita)->upperLayerSwitchingType == tspecL.SWtype && (*ita)->upperLayerEncodingType == tspecL.ENCtype)) 
+            {
+                iacd = *ita;
+                break;
+            }
+        }
+        assert (iscdL == NULL);
+        L->GetSwCapDescriptors().clear(); // mem leak
+        L->GetAdjCapDescriptors().clear(); // mem leak
+        // no adjust or implicit adjust case
+        if (iscdN == NULL || iacd == NULL)
+        {
+            L->GetSwCapDescriptors().push_back(iscdL);
+        }
+        else // explicit adjust case
+        {
+            L->GetSwCapDescriptors().push_back(iscdL);
+            L->GetSwCapDescriptors().push_back(iscdN);
+            L->GetAdjCapDescriptors().push_back(iacd);
+        }
+    }    
+
+    //// update Layer2 VLANs    
+    // TODO: vlanRange instead of single tags ?  -- (treat  availableVtagRange different ?)
     bool forwardContinued = true;
     // assign srcVtag to suggestedVlanTags along the path in foward direction
     for (iterL = path.begin(); iterL != path.end(); iterL++)
