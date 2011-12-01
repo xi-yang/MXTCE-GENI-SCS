@@ -141,7 +141,7 @@ public class PrimitiveEncoder {
 		byte priType = INTEGER_NUM;
 
 
-		mask = ((long)0x1FF) << ((8 * 7) - 1);
+		mask = ((long)0x1FFL) << ((8 * 7) - 1);
 		
 		
 		while((((longInt & mask) == 0) || ((longInt & mask) == mask))

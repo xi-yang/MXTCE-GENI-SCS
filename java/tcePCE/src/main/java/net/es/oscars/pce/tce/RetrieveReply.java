@@ -80,7 +80,7 @@ public class RetrieveReply {
 		
 		
 		sum = fieldOne + fieldTwo + fieldThree;
-		sum = sum & ((long) 0xFFFFFFFF);
+		sum = sum & ((long) 0xFFFFFFFFL);
 		
 		
 		
