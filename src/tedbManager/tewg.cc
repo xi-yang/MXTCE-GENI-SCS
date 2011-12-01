@@ -1146,6 +1146,7 @@ void TPath::UpdateLayerSpecInfo(u_int32_t srcVtag, u_int32_t dstVtag)
                 if ((*it)->switchingType != tspecL.SWtype || (*it)->encodingType != tspecL.ENCtype)
                     it = L->GetSwCapDescriptors().erase(it);
             }
+            break;
         }
         TLink* nextL = *iterN;
         TSpec& tspecN = TWDATA(nextL->GetLocalEnd())->tspec;
