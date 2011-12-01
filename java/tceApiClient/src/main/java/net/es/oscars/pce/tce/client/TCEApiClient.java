@@ -58,6 +58,7 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
     private static int griAutoNum = 1;
 
     private static TCERuntimeSoapServer runtimeServer = null;
+    private static EndpointImpl runtimeEndpoint = null;
 
     private String clientName = "TestTCEClient";
     
@@ -77,14 +78,18 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
         return client;
     }
 
-    public EndpointImpl initClient(TCECallbackHandler replyHandler) throws OSCARSServiceException {
+    public void initClient(TCECallbackHandler replyHandler) throws OSCARSServiceException {
         runtimeServer = TCERuntimeSoapServer.getInstance();
         runtimeServer.setCallbackHandler(replyHandler);
-        EndpointImpl epImpl = (EndpointImpl)runtimeServer.startServer(false);
+        runtimeEndpoint = (EndpointImpl)runtimeServer.startServer(false);
         Map soap = (Map)runtimeServer.getConfig().get("soap");
         if (soap != null && soap.get("publishTo") != null)
             CallBackEndpoint = (String)soap.get("publishTo");
-        return epImpl;
+    }
+
+    public void stopClient() {
+        if (runtimeEndpoint != null)
+            runtimeEndpoint.stop();
     }
 
     private String getAutoGRI() {
