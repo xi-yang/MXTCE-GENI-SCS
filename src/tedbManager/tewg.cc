@@ -1133,15 +1133,32 @@ void TPath::UpdateLayerSpecInfo(u_int32_t srcVtag, u_int32_t dstVtag)
     {
         L = *iterL;
         list<TLink*>::iterator iterN = iterL; ++iterN;
-        if (iterN == path.end())
-            break;
+        if(iterN == path.end())
+            throw TCEException((char*)"TPath::UpdateLayerSpecInfo(): Path hops not paired up");
         TLink* nextL = *iterN;
-        TSpec& tspecL = TWDATA(L->GetRemoteEnd())->tspec;
-        TSpec& tspecN = TWDATA(nextL->GetRemoteEnd())->tspec;
-        if (tspecL.SWtype == tspecN.SWtype && tspecL.ENCtype == tspecN.ENCtype)
-            continue;
+        TSpec& tspecL = TWDATA(L->GetLocalEnd())->tspec;
+        TSpec& tspecN = TWDATA(nextL->GetLocalEnd())->tspec;
         list<ISCD*>::iterator it;
         ISCD* iscdL = NULL; ISCD* iscdN = NULL;
+        list<IACD*>::iterator ita;
+        IACD* iacd = NULL;
+        // same layer/region handling: only one ISCD is left
+        if (tspecL.SWtype == tspecN.SWtype && tspecL.ENCtype == tspecN.ENCtype) 
+        {
+            for (it = L->GetSwCapDescriptors().begin(); it !=  L->GetSwCapDescriptors().end(); it++)
+            {
+                if ((*it)->switchingType != tspecL.SWtype || (*it)->encodingType != tspecL.ENCtype)
+                    it = L->GetSwCapDescriptors().erase(it);
+            }
+            for (it = nextL->GetSwCapDescriptors().begin(); it != nextL->GetSwCapDescriptors().end(); it++)
+            {
+                if ((*it)->switchingType != tspecN.SWtype || (*it)->encodingType != tspecN.ENCtype)
+                    it = L->GetSwCapDescriptors().erase(it);
+            }            
+            ++iterL;
+            continue;
+        }
+        // example current link in a cross-layer case
         for (it = L->GetSwCapDescriptors().begin(); it !=  L->GetSwCapDescriptors().end(); it++)
         {
             if ((*it)->switchingType == tspecL.SWtype && (*it)->encodingType == tspecL.ENCtype)
@@ -1149,8 +1166,6 @@ void TPath::UpdateLayerSpecInfo(u_int32_t srcVtag, u_int32_t dstVtag)
             if ((*it)->switchingType == tspecN.SWtype && (*it)->encodingType == tspecN.ENCtype)
                 iscdN = *it;
         }
-        list<IACD*>::iterator ita;
-        IACD* iacd = NULL;
         for (ita = L->GetAdjCapDescriptors().begin(); ita !=  L->GetAdjCapDescriptors().end(); ita++)
         {
             if (((*ita)->lowerLayerSwitchingType == tspecL.SWtype && (*ita)->lowerLayerEncodingType == tspecL.ENCtype
@@ -1162,7 +1177,8 @@ void TPath::UpdateLayerSpecInfo(u_int32_t srcVtag, u_int32_t dstVtag)
                 break;
             }
         }
-        assert (iscdL != NULL);
+        if (iscdL == NULL)
+            throw TCEException((char*)"TPath::UpdateLayerSpecInfo(): Hop missing valid ISCD");
         L->GetSwCapDescriptors().clear(); // mem leak
         L->GetAdjCapDescriptors().clear(); // mem leak
         // no adjust or implicit adjust case
@@ -1176,6 +1192,43 @@ void TPath::UpdateLayerSpecInfo(u_int32_t srcVtag, u_int32_t dstVtag)
             L->GetSwCapDescriptors().push_back(iscdN);
             L->GetAdjCapDescriptors().push_back(iacd);
         }
+
+        //  example next link in a cross-layer case
+        iscdL = NULL; iscdN = NULL; iacd = NULL;
+        for (it = nextL->GetSwCapDescriptors().begin(); it != nextL->GetSwCapDescriptors().end(); it++)
+        {
+            if ((*it)->switchingType == tspecL.SWtype && (*it)->encodingType == tspecL.ENCtype)
+                iscdL = *it;
+            if ((*it)->switchingType == tspecN.SWtype && (*it)->encodingType == tspecN.ENCtype)
+                iscdN = *it;
+        }
+        for (ita = nextL->GetAdjCapDescriptors().begin(); ita != nextL->GetAdjCapDescriptors().end(); ita++)
+        {
+            if (((*ita)->lowerLayerSwitchingType == tspecL.SWtype && (*ita)->lowerLayerEncodingType == tspecL.ENCtype
+                && (*ita)->upperLayerSwitchingType == tspecN.SWtype && (*ita)->upperLayerEncodingType == tspecN.ENCtype)
+                ||((*ita)->lowerLayerSwitchingType == tspecN.SWtype && (*ita)->lowerLayerEncodingType == tspecN.ENCtype
+                && (*ita)->upperLayerSwitchingType == tspecL.SWtype && (*ita)->upperLayerEncodingType == tspecL.ENCtype)) 
+            {
+                iacd = *ita;
+                break;
+            }
+        }
+        if (iscdL == NULL)
+            throw TCEException((char*)"TPath::UpdateLayerSpecInfo(): Hop missing valid ISCD");
+        nextL->GetSwCapDescriptors().clear(); // mem leak
+        nextL->GetAdjCapDescriptors().clear(); // mem leak
+        // no adjust or implicit adjust case
+        if (iscdN == NULL || iacd == NULL)
+        {
+            nextL->GetSwCapDescriptors().push_back(iscdL);
+        }
+        else // explicit adjust case
+        {
+            nextL->GetSwCapDescriptors().push_back(iscdL);
+            nextL->GetSwCapDescriptors().push_back(iscdN);
+            nextL->GetAdjCapDescriptors().push_back(iacd);
+        }
+        ++iterL;
     }    
 
     //// update Layer2 VLANs    
