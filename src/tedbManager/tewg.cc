@@ -1133,15 +1133,22 @@ void TPath::UpdateLayerSpecInfo(u_int32_t srcVtag, u_int32_t dstVtag)
     {
         L = *iterL;
         list<TLink*>::iterator iterN = iterL; ++iterN;
-        if(iterN == path.end())
-            throw TCEException((char*)"TPath::UpdateLayerSpecInfo(): Path hops not paired up");
-        TLink* nextL = *iterN;
-        TSpec& tspecL = TWDATA(L->GetLocalEnd())->tspec;
-        TSpec& tspecN = TWDATA(nextL->GetLocalEnd())->tspec;
         list<ISCD*>::iterator it;
         ISCD* iscdL = NULL; ISCD* iscdN = NULL;
         list<IACD*>::iterator ita;
         IACD* iacd = NULL;
+        TSpec& tspecL = TWDATA(L->GetLocalEnd())->tspec;
+        // last hop
+        if(iterN == path.end())
+        {
+            for (it = L->GetSwCapDescriptors().begin(); it !=  L->GetSwCapDescriptors().end(); it++)
+            {
+                if ((*it)->switchingType != tspecL.SWtype || (*it)->encodingType != tspecL.ENCtype)
+                    it = L->GetSwCapDescriptors().erase(it);
+            }
+        }
+        TLink* nextL = *iterN;
+        TSpec& tspecN = TWDATA(nextL->GetLocalEnd())->tspec;
         // same layer/region handling: only one ISCD is left
         if (tspecL.SWtype == tspecN.SWtype && tspecL.ENCtype == tspecN.ENCtype) 
         {
