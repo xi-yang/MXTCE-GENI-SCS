@@ -1150,12 +1150,6 @@ void TPath::UpdateLayerSpecInfo(u_int32_t srcVtag, u_int32_t dstVtag)
                 if ((*it)->switchingType != tspecL.SWtype || (*it)->encodingType != tspecL.ENCtype)
                     it = L->GetSwCapDescriptors().erase(it);
             }
-            for (it = nextL->GetSwCapDescriptors().begin(); it != nextL->GetSwCapDescriptors().end(); it++)
-            {
-                if ((*it)->switchingType != tspecN.SWtype || (*it)->encodingType != tspecN.ENCtype)
-                    it = L->GetSwCapDescriptors().erase(it);
-            }            
-            ++iterL;
             continue;
         }
         // example current link in a cross-layer case
@@ -1213,14 +1207,14 @@ void TPath::UpdateLayerSpecInfo(u_int32_t srcVtag, u_int32_t dstVtag)
                 break;
             }
         }
-        if (iscdL == NULL)
+        if (iscdN == NULL)
             throw TCEException((char*)"TPath::UpdateLayerSpecInfo(): Hop missing valid ISCD");
         nextL->GetSwCapDescriptors().clear(); // mem leak
         nextL->GetAdjCapDescriptors().clear(); // mem leak
         // no adjust or implicit adjust case
-        if (iscdN == NULL || iacd == NULL)
+        if (iscdL == NULL || iacd == NULL)
         {
-            nextL->GetSwCapDescriptors().push_back(iscdL);
+            nextL->GetSwCapDescriptors().push_back(iscdN);
         }
         else // explicit adjust case
         {
