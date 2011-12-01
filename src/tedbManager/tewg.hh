@@ -50,7 +50,7 @@ public:
     long Bandwidth;    
     TSpec ():SWtype(0), ENCtype(0), Bandwidth(0) {}    
     TSpec (u_int8_t sw, u_int8_t enc, long bw):SWtype(sw), ENCtype(enc), Bandwidth(bw) {}    
-    void Update(u_int8_t sw_type, u_int8_t encoding, float bw) {            
+    void Update(u_int8_t sw_type, u_int8_t encoding, long bw) {            
         SWtype = sw_type;            
         ENCtype = encoding;            
         Bandwidth = bw;        

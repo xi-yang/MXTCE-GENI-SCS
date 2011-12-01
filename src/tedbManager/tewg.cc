@@ -1266,17 +1266,6 @@ void TPath::LogDump()
                 L->GetPort()->GetName().c_str(), 
                 L->GetName().c_str());
             strcat(buf, str);
-            /*
-            if (L->GetRemoteLink() && !(*L == *((TLink*)L->GetRemoteLink())))
-            {
-                snprintf(str, 256, " ->%s:%s:%s:%s",
-                    L->GetRemoteLink()->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
-                    L->GetRemoteLink()->GetPort()->GetNode()->GetName().c_str(),
-                    L->GetRemoteLink()->GetPort()->GetName().c_str(), 
-                    L->GetRemoteLink()->GetName().c_str());
-                strcat(buf, str);
-            }
-            */
             list<ISCD*>::iterator it;
             ISCD_L2SC* iscd = NULL;
             for (it = L->GetSwCapDescriptors().begin(); it !=  L->GetSwCapDescriptors().end(); it++)

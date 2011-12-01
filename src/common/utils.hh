@@ -143,8 +143,8 @@ public:
         }
     void LoadRangeString(string rangeStr)
         {
-            char buf[128];
-            strncpy(buf, rangeStr.c_str(), 128);
+            char buf[256];
+            strncpy(buf, rangeStr.c_str(), 256);
             for (char* ptr = strtok(buf, ", \t\n"); ptr; ptr = strtok(NULL,  ", \t\n"))
             {
                 int low, high;

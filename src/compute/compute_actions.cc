@@ -399,6 +399,8 @@ void Action_ComputeKSP::Process()
                 feasiblePaths = new vector<TPath*>;
                 this->GetComputeWorker()->SetParameter(paramName, feasiblePaths);
             }
+			// make a copy of TPath from work set. Then do twists on the copy to satisfy reply format.
+			// Caution: Clone() will inherit the orignal localEnd and remoteEnd nodes from work set.
             TPath* feasiblePath = (*itP)->Clone();
             // check whether BAG is requested
             if (userConstraint->getCoschedreq() && userConstraint->getCoschedreq()->getBandwidthavaigraph()) 
@@ -413,6 +415,7 @@ void Action_ComputeKSP::Process()
             }
             feasiblePaths->push_back(feasiblePath);
             feasiblePath->UpdateLayer2Info(ingTSS.GetVlanSet().LowestTag(), egrTSS.GetVlanSet().LowestTag());
+			// TODO: feasiblePath->UpdateMLNInfo()
             itP++;
         }
     }
