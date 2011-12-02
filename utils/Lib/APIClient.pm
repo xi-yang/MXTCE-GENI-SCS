@@ -79,6 +79,23 @@ sub disconnect_server() {
 	}
 }
 
+sub check_socket(;$) {
+        my $self = shift;
+        my $num_tries = shift;
+        $num_tries = 1 unless (!defined($num_tries) || $num_tries < 1);
+        my $sock = $$self{bin_queue}{fh};
+        while ($num_tries > 0 && !$sock->connected()) {
+            $sock = connect_server();
+            if ($sock->connected()) {
+                $$self{bin_queue}{fh} = $sock;
+                return 1;
+            }
+            $num_tries--;
+            sleep(1) if ($num_tries > 0);
+        }
+        return 0;
+}
+
 sub queue_bin_msg($$;$@) {
         my ($self, $type, $tag1, @data) = @_;
         my ($len, $ucid, $sn);

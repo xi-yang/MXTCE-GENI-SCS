@@ -64,6 +64,10 @@ sub parse_resvs($)
 }
 
 while(1) {
+    unless ($api_conn->check_socket(3)) {
+        print "\n\tMxTCE API servier is not ready!\n";
+        continue;
+    }
     my $sth = $dbh->prepare($sql);
     $sth->execute or die "SQL Error: $DBI::errstr\n";
     my @resvs = parse_resvs($sth);
