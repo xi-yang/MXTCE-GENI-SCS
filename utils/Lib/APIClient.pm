@@ -82,11 +82,15 @@ sub disconnect_server() {
 sub check_socket(;$) {
         my $self = shift;
         my $num_tries = shift;
-        $num_tries = 1 unless (!defined($num_tries) || $num_tries < 1);
+        $num_tries = 1 unless defined($num_tries);
         my $sock = $$self{bin_queue}{fh};
-        while ($num_tries > 0 && !$sock->connected()) {
-            $sock = connect_server();
-            if ($sock->connected()) {
+        return 1 if ($sock->connected());
+        while ($num_tries > 0) {
+            $sock = IO::Socket::INET->new(
+                PeerAddr => $self->{server_host},
+                PeerPort => $self->{server_port},
+                Proto     => 'tcp');
+            if ($sock && $sock->connected()) {
                 $$self{bin_queue}{fh} = $sock;
                 return 1;
             }

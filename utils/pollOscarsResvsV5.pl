@@ -64,9 +64,10 @@ sub parse_resvs($)
 }
 
 while(1) {
-    unless ($api_conn->check_socket(3)) {
-        print "\n\tMxTCE API servier is not ready!\n";
-        continue;
+    unless ($api_conn->check_socket()) {
+        sleep(30);
+        print "\n\tAPI socket broken...retry in 30 seconds\n";
+        next;
     }
     my $sth = $dbh->prepare($sql);
     $sth->execute or die "SQL Error: $DBI::errstr\n";
