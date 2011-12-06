@@ -23,7 +23,7 @@ my $dbh = DBI->connect('dbi:mysql:bss','oscars','oscars') or die "Connection Err
 
 my $sql = "select R.globalReservationId,R.status,R.startTime,R.endTime,R.bandwidth,E.urn,V.swcap,V.value from reservations as R,paths as P,pathElems as E,pathElemParams as V where (R.status='ACTIVE' or R.status='PENDING' or R.status='INSETUP') and P.pathType='local' and V.type='suggestedVlan' and P.reservationId=R.id and E.pathId=P.id and V.pathElemId=E.id order by R.id, E.id";
 
-my $api_conn = new APIClient($host, '2091', 10101);
+my $api_conn = new APIClient($host, '2091', 10105);
 $api_conn->connect_server();
 
 sub parse_resvs($)
