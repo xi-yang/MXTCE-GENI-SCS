@@ -79,7 +79,7 @@ int main( int argc, char* argv[])
 	string gri="";
 	u_int32_t start_time=0;
 	u_int32_t end_time=0;
-	u_int32_t bandwidth=0;
+	u_int64_t bandwidth=0;
 	string layer="2";
 	string path_setup_model="";
 	string path_type="";
@@ -119,7 +119,7 @@ int main( int argc, char* argv[])
         case 'B':
             {
             string bw_str = optarg;
-            bandwidth = (u_int32_t)StringToBandwidth(bw_str);
+            bandwidth = (u_int64_t)StringToBandwidth(bw_str);
             }
             break;
         case 'S':

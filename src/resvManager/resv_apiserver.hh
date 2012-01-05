@@ -73,7 +73,7 @@ typedef struct {
     char domain[32]; //c_str
     u_int32_t start_time;
     u_int32_t end_time;
-    u_int32_t bandwidth;
+    u_int64_t bandwidth;
     char status[16]; //c_str
 } TLV_ResvInfo;
 
