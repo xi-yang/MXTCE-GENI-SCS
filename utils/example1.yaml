@@ -9,8 +9,9 @@ create:
 # source and destination are urn-style or dns-style friendly names.
 # Note ':' characters are significant in YAML,
 # so remember to enclose URNs in single quotes
-        src:            'urn:ogf:network:domain=ion.internet2.edu:node=rtr.hous:port=xe-0/3/0:link=*'
-        dst:            'urn:ogf:network:domain=ion.internet2.edu:node=rtr.wash:port=xe-0/3/0:link=*'
+        src:            'urn:ogf:network:domain=ion.internet2.edu:node=rtr.chic:port=xe-2/1/0:link=*'
+#        dst:            'urn:ogf:network:domain=ion.internet2.edu:node=rtr.newy:port=xe-1/0/1:link=*'
+        dst:            'urn:ogf:network:domain=es.net:node=bnl-mr3:port=xe-1/2/0:link=*'
 
 # bandwidth, in Mbps, integer
         bandwidth:      500
@@ -22,8 +23,8 @@ create:
 # end time may be a date expression, or can start with a '+' sign
 # to specify a duration, the format is : '+DD:HH:mm'
 # Remember to enclose date expressions in single quotes
-        start-time:     '2011-06-14 18:00'
-        end-time:       '+00:00:04'
+        start-time:     '2012-01-21 18:00'
+        end-time:       '+01:00:00'
 
 # this may be timer-automatic or signal-xml . generally leave at timer-automatic
         path-setup-mode:        'timer-automatic'

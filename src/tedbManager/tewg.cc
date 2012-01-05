@@ -780,6 +780,7 @@ TLink* TGraph::LookupLinkByURN(string& urn)
 void TGraph::LoadPath(list<TLink*> path)
 {
     string domainName, nodeName, portName, linkName;
+    char buf[256];
     list<TLink*>::iterator itL;
     TLink* lastLink = NULL;
     for (itL = path.begin(); itL != path.end(); itL++)
@@ -787,8 +788,16 @@ void TGraph::LoadPath(list<TLink*> path)
         TLink* link = *itL;
         string urn = link->GetName();
         ParseFQUrn(urn, domainName, nodeName, portName, linkName);
-        assert(domainName.length() > 0 && nodeName.length() > 0 && portName.length() > 0 && linkName.length() > 0);
-        assert(LookupLinkByURN(urn) == NULL && LookupPortByURN(urn) == NULL);
+        if (domainName.length() == 0 || nodeName.length() == 0 || portName.length() == 0 || linkName.length() == 0)
+        {
+            snprintf(buf, 256, "TGraph::LoadPath raises Excaption: invalid link urn '%s'", urn.c_str());
+            throw TEDBException(buf);
+        }
+        if (LookupLinkByURN(urn) != NULL || LookupPortByURN(urn) != NULL)
+        {
+            snprintf(buf, 256, "TGraph::LoadPath raises Excaption: duplicate link '%s' in path", urn.c_str());
+            throw TEDBException(buf);
+        }
         link->SetName(linkName);
         TDomain* domain = LookupDomainByName(domainName);
         if (domain == NULL)

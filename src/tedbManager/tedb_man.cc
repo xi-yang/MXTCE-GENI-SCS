@@ -78,12 +78,15 @@ void TEDBManThread::hookHandleMessage()
         }
         else if (msg->GetTopic() == "TEDB_ADD_RESV") 
         {
+            string domain;
             string gri;
             string status;
             long bw = 0;
             int mtu = 9000;
             time_t start, end;
             list<TLink*> path;
+
+            char buf[256];
 
             //$$ get reservation info
             list<TLV*>& tlvList = msg->GetTLVList();
@@ -94,11 +97,14 @@ void TEDBManThread::hookHandleMessage()
                 if ((*itlv)->type == MSG_TLV_RESV_INFO)
                 {
                     TLV_ResvInfo* tlv = (TLV_ResvInfo*)(*itlv);
+                    domain = (const char*)tlv->domain;
                     gri = (const char*)tlv->gri;
                     start = tlv->start_time;
                     end = tlv->end_time;
-                    bw = (long)tlv->bandwidth;
+                    bw = tlv->bandwidth;
                     status = (const char*)tlv->status;
+                    snprintf(buf, 256, "RESV domain=%s, gri=%s, bw=%ld\n", domain.c_str(), gri.c_str(), bw); 
+                    LOG_DEBUG(buf);
                 }
                 else if ((*itlv)->type == MSG_TLV_PATH_ELEM)
                 {
@@ -115,7 +121,13 @@ void TEDBManThread::hookHandleMessage()
                     else if (tlv->switching_type <= LINK_IFSWCAP_PSC4)
                         iscd = new ISCD_PSC((int)tlv->switching_type, bw, mtu);
                     // TODO:  support for TMD and LSC
-                    assert(bw > 0 && iscd != NULL);
+                    // assert(bw > 0 && iscd != NULL);
+                    if (bw <= 0 || iscd == NULL)
+                    {
+                        snprintf(buf, 256, "Invalid RESV data from domain=%s, gri=%s, bw=%ld\n", domain.c_str(), gri.c_str(), bw); 
+                        LOG_DEBUG(buf);
+                        continue;
+                    }
                     link->GetSwCapDescriptors().push_back(iscd);
                     link->SetMaxBandwidth(bw);
                     link->SetMaxReservableBandwidth(bw);
@@ -123,12 +135,22 @@ void TEDBManThread::hookHandleMessage()
                 }                    
             }
 
+            if (gri.length() == 0 || path.size() == 0)
+            {
+                snprintf(buf, 256, "Invalid RESV data from domain=%s, gri=%s, path.size=%d\n", domain.c_str(), gri.c_str(), path.size()); 
+                LOG_DEBUG(buf);
+                continue;
+            }
             //$$ create TReservation
-            assert(gri.length() > 0 && path.size() > 0);
             TReservation* resv = new TReservation(gri);
             resv->GetSchedules().push_back(new TSchedule(start, end));
             TGraph* serviceTopo = new TGraph(gri);
-            serviceTopo->LoadPath(path); // TODO: catch exception
+            try {
+                serviceTopo->LoadPath(path); 
+            } catch  (TEDBException e) {
+                LOG_DEBUG("Invalid RESV data from domain: " << domain << ", gri=" << gri << ", " << e.GetMessage() << endl);
+                continue; 
+            }
             resv->SetServiceTopology(serviceTopo);
             resv->SetStatus(status);
 
