@@ -41,11 +41,11 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     string rangStr="";
     string remoteLinkName="";
     int metric;
-    long maxBandwidth;
-    long maxReservableBandwidth;
-    long minReservableBandwidth;
-    long unreservedBandwidth[8];   // 8 priorities: use unreservedBandwidth[7] by default
-    long bandwidthGranularity;
+    u_int64_t maxBandwidth;
+    u_int64_t maxReservableBandwidth;
+    u_int64_t minReservableBandwidth;
+    u_int64_t unreservedBandwidth[8];   // 8 priorities: use unreservedBandwidth[7] by default
+    u_int64_t bandwidthGranularity;
     bool optional_cons_flag=true;
 
     list<TPath*> alterPaths;
@@ -57,7 +57,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 
     memcpy(&compute_result, msg->GetTLVList().front()->value, sizeof(void*));
 
-    //cout<<"int="<<sizeof(int)<<" long="<<sizeof(long)<<endl;
+    //cout<<"int="<<sizeof(int)<<" u_int64_t="<<sizeof(u_int64_t)<<endl;
 
 	gri = compute_result->GetGri();
 	this->gri_value = gri;
@@ -315,20 +315,20 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 	string rangStr="";
 	string remoteLinkName="";
 	int metric;
-	long maxBandwidth;
-	long maxReservableBandwidth;
-	long minReservableBandwidth;
-	long unreservedBandwidth[8];   // 8 priorities: use unreservedBandwidth[7] by default
-	long bandwidthGranularity;
+	u_int64_t maxBandwidth;
+	u_int64_t maxReservableBandwidth;
+	u_int64_t minReservableBandwidth;
+	u_int64_t unreservedBandwidth[8];   // 8 priorities: use unreservedBandwidth[7] by default
+	u_int64_t bandwidthGranularity;
 	bool optional_cons_flag=true;
 
 	list<TPath*> alterPaths;
 
 	BandwidthAvailabilityGraph* bag=NULL;
 
-	//map<time_t, long> TBSF;
+	//map<time_t, u_int64_t> TBSF;
 
-	map<time_t, long>::iterator it;
+	map<time_t, u_int64_t>::iterator it;
 
 	char print_buff[200];
 
@@ -498,13 +498,13 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 	{
 		time_t new_time = 0;
 		//time_t last_time = 0;
-		long bandwidth;
+		u_int64_t bandwidth;
 		int bag_size;
 		int counter=0;
 		bag=path_info->GetBAG();
 		if (bag != NULL)
 		{
-    		map<time_t, long> TBSF=bag->GetTBSF();
+    		map<time_t, u_int64_t> TBSF=bag->GetTBSF();
 
     		bag_size=TBSF.size();
     		cout<<"size of bag="<<TBSF.size()<<endl;

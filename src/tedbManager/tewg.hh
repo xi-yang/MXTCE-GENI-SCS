@@ -47,10 +47,10 @@ class TSpec
 public:    
     u_int8_t SWtype;    
     u_int8_t ENCtype;    
-    long Bandwidth;    
+    u_int64_t Bandwidth;    
     TSpec ():SWtype(0), ENCtype(0), Bandwidth(0) {}    
-    TSpec (u_int8_t sw, u_int8_t enc, long bw):SWtype(sw), ENCtype(enc), Bandwidth(bw) {}    
-    void Update(u_int8_t sw_type, u_int8_t encoding, long bw) {            
+    TSpec (u_int8_t sw, u_int8_t enc, u_int64_t bw):SWtype(sw), ENCtype(enc), Bandwidth(bw) {}    
+    void Update(u_int8_t sw_type, u_int8_t encoding, u_int64_t bw) {            
         SWtype = sw_type;            
         ENCtype = encoding;            
         Bandwidth = bw;        
@@ -70,7 +70,7 @@ public:
     ConstraintTagSet timeslotSet;
     ConstraintTagSet wavelengthSet;
     TServiceSpec(): TSpec(), vlanSet(MAX_VLAN_NUM), timeslotSet(MAX_TIMESLOTS_NUM), wavelengthSet(MAX_WAVE_NUM) { }
-    TServiceSpec(u_int8_t sw, u_int8_t enc, long bw, string& tagRange): TSpec(sw, enc, bw),
+    TServiceSpec(u_int8_t sw, u_int8_t enc, u_int64_t bw, string& tagRange): TSpec(sw, enc, bw),
         vlanSet(MAX_VLAN_NUM), timeslotSet(MAX_TIMESLOTS_NUM), wavelengthSet(MAX_WAVE_NUM) {
         switch (sw) {
             case LINK_IFSWCAP_L2SC:
@@ -389,7 +389,7 @@ public:
     void HoldResvDeltas(string& resvName, bool doHold);
     void ApplyResvDeltas(string& resvName);
     void RevokeResvDeltas(string& resvName);
-    void PruneByBandwidth(long bw);
+    void PruneByBandwidth(u_int64_t bw);
     list<TLink*> ComputeDijkstraPath(TNode* srcNode, TNode* dstLink, bool cleanStart=false);
     void ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<TPath*>& KSP);
     void LogDumpWithFlags();

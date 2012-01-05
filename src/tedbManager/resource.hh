@@ -72,7 +72,7 @@ public:
     void SetData(const char* cs, void* d) { string s = cs; store[s] = d; }
     bool GetBool(const char* cs) { string s = cs; return *((bool*)(GetData(s))); }
     int GetInt(const char* cs) { string s = cs; return *((int*)GetData(s)); }
-    long GetLong(const char* cs) { string s = cs; return *((long*)GetData(s)); }
+    u_int64_t GetLong(const char* cs) { string s = cs; return *((u_int64_t*)GetData(s)); }
     float GetFloat(const char* cs) { string s = cs; return *((float*)GetData(s)); }
     double GetDouble(const char* cs) { string s = cs; return *((double*)GetData(s)); }
     string GetString(const char* cs) { string s = cs; return *((string*)GetData(s)); }
@@ -186,11 +186,11 @@ protected:
     map<string, Link*, strcmpless> links;
     map<string, Point*, strcmpless> points; //$$$ place holder
     Node* node;
-    long maxBandwidth;
-    long maxReservableBandwidth;
-    long minReservableBandwidth;
-    long unreservedBandwidth[8];   // 8 priorities: use unreservedBandwidth[7] by default
-    long bandwidthGranularity;
+    u_int64_t maxBandwidth;
+    u_int64_t maxReservableBandwidth;
+    u_int64_t minReservableBandwidth;
+    u_int64_t unreservedBandwidth[8];   // 8 priorities: use unreservedBandwidth[7] by default
+    u_int64_t bandwidthGranularity;
     void _Init() {
         node = NULL;
         maxBandwidth = maxReservableBandwidth = minReservableBandwidth = 0;
@@ -208,15 +208,15 @@ public:
     void AddLink(Link* link);
     map<string, Point*, strcmpless>& GetPoints() { return points; }
     void AddPoint();
-    long GetMaxBandwidth() {return maxBandwidth;}
-    void SetMaxBandwidth(long bw) { maxBandwidth = bw;}
-    long GetMaxReservableBandwidth() {return maxReservableBandwidth;}
-    void SetMaxReservableBandwidth(long bw) { maxReservableBandwidth = bw;}
-    long GetMinReservableBandwidth() {return minReservableBandwidth;}
-    void SetMinReservableBandwidth(long bw) { minReservableBandwidth = bw;}
-    long GetBandwidthGranularity() {return bandwidthGranularity;}
-    void SetBandwidthGranularity(long bw) { bandwidthGranularity = bw;}
-    long* GetUnreservedBandwidth() { return unreservedBandwidth; }
+    u_int64_t GetMaxBandwidth() {return maxBandwidth;}
+    void SetMaxBandwidth(u_int64_t bw) { maxBandwidth = bw;}
+    u_int64_t GetMaxReservableBandwidth() {return maxReservableBandwidth;}
+    void SetMaxReservableBandwidth(u_int64_t bw) { maxReservableBandwidth = bw;}
+    u_int64_t GetMinReservableBandwidth() {return minReservableBandwidth;}
+    void SetMinReservableBandwidth(u_int64_t bw) { minReservableBandwidth = bw;}
+    u_int64_t GetBandwidthGranularity() {return bandwidthGranularity;}
+    void SetBandwidthGranularity(u_int64_t bw) { bandwidthGranularity = bw;}
+    u_int64_t* GetUnreservedBandwidth() { return unreservedBandwidth; }
     bool operator==(Port& aPort) {
         if (this->node == NULL && aPort.node != NULL 
             || this->node != NULL && aPort.node == NULL)
@@ -234,11 +234,11 @@ class Link: public Resource
 protected:
     Port* port;
     int metric;
-    long maxBandwidth;
-    long maxReservableBandwidth;
-    long minReservableBandwidth;
-    long unreservedBandwidth[8];   // 8 priorities: use unreservedBandwidth[7] by default
-    long bandwidthGranularity;
+    u_int64_t maxBandwidth;
+    u_int64_t maxReservableBandwidth;
+    u_int64_t minReservableBandwidth;
+    u_int64_t unreservedBandwidth[8];   // 8 priorities: use unreservedBandwidth[7] by default
+    u_int64_t bandwidthGranularity;
     Link* remoteLink;
     list<ISCD*> swCapDescriptors;
     list<IACD*> adjCapDescriptors;
@@ -261,17 +261,17 @@ public:
     void SetPort(Port* p) { port = p; }
     int GetMetric() {return metric;}
     void SetMetric(int x) { metric = x;}
-    long GetMaxBandwidth() {return maxBandwidth;}
-    void SetMaxBandwidth(long bw) { maxBandwidth = bw;}
-    long GetMaxReservableBandwidth() {return maxReservableBandwidth;}
-    void SetMaxReservableBandwidth(long bw) { maxReservableBandwidth = bw;}
-    long GetMinReservableBandwidth() {return minReservableBandwidth;}
-    void SetMinReservableBandwidth(long bw) { minReservableBandwidth = bw;}
-    long GetBandwidthGranularity() {return bandwidthGranularity;}
-    void SetBandwidthGranularity(long bw) { bandwidthGranularity = bw;}
-    long* GetUnreservedBandwidth() { return unreservedBandwidth; }
-    long GetAvailableBandwidth() { return unreservedBandwidth[7]; }
-    void SetAvailableBandwidth(long bw) { unreservedBandwidth[7] = bw; }
+    u_int64_t GetMaxBandwidth() {return maxBandwidth;}
+    void SetMaxBandwidth(u_int64_t bw) { maxBandwidth = bw;}
+    u_int64_t GetMaxReservableBandwidth() {return maxReservableBandwidth;}
+    void SetMaxReservableBandwidth(u_int64_t bw) { maxReservableBandwidth = bw;}
+    u_int64_t GetMinReservableBandwidth() {return minReservableBandwidth;}
+    void SetMinReservableBandwidth(u_int64_t bw) { minReservableBandwidth = bw;}
+    u_int64_t GetBandwidthGranularity() {return bandwidthGranularity;}
+    void SetBandwidthGranularity(u_int64_t bw) { bandwidthGranularity = bw;}
+    u_int64_t* GetUnreservedBandwidth() { return unreservedBandwidth; }
+    u_int64_t GetAvailableBandwidth() { return unreservedBandwidth[7]; }
+    void SetAvailableBandwidth(u_int64_t bw) { unreservedBandwidth[7] = bw; }
     Link* GetRemoteLink() {return remoteLink;}
     void SetRemoteLink(Link* rmt) { remoteLink = rmt;}
     list<ISCD*>& GetSwCapDescriptors() { return swCapDescriptors; }
@@ -352,10 +352,10 @@ class ISCD
 public:
     u_char	switchingType;
     u_char	encodingType;
-    long capacity;
+    u_int64_t capacity;
     xmlNodePtr vendorSpecInfoXml;
     VendorSpecificInfoParser* vendorSpecInfoParser;
-    ISCD (u_char swType, u_char enc, long bw): switchingType(swType), encodingType(enc), capacity(bw), 
+    ISCD (u_char swType, u_char enc, u_int64_t bw): switchingType(swType), encodingType(enc), capacity(bw), 
         vendorSpecInfoXml(NULL), vendorSpecInfoParser(NULL) { }
     virtual ~ISCD() { }
     virtual ISCD* Duplicate() { return NULL; }
@@ -367,7 +367,7 @@ class ISCD_PSC: public ISCD
 {
 public:
     int mtu;
-    ISCD_PSC(int level,long bw,  int m): ISCD(LINK_IFSWCAP_PSC1+level-1, LINK_IFSWCAP_ENC_PKT, bw), mtu(m) { }
+    ISCD_PSC(int level,u_int64_t bw,  int m): ISCD(LINK_IFSWCAP_PSC1+level-1, LINK_IFSWCAP_ENC_PKT, bw), mtu(m) { }
     virtual ~ISCD_PSC() { }
     virtual ISCD* Duplicate(){
         ISCD_PSC* iscd = new ISCD_PSC(encodingType-LINK_IFSWCAP_PSC1+1, this->capacity, this->mtu);
@@ -391,7 +391,7 @@ public:
     ConstraintTagSet suggestedVlanTags;
     bool vlanTranslation;
 
-    ISCD_L2SC(long bw, int m): ISCD(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw), mtu(m), availableVlanTags(MAX_VLAN_NUM), assignedVlanTags(MAX_VLAN_NUM), suggestedVlanTags(MAX_VLAN_NUM), vlanTranslation(false) { }
+    ISCD_L2SC(u_int64_t bw, int m): ISCD(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw), mtu(m), availableVlanTags(MAX_VLAN_NUM), assignedVlanTags(MAX_VLAN_NUM), suggestedVlanTags(MAX_VLAN_NUM), vlanTranslation(false) { }
     virtual ~ISCD_L2SC() { }
     virtual ISCD* Duplicate(){
         ISCD_L2SC* iscd = new ISCD_L2SC(this->capacity, this->mtu);
@@ -422,7 +422,7 @@ public:
     bool tsiEnabled;
     bool vcatEnabled;
 
-    ISCD_TDM(long bw): ISCD(LINK_IFSWCAP_TDM, LINK_IFSWCAP_ENC_SONETSDH, bw), concatenationType(STS1), availableTimeSlots(MAX_TIMESLOTS_NUM), 
+    ISCD_TDM(u_int64_t bw): ISCD(LINK_IFSWCAP_TDM, LINK_IFSWCAP_ENC_SONETSDH, bw), concatenationType(STS1), availableTimeSlots(MAX_TIMESLOTS_NUM), 
         assignedTimeSlots(MAX_TIMESLOTS_NUM), tsiEnabled(true), vcatEnabled(true) { }
     virtual ~ISCD_TDM() { }
     virtual ISCD* Duplicate(){
@@ -455,7 +455,7 @@ public:
     ConstraintTagSet assignedWavelengths;
     bool wavelengthConversion;
 
-    ISCD_LSC(long bw): ISCD(LINK_IFSWCAP_LSC, LINK_IFSWCAP_ENC_LAMBDA, bw), channelRepresentation(ITU_CHANNEL_GRID), availableWavelengths(MAX_WAVE_NUM), 
+    ISCD_LSC(u_int64_t bw): ISCD(LINK_IFSWCAP_LSC, LINK_IFSWCAP_ENC_LAMBDA, bw), channelRepresentation(ITU_CHANNEL_GRID), availableWavelengths(MAX_WAVE_NUM), 
         assignedWavelengths(MAX_WAVE_NUM), wavelengthConversion(false) { }
     virtual ~ISCD_LSC() { }
     virtual ISCD* Duplicate(){
@@ -478,9 +478,9 @@ public:
     u_char	lowerLayerEncodingType;
     u_char  upperLayerSwitchingType;
     u_char	upperLayerEncodingType;
-    long maxAdaptBandwidth;
+    u_int64_t maxAdaptBandwidth;
     xmlNodePtr vendorSpecInfoXml; 
-    IACD(u_char lowerSwType, u_char lowerEnc, u_char upperSwType, u_char upperEnc, long bw): lowerLayerSwitchingType(lowerSwType), lowerLayerEncodingType(lowerEnc), 
+    IACD(u_char lowerSwType, u_char lowerEnc, u_char upperSwType, u_char upperEnc, u_int64_t bw): lowerLayerSwitchingType(lowerSwType), lowerLayerEncodingType(lowerEnc), 
         upperLayerSwitchingType(upperSwType), upperLayerEncodingType(upperEnc), maxAdaptBandwidth(bw), vendorSpecInfoXml(NULL) { }
     virtual ~IACD() { }
     virtual IACD* Duplicate() {
@@ -505,7 +505,7 @@ struct portcmpless {
 class NodeIfAdaptMatrix
 {
 private:
-    long* bwCaps;
+    u_int64_t* bwCaps;
     int size;
     int portSN;
     map<Port*, int, portcmpless> portMap;
@@ -513,14 +513,14 @@ private:
     NodeIfAdaptMatrix() { }
 
 public:
-    NodeIfAdaptMatrix(int n): size(n), portSN(0) { bwCaps = new long[n*n]; }
+    NodeIfAdaptMatrix(int n): size(n), portSN(0) { bwCaps = new u_int64_t[n*n]; }
     ~NodeIfAdaptMatrix() { delete[] bwCaps; }
     void AddPort(Port* port) { assert(port && portSN < size); portMap[port] = portSN++; }
-    long GetAdaptCap(int n1, int n2) { 
+    u_int64_t GetAdaptCap(int n1, int n2) { 
         assert(n1 >= 0 && n1 < size && n2 >= 0 && n2 < size); 
         return bwCaps[n1*size+n2]; 
     }
-    long GetAdaptCap(Port* p1, Port* p2) { 
+    u_int64_t GetAdaptCap(Port* p1, Port* p2) { 
         if (portMap.find(p1) != portMap.end() && portMap.find(p2) != portMap.end()) 
         {
             int n1 = portMap[p1];
@@ -528,8 +528,8 @@ public:
             return GetAdaptCap(n1, n2); 
         }
     }
-    list<Port*> GetAdaptToPorts(Port* port, long bw=0);
-    list<Port*> GetAdaptFromPorts(Port* port, long bw=0);
+    list<Port*> GetAdaptToPorts(Port* port, u_int64_t bw=0);
+    list<Port*> GetAdaptFromPorts(Port* port, u_int64_t bw=0);
 };
 
 #endif

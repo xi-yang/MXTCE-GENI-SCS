@@ -407,7 +407,7 @@ extern "C"
 
 void StripXmlString(string& str, xmlChar* val);
 
-long StringToBandwidth(string& strBandwidth);
+u_int64_t StringToBandwidth(string& strBandwidth);
 
 string GetUrnField(string& urn, const char* field);
 

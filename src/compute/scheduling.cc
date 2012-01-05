@@ -210,12 +210,12 @@ void AggregateDeltaSeries::Join(AggregateDeltaSeries& ads, time_t start, time_t 
 
 
 
-void BandwidthAvailabilityGraph::AddStep(time_t t, long bw)
+void BandwidthAvailabilityGraph::AddStep(time_t t, u_int64_t bw)
 {
     this->TBSF[t] = bw;
 }
 
-void BandwidthAvailabilityGraph::LoadADS(AggregateDeltaSeries& ads, time_t start, time_t end, long capacity)
+void BandwidthAvailabilityGraph::LoadADS(AggregateDeltaSeries& ads, time_t start, time_t end, u_int64_t capacity)
 {
     // get BAG by substracting ADS bandwidth from capacity for the time window
     list<TDelta*> deltaList = ads.GetADSInWindow(start, end);
@@ -249,7 +249,7 @@ void BandwidthAvailabilityGraph::LogDump()
     char str[64];
     sprintf(buf, "BAG: ");
 
-    map<time_t, long>::iterator itA, itB;
+    map<time_t, u_int64_t>::iterator itA, itB;
     itA = itB = TBSF.begin();
     if (itA == TBSF.end())
     {
@@ -261,12 +261,12 @@ void BandwidthAvailabilityGraph::LogDump()
     {
         if (itB == TBSF.end())
         {
-            snprintf(str, 64, "\n\t[%ld - +INF] : bw=%ld", (*itA).first, (*itA).second);
+            snprintf(str, 64, "\n\t[%ld - +INF] : bw=%llu", (*itA).first, (*itA).second);
             strcat(buf, str);
         }
         else 
         {
-            snprintf(str, 64, "\n\t[%ld - %ld] : bw=%ld", (*itA).first, (*itB).first, (*itA).second);
+            snprintf(str, 64, "\n\t[%ld - %ld] : bw=%llu", (*itA).first, (*itB).first, (*itA).second);
             strcat(buf, str);
         }
     }
@@ -279,7 +279,7 @@ _output:
 BandwidthAvailabilityGraph* BandwidthAvailabilityGraph::Clone()
 {
     BandwidthAvailabilityGraph* bag = new BandwidthAvailabilityGraph();
-    map<time_t, long>::iterator iter = this->TBSF.begin();
+    map<time_t, u_int64_t>::iterator iter = this->TBSF.begin();
     for (; iter != this->TBSF.end(); iter++)
         bag->TBSF[(*iter).first] = (*iter).second;
     return bag;

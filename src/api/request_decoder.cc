@@ -190,7 +190,7 @@ void Apireqmsg_decoder::decode_usercons(char* & decode_ptr, int total_len, Apims
 			break;
 		}//end of switch
 
-	length_offset=length_offset+length+len_tag_len+1;//should consider long form of length field
+	length_offset=length_offset+length+len_tag_len+1;//should consider u_int64_t form of length field
     
 
 	}
@@ -340,7 +340,7 @@ void Apireqmsg_decoder::decode_resvcons(char* & decode_ptr, int total_len, Apims
 
 
 
-		length_offset=length_offset+length+len_tag_len+1;//should consider long form of length field
+		length_offset=length_offset+length+len_tag_len+1;//should consider u_int64_t form of length field
 
 		//cout<<"length_offset="<<length_offset<<endl;
 		//printf("\n test_2= %d\n",decode_ptr);
@@ -688,7 +688,7 @@ void Apireqmsg_decoder::decode_opitcons_coschedreq(char* & decode_ptr, int total
 		}//end of switch
 
 
-		length_offset=length_offset+length+len_tag_len+1;//should consider long form of length field
+		length_offset=length_offset+length+len_tag_len+1;//should consider u_int64_t form of length field
 
 
 	}

@@ -61,14 +61,14 @@ public:
 class BandwidthAvailabilityGraph
 {
 protected:
-    map<time_t, long> TBSF; //Time-Bandwidth-Step-Function (first element is for startTime, last element always has BW value 0)
+    map<time_t, u_int64_t> TBSF; //Time-Bandwidth-Step-Function (first element is for startTime, last element always has BW value 0)
 
 public:
     BandwidthAvailabilityGraph() { }
     virtual ~BandwidthAvailabilityGraph() { }
-    map<time_t, long>& GetTBSF() { return TBSF; }
-    void AddStep(time_t t, long bw);
-    void LoadADS(AggregateDeltaSeries& ads, time_t start, time_t end, long capacity);
+    map<time_t, u_int64_t>& GetTBSF() { return TBSF; }
+    void AddStep(time_t t, u_int64_t bw);
+    void LoadADS(AggregateDeltaSeries& ads, time_t start, time_t end, u_int64_t capacity);
     void LogDump();
     BandwidthAvailabilityGraph* Clone();
     

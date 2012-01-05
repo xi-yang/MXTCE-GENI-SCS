@@ -218,24 +218,24 @@ void StripXmlString(string& str, xmlChar* val)
 }
 
 
-long StringToBandwidth(string& strBandwidth) 
+u_int64_t StringToBandwidth(string& strBandwidth) 
 {
-    long bandwidth = 0L;
-    long factor = 1;
+    u_int64_t bandwidth = 0LLU;
+    u_int64_t factor = 1LLU;
     if (strcasestr(strBandwidth.c_str(), "K"))
     {
-        factor = 1000;
+        factor = 1000LLU;
     }
     if (strcasestr(strBandwidth.c_str(), "M"))
     {
-        factor = 1000000;
+        factor = 1000000LLU;
     }
     if (strcasestr(strBandwidth.c_str(), "G"))
     {
-        factor = 1000000000;
+        factor = 1000000000LLU;
     }
 
-    if (sscanf(strBandwidth.c_str(), "%ld", &bandwidth) == 1)
+    if (sscanf(strBandwidth.c_str(), "%llu", &bandwidth) == 1)
         return bandwidth*factor;
     return 0;
 }

@@ -81,7 +81,7 @@ void TEDBManThread::hookHandleMessage()
             string domain;
             string gri;
             string status;
-            long bw = 0;
+            u_int64_t bw = 0;
             int mtu = 9000;
             time_t start, end;
             list<TLink*> path;
@@ -103,7 +103,7 @@ void TEDBManThread::hookHandleMessage()
                     end = tlv->end_time;
                     bw = tlv->bandwidth;
                     status = (const char*)tlv->status;
-                    snprintf(buf, 256, "RESV domain=%s, gri=%s, bw=%ld\n", domain.c_str(), gri.c_str(), bw); 
+                    snprintf(buf, 256, "RESV domain=%s, gri=%s, bw=%llu\n", domain.c_str(), gri.c_str(), bw); 
                     LOG_DEBUG(buf);
                 }
                 else if ((*itlv)->type == MSG_TLV_PATH_ELEM)
@@ -124,7 +124,7 @@ void TEDBManThread::hookHandleMessage()
                     // assert(bw > 0 && iscd != NULL);
                     if (bw <= 0 || iscd == NULL)
                     {
-                        snprintf(buf, 256, "Invalid RESV data from domain=%s, gri=%s, bw=%ld\n", domain.c_str(), gri.c_str(), bw); 
+                        snprintf(buf, 256, "Invalid RESV data from domain=%s, gri=%s, bw=%llu\n", domain.c_str(), gri.c_str(), bw); 
                         LOG_DEBUG(buf);
                         continue;
                     }
@@ -137,7 +137,7 @@ void TEDBManThread::hookHandleMessage()
 
             if (gri.length() == 0 || path.size() == 0)
             {
-                snprintf(buf, 256, "Invalid RESV data from domain=%s, gri=%s, path.size=%d\n", domain.c_str(), gri.c_str(), path.size()); 
+                snprintf(buf, 256, "Invalid RESV data from domain=%s, gri=%s, path.size=%d\n", domain.c_str(), gri.c_str(), (int)path.size()); 
                 LOG_DEBUG(buf);
                 continue;
             }

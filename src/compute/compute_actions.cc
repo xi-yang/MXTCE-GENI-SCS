@@ -248,7 +248,7 @@ void Action_ComputeKSP::Process()
     TNode* dstNode = tewg->LookupNodeByURN(userConstraint->getDestendpoint());
     if (dstNode == NULL)
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown destination URN!");
-    long bw = (long)userConstraint->getBandwidth();
+    u_int64_t bw = (u_int64_t)userConstraint->getBandwidth();
     if (userConstraint->getCoschedreq()&& userConstraint->getCoschedreq()->getMinbandwidth() > bw)
         bw = userConstraint->getCoschedreq()->getMinbandwidth();
     u_int32_t srcVtag, dstVtag;
@@ -570,7 +570,7 @@ void Action_CreateOrderedATS::Process()
         time_t t_start = time(0); 
         time_t t_end = t_start;
         time_t t_next = 0; // for sliding t_start
-        long maxRemainBW = L->GetMaxReservableBandwidth() - ((TLinkDelta*)ads->GetADS().front())->GetBandwidth();
+        u_int64_t maxRemainBW = L->GetMaxReservableBandwidth() - ((TLinkDelta*)ads->GetADS().front())->GetBandwidth();
 
         // TODO: change selection and order of ATS based on request constraints and objectives!
         // the current logic prefers max-bandwidth criterion
@@ -672,7 +672,7 @@ void Action_ComputeSchedulesWithKSP::Process()
         throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() No Ordered Aggregate Time Series available for computation!");
 
     // TODO: should get the following params from API request
-    long bw = 1000000000; // 100M
+    u_int64_t bw = 1000000000; // 100M
     TNode* srcNode = tewg->GetNodes().front();
     TNode* dstNode = tewg->GetNodes().back();
     time_t duration = 3600;

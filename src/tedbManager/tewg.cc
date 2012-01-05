@@ -392,7 +392,7 @@ void TLink::ProceedByUpdatingTimeslots(ConstraintTagSet &head_timeslotset, Const
 
 bool TLink::CrossingRegionBoundary(TSpec& tspec, TLink* next_link)
 {
-    // link may have multiple ISCDs. But as long as both link and next links can accomodarte the spec, no crossing is required on this link.
+    // link may have multiple ISCDs. But as u_int64_t as both link and next links can accomodarte the spec, no crossing is required on this link.
     if (next_link)
     {
         bool compatibleTspec = false;
@@ -900,11 +900,11 @@ void TGraph::LogDump()
                             tl->GetRemoteLink()->GetName().c_str());
                         strcat(buf, str);
                     }
-                    snprintf(str, 256, "\t\t\t\t<AvailableBandwidth>%ld</AvailableBandwidth>\n", tl->GetAvailableBandwidth());
+                    snprintf(str, 256, "\t\t\t\t<AvailableBandwidth>%llu</AvailableBandwidth>\n", tl->GetAvailableBandwidth());
                     strcat(buf, str);
                     if (tl->GetTheISCD())
                     {
-                        snprintf(str, 256, "\t\t\t\t<SwitchingCapabilityDescriptors> <switchingcapType=%d><encodingType=%d><capacity=%ld> </SwitchingCapabilityDescriptors>\n",  
+                        snprintf(str, 256, "\t\t\t\t<SwitchingCapabilityDescriptors> <switchingcapType=%d><encodingType=%d><capacity=%llu> </SwitchingCapabilityDescriptors>\n",  
                             tl->GetTheISCD()->switchingType,
                             tl->GetTheISCD()->encodingType,
                             tl->GetTheISCD()->capacity);
@@ -916,7 +916,7 @@ void TGraph::LogDump()
                         list<TDelta*>::iterator itD = tl->GetDeltaList().begin();
                         for (; itD != tl->GetDeltaList().end(); itD++)
                         {
-                            snprintf(str, 256, "[bw=%ld:%d-%d] ", ((TLinkDelta*)(*itD))->GetBandwidth(), (int)(*itD)->GetStartTime(), (int)(*itD)->GetEndTime());
+                            snprintf(str, 256, "[bw=%llu:%d-%d] ", ((TLinkDelta*)(*itD))->GetBandwidth(), (int)(*itD)->GetStartTime(), (int)(*itD)->GetEndTime());
                             strcat(buf, str);
                         }
                         strcat(buf, "</DeltaList>\n");
@@ -1315,7 +1315,7 @@ BandwidthAvailabilityGraph* TPath::CreatePathBAG(time_t start, time_t end)
     }
     ads = ads->Duplicate();
     itL++;
-    long capacity = (*itL)->GetMaxReservableBandwidth();
+    u_int64_t capacity = (*itL)->GetMaxReservableBandwidth();
     for (; itL != path.end(); itL++)
     {
         if ((*itL)->GetWorkData()->GetData("ADS") == NULL)
@@ -1520,7 +1520,7 @@ void TEWG::RevokeResvDeltas(string& resvName)
     }
 }
 
-void TEWG::PruneByBandwidth(long bw)
+void TEWG::PruneByBandwidth(u_int64_t bw)
 {
     list<TLink*>::iterator itl = tLinks.begin();
     itl = tLinks.begin();

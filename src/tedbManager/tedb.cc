@@ -459,7 +459,7 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
     int mtu = 0;
     string vlanRange = "";
     bool vlanTranslation = false;
-    long capacity = 0;
+    u_int64_t capacity = 0;
     TDMConcatenationType concatenationType = STS1;
     string timeslotRange = "";
     bool tsiEnabled = true;
@@ -671,7 +671,7 @@ IACD* DBLink::GetIACDFromXML(xmlNodePtr xmlNode)
 {
     IACD* iacd = NULL;
     u_char swTypeLower = 0, encTypeLower = 0, swTypeUpper = 0, encTypeUpper = 0;
-    long capacity = 0;
+    u_int64_t capacity = 0;
     xmlNodePtr specLevel = NULL;
     for (xmlNode = xmlNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
     {
@@ -1055,11 +1055,11 @@ void TEDB::LogDump()
                             tl->GetRemoteLink()->GetName().c_str());
                         strcat(buf, str);
                     }
-                    snprintf(str, 256, "\t\t\t\t<MaxBandwidth>%ld</MaxBandwidth>\n", tl->GetMaxBandwidth());
+                    snprintf(str, 256, "\t\t\t\t<MaxBandwidth>%llu</MaxBandwidth>\n", tl->GetMaxBandwidth());
                     strcat(buf, str);
-                    snprintf(str, 256, "\t\t\t\t<MaxReservableBandwidth>%ld</MaxReservableBandwidth>\n", tl->GetMaxReservableBandwidth());
+                    snprintf(str, 256, "\t\t\t\t<MaxReservableBandwidth>%llu</MaxReservableBandwidth>\n", tl->GetMaxReservableBandwidth());
                     strcat(buf, str);
-                    snprintf(str, 256, "\t\t\t\t<Granularity>%ld</Granularity>\n", tl->GetBandwidthGranularity());
+                    snprintf(str, 256, "\t\t\t\t<Granularity>%llu</Granularity>\n", tl->GetBandwidthGranularity());
                     strcat(buf, str);
                     snprintf(str, 256, "\t\t\t</link>\n");
                     strcat(buf, str);
