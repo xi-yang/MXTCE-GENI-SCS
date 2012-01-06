@@ -57,8 +57,9 @@ void DBDomain::UpdateFromXML(bool populateSubLevels)
         {
             bool newNode = false;
             string nodeName = (const char*)xmlGetProp(nodeLevel, (const xmlChar*)"id");
-            if (strstr(nodeName.c_str(), "node=") != NULL)
-                nodeName = GetUrnField(nodeName, "node");
+            string aName = nodeName = GetUrnField(nodeName, "node");
+            if (aName.length() > 0)
+                nodeName = aName;
             DBNode* node = NULL;
             if (this->nodes.find(nodeName) != this->nodes.end())
             {
@@ -145,8 +146,9 @@ void DBNode::UpdateFromXML(bool populateSubLevels)
         {
             bool newPort = false;
             string portName = (const char*)xmlGetProp(portLevel, (const xmlChar*)"id");
-            if (strstr(portName.c_str(), "port=") != NULL)
-                portName = GetUrnField(portName, "port");
+            string aName = GetUrnField(portName, "port");
+            if (aName.length() > 0)
+                portName = aName;
             DBPort* port = NULL;
             if (this->ports.find(portName) != this->ports.end())
             {
@@ -244,8 +246,10 @@ void DBPort::UpdateFromXML(bool populateSubLevels)
         {
             bool newLink = false;
             string linkName = (const char*)xmlGetProp(linkLevel, (const xmlChar*)"id");
-            if (strstr(linkName.c_str(), "link=") != NULL)
-                linkName = GetUrnField(linkName, "link");
+            string aName = GetUrnField(linkName, "link");
+            if (aName.length() > 0)
+                linkName = aName;
+
             DBLink* link = NULL;
             if (this->links.find(linkName) != this->links.end())
             {
@@ -884,8 +888,9 @@ void TEDB::PopulateXmlTrees()
                 continue;
             bool newDomain = false;
             string domainName = (const char*)xmlGetProp(domainLevel, (const xmlChar*)"id");
-            if (strstr(domainName.c_str(), "domain=") != NULL)
-                domainName = GetUrnField(domainName, "domain");
+            string aName = GetUrnField(domainName, "domain");
+            if (aName.length() > 0)
+                domainName = aName;
             DBDomain* domain = LookupDomainByName(domainName);
             if (domain == NULL)
             {

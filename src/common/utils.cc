@@ -248,7 +248,20 @@ string GetUrnField(string& urn, const char* field)
     snprintf(str, 128, "%s=", field);
     char* ptr = (char*)strstr(urn.c_str(), str);
     if (ptr == NULL)
-        return name;
+    {
+        string domain, node, port, link;
+        ParseFQUrnShort(urn, domain, node, port, link);
+        if (strncmp(field, "domain", 2) == 0)
+            return domain;
+        else if (strncmp(field, "node", 2) == 0)
+            return node;
+        else if (strncmp(field, "port", 2) == 0)
+            return port;
+        else if (strncmp(field, "link", 2) == 0)
+            return link;
+        else
+            return name;
+    }
     ptr += (strlen(field)+1);
     char* ptr2 = strstr(ptr, ":"); 
     if (ptr2 == NULL)

@@ -311,7 +311,7 @@ void Action_ComputeKSP::Process()
     // compute KSP
     vector<TPath*>* KSP = new vector<TPath*>;
     try {
-        tewg->ComputeKShortestPaths(srcNode, dstNode, tewg->GetNodes().size()*2, *KSP);
+        tewg->ComputeKShortestPaths(srcNode, dstNode, tewg->GetNodes().size()*2>20?20:tewg->GetNodes().size()*2, *KSP);
     } catch (TCEException e) {
         LOG_DEBUG("Action_ComputeKSP::Process raised exception: " << e.GetMessage() <<endl);
         throw ComputeThreadException(e.GetMessage());
@@ -710,7 +710,7 @@ void Action_ComputeSchedulesWithKSP::Process()
         // $$ search KSP
         KSP.clear();
         try {
-             tewg->ComputeKShortestPaths(srcNode, dstNode, tewg->GetNodes().size(), KSP);
+             tewg->ComputeKShortestPaths(srcNode, dstNode, tewg->GetNodes().size()>20?20:tewg->GetNodes().size(), KSP);
         } catch (TCEException e) {
             //some debug logging here but do not throw exception upward
             LOG_DEBUG("Action_ComputeSchedulesWithKSP::Process() at TimePoint=" << startTime << " raised exception: " << e.GetMessage() <<endl);
