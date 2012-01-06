@@ -1,7 +1,7 @@
 LIB=lib/
 # update classpath
 #OSCARS_CLASSPATH=target/test-classes
-OSCARS_CLASSPATH=target/classes:target/test-classes
+OSCARS_CLASSPATH=target/test-classes
 for f in "$LIB"*.jar
 do
  OSCARS_CLASSPATH="$OSCARS_CLASSPATH":$f
