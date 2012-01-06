@@ -30,7 +30,7 @@ public class TCEExampleReplyHandler extends TCECallbackHandler {
                && pceDataContent.getOptionalConstraint().get(0).getValue().getStringValue() != null
                && !pceDataContent.getOptionalConstraint().get(0).getValue().getStringValue().isEmpty()) {
             String optionalConstraint = pceDataContent.getOptionalConstraint().get(0).getValue().getStringValue();
-            System.out.println( "PCEErroptionalConstraint = "+optionalConstraint);
+            System.out.println( "PCE optionalConstraint = "+optionalConstraint);
         }
 
         // retrieve error message

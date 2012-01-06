@@ -52,8 +52,9 @@ void TLinkDelta::Apply()
     applied = true;
     Link* link = (Link*)targetResource;
     for (int i = 0; i < 8; i++) {
-        link->GetUnreservedBandwidth()[i] -= this->bandwidth;
-        if (link->GetUnreservedBandwidth()[i] < 0) 
+        if (link->GetUnreservedBandwidth()[i] > this->bandwidth)
+            link->GetUnreservedBandwidth()[i] -= this->bandwidth;
+        else
             link->GetUnreservedBandwidth()[i] = 0;
     }
 }
@@ -84,8 +85,10 @@ void TLinkDelta::Combine(TDelta* delta)
 
 void TLinkDelta::Decombine(TDelta* delta)
 {
-    bandwidth -= ((TLinkDelta*)delta)->GetBandwidth();
-    if (bandwidth < 0) bandwidth = 0;
+    if (bandwidth > ((TLinkDelta*)delta)->GetBandwidth())
+        bandwidth -= ((TLinkDelta*)delta)->GetBandwidth();
+    else
+        bandwidth = 0;
 }
 
 void TLinkDelta::Join(TDelta* delta)

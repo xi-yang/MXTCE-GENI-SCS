@@ -232,7 +232,7 @@ void BandwidthAvailabilityGraph::LoadADS(AggregateDeltaSeries& ads, time_t start
         AddStep(start, capacity);
     for (; itD1 != deltaList.end(); itD1++, itD2++)
     {
-        AddStep((*itD1)->GetStartTime(), capacity - ((TLinkDelta*)(*itD1))->GetBandwidth() > 0 ? capacity -  ((TLinkDelta*)(*itD1))->GetBandwidth() : 0);
+        AddStep((*itD1)->GetStartTime(), capacity > ((TLinkDelta*)(*itD1))->GetBandwidth() ? capacity -  ((TLinkDelta*)(*itD1))->GetBandwidth() : 0);
         if ((*itD1)->GetEndTime() >= end)
             break;
         if (itD2 == deltaList.end() || (itD2 != deltaList.end() && (*itD2)->GetStartTime() > (*itD1)->GetEndTime()))
