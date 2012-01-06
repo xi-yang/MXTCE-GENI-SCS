@@ -7,7 +7,7 @@ package net.es.oscars.pce.tce.client.test;
 import net.es.oscars.pce.tce.client.*;
 import net.es.oscars.pce.soap.gen.v06.*;
 
-import org.w3c.dom.Element;
+import java.io.*;
 
 /**
  *
@@ -31,11 +31,20 @@ public class TCEExampleReplyHandler extends TCECallbackHandler {
                && !pceDataContent.getOptionalConstraint().get(0).getValue().getStringValue().isEmpty()) {
             String optionalConstraint = pceDataContent.getOptionalConstraint().get(0).getValue().getStringValue();
             System.out.println( "PCE optionalConstraint = "+optionalConstraint);
+            try {
+                FileWriter fstream = new FileWriter("mxtcePceReply_OC.xml");
+                BufferedWriter out = new BufferedWriter(fstream);
+                out.write(optionalConstraint);
+                out.flush();
+                out.close();
+            } catch (Exception e) {
+                System.err.println("Fail to write to mxtcePceReply.xml: " + e.getMessage());
+            }
         }
 
         // retrieve error message
         if (pceDataContent == null && pceError != null) {
-            System.out.println( "PCEErrorMsg="+pceError.getMsg());
+            System.err.println( "PCEErrorMsg="+pceError.getMsg());
         }
         // Do not exit in real app
         System.exit(0);
