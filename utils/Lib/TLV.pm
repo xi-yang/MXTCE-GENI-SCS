@@ -5,6 +5,8 @@ package TLV;
 use strict;
 use warnings;
 
+use Math::BigInt;
+
 BEGIN {
         use Exporter   ();
         our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
@@ -30,8 +32,8 @@ sub new {
         };
         # type(16) length(16) gri(8*64) domain(8*32) start_time(32) end_time(32) bandwidth(32) status(8*16)
         if($a[0] == MSG_TLV_RESV_INFO) {
-                $$self{templ} .= 'a64a32LLLa16';
-                $$self{len} = 124;
+                $$self{templ} .= 'a64a32LLLLa16';
+                $$self{len} = 128;
                 $$self{gri} = $a[1];
                 $$self{domain} = $a[2];
                 $$self{start_time} = $a[3];
@@ -59,8 +61,11 @@ sub get_len() {
 sub get_bin() {
         my $self = shift;
         if($$self{type} == MSG_TLV_RESV_INFO) {
+                my $bw = Math::BigInt->new($$self{bw});
+                my($bw1,$bw2) = (int($bw%2**32), int($bw/2**32)%2**32);
+                print "bw1=$bw1, bw2=$bw2\n";
                 return pack($$self{templ}, $$self{type}, $$self{len}, $$self{gri}, $$self{domain}, $$self{start_time},
-                        $$self{end_time}, $$self{bw}, $$self{status});
+                        $$self{end_time}, $bw1, $bw2, $$self{status});
         }
         elsif($$self{type} == MSG_TLV_PATH_ELEM) {
                 return pack($$self{templ}, $$self{type}, $$self{len}, $$self{urn}, $$self{sw_type}, $$self{enc_type},
