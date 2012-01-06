@@ -262,11 +262,58 @@ string GetUrnField(string& urn, const char* field)
     return name;
 }
 
+
 void ParseFQUrn(string& urn, string& domain, string& node, string& port, string& link) 
 {
     domain = GetUrnField(urn, "domain");
     node = GetUrnField(urn, "node");
     port = GetUrnField(urn, "port");
     link = GetUrnField(urn, "link");
+    if (domain.length() == 0 && node.length() == 0 && port.length() == 0 && link.length() == 0)
+        ParseFQUrnShort(urn, domain, node, port, link);
+}
+
+// example urn: 'urn:ogf:network:es.net:fnal-mr2:xe-7/0/0:*'
+void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, string& link) 
+{
+    char buf[256];
+    char *pbuf=buf, *ps=NULL;
+    if (strncmp(urn.c_str(), "urn:ogf:network:", 16) == 0) 
+    {
+        strncpy(buf, urn.c_str()+16, 256);
+        ps = strstr(pbuf, ":");
+        if (ps != NULL)
+        {
+            *ps = 0;
+        }
+        else 
+            return;
+        domain = pbuf;
+        pbuf = ps+1;
+        ps = strstr(pbuf, ":");
+        if (ps != NULL)
+        {
+            *ps = 0;
+        }
+        else 
+            return;
+        node = pbuf;
+        pbuf = ps+1;
+        ps = strstr(pbuf, ":");
+        if (ps != NULL)
+        {
+            *ps = 0;
+        }
+        else 
+            return;
+        port = pbuf;
+        pbuf = ps+1;
+        ps = strstr(pbuf, ":");
+        if (ps != NULL)
+        {
+            return;
+        }
+        link = pbuf;        
+    }
 }
 

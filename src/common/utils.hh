@@ -413,4 +413,6 @@ string GetUrnField(string& urn, const char* field);
 
 void ParseFQUrn(string& urn, string& domain, string& node, string& port, string& link);
 
+void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, string& link);
+
 #endif
