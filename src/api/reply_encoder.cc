@@ -25,6 +25,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	string gri="";
 	string err_msg="";
 	TPath* path_info=NULL;
+	/*
 	list<TLink*> path;
 
 	TLink* link=NULL;
@@ -46,10 +47,11 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     u_int64_t minReservableBandwidth;
     u_int64_t unreservedBandwidth[8];   // 8 priorities: use unreservedBandwidth[7] by default
     u_int64_t bandwidthGranularity;
+    */
     bool optional_cons_flag=true;
 
     list<TPath*> alterPaths;
-    BandwidthAvailabilityGraph* bag=NULL;
+    //BandwidthAvailabilityGraph* bag=NULL;
 
     //Encode_Pri_Type* pri_type_encoder = new Encode_Pri_Type();
 
@@ -71,8 +73,8 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 
 		msg_sub_ptr=pri_type_encoder->get_buff();
 		msg_sublen=pri_type_encoder->get_length();
-		msg_pre_part_ptr = new u_int8_t[msg_sublen];
-		memcpy(msg_pre_part_ptr, msg_sub_ptr, msg_sublen);
+		msg_pre_part_ptr = new u_int8_t[msg_sublen];  //create a new memory space to store the first part (gri)
+		memcpy(msg_pre_part_ptr, msg_sub_ptr, msg_sublen); //copy the first part to allocated space
 		this->length+=msg_sublen;
 		pri_type_encoder->reset_length(); //reset encoder offset
 
@@ -88,7 +90,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 
 		msg_sub_ptr=pri_type_encoder->get_buff();
 		msg_sublen=pri_type_encoder->get_length();
-		msg_sub_startlen=0;
+		msg_sub_startlen=0;  //this variable will be used as a reference argument in encode_msg_sub_start, it stores the length of msg header
 		msg_sub_start_ptr=encode_msg_sub_start(PCE_REGU_REPLY, msg_sublen, msg_sub_startlen); //encode the subfield-header
 		msg_body_ptr=encode_merge_buff(msg_sub_start_ptr, msg_sub_startlen, msg_sub_ptr, msg_sublen);  //merge subfield-header and body
 		msg_len=msg_sub_startlen + msg_sublen; //body length
@@ -96,7 +98,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 		msg_new_part_ptr=encode_merge_buff(msg_pre_part_ptr, this->length, msg_body_ptr, msg_len);  //merge the previous part and the new part
 		delete[] msg_body_ptr;
 		delete[] msg_pre_part_ptr;
-		msg_pre_part_ptr=msg_new_part_ptr;
+		msg_pre_part_ptr=msg_new_part_ptr;  //msg_pre_part_ptr points to the newly merged result
 		this->length+=msg_len;
 		pri_type_encoder->reset_length(); //reset encoder offset
 
@@ -146,7 +148,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	    	msg_new_part_ptr=encode_merge_buff(msg_pre_part_ptr, this->length, msg_body_ptr, msg_len);  //merge the previous part and the new part
 	    	delete[] msg_body_ptr;
 	    	delete[] msg_pre_part_ptr;
-	    	msg_pre_part_ptr=msg_new_part_ptr;
+	    	msg_pre_part_ptr=msg_new_part_ptr;  //msg_pre_part_ptr points to the newly merged result
 	    	this->length+=msg_len;
 	    	pri_type_encoder->reset_length(); //reset encoder offset
 	    }
@@ -158,8 +160,8 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 
 		msg_sub_ptr=pri_type_encoder->get_buff();
 		msg_sublen=pri_type_encoder->get_length();
-		msg_pre_part_ptr = new u_int8_t[msg_sublen];
-		memcpy(msg_pre_part_ptr, msg_sub_ptr, msg_sublen);
+		msg_pre_part_ptr = new u_int8_t[msg_sublen];  //create a new memory space to store the first part (gri and error msg)
+		memcpy(msg_pre_part_ptr, msg_sub_ptr, msg_sublen);  //copy the first part to allocated space
 		this->length+=msg_sublen;
 		pri_type_encoder->reset_length(); //reset encoder offset
 	}
@@ -170,14 +172,14 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	this->length=this->length+msg_sub_startlen;
 	delete[] msg_sub_start_ptr;
 	delete[] msg_pre_part_ptr;
-	msg_pre_part_ptr=msg_new_part_ptr;
+	msg_pre_part_ptr=msg_new_part_ptr;  //msg_pre_part_ptr points to the newly merged result
 
 	//memory revoke for the buff in pri encoder
 	//now move the function to deconstructor of pri encoder itself
 	//msg_sub_ptr=pri_type_encoder->get_buff();
 	//delete[] msg_sub_ptr;
 
-	body=(char*)msg_pre_part_ptr;
+	body=(char*)msg_pre_part_ptr;  //store the pointer of the result to reference pointer parameter body
 
 
 	/*
@@ -311,7 +313,7 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 	ConstraintTagSet* assignedVlanTags;
 	bool vlanTranslation;
 	int mtu;
-	int capacity;
+	u_int64_t capacity;
 	string rangStr="";
 	string remoteLinkName="";
 	int metric;
@@ -358,13 +360,13 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 		//pri_type_encoder_ptr->encodeString(PCE_REMOTE_LINK, remoteLinkName);
 
 		maxReservableBandwidth = (*it)->GetMaxReservableBandwidth();
-		pri_type_encoder_ptr->encodeInteger(PCE_MAXRESVCAPACITY, (int)maxReservableBandwidth);
+		pri_type_encoder_ptr->encodeLong(PCE_MAXRESVCAPACITY, maxReservableBandwidth);
 
 		minReservableBandwidth = (*it)->GetMinReservableBandwidth();
-		pri_type_encoder_ptr->encodeInteger(PCE_MINRESVCAPACITY, (int)minReservableBandwidth);
+		pri_type_encoder_ptr->encodeLong(PCE_MINRESVCAPACITY, minReservableBandwidth);
 
 		bandwidthGranularity = (*it)->GetBandwidthGranularity();
-		pri_type_encoder_ptr->encodeInteger(PCE_GRANULARITY, bandwidthGranularity);
+		pri_type_encoder_ptr->encodeLong(PCE_GRANULARITY, bandwidthGranularity);
 
 		metric = (*it)->GetMetric();
 		pri_type_encoder_ptr->encodeInteger(PCE_TE_METRIC, metric);
@@ -377,7 +379,7 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 
 		capacity = sw_cap_descriptors->capacity;
 
-		pri_type_encoder_ptr->encodeInteger(PCE_CAPACITY, capacity);
+		pri_type_encoder_ptr->encodeLong(PCE_CAPACITY, capacity);
 
 		switchingType = sw_cap_descriptors->switchingType;
 		encodingType = sw_cap_descriptors->encodingType;
@@ -523,7 +525,7 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 
     			if(counter!=(bag_size-1))
     			{
-    				pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_BANDWIDTH, bandwidth);
+    				pri_type_encoder_ptr->encodeLong(PCE_OPT_BAG_BANDWIDTH, bandwidth);
     				pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_STARTTIME, new_time);
 
     				cout<<"bag bandwith="<<bandwidth<<endl;

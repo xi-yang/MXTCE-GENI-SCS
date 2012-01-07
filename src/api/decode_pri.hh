@@ -17,6 +17,7 @@ public:
 	int getLen(char* &, int &);
 	bool decodeBoolean(char* &, int);
 	int decodeInt(char* &, int);
+	u_int64_t decodeLong(char* &, int);
 	string decodeStr(char* &, int);
 	float decodeFlo(char* &, int);
 	double decodeDou(char* &, int);

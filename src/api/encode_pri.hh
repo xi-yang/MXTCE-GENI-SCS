@@ -42,6 +42,7 @@ public:
 	void encodeHeader(u_int8_t , u_int8_t , int );
 	void encodeBoolean(u_int8_t, bool);
 	void encodeInteger(u_int8_t, int );
+	void encodeLong(u_int8_t, u_int64_t);
 	void encodeString(u_int8_t , string );
 	void encodeFloat(u_int8_t , float );
 	void encodeDouble(u_int8_t , double );

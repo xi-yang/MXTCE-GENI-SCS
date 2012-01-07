@@ -86,6 +86,34 @@ int Decode_Pri_Type::decodeInt(char* & decode_ptr, int length)
 
 }
 
+u_int64_t Decode_Pri_Type::decodeLong(char* & decode_ptr, int length)
+{
+	u_int64_t longvalue = 0L;
+	u_int64_t result = 0L;
+	u_int8_t bytevalue=0;
+
+	memcpy(&bytevalue, decode_ptr++, sizeof(char));
+
+	longvalue = bytevalue & 0xFF;
+    if((longvalue & 0x80L)>0)
+	{
+		result = -1;  //result is negative, use -1 (all bit set to 1) as initial value to shift left
+	}
+
+	while(length-- >0)
+	{
+		result = (result<<8) | longvalue;
+
+		if(length>0)
+		{
+			memcpy(&bytevalue, decode_ptr++, sizeof(char));
+			longvalue = bytevalue & 0xFF;
+		}
+	}
+
+	return result;
+
+}
 
 string Decode_Pri_Type::decodeStr(char* & decode_ptr, int length)
 {

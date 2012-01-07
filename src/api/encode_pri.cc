@@ -125,6 +125,32 @@ void Encode_Pri_Type::encodeInteger(u_int8_t pcetype, int value)
 	}
 }
 
+void Encode_Pri_Type::encodeLong(u_int8_t pcetype, u_int64_t value)
+{
+	u_int64_t long_val = value;
+	u_int64_t mask = 0;
+	int intsize = 8;
+	u_int8_t priType = INTEGER_NUM;
+
+	mask = 0x1FFL << ((8*7)-1);
+
+	while((((long_val & mask)==0)||((long_val & mask)==mask)) && intsize>1)
+	{
+		intsize--;
+		long_val <<= 8;
+
+	}
+
+	buff_rem_check(intsize+6);
+	encodeHeader(pcetype, priType, intsize);
+	mask = 0xFFL << (8*7);
+	while ((intsize--)>0)
+	{
+		buff[offset++] = (u_int8_t)((long_val & mask) >> (8 * 7));
+		long_val <<= 8;
+	}
+}
+
 void Encode_Pri_Type::encodeString(u_int8_t pceType, string value)
 {
 	string str = value;

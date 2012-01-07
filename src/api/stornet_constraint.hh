@@ -16,12 +16,12 @@ protected:
 	string co_schedule_request_id;
 	u_int32_t start_time;
 	u_int32_t end_time;
-	u_int32_t min_bandwidth;
+	u_int64_t min_bandwidth;
 	u_int32_t max_num_of_alt_paths;
 	bool bandwidth_avai_graph;
 	bool contiguous_vlan;
 	u_int32_t max_duration;
-	u_int32_t max_bandwidth;
+	u_int64_t max_bandwidth;
 	u_int32_t data_size_bytes;
 
 public:
@@ -37,11 +37,11 @@ public:
 		this->co_schedule_request_id = "";
 		this->start_time = 0;
 		this->end_time = 0;
-		this->min_bandwidth = 0;
+		this->min_bandwidth = 0L;
 		this->max_num_of_alt_paths = 0;
 		this->bandwidth_avai_graph = false;
 		this->contiguous_vlan = false;
-		this->max_bandwidth = 0;
+		this->max_bandwidth = 0L;
 		this->max_duration = 0;
 		this->data_size_bytes = 0;
 
@@ -56,8 +56,8 @@ public:
 	void setEndtime(u_int32_t t_end_time) {this->end_time = t_end_time;}
 	u_int32_t getEndtime() {return this->end_time;}
 
-	void setMinbandwidth(u_int32_t t_min_bandwidth) {this->min_bandwidth = t_min_bandwidth;}
-	u_int32_t getMinbandwidth() {return this->min_bandwidth;}
+	void setMinbandwidth(u_int64_t t_min_bandwidth) {this->min_bandwidth = t_min_bandwidth;}
+	u_int64_t getMinbandwidth() {return this->min_bandwidth;}
 
 	void setMaxnumofaltpaths(u_int32_t t_max_num_of_alt_paths) {this->max_num_of_alt_paths = t_max_num_of_alt_paths;}
 	u_int32_t getMaxnumofaltpaths() {return this->max_num_of_alt_paths;}
@@ -71,8 +71,8 @@ public:
 	void setMaxduration(u_int32_t t_max_duration) {this->max_duration = t_max_duration;}
 	u_int32_t getMaxduration() {return this->max_duration;}
 
-	void setMaxbandwidth(u_int32_t t_max_bandwidth) {this->max_bandwidth = t_max_bandwidth;}
-	u_int32_t getMaxbandwidth() {return this->max_bandwidth;}
+	void setMaxbandwidth(u_int64_t t_max_bandwidth) {this->max_bandwidth = t_max_bandwidth;}
+	u_int64_t getMaxbandwidth() {return this->max_bandwidth;}
 
 	void setDatasizebytes(u_int32_t t_data_size_bytes) {this->data_size_bytes = t_data_size_bytes;}
 	u_int32_t getDatasizebytes() {return this->data_size_bytes;}

@@ -83,6 +83,30 @@ public class PrimitiveDecoder {
 		return result;
 		
 	}
+	
+	long decodeLong(byte[] buff, int offset, int length){
+		byte byteValue = 0;
+		long longValue = 0L;
+		long result = 0L;
+		
+		byteValue = buff[offset++];
+		longValue = byteValue & 0xFF;
+		if((longValue & 0x80L) > 0){
+			result = -1;  //negative value, use -1 (all bits set to 1) to initial value for shift left
+		}
+		
+		while(length-- >0){
+			result = (result<<8) | longValue;
+			
+			if(length > 0){
+				byteValue = buff[offset++];
+				longValue = byteValue & 0xFF;
+			}
+		}
+		
+		return result;
+		
+	}
 
 	
 	String decodeString(byte[] buff, int offset, int length){

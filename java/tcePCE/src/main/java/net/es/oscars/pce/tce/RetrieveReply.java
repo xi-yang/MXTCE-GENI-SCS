@@ -477,12 +477,12 @@ public class RetrieveReply {
 		String suggestedVlanTags;
 		String availableVlanTags;
 		boolean vlanTranslation;
-		int capacity;
+		long capacity;
 		int mtu;
 		String remoteLinkId;
-		int maximumReservableCapacity;
-		int minimumReservableCapacity;
-		int granularity;
+		long maximumReservableCapacity;
+		long minimumReservableCapacity;
+		long granularity;
 		int trafficEngineeringMetric;
 		ReplyLinkContent replyLink = null;
 		List<ReplyLinkContent> linkSet = null;
@@ -588,7 +588,7 @@ public class RetrieveReply {
 				replyLink.setVlanTranslation(vlanTranslation);
 			}else if(type == CodeNumber.PCE_CAPACITY){
 				length = this.decodeLength(priDecoder, buff);
-				capacity = priDecoder.decodeInteger(buff, offset, length);
+				capacity = priDecoder.decodeLong(buff, offset, length);
 
 				offset = offset + length;
 
@@ -602,21 +602,21 @@ public class RetrieveReply {
 				replyLink.setMtu(mtu);
 			}else if(type == CodeNumber.PCE_MAXRESVCAPACITY){
 				length = this.decodeLength(priDecoder, buff);
-				maximumReservableCapacity = priDecoder.decodeInteger(buff, offset, length);
+				maximumReservableCapacity = priDecoder.decodeLong(buff, offset, length);
 
 				offset = offset + length;
 
 				replyLink.setMaximumReservableCapacity(maximumReservableCapacity);					
 			}else if(type == CodeNumber.PCE_MINRESVCAPACITY){
 				length = this.decodeLength(priDecoder, buff);
-				minimumReservableCapacity = priDecoder.decodeInteger(buff, offset, length);
+				minimumReservableCapacity = priDecoder.decodeLong(buff, offset, length);
 
 				offset = offset + length;
 
 				replyLink.setMinimumReservableCapacity(minimumReservableCapacity);
 			}else if(type == CodeNumber.PCE_GRANULARITY){
 				length = this.decodeLength(priDecoder, buff);
-				granularity = priDecoder.decodeInteger(buff, offset, length);
+				granularity = priDecoder.decodeLong(buff, offset, length);
 
 				offset = offset + length;
 

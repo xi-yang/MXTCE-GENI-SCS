@@ -617,12 +617,12 @@ void Apireqmsg_decoder::decode_opitcons_coschedreq(char* & decode_ptr, int total
 	string co_schedule_request_id="";
 	u_int32_t start_time=0;
 	u_int32_t end_time=0;
-	u_int32_t min_bandwidth=0;
+	u_int64_t min_bandwidth=0L;
 	u_int32_t max_num_of_alt_paths=0;
 	bool bandwidth_avai_graph=false;
 	bool contiguous_vlan=false;
 	int max_duration=0;
-	int max_bandwidth=0;
+	u_int64_t max_bandwidth=0L;
 	int data_size_bytes=0;
 
 	Apimsg_stornet_constraint* co_schedule_request = new Apimsg_stornet_constraint();
@@ -651,7 +651,7 @@ void Apireqmsg_decoder::decode_opitcons_coschedreq(char* & decode_ptr, int total
 			break;
 		case PCE_OPT_COSCHREQ_MINBANDWIDTH:
 			length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
-			min_bandwidth = pri_type_decoder.decodeInt(decode_ptr,length);
+			min_bandwidth = pri_type_decoder.decodeLong(decode_ptr,length);
 
 			break;
 		case PCE_OPT_COSCHREQ_MAXNUMOFALTPATHS:
@@ -676,7 +676,7 @@ void Apireqmsg_decoder::decode_opitcons_coschedreq(char* & decode_ptr, int total
 			break;
 		case PCE_OPT_COSCHREQ_MAXBANDWIDTH:
 			length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
-			max_bandwidth = pri_type_decoder.decodeInt(decode_ptr, length);
+			max_bandwidth = pri_type_decoder.decodeLong(decode_ptr, length);
 
 			break;
 		case PCE_OPT_COSCHREQ_DATASIZEBYTES:

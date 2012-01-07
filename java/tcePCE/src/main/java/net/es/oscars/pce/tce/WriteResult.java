@@ -122,21 +122,21 @@ public class WriteResult {
 			}else{
 				linkOri.setRemoteLinkId("urn:ogf:network:domain=*:node=*:port=*:link=*");
 			}
-			int maximumReservableCapacity = linkRes.getMaximumReservableCapacity();
-			linkOri.setMaximumReservableCapacity(Integer.toString(maximumReservableCapacity));
-			int minimumReservableCapacity = linkRes.getMinimumReservableCapacity();
-			linkOri.setMinimumReservableCapacity(Integer.toString(minimumReservableCapacity));
-			int granularity = linkRes.getGranularity();
-			linkOri.setGranularity(Integer.toString(granularity));
+			long maximumReservableCapacity = linkRes.getMaximumReservableCapacity();  
+			linkOri.setMaximumReservableCapacity(Long.toString(maximumReservableCapacity));
+			long minimumReservableCapacity = linkRes.getMinimumReservableCapacity();
+			linkOri.setMinimumReservableCapacity(Long.toString(minimumReservableCapacity));
+			long granularity = linkRes.getGranularity();
+			linkOri.setGranularity(Long.toString(granularity));
 			int trafficEngineeringMetric = linkRes.getTrafficEngineeringMetric();
 			linkOri.setTrafficEngineeringMetric(Integer.toString(trafficEngineeringMetric));
 			String switchingcapType = linkRes.getSwitchingType();
 			switchingCapabilityDescriptors.setSwitchingcapType(switchingcapType);
 			String encodingType = linkRes.getEncodingType();
 			switchingCapabilityDescriptors.setEncodingType(encodingType);
-			int capability = linkRes.getCapacity();
+			long capability = linkRes.getCapacity();
 			
-			linkOri.setCapacity(Integer.toString(capability));
+			linkOri.setCapacity(Long.toString(capability));
 			int interfaceMTU = linkRes.getMtu();
 			switchingCapabilitySpecificInfo.setInterfaceMTU(interfaceMTU);
 			String vlanRangeAvailability = linkRes.getAvailableVlanTags();
@@ -181,21 +181,21 @@ public class WriteResult {
 			}else{
 				linkOri.setRemoteLinkId("urn:ogf:network:domain=*:node=*:port=*:link=*");
 			}
-			int maximumReservableCapacity = linkRes.getMaximumReservableCapacity();
-			linkOri.setMaximumReservableCapacity(Integer.toString(maximumReservableCapacity));
-			int minimumReservableCapacity = linkRes.getMinimumReservableCapacity();
-			linkOri.setMinimumReservableCapacity(Integer.toString(minimumReservableCapacity));
-			int granularity = linkRes.getGranularity();
-			linkOri.setGranularity(Integer.toString(granularity));
+			long maximumReservableCapacity = linkRes.getMaximumReservableCapacity();
+			linkOri.setMaximumReservableCapacity(Long.toString(maximumReservableCapacity));
+			long minimumReservableCapacity = linkRes.getMinimumReservableCapacity();
+			linkOri.setMinimumReservableCapacity(Long.toString(minimumReservableCapacity));
+			long granularity = linkRes.getGranularity();
+			linkOri.setGranularity(Long.toString(granularity));
 			int trafficEngineeringMetric = linkRes.getTrafficEngineeringMetric();
 			linkOri.setTrafficEngineeringMetric(Integer.toString(trafficEngineeringMetric));
 			String switchingcapType = linkRes.getSwitchingType();
 			switchingCapabilityDescriptors.setSwitchingcapType(switchingcapType);
 			String encodingType = linkRes.getEncodingType();
 			switchingCapabilityDescriptors.setEncodingType(encodingType);
-			int capability = linkRes.getCapacity();
+			long capability = linkRes.getCapacity();
 			
-			linkOri.setCapacity(Integer.toString(capability));
+			linkOri.setCapacity(Long.toString(capability));
 			int interfaceMTU = linkRes.getMtu();
 			switchingCapabilitySpecificInfo.setInterfaceMTU(interfaceMTU);
 			String vlanRangeAvailability = linkRes.getAvailableVlanTags();
