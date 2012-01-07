@@ -10,10 +10,17 @@
   
   <groupId>net.es.oscars</groupId>
   <artifactId>tcePCE</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
   <name>tcePCE</name>
   <url>http://maven.apache.org</url>
   
+  <!-- puts all code & libraries in one jar -->
+  <pluginRepositories>
+      <pluginRepository>
+          <id>onejar-maven-plugin.googlecode.com</id>
+          <url>http://onejar-maven-plugin.googlecode.com/svn/mavenrepo</url>
+      </pluginRepository>
+  </pluginRepositories>
+
   <repositories>
     <repository>
         <id>OSCARS</id>
@@ -29,35 +36,35 @@
    <dependency>
         <groupId>net.es.oscars</groupId>
         <artifactId>common-soap</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${oscars.version}</version>
     </dependency>
     
     <!--  OSCARS PCE libraries -->
     <dependency>
         <groupId>net.es.oscars</groupId>
         <artifactId>pce</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${oscars.version}</version>
     </dependency>
     
     <!-- OSCARS utilities -->
     <dependency>
         <groupId>net.es.oscars</groupId>
         <artifactId>utils</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${oscars.version}</version>
     </dependency>
     
     <!-- OSCARS common logging -->
     <dependency>
         <groupId>net.es.oscars</groupId>
         <artifactId>common-logging</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${oscars.version}</version>
     </dependency>
     
     <!-- OSCARS resource manager -->
    <dependency>
         <groupId>net.es.oscars</groupId>
         <artifactId>resourceManager</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${oscars.version}</version>
     </dependency>
   </dependencies>
   
