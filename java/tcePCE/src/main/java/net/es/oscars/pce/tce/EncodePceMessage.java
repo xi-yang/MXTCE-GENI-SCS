@@ -79,7 +79,7 @@ public class EncodePceMessage {
 		int buffLen;
 	    long startTime = userCons.getStartTime();
 	    long endTime = userCons.getEndTime();
-	    int bandwidth = (userCons.getBandwidth()) * 1000000; //convert from MB to Bytes
+	    long bandwidth = (userCons.getBandwidth()) * 1000000; //convert from MB to Bytes
 	    PathInfo pathInf = userCons.getPathInfo();
 	    String pathSetupMode = pathInf.getPathSetupMode();
 	    String pathType = pathInf.getPathType();
@@ -91,7 +91,7 @@ public class EncodePceMessage {
 	    priEncoder.encodeString(PCE_GRI, gri);
 	    priEncoder.encodeLong(PCE_STARTTIME, startTime);
 	    priEncoder.encodeLong(PCE_ENDTIME, endTime);
-	    priEncoder.encodeInteger(PCE_BANDWIDTH, bandwidth);	    
+	    priEncoder.encodeLong(PCE_BANDWIDTH, bandwidth);	    
 	    
 	    if(pathInf.getLayer2Info()!=null){
 	    	Layer2Info layer2Info = pathInf.getLayer2Info();
@@ -161,7 +161,7 @@ public class EncodePceMessage {
 		int buffLen;
 	    long startTime = resvCons.getStartTime();
 	    long endTime = resvCons.getEndTime();
-	    int bandwidth = resvCons.getBandwidth();
+	    long bandwidth = (resvCons.getBandwidth()) * 1000000;
 	    PathInfo pathInf = resvCons.getPathInfo();
 	    
 	    if((pathInf.getLayer2Info()!=null) && (pathInf.getLayer3Info()!=null)){

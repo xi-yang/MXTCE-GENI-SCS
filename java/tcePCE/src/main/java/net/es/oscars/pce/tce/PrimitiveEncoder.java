@@ -152,7 +152,7 @@ public class PrimitiveEncoder {
 		
 		buffRemCheck(intsize+6);
 		encodeHeader(pceType, priType, intsize);
-		mask = 0xFF << (8 * 7);		
+		mask = 0xFFL << (8 * 7);		
 		while ((intsize--) > 0){
 			
 			buff[offset++] = (byte) ((longInt & mask) >> (8 * 7));

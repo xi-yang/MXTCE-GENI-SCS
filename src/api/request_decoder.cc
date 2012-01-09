@@ -81,7 +81,7 @@ void Apireqmsg_decoder::decode_usercons(char* & decode_ptr, int total_len, Apims
 	int length=0;
 	int starttime=0;
 	int endtime=0;
-	int bandwidth=0;
+	u_int64_t bandwidth=0;
     //float bandwidth=0;
     //double bandwidth=0;
 	int src_ip_port=0;
@@ -127,7 +127,7 @@ void Apireqmsg_decoder::decode_usercons(char* & decode_ptr, int total_len, Apims
 			break;
 		case PCE_BANDWIDTH:
 			length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
-			bandwidth = pri_type_decoder.decodeInt(decode_ptr,length);
+			bandwidth = pri_type_decoder.decodeLong(decode_ptr,length);
 
 			break;
 		case PCE_PATHSETUPMODEL:
@@ -280,7 +280,7 @@ void Apireqmsg_decoder::decode_resvcons(char* & decode_ptr, int total_len, Apims
 	int length=0;
 	int starttime=0;
 	int endtime=0;
-	int bandwidth=0;
+	u_int64_t bandwidth=0;
 
     char bytevalue=0;
 	int intvalue=0;
@@ -327,7 +327,7 @@ void Apireqmsg_decoder::decode_resvcons(char* & decode_ptr, int total_len, Apims
 			break;
 		case PCE_BANDWIDTH:
 			length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
-			bandwidth = pri_type_decoder.decodeInt(decode_ptr,length);
+			bandwidth = pri_type_decoder.decodeLong(decode_ptr,length);
 
 			break;
 		case PCE_PATH_ID:

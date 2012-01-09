@@ -9,7 +9,7 @@ protected:
 	string gri;
 	u_int32_t start_time;
 	u_int32_t end_time;
-	u_int32_t bandwidth;
+	u_int64_t bandwidth;
 	string layer;
 	string path_setup_model;
 	string path_type;
@@ -39,7 +39,7 @@ public:
 		this->gri = "";
 		this->start_time = 0;
 		this->end_time = 0;
-		this->bandwidth = 0;
+		this->bandwidth = 0L;
 		this->layer = "";
 		this->path_setup_model = "";
 		this->path_type = "";
@@ -65,8 +65,8 @@ public:
 	void setEndtime(u_int32_t t_end_time) {this->end_time = t_end_time;}
 	u_int32_t getEndtime() {return this->end_time;}
 
-	void setBandwidth(u_int32_t t_bandwidth) {this->bandwidth = t_bandwidth;}
-	u_int32_t getBandwidth() {return this->bandwidth;}
+	void setBandwidth(u_int64_t t_bandwidth) {this->bandwidth = t_bandwidth;}
+	u_int64_t getBandwidth() {return this->bandwidth;}
 
 	void setLayer(string& t_layer) {this->layer = t_layer;}
 	string& getLayer() {return this->layer;}
