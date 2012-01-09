@@ -132,7 +132,7 @@ void Encode_Pri_Type::encodeLong(u_int8_t pcetype, u_int64_t value)
 	int intsize = 8;
 	u_int8_t priType = INTEGER_NUM;
 
-	mask = 0x1FFL << ((8*7)-1);
+	mask = 0x1FFLLU << ((8*7)-1);
 
 	while((((long_val & mask)==0)||((long_val & mask)==mask)) && intsize>1)
 	{
@@ -143,7 +143,7 @@ void Encode_Pri_Type::encodeLong(u_int8_t pcetype, u_int64_t value)
 
 	buff_rem_check(intsize+6);
 	encodeHeader(pcetype, priType, intsize);
-	mask = 0xFFL << (8*7);
+	mask = 0xFFLLU << (8*7);
 	while ((intsize--)>0)
 	{
 		buff[offset++] = (u_int8_t)((long_val & mask) >> (8 * 7));
