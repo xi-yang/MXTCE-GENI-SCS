@@ -2,15 +2,15 @@ package net.es.oscars.pce.tce.optionalConstraint.stornet;
 
 public class BagSegmentField {
 	
-	protected int segmentBandwidth;
+	protected long segmentBandwidth;
 	protected int segmentStartTime;
 	protected int segmentEndTime;
 	
-	public int getSegmentBandwidth(){
+	public long getSegmentBandwidth(){
 		return this.segmentBandwidth;
 	}
 	
-	public void setSegmentBandwidth(int value){
+	public void setSegmentBandwidth(long value){
 		this.segmentBandwidth = value;
 	}
 	

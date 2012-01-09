@@ -490,7 +490,7 @@ public class RetrieveReply {
 		boolean pathEndFlag = false;
 		List<ReplyBagSegmentContent> bags = null;
 		ReplyBagSegmentContent bagSegment = null;
-		int bagBandwidth;
+		long bagBandwidth;
 		int bagStartTime;
 		int bagEndTime;
 		
@@ -630,7 +630,7 @@ public class RetrieveReply {
 				replyLink.setTrafficEngineeringMetric(trafficEngineeringMetric);
 			}else if(type == CodeNumber.PCE_OPT_BAG_BANDWIDTH){				
 				length = this.decodeLength(priDecoder, buff);
-				bagBandwidth = priDecoder.decodeInteger(buff, offset, length);
+				bagBandwidth = priDecoder.decodeLong(buff, offset, length);
 				
 				offset = offset + length;
 				

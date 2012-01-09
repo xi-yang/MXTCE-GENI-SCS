@@ -2,15 +2,15 @@ package net.es.oscars.pce.tce;
 
 public class ReplyBagSegmentContent {
 	
-	protected int bandwidth;
+	protected long bandwidth;
 	protected int startTime;
 	protected int endTime;
 	
-	public int getBandwidth(){
+	public long getBandwidth(){
 		return this.bandwidth;
 	}
 	
-	public void setBandwidth(int value){
+	public void setBandwidth(long value){
 		this.bandwidth = value;
 	}
 	

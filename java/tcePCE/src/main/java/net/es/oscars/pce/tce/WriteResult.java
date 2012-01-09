@@ -337,7 +337,7 @@ public class WriteResult {
 	}
 	
 	protected void writeBagDetail(ReplyBagSegmentContent bagSegmentContentReply, BagSegmentField bagSegmentField){
-		int bandwidth;
+		long bandwidth;
 		int startTime;
 		int endTime;
 		bandwidth = bagSegmentContentReply.getBandwidth();

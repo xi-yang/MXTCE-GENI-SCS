@@ -147,7 +147,7 @@ public class BuildXml {
 					bagInfoNode.appendChild(bagSegmentNode);
 
 					Element segmentBandwidthNode = document.createElement("segmentBandwidth");
-					Text segmentBandwidthValue = document.createTextNode(Integer.toString(bagSegmentField.getSegmentBandwidth()));
+					Text segmentBandwidthValue = document.createTextNode(Long.toString(bagSegmentField.getSegmentBandwidth()));
 					segmentBandwidthNode.appendChild(segmentBandwidthValue);
 					bagSegmentNode.appendChild(segmentBandwidthNode);
 
