@@ -180,7 +180,7 @@ public class ParseXml {
 						   coScheReq.setEndTime(Long.valueOf(endTime));
 					   }
 					   if(minBandwidth!=null){
-						   coScheReq.setMinBandwidth(Long.valueOf(minBandwidth));
+						   coScheReq.setMinBandwidth((Long.valueOf(minBandwidth))*1000000);
 					   }
 					   if(maxNumOfAltPaths!=null){
 						   coScheReq.setMaxNumOfAltPaths(Integer.valueOf(maxNumOfAltPaths));
@@ -195,7 +195,7 @@ public class ParseXml {
 						   coScheReq.setMaxDuration(Integer.valueOf(maxDuration));
 					   }
 					   if(maxBandwidth!=null){
-						   coScheReq.setMaxBandwidth(Long.valueOf(maxBandwidth));
+						   coScheReq.setMaxBandwidth((Long.valueOf(maxBandwidth))*1000000);
 					   }
 					   if(dataSizeBytes!=null){
 						   coScheReq.setDataSizeBytes(Long.valueOf(dataSizeBytes));
