@@ -446,7 +446,7 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
         if (optionalConstraint != null && optionalConstraint.length() > 0) {
             optionalConstraint = optionalConstraint.replaceAll("_starttime_", Long.toString(times.get("start")));
             optionalConstraint = optionalConstraint.replaceAll("_endtime_", Long.toString(times.get("end")));
-            optionalConstraint = optionalConstraint.replaceAll("_bandwidth_", Integer.toString(bandwidth));
+            optionalConstraint = optionalConstraint.replaceAll("_bandwidth_", Long.toString((long)bandwidth*1000000));
             OptionalConstraintValue optValue = new OptionalConstraintValue();
             optValue.setStringValue(optionalConstraint);
             OptionalConstraintType optType = new OptionalConstraintType();
