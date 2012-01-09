@@ -434,8 +434,8 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
         path = new CtrlPlanePathContent();
         String pathId = "path-"+ UUID.randomUUID().toString();
         path.setId(pathId);
-        CtrlPlaneHopContent srcHop = makeEdgeHop(src, vlan.toString());
-        CtrlPlaneHopContent dstHop = makeEdgeHop(dst, vlan.toString());
+        CtrlPlaneHopContent srcHop = makeEdgeHop(src, srcVlan);
+        CtrlPlaneHopContent dstHop = makeEdgeHop(dst, dstVlan);
         path.getHop().add(srcHop);
         path.getHop().add(dstHop);
         pathInfo.setPath(path);
