@@ -51,6 +51,10 @@ using namespace std;
 #define VTAG_UNTAGGED 4096
 #endif
 
+int wavegrid_50g_to_tag(char ch, int num);
+
+void wavegrid_tag_to_50g(char* buf, int tag);
+
 class ConstraintTagSet
 {
 private:
@@ -158,6 +162,28 @@ public:
                 }
                 else if (n == 2)
                 {
+                    for (int t = low; t <= high; t++)
+                        AddTag(t);
+                }
+            }
+        }
+    void LoadRangeString_WaveGrid_50GHz(string rangeStr)
+        {
+            char buf[256];
+            strncpy(buf, rangeStr.c_str(), 256);
+            for (char* ptr = strtok(buf, ", \t\n"); ptr; ptr = strtok(NULL,  ", \t\n"))
+            {
+                char cl, ch;
+                int low, high;
+                int n = sscanf(ptr, "%c%d-%c%d", &cl, &low, &ch, &high);
+                if (n == 2) 
+                {
+                    AddTag(wavegrid_50g_to_tag(cl, low));
+                }
+                else if (n == 4)
+                {
+                    low = wavegrid_50g_to_tag(cl, low);
+                    high = wavegrid_50g_to_tag(ch, high); 
                     for (int t = low; t <= high; t++)
                         AddTag(t);
                 }

@@ -192,6 +192,24 @@ time_t get_mtime(const char *path)
 }
 
 
+// C1 = 1, H1 = 2 ...
+int wavegrid_50g_to_tag(char ch, int num)
+{
+    int half = 0;
+    if (ch=='h' || ch=='H')
+        half = 1;
+    return ((num)*2+half-1);
+}
+
+void wavegrid_tag_to_50g(char* buf, int tag)
+{
+    if (tag%2==0)
+        snprintf(buf, 5, "H%d", (tag+1)/2);
+    else
+        snprintf(buf, 5, "C%d", (tag+1)/2);
+}
+
+
 void StripXmlString(string& str, xmlChar* val) 
 {
     char cstr[512];

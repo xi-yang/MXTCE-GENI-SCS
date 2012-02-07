@@ -392,7 +392,7 @@ void TLink::ProceedByUpdatingTimeslots(ConstraintTagSet &head_timeslotset, Const
 
 bool TLink::CrossingRegionBoundary(TSpec& tspec, TLink* next_link)
 {
-    // link may have multiple ISCDs. But as u_int64_t as both link and next links can accomodarte the spec, no crossing is required on this link.
+    // link may have multiple ISCDs. But as long as both this and next links can accomodarte the spec, no crossing is required on this link.
     if (next_link)
     {
         bool compatibleTspec = false;
@@ -603,6 +603,21 @@ bool TLink::GetNextRegionTspec(TSpec& tspec, TLink* next_link)
     }
 
     return false;
+}
+
+
+void TLink::InitNextRegionTagSet(TSpec& tspec, ConstraintTagSet &head_waveset)
+{
+    list<ISCD*>::iterator it_iscd;
+    for (it_iscd = this->GetSwCapDescriptors().begin(); it_iscd != this->GetSwCapDescriptors().end(); it_iscd++)
+    {
+        if ((*it_iscd)->switchingType == tspec.SWtype && (*it_iscd)->encodingType == tspec.ENCtype)
+        {
+            head_waveset = ((ISCD_LSC*)(*it_iscd))->availableWavelengths;
+            return;
+        }
+    }
+    head_waveset.AddTag(ANY_TAG);
 }
 
 
@@ -1072,6 +1087,9 @@ bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_in
         if (L->CrossingRegionBoundary(TWDATA(L->GetLocalEnd())->tspec, nextL))
         {
             L->GetNextRegionTspec(TWDATA(nextL->GetLocalEnd())->tspec, nextL);
+            // handling LSC region entry case only for now
+            if (TWDATA(nextL->GetLocalEnd())->tspec.SWtype == LINK_IFSWCAP_LSC)
+                L->InitNextRegionTagSet(TWDATA(nextL->GetLocalEnd())->tspec, head_waveset);
         }       
         else
         {

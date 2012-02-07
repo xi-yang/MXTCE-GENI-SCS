@@ -468,7 +468,7 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
     string timeslotRange = "";
     bool tsiEnabled = true;
     bool vcatEnabled = true;
-    WDMChannelRepresentationType channelRepresentation = ITU_CHANNEL_GRID;
+    WDMChannelRepresentationType channelRepresentation = ITU_GRID_50GHZ;
     string wavelengthRange = "";
     bool wavelengthConversion = false;
     xmlNodePtr vendorSpecInfo = NULL;
@@ -580,12 +580,14 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
                         {
                             string typeStr;
                             StripXmlString(typeStr, xmlNodeGetContent(specSubLevel));
-                            if (strncasecmp(typeStr.c_str(), "itu-channel-grid", 3) == 0)
-                                channelRepresentation = ITU_CHANNEL_GRID;
-                            else if (strncasecmp(typeStr.c_str(), "frequency-ghz", 3) == 0)
+                            if (strncasecmp(typeStr.c_str(), "frequency-ghz", 3) == 0)
                                 channelRepresentation = FREQUENCY_GHZ;
                             else if (strncasecmp(typeStr.c_str(), "wavelength-nm", 3) == 0)
                                 channelRepresentation = WAVELENGTH_NM;
+                            else if (strncasecmp(typeStr.c_str(), "itu-grid-100ghz", 12) == 0)
+                                channelRepresentation = ITU_GRID_100GHZ;
+                            else if (strncasecmp(typeStr.c_str(), "itu-grid-50ghz", 11) == 0)
+                                channelRepresentation = ITU_GRID_50GHZ;
                         }
                         else if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "wavelengthRangeSet", 18) == 0)
                         {
@@ -653,7 +655,10 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
         case LINK_IFSWCAP_LSC:
             iscd = new ISCD_LSC(capacity);
             ((ISCD_LSC*)iscd)->channelRepresentation = channelRepresentation;
-            ((ISCD_LSC*)iscd)->availableWavelengths.LoadRangeString(wavelengthRange);
+            if (channelRepresentation == ITU_GRID_50GHZ)// default
+                ((ISCD_LSC*)iscd)->availableWavelengths.LoadRangeString_WaveGrid_50GHz(wavelengthRange);
+            else
+                ((ISCD_LSC*)iscd)->availableWavelengths.LoadRangeString(wavelengthRange);
             ((ISCD_LSC*)iscd)->wavelengthConversion = wavelengthConversion;
             break;
         default:

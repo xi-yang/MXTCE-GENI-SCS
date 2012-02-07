@@ -250,6 +250,7 @@ public:
     void ProceedByUpdatingTimeslots(ConstraintTagSet &head_timeslotset, ConstraintTagSet &next_timeslotset);
     bool CrossingRegionBoundary(TSpec& tspec, TLink* next_link=NULL);
     bool GetNextRegionTspec(TSpec& tspec, TLink* next_link=NULL);
+    void InitNextRegionTagSet(TSpec& tspec, ConstraintTagSet &head_waveset);
     // operators
     bool operator==(TLink& aLink) {
         if (this->port == NULL && aLink.port != NULL 

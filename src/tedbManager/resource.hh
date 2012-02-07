@@ -442,9 +442,10 @@ public:
 #endif
 
 typedef enum {
-    ITU_CHANNEL_GRID = 1,
-    FREQUENCY_GHZ = 2,
-    WAVELENGTH_NM = 3
+    FREQUENCY_GHZ = 1,
+    WAVELENGTH_NM = 2,
+    ITU_GRID_100GHZ = 3,
+    ITU_GRID_50GHZ = 4,
 } WDMChannelRepresentationType;
 
 class ISCD_LSC: public ISCD
@@ -455,7 +456,7 @@ public:
     ConstraintTagSet assignedWavelengths;
     bool wavelengthConversion;
 
-    ISCD_LSC(u_int64_t bw): ISCD(LINK_IFSWCAP_LSC, LINK_IFSWCAP_ENC_LAMBDA, bw), channelRepresentation(ITU_CHANNEL_GRID), availableWavelengths(MAX_WAVE_NUM), 
+    ISCD_LSC(u_int64_t bw): ISCD(LINK_IFSWCAP_LSC, LINK_IFSWCAP_ENC_LAMBDA, bw), channelRepresentation(ITU_GRID_50GHZ), availableWavelengths(MAX_WAVE_NUM), 
         assignedWavelengths(MAX_WAVE_NUM), wavelengthConversion(false) { }
     virtual ~ISCD_LSC() { }
     virtual ISCD* Duplicate(){
