@@ -204,9 +204,9 @@ int wavegrid_50g_to_tag(char ch, int num)
 void wavegrid_tag_to_50g(char* buf, int tag)
 {
     if (tag%2==0)
-        snprintf(buf, 5, "H%d", (tag+1)/2);
+        snprintf(buf, 4, "H%d", (tag+1)/2);
     else
-        snprintf(buf, 5, "C%d", (tag+1)/2);
+        snprintf(buf, 4, "C%d", (tag+1)/2);
 }
 
 

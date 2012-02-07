@@ -379,7 +379,7 @@ public:
 
 #ifndef MAX_VLAN_NUM
 #define MAX_VLAN_NUM 4096
-#define VTAG_UNTAGGED 4096
+#define VTAG_UNTAGGED MAX_VLAN_NUM
 #endif
 
 class ISCD_L2SC: public ISCD
@@ -441,6 +441,7 @@ public:
 
 #ifndef MAX_WAVE_NUM
 #define MAX_WAVE_NUM 256 //64: 10G with OPVCX; 40: WDM 
+#define WAVE_TUNABLE MAX_WAVE_NUM
 #endif
 
 typedef enum {

@@ -48,7 +48,12 @@ using namespace std;
 
 #ifndef MAX_VLAN_NUM
 #define MAX_VLAN_NUM 4096
-#define VTAG_UNTAGGED 4096
+#define VTAG_UNTAGGED MAX_VLAN_NUM
+#endif
+
+#ifndef MAX_WAVE_NUM
+#define MAX_WAVE_NUM 256
+#define WAVE_TUNABLE MAX_WAVE_NUM
 #endif
 
 int wavegrid_50g_to_tag(char ch, int num);
@@ -149,6 +154,16 @@ public:
         {
             char buf[256];
             strncpy(buf, rangeStr.c_str(), 256);
+            if (strncasecmp(buf, "any", 3) == 0)
+            {                
+                AddTag(ANY_TAG);
+                return;
+            }
+            if (strncasecmp(buf, "untagged", 5) == 0)
+            {                
+                AddTag(VTAG_UNTAGGED);
+                return;
+            }
             for (char* ptr = strtok(buf, ", \t\n"); ptr; ptr = strtok(NULL,  ", \t\n"))
             {
                 int low, high;
@@ -171,6 +186,11 @@ public:
         {
             char buf[256];
             strncpy(buf, rangeStr.c_str(), 256);
+            if (strncasecmp(buf, "tunable", 5) == 0 || strncasecmp(buf, "any", 3) == 0)
+            {                
+                AddTag(ANY_TAG);
+                return;
+            }
             for (char* ptr = strtok(buf, ", \t\n"); ptr; ptr = strtok(NULL,  ", \t\n"))
             {
                 char cl, ch;
@@ -411,7 +431,75 @@ public:
                 rangeStr = (const char*)buf;
             return rangeStr;
         }
-};
+        string GetRangeString_WaveGrid_50GHz() 
+            { 
+                string rangeStr = "";
+                char buf[128];
+                char buf2[16];
+                char buf3[4];
+                if (numBits == MAX_WAVE_NUM && HasTag(WAVE_TUNABLE))
+                {
+                    strcpy(buf, "tunable");
+                    rangeStr = (const char*)buf;
+                    return rangeStr;
+                }
+                else
+                    buf[0] = 0;
+                int i, i_start, i_end;
+                for (i = 1, i_start = 1, i_end = 0; i <= numBits; i++)
+                {
+                    if (numBits == MAX_VLAN_NUM && i == numBits)
+                        break;
+                    if (HasTag(i))
+                    {
+                        if (i_end < i_start)
+                        {
+                            wavegrid_tag_to_50g(buf3, i);
+                            sprintf(buf2, ",%s", buf3);
+                            strcat(buf, buf2);
+                            i_start = i;
+                        }
+                        if (i == numBits)
+                        {
+                            if (i - i_start >= 2) 
+                            {
+                                wavegrid_tag_to_50g(buf3, i);
+                                sprintf(buf2, "-%s", buf3);
+                                strcat(buf, buf2);
+                            }
+                            else if (i - i_start == 1) 
+                            {
+                                wavegrid_tag_to_50g(buf3, i);
+                                sprintf(buf2,",%s", buf3);
+                                strcat(buf, buf2);
+                            }
+                        }
+                        i_end = i;
+                    }
+                    else
+                    {
+                        if (i_end - i_start >= 2)
+                        {
+                            wavegrid_tag_to_50g(buf3, i_end);
+                            sprintf(buf2, "-%s", buf3);
+                            strcat(buf, buf2);
+                        }
+                        else if (i_end - i_start == 1)
+                        {
+                            wavegrid_tag_to_50g(buf3, i_end);
+                            sprintf(buf2, ",%s", buf3);
+                            strcat(buf, buf2);
+                        }
+                        i_end = 0;
+                    }
+                }
+                if (buf[0] == ',')
+                    rangeStr = (const char*)buf+1;
+                else 
+                    rangeStr = (const char*)buf;
+                return rangeStr;
+            }
+    };
 
 
 extern "C"

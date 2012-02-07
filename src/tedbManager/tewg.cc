@@ -1488,19 +1488,25 @@ void TPath::LogDump()
                 L->GetName().c_str());
             strcat(buf, str);
             list<ISCD*>::iterator it;
-            ISCD_L2SC* iscd = NULL;
+            ISCD_L2SC* iscd_l2sc = NULL;
+            ISCD_LSC* iscd_lsc = NULL;
             for (it = L->GetSwCapDescriptors().begin(); it !=  L->GetSwCapDescriptors().end(); it++)
             {
-                if ((*it)->switchingType != LINK_IFSWCAP_L2SC || (*it)->encodingType != LINK_IFSWCAP_ENC_ETH)
-                    continue;
-                iscd = (ISCD_L2SC*)(*it);
-                break;
+                if ((*it)->switchingType == LINK_IFSWCAP_L2SC && (*it)->encodingType == LINK_IFSWCAP_ENC_ETH)
+                    iscd_l2sc = (ISCD_L2SC*)(*it);
+                else if ((*it)->switchingType == LINK_IFSWCAP_LSC)
+                    iscd_lsc = (ISCD_LSC*)(*it);
             }
-            if (iscd)
+            if (iscd_l2sc)
             {
-                snprintf(str, 256, " (suggestedVlan:%s) ", iscd->suggestedVlanTags.GetRangeString().c_str());
+                snprintf(str, 256, " (suggestedVlan:%s) ", iscd_l2sc->suggestedVlanTags.GetRangeString().c_str());
                 strcat(buf, str);
             }    
+            if (iscd_lsc && iscd_lsc->channelRepresentation == ITU_GRID_50GHZ) // for test 
+            {
+                snprintf(str, 256, " (suggestedWave:%s) ", iscd_lsc->suggestedWavelengths.GetRangeString_WaveGrid_50GHz().c_str());
+                strcat(buf, str);
+            }
         }
         list<TSchedule*>::iterator itS = this->schedules.begin();
         if (itS != this->schedules.end())
