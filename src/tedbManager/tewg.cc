@@ -1006,7 +1006,7 @@ bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_in
     ConstraintTagSet head_vtagset_trans(MAX_VLAN_NUM), next_vtagset_trans(MAX_VLAN_NUM);
     ConstraintTagSet init_vtagset(MAX_VLAN_NUM);
     bool no_vtag = false, no_vtag_trans = false;
-    ConstraintTagSet head_waveset(MAX_WAVE_NUM, 190000, 100), next_waveset(MAX_WAVE_NUM, 190000, 100);
+    ConstraintTagSet head_waveset(MAX_WAVE_NUM), next_waveset(MAX_WAVE_NUM);
 
     if (path.size() == 0)
         return false;
