@@ -1090,7 +1090,7 @@ bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_in
         if (no_vtag && no_vtag_trans)
             return false;
         // we currently do not consider wavelength translation
-        if (!head_waveset.IsEmpty())
+        if (TWDATA(L->GetLocalEnd())->tspec.SWtype == LINK_IFSWCAP_LSC && !head_waveset.IsEmpty())
         {
             L->ProceedByUpdatingWaves(head_waveset, next_waveset, true);
             if (next_waveset.IsEmpty())
