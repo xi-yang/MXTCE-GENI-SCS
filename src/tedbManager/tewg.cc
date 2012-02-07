@@ -362,15 +362,34 @@ void TLink::ProceedByUpdatingVtags(ConstraintTagSet &head_vtagset, ConstraintTag
 
 
 //$$$$ only constrain the forward direction (not checking the reverse)
-void TLink::ProceedByUpdatingWaves(ConstraintTagSet &head_waveset, ConstraintTagSet &next_waveset)
+void TLink::ProceedByUpdatingWaves(ConstraintTagSet &head_waveset, ConstraintTagSet &next_waveset, bool do_conversion)
 {
     next_waveset.Clear();
+    list<ISCD*>::iterator it;
     bool any_wave_ok = head_waveset.HasAnyTag();
 
-    // TODO: vendor specific wavelength constraint handling
-    //load up next_wavset from link
+    // Add Wavelength tags available for this link.
+    for (it = swCapDescriptors.begin(); it != swCapDescriptors.end(); it++)
+    {
+         // The non-L2SC layers are temoperaty here and yet to remove.
+        if ((*it)->switchingType != LINK_IFSWCAP_LSC)
+            continue;
+        ISCD_LSC* iscd = (ISCD_LSC*)(*it);
+        if (iscd->assignedWavelengths.Size()+iscd->availableWavelengths.Size() > 0)
+        {
+            next_waveset.AddTags(iscd->availableWavelengths.TagBitmask(), MAX_VLAN_NUM);
+        }
+        // Convert wavelength only if do_conversion==true and iscd->wavelengthConversion==true
+        do_conversion = (do_conversion && iscd->wavelengthConversion);
+        // there should be only one ISCD_LSC 
+        break;
+    }
 
-    if (!any_wave_ok)
+    // TODO: vendor specific wavelength constraint handling
+
+     if (do_conversion)
+        ; //next_waveset unchanged after wavelength conversion, or
+     else if (!any_wave_ok)
         next_waveset.Intersect(head_waveset);
 }
 
@@ -1073,7 +1092,7 @@ bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_in
         // we currently do not consider wavelength translation
         if (!head_waveset.IsEmpty())
         {
-            L->ProceedByUpdatingWaves(head_waveset, next_waveset);
+            L->ProceedByUpdatingWaves(head_waveset, next_waveset, true);
             if (next_waveset.IsEmpty())
                 return false;
             head_waveset = next_waveset;
