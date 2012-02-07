@@ -414,7 +414,7 @@ void Action_ComputeKSP::Process()
                 }
             }
             feasiblePaths->push_back(feasiblePath);
-            feasiblePath->UpdateLayerSpecInfo(ingTSS.GetVlanSet().LowestTag(), egrTSS.GetVlanSet().LowestTag());
+            feasiblePath->UpdateLayerSpecInfo(ingTSS, egrTSS);
             itP++;
         }
     }

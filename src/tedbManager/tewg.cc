@@ -1169,11 +1169,15 @@ bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_in
     return true;
 }
 
-void TPath::UpdateLayerSpecInfo(u_int32_t srcVtag, u_int32_t dstVtag)
+void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS)
 {
     TLink* L;
     list<TLink*>::iterator iterL;
-
+    u_int32_t srcVtag = ingTSS.GetVlanSet().LowestTag();
+    u_int32_t dstVtag = egrTSS.GetVlanSet().LowestTag();
+    u_int32_t srcWave = (ingTSS.GetWavelengthSet().IsEmpty()? 0 : ingTSS.GetWavelengthSet().LowestTag());
+    u_int32_t dstWave = (egrTSS.GetWavelengthSet().IsEmpty()? 0 : egrTSS.GetWavelengthSet().LowestTag());
+    
     //// update cross-layer info -- strip unused ISCD(s) and IACD(s) from final path hops
     for (iterL = path.begin(); iterL != path.end(); iterL++)
     {
@@ -1279,6 +1283,7 @@ void TPath::UpdateLayerSpecInfo(u_int32_t srcVtag, u_int32_t dstVtag)
         ++iterL;
     }    
 
+
     //// update Layer2 VLANs    
     // TODO: vlanRange instead of single tags ?  -- (treat  availableVtagRange different ?)
     bool forwardContinued = true;
@@ -1311,33 +1316,96 @@ void TPath::UpdateLayerSpecInfo(u_int32_t srcVtag, u_int32_t dstVtag)
             forwardContinued = false;
         }
     }
-    if (dstVtag == srcVtag)
-        return;
-    // assign dstVtag to suggestedVlanTags along the path in reverse direction
-    list<TLink*>::reverse_iterator iterR;
-    for (iterR = path.rbegin(); iterR != path.rend(); iterR++)
+    if (dstVtag != srcVtag)
     {
-        L = *iterR;
-        list<ISCD*>::iterator it;
-        ISCD_L2SC* iscd = NULL;
-        for (it = L->GetSwCapDescriptors().begin(); it !=  L->GetSwCapDescriptors().end(); it++)
+        // assign dstVtag to suggestedVlanTags along the path in reverse direction
+        list<TLink*>::reverse_iterator iterR;
+        for (iterR = path.rbegin(); iterR != path.rend(); iterR++)
         {
-            if ((*it)->switchingType != LINK_IFSWCAP_L2SC || (*it)->encodingType != LINK_IFSWCAP_ENC_ETH)
+            L = *iterR;
+            list<ISCD*>::iterator it;
+            ISCD_L2SC* iscd = NULL;
+            for (it = L->GetSwCapDescriptors().begin(); it !=  L->GetSwCapDescriptors().end(); it++)
+            {
+                if ((*it)->switchingType != LINK_IFSWCAP_L2SC || (*it)->encodingType != LINK_IFSWCAP_ENC_ETH)
+                    continue;
+                iscd = (ISCD_L2SC*)(*it);
+                break;
+            }
+            if (!iscd)
                 continue;
-            iscd = (ISCD_L2SC*)(*it);
-            break;
+            if (iterR == path.rbegin())
+            {
+                iscd->availableVlanTags.Clear();
+                iscd->suggestedVlanTags.Clear();
+            }
+            else if (!iscd->suggestedVlanTags.IsEmpty()|| iscd->availableVlanTags.HasTag(dstVtag))
+                break;
+            iscd->availableVlanTags.AddTag(dstVtag);
+            iscd->suggestedVlanTags.AddTag(dstVtag);
         }
-        if (!iscd)
-            continue;
-        if (iterR == path.rbegin())
+    }
+
+    //// update LSC wavelengths
+    if (srcWave != 0 && dstWave != 0) {
+        forwardContinued = true;
+        for (iterL = path.begin(); iterL != path.end(); iterL++)
         {
-            iscd->availableVlanTags.Clear();
-            iscd->suggestedVlanTags.Clear();
+            L = *iterL;
+            list<ISCD*>::iterator it;
+            ISCD_LSC* iscd = NULL;
+            for (it = L->GetSwCapDescriptors().begin(); it !=  L->GetSwCapDescriptors().end(); it++)
+            {
+                if ((*it)->switchingType != LINK_IFSWCAP_LSC)
+                    continue;
+                iscd = (ISCD_LSC*)(*it);
+                break;
+            }
+            if (!iscd)
+                continue;
+            if (forwardContinued && iscd->availableWavelengths.HasTag(srcWave))
+            {
+                iscd->availableWavelengths.Clear();
+                iscd->suggestedWavelengths.Clear();
+                iscd->availableWavelengths.AddTag(srcWave);
+                iscd->suggestedWavelengths.AddTag(srcWave);
+            }
+            else 
+            {
+                iscd->availableWavelengths.Clear();
+                iscd->suggestedWavelengths.Clear();
+                forwardContinued = false;
+            }
         }
-        else if (!iscd->suggestedVlanTags.IsEmpty()|| iscd->availableVlanTags.HasTag(dstVtag))
-            break;
-        iscd->availableVlanTags.AddTag(dstVtag);
-        iscd->suggestedVlanTags.AddTag(dstVtag);
+        if (dstWave != srcWave)
+        {
+            // assign dstWave to suggestedWavelength along the path in reverse direction
+            list<TLink*>::reverse_iterator iterR;
+            for (iterR = path.rbegin(); iterR != path.rend(); iterR++)
+            {
+                L = *iterR;
+                list<ISCD*>::iterator it;
+                ISCD_LSC* iscd = NULL;
+                for (it = L->GetSwCapDescriptors().begin(); it !=  L->GetSwCapDescriptors().end(); it++)
+                {
+                    if ((*it)->switchingType != LINK_IFSWCAP_LSC)
+                        continue;
+                    iscd = (ISCD_LSC*)(*it);
+                    break;
+                }
+                if (!iscd)
+                    continue;
+                if (iterR == path.rbegin())
+                {
+                    iscd->availableWavelengths.Clear();
+                    iscd->suggestedWavelengths.Clear();
+                }
+                else if (!iscd->suggestedWavelengths.IsEmpty()|| iscd->availableWavelengths.HasTag(dstVtag))
+                    break;
+                iscd->availableWavelengths.AddTag(dstVtag);
+                iscd->suggestedWavelengths.AddTag(dstVtag);
+            }
+        }
     }
 }
 

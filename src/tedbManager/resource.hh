@@ -419,16 +419,18 @@ public:
     TDMConcatenationType concatenationType;
     ConstraintTagSet availableTimeSlots;
     ConstraintTagSet assignedTimeSlots;
+    ConstraintTagSet suggestedTimeSlots;
     bool tsiEnabled;
     bool vcatEnabled;
 
     ISCD_TDM(u_int64_t bw): ISCD(LINK_IFSWCAP_TDM, LINK_IFSWCAP_ENC_SONETSDH, bw), concatenationType(STS1), availableTimeSlots(MAX_TIMESLOTS_NUM), 
-        assignedTimeSlots(MAX_TIMESLOTS_NUM), tsiEnabled(true), vcatEnabled(true) { }
+        assignedTimeSlots(MAX_TIMESLOTS_NUM), suggestedTimeSlots(MAX_TIMESLOTS_NUM), tsiEnabled(true), vcatEnabled(true) { }
     virtual ~ISCD_TDM() { }
     virtual ISCD* Duplicate(){
         ISCD_TDM* iscd = new ISCD_TDM(this->capacity);
         iscd->availableTimeSlots = this->availableTimeSlots;
         iscd->assignedTimeSlots = this->assignedTimeSlots;
+        iscd->suggestedTimeSlots = this->suggestedTimeSlots;
         iscd->concatenationType = this->concatenationType;
         iscd->tsiEnabled = this->tsiEnabled;
         iscd->vcatEnabled = this->vcatEnabled;
@@ -454,16 +456,18 @@ public:
     WDMChannelRepresentationType channelRepresentation;
     ConstraintTagSet availableWavelengths;
     ConstraintTagSet assignedWavelengths;
+    ConstraintTagSet suggestedWavelengths;
     bool wavelengthConversion;
 
     ISCD_LSC(u_int64_t bw): ISCD(LINK_IFSWCAP_LSC, LINK_IFSWCAP_ENC_LAMBDA, bw), channelRepresentation(ITU_GRID_50GHZ), availableWavelengths(MAX_WAVE_NUM), 
-        assignedWavelengths(MAX_WAVE_NUM), wavelengthConversion(false) { }
+        assignedWavelengths(MAX_WAVE_NUM), suggestedWavelengths(MAX_WAVE_NUM), wavelengthConversion(false) { }
     virtual ~ISCD_LSC() { }
     virtual ISCD* Duplicate(){
         ISCD_LSC* iscd = new ISCD_LSC(this->capacity);
         iscd->channelRepresentation = this->channelRepresentation;
         iscd->availableWavelengths = this->availableWavelengths;
         iscd->assignedWavelengths = this->assignedWavelengths;
+        iscd->suggestedWavelengths = this->suggestedWavelengths;
         iscd->wavelengthConversion = this->wavelengthConversion;
         iscd->vendorSpecInfoParser = (VendorSpecificInfoParser*)this->VendorSpecificInfo();
         return iscd;
