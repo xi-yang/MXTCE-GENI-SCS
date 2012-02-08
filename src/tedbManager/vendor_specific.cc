@@ -58,11 +58,8 @@ VendorSpecificInfoParser* VendorSpecificInfoParserFactory::CreateParser(xmlNodeP
     return NULL;
 }
 
-void VendorSpecificInfoParser_InfineraDTN::Parse(bool forceParse)
+void VendorSpecificInfoParser_InfineraDTN::Parse()
 {
-    if (hasParsed && !forceParse)
-        return;
-    hasParsed = true;
     xmlChar* attr;
     if (vendorSpecXmlNode->type == XML_ELEMENT_NODE && (strncasecmp((const char*)vendorSpecXmlNode->name, "tributaryInfo", 13) == 0
         || strncasecmp((const char*)vendorSpecXmlNode->name, "wavebandMuxInfo", 15) == 0))
@@ -173,11 +170,8 @@ void OTNObject::Parse()
     throw TEDBException((char*)"Parsing OTNObject: not a valid XML node");   
 }
 
-void VendorSpecificInfoParser_InfineraDTN_TributaryInfo::Parse(bool forceParse)
+void VendorSpecificInfoParser_InfineraDTN_TributaryInfo::Parse()
 {
-    if (hasParsed && !forceParse)
-        return;
-    hasParsed = true;
     VendorSpecificInfoParser_InfineraDTN::Parse();
     xmlNodePtr xmlNode;
     for (xmlNode = vendorSpecXmlNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
@@ -195,11 +189,8 @@ void VendorSpecificInfoParser_InfineraDTN_TributaryInfo::Parse(bool forceParse)
     throw TEDBException((char*)"Parsing InfineraDTN_TributaryInfo: XML not containing an OTUx type OTNObject");   
 }
 
-void VendorSpecificInfoParser_InfineraDTN_WavebandMuxInfo::Parse(bool forceParse)
+void VendorSpecificInfoParser_InfineraDTN_WavebandMuxInfo::Parse()
 {
-    if (hasParsed && !forceParse)
-        return;
-    hasParsed = true;
     VendorSpecificInfoParser_InfineraDTN::Parse();
     if (strncasecmp(this->containType.c_str(), "OCG", 3) != 0)
         throw TEDBException((char*)"Parsing InfineraDTN_WavebandMuxInfo: requires 'NxOCG' as 'contain' atribute");
@@ -226,10 +217,7 @@ void VendorSpecificInfoParser_InfineraDTN_WavebandMuxInfo::Parse(bool forceParse
 }
 
 
-void VendorSpecificInfoParser_CienaOTN::Parse(bool forceParse)
+void VendorSpecificInfoParser_CienaOTN::Parse()
 {
-    if (hasParsed && !forceParse)
-        return;
-    hasParsed = true;
     // TODO: 
 }

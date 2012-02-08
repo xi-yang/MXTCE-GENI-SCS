@@ -45,13 +45,12 @@ class VendorSpecificInfoParser
 protected:
     string type;
     xmlNodePtr vendorSpecXmlNode;
-    bool hasParsed;
 
 public:
-    VendorSpecificInfoParser(xmlNodePtr xmlNode): vendorSpecXmlNode(xmlNode), hasParsed(false) { }
+    VendorSpecificInfoParser(xmlNodePtr xmlNode): vendorSpecXmlNode(xmlNode) { }
     virtual ~VendorSpecificInfoParser() { }
     string& GetType() {return type;}
-    virtual void Parse(bool forceParse=false)=0;
+    virtual void Parse()=0;
     // TODO: clone method
 };
 
@@ -81,7 +80,7 @@ public:
     string& GetModel() {return model;}
     string& GetContainsType() {return containType;}
     int GetContainsCount() {return containCount;}
-    virtual void Parse(bool forceParse=false);
+    virtual void Parse();
 };
 
 class OTNObject
@@ -116,7 +115,7 @@ private:
 public:
     VendorSpecificInfoParser_InfineraDTN_TributaryInfo(xmlNodePtr xmlNode): VendorSpecificInfoParser_InfineraDTN(xmlNode), tribOTU(NULL) { }
     virtual ~VendorSpecificInfoParser_InfineraDTN_TributaryInfo() { delete tribOTU; }
-    virtual void Parse(bool forceParse=false);
+    virtual void Parse();
 };
 
 class VendorSpecificInfoParser_InfineraDTN_WavebandMuxInfo: public VendorSpecificInfoParser_InfineraDTN
@@ -131,7 +130,7 @@ public:
                 delete ocgVector[i];
             ocgVector.clear();
         }
-    virtual void Parse(bool forceParse=false);
+    virtual void Parse();
 };
 
 // place holder
@@ -141,7 +140,7 @@ protected:
 public:
     VendorSpecificInfoParser_CienaOTN(xmlNodePtr xmlNode): VendorSpecificInfoParser(xmlNode) { }
     virtual ~VendorSpecificInfoParser_CienaOTN() { }
-    virtual void Parse(bool forceParse=false);
+    virtual void Parse();
 };
 
 #endif
