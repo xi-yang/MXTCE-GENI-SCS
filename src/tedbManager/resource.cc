@@ -67,7 +67,7 @@ list<TDelta*> Resource::LookupDeltasByName(string resvName)
     return deltaListNew;
 }
 
-void * ISCD::VendorSpecificInfo() 
+VendorSpecificInfoParser * ISCD::VendorSpecificInfo() 
 {
     if (vendorSpecInfoXml != NULL) 
     {

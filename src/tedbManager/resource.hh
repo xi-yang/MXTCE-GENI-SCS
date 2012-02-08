@@ -359,7 +359,7 @@ public:
         vendorSpecInfoXml(NULL), vendorSpecInfoParser(NULL) { }
     virtual ~ISCD() { }
     virtual ISCD* Duplicate() { return NULL; }
-    virtual void * VendorSpecificInfo();
+    virtual VendorSpecificInfoParser* VendorSpecificInfo();
 };
 
 
@@ -399,6 +399,7 @@ public:
         iscd->assignedVlanTags = this->assignedVlanTags;
         iscd->suggestedVlanTags = this->suggestedVlanTags;
         iscd->vlanTranslation = this->vlanTranslation;
+        iscd->vendorSpecInfoParser = (VendorSpecificInfoParser*)this->VendorSpecificInfo();
         return iscd;
     }
 };
@@ -434,6 +435,7 @@ public:
         iscd->concatenationType = this->concatenationType;
         iscd->tsiEnabled = this->tsiEnabled;
         iscd->vcatEnabled = this->vcatEnabled;
+        iscd->vendorSpecInfoParser = (VendorSpecificInfoParser*)this->VendorSpecificInfo();
         return iscd;
     }
 };

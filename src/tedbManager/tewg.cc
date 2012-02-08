@@ -630,9 +630,17 @@ void TLink::InitNextRegionTagSet(TSpec& tspec, ConstraintTagSet &head_waveset)
     list<ISCD*>::iterator it_iscd;
     for (it_iscd = this->GetSwCapDescriptors().begin(); it_iscd != this->GetSwCapDescriptors().end(); it_iscd++)
     {
-        if ((*it_iscd)->switchingType == tspec.SWtype && (*it_iscd)->encodingType == tspec.ENCtype)
+        if (tspec.SWtype == LINK_IFSWCAP_LSC && (*it_iscd)->switchingType == tspec.SWtype && (*it_iscd)->encodingType == tspec.ENCtype)
         {
-            head_waveset = ((ISCD_LSC*)(*it_iscd))->availableWavelengths;
+            ISCD_LSC* iscd = (ISCD_LSC*)(*it_iscd);
+            head_waveset = iscd->availableWavelengths;
+            // TODO: handle vendor specific info
+            VendorSpecificInfoParser* vendorSpecParser = iscd->VendorSpecificInfo();
+            if (vendorSpecParser != NULL)
+            {
+                // TODO: handle vendor specific info                
+                LOG_DEBUG(vendorSpecParser->GetType());
+            }
             return;
         }
     }
@@ -1347,6 +1355,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS)
     }
 
     //// update LSC wavelengths
+    // TODO: handle vendor specific info
     if (srcWave != 0 && dstWave != 0) {
         forwardContinued = true;
         for (iterL = path.begin(); iterL != path.end(); iterL++)
