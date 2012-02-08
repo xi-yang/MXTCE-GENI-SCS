@@ -69,6 +69,8 @@ list<TDelta*> Resource::LookupDeltasByName(string resvName)
 
 VendorSpecificInfoParser * ISCD::VendorSpecificInfo() 
 {
+    if (vendorSpecInfoParser != NULL)
+        return vendorSpecInfoParser;
     if (vendorSpecInfoXml != NULL) 
     {
         VendorSpecificInfoParser* parser = VendorSpecificInfoParserFactory::CreateParser(vendorSpecInfoXml);

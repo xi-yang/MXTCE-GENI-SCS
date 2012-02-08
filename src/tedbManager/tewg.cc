@@ -1355,7 +1355,6 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS)
     }
 
     //// update LSC wavelengths
-    // TODO: handle vendor specific info
     if (srcWave != 0 && dstWave != 0) {
         forwardContinued = true;
         for (iterL = path.begin(); iterL != path.end(); iterL++)
@@ -1384,6 +1383,19 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS)
                 iscd->availableWavelengths.Clear();
                 iscd->suggestedWavelengths.Clear();
                 forwardContinued = false;
+            }
+            VendorSpecificInfoParser* vendorSpecInfo = iscd->VendorSpecificInfo();
+            if (vendorSpecInfo == NULL)
+                continue;
+            if (vendorSpecInfo->GetType() == "InfineraDTNSpecificInfo:tributaryInfo")
+            {
+                // TODO: handle vendor specific info for InfineraDTNSpecificInfo:tributaryInfo
+                // pick the OTN object
+            }
+            else if (vendorSpecInfo->GetType() == "InfineraDTNSpecificInfo:wavebandMuxInfo")
+            {
+                // TODO: handle vendor specific info for InfineraDTNSpecificInfo:wavebandMuxInfo
+                // pick the OTN object
             }
         }
         if (dstWave != srcWave)
