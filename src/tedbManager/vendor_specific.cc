@@ -43,17 +43,17 @@ void VendorSpecificInfoParser::SetXmlByString(string& xml)
 
 string VendorSpecificInfoParser::GetXmlByString()
 {
-    xmlChar ** memBuf;
+    xmlChar* memBuf;
     int sizeBuf=6;
     if (this->vendorSpecXmlNode == NULL)
         return string("");
     const char* xmlBuf = "<xml/>";
     xmlDocPtr xmlDoc = xmlParseMemory(xmlBuf, sizeBuf);
     xmlDocSetRootElement(xmlDoc, this->vendorSpecXmlNode);
-    xmlDocDumpMemory(xmlDoc, memBuf, &sizeBuf);
-    string xmlString = (const char*)*memBuf; // mem leak?
+    xmlDocDumpMemory(xmlDoc, &memBuf, &sizeBuf);
+    string xmlString = (const char*)memBuf; // mem leak?
     xmlFreeDoc(xmlDoc);
-    xmlFree(*memBuf);
+    xmlFree(memBuf);
     return xmlString;
 }
 
