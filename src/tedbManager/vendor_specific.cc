@@ -34,6 +34,26 @@
 #include "vendor_specific.hh"
 #include "exception.hh"
 
+void VendorSpecificInfoParser::SetXmlByString(string& xml)
+{
+    xmlDocPtr xmlDoc = xmlParseMemory(xml.c_str(), xml.size());
+    this->vendorSpecXmlNode = xmlDocGetRootElement(xmlDoc);
+}
+
+
+string VendorSpecificInfoParser::GetXmlByString()
+{
+    xmlChar ** memBuf;
+    int sizeBuf;
+    if (this->vendorSpecXmlNode == NULL)
+        return string("");
+    xmlDocDumpMemory((xmlDocPtr)(this->vendorSpecXmlNode), memBuf, &sizeBuf);
+    string xmlString = (const char*)*memBuf; // mem leak?
+    xmlFree(*memBuf);
+    return xmlString;
+}
+
+
 VendorSpecificInfoParser* VendorSpecificInfoParserFactory::CreateParser(xmlNodePtr vendorSepcXmlNode)
 {
     if (vendorSepcXmlNode == NULL || vendorSepcXmlNode->type != XML_ELEMENT_NODE)
@@ -195,6 +215,7 @@ void VendorSpecificInfoParser_InfineraDTN_WavebandMuxInfo::Parse()
     if (strncasecmp(this->containType.c_str(), "OCG", 3) != 0)
         throw TEDBException((char*)"Parsing InfineraDTN_WavebandMuxInfo: requires 'NxOCG' as 'contain' atribute");
     xmlNodePtr xmlNode;
+    this->ocgVector.clear();
     for (xmlNode = vendorSpecXmlNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
     {
         if (xmlNode->type == XML_ELEMENT_NODE )

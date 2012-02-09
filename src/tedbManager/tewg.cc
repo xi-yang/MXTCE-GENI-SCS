@@ -1390,7 +1390,11 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS)
             if (vendorSpecInfo->GetType() == "InfineraDTNSpecificInfo:tributaryInfo")
             {
                 // TODO: handle vendor specific info for InfineraDTNSpecificInfo:tributaryInfo
-                // pick the OTN object
+                // pick the resulting OTN object
+                // TODO: Design
+                // 1.  Format result into XML and load into ISCD::vendorSpecificInfoXml (xmlNodePtr type)
+                // 2.  API only need to extract the XML from (xmlNodePtr) and parse as plain text to tcePCE 
+                // Add tools to facilitate both 1 and 2
             }
             else if (vendorSpecInfo->GetType() == "InfineraDTNSpecificInfo:wavebandMuxInfo")
             {

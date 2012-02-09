@@ -50,6 +50,10 @@ public:
     VendorSpecificInfoParser(xmlNodePtr xmlNode): vendorSpecXmlNode(xmlNode) { }
     virtual ~VendorSpecificInfoParser() { }
     string& GetType() {return type;}
+    xmlNodePtr GetXmlNode() { return vendorSpecXmlNode; }
+    void SetXmlNode(xmlNodePtr xmlNode) { vendorSpecXmlNode = xmlNode; }
+    void SetXmlByString(string& xml);
+    string GetXmlByString();
     virtual void Parse()=0;
     // TODO: clone method
 };
