@@ -376,13 +376,13 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 		cout<<"switchingtype="<<(int)sw_cap_descriptors->switchingType<<endl;
 		cout<<"encodingtype="<<(int)sw_cap_descriptors->encodingType<<endl;
 		cout<<"capacity="<<sw_cap_descriptors->capacity<<endl;
-
-        if (sw_cap_descriptors->switchingType == 150 && sw_cap_descriptors->vendorSpecInfoParser != NULL) 
-        {
-            string xmlVendorSpecInfo= sw_cap_descriptors->vendorSpecInfoParser->GetXmlByString();
-            cout<<"vendorSpecificInfo="<<xmlVendorSpecInfo<<endl;
-        }
-
+		/* example handling of vendorSpecInfo
+		if (sw_cap_descriptors->vendorSpecInfoParser != NULL)
+		{
+			string xmlVendorSpecInfo= sw_cap_descriptors->vendorSpecInfoParser->GetXmlByString();
+			cout<<"vendorSpecificInfo="<<xmlVendorSpecInfo<<endl;
+		}
+		*/
 		capacity = sw_cap_descriptors->capacity;
 
 		pri_type_encoder_ptr->encodeLong(PCE_CAPACITY, capacity);

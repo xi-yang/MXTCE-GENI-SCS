@@ -235,6 +235,29 @@ void StripXmlString(string& str, xmlChar* val)
     str = (const char*) ptr;
 }
 
+void CleanupXmlString(string& str) 
+{
+    string::size_type pos = 0;
+    string str1="    ";
+    string str2="";
+    while ( (pos = str.find(str1, pos)) != string::npos ) 
+    {
+        str.replace( pos, str1.size(), str2 );
+        pos++;
+    }
+    str1 = "\t";
+    while ( (pos = str.find(str1, pos)) != string::npos ) 
+    {
+        str.replace( pos, str1.size(), str2 );
+        pos++;
+    }
+    str1 = "\n";
+    while ( (pos = str.find(str1, pos)) != string::npos ) 
+    {
+        str.replace( pos, str1.size(), str2 );
+        pos++;
+    }
+}
 
 u_int64_t StringToBandwidth(string& strBandwidth) 
 {

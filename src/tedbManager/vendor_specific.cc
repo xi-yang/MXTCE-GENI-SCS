@@ -57,7 +57,8 @@ string VendorSpecificInfoParser::GetXmlByString()
         pStr = (char*)memBuf;
     else 
         pStr += 3;
-    string xmlString = pStr; 
+    string xmlString = pStr;
+    CleanupXmlString(xmlString);
     xmlDocSetRootElement(xmlDoc, oldXmlNode);
     xmlFreeDoc(xmlDoc);
     xmlFree(memBuf);
