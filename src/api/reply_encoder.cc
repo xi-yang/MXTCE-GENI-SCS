@@ -366,10 +366,10 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 			//sw_cap_descriptors=(*it)->GetTheISCD();
 
 			switchingType = (*iscdVar)->switchingType;
-			cout<<"switchingtype="<<switchingType<<endl;
+			cout<<"switchingtype="<<(int)switchingType<<endl;
 
 			encodingType = (*iscdVar)->encodingType;
-			cout<<"encodingtype="<<encodingType<<endl;
+			cout<<"encodingtype="<<(int)encodingType<<endl;
 
 			//always encode switch capability type first
 			switch (switchingType)
