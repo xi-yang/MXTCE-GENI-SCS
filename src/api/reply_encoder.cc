@@ -568,6 +568,7 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 			switch (encodingType)
 			{
 			case LINK_IFSWCAP_ENC_PKT:
+				pri_type_encoder_ptr->encodeString(PCE_SWITCHINGENCTYPE, "packet");
 				break;
 			case LINK_IFSWCAP_ENC_ETH:
 				pri_type_encoder_ptr->encodeString(PCE_SWITCHINGENCTYPE, "ethernet");
@@ -583,6 +584,7 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 			case LINK_IFSWCAP_ENC_DIGIWRAP:
 				break;
 			case LINK_IFSWCAP_ENC_LAMBDA:
+				pri_type_encoder_ptr->encodeString(PCE_SWITCHINGENCTYPE, "lambda");
 				break;
 			case LINK_IFSWCAP_ENC_FIBER:
 				break;
