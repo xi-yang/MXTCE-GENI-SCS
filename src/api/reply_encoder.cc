@@ -298,40 +298,13 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 	u_int16_t type;
 	u_int16_t length;
 	u_int8_t* value;
-
 	string gri="";
 	string err_msg="";
 	list<TLink*> path;
-
-	TLink* link=NULL;
-	ISCD* sw_cap_descriptors=NULL;
-	Link* remoteLink=NULL;
-	u_char	switchingType;
-	u_char	encodingType;
-	ConstraintTagSet* availableVlanTags;
-	ConstraintTagSet* suggestedVlanTags;
-	ConstraintTagSet* assignedVlanTags;
-	bool vlanTranslation;
-	int mtu;
-	u_int64_t capacity;
-	string rangStr="";
-	string remoteLinkName="";
-	int metric;
-	u_int64_t maxBandwidth;
-	u_int64_t maxReservableBandwidth;
-	u_int64_t minReservableBandwidth;
-	u_int64_t unreservedBandwidth[8];   // 8 priorities: use unreservedBandwidth[7] by default
-	u_int64_t bandwidthGranularity;
+	//TLink* link=NULL;
+	//ISCD* sw_cap_descriptors=NULL;
 	bool optional_cons_flag=true;
-
-	list<TPath*> alterPaths;
-
-	BandwidthAvailabilityGraph* bag=NULL;
-
-	//map<time_t, u_int64_t> TBSF;
-
-	map<time_t, u_int64_t>::iterator it;
-
+	//list<TPath*> alterPaths;
 	char print_buff[200];
 
 	path = path_info->GetPath();
@@ -344,6 +317,17 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 
 	for(list<TLink*>::iterator it=path.begin();it!=path.end();it++)
 	{
+		int metric;
+		u_int64_t maxBandwidth;
+		u_int64_t maxReservableBandwidth;
+		u_int64_t minReservableBandwidth;
+		u_int64_t unreservedBandwidth[8];   // 8 priorities: use unreservedBandwidth[7] by default
+		u_int64_t bandwidthGranularity;
+		Link* remoteLink=NULL;
+		string remoteLinkName="";
+		list<ISCD*> swCapDescriptors;
+		list<IACD*> adjCapDescriptors;
+
 		cout<<"id="<<(*it)->GetId()<<endl;
 		cout<<"name="<<(*it)->GetName()<<endl;
 		pri_type_encoder_ptr->encodeString(PCE_LINK_ID, (*it)->GetName());//encode link id (name)
@@ -371,144 +355,309 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 		metric = (*it)->GetMetric();
 		pri_type_encoder_ptr->encodeInteger(PCE_TE_METRIC, metric);
 
-		sw_cap_descriptors=(*it)->GetTheISCD();
+		swCapDescriptors = (*it)->GetSwCapDescriptors();
 
-		cout<<"switchingtype="<<(int)sw_cap_descriptors->switchingType<<endl;
-		cout<<"encodingtype="<<(int)sw_cap_descriptors->encodingType<<endl;
-		cout<<"capacity="<<sw_cap_descriptors->capacity<<endl;
-		/* example handling of vendorSpecInfo
-		if (sw_cap_descriptors->vendorSpecInfoParser != NULL)
+		for(list<ISCD*>::iterator iscdVar=swCapDescriptors.begin();iscdVar!=swCapDescriptors.end();iscdVar++)
 		{
-			string xmlVendorSpecInfo= sw_cap_descriptors->vendorSpecInfoParser->GetXmlByString();
-			cout<<"vendorSpecificInfo="<<xmlVendorSpecInfo<<endl;
-		}
-		*/
-		capacity = sw_cap_descriptors->capacity;
+			u_char	switchingType;
+			u_char	encodingType;
+			u_int64_t capacity;
+			string rangStr="";
+			//sw_cap_descriptors=(*it)->GetTheISCD();
 
-		pri_type_encoder_ptr->encodeLong(PCE_CAPACITY, capacity);
+			switchingType = (*iscdVar)->switchingType;
+			cout<<"switchingtype="<<switchingType<<endl;
 
-		switchingType = sw_cap_descriptors->switchingType;
-		encodingType = sw_cap_descriptors->encodingType;
+			encodingType = (*iscdVar)->encodingType;
+			cout<<"encodingtype="<<encodingType<<endl;
 
-		switch (switchingType)
-		{
-		case LINK_IFSWCAP_L2SC:
-			cout<<"mtu="<<((ISCD_L2SC*)sw_cap_descriptors)->mtu<<endl;
-			cout<<"vlantranslation="<<((ISCD_L2SC*)sw_cap_descriptors)->vlanTranslation<<endl;
+			//always encode switch capability type first
+			switch (switchingType)
+			{
+			case LINK_IFSWCAP_L2SC:
+			{
+				ConstraintTagSet* availableVlanTags;
+				ConstraintTagSet* suggestedVlanTags;
+				ConstraintTagSet* assignedVlanTags;
+				bool vlanTranslation;
+				int mtu;
 
-			mtu = ((ISCD_L2SC*)sw_cap_descriptors)->mtu;
+				pri_type_encoder_ptr->encodeString(PCE_SWITCHINGCAPTYPE, "l2sc");
 
-			pri_type_encoder_ptr->encodeInteger(PCE_MTU, mtu);
+				mtu = ((ISCD_L2SC*)(*iscdVar))->mtu;
+				pri_type_encoder_ptr->encodeInteger(PCE_MTU, mtu);
+				cout<<"mtu="<<mtu<<endl;
 
-			vlanTranslation = ((ISCD_L2SC*)sw_cap_descriptors)->vlanTranslation;
+				vlanTranslation = ((ISCD_L2SC*)(*iscdVar))->vlanTranslation;
+				pri_type_encoder_ptr->encodeBoolean(PCE_VLANTRANSLATION, vlanTranslation);
+				cout<<"vlantranslation="<<vlanTranslation<<endl;
 
-			pri_type_encoder_ptr->encodeBoolean(PCE_VLANTRANSLATION, vlanTranslation);
-
-			pri_type_encoder_ptr->encodeString(PCE_SWITCHINGCAPTYPE, "l2sc");
-
-			if(!(((ISCD_L2SC*)sw_cap_descriptors)->assignedVlanTags).IsEmpty())
+				/*
+			if(!(((ISCD_L2SC*)(*iscdVar))->assignedVlanTags).IsEmpty())
 			{
 				cout<<"assignedvlantags is not empty"<<endl;
 			}
-			if(!(((ISCD_L2SC*)sw_cap_descriptors)->suggestedVlanTags).IsEmpty())
+			if(!(((ISCD_L2SC*)(*iscdVar))->suggestedVlanTags).IsEmpty())
 			{
 				cout<<"suggestedvlantags is not empty"<<endl;
 			}
-			if(!(((ISCD_L2SC*)sw_cap_descriptors)->availableVlanTags).IsEmpty())
+			if(!(((ISCD_L2SC*)(*iscdVar))->availableVlanTags).IsEmpty())
 			{
 				cout<<"availablevlantags is not empty"<<endl;
 			}
+				 */
 
-			availableVlanTags = &((ISCD_L2SC*)sw_cap_descriptors)->availableVlanTags;
-			if(!availableVlanTags->IsEmpty())
-			{
-				rangStr=availableVlanTags->GetRangeString();
-				pri_type_encoder_ptr->encodeString(PCE_SWITCHINGVLANRANGEAVAI, rangStr);
-				cout<<"availableVlanTags="<<rangStr<<endl;
+				availableVlanTags = &((ISCD_L2SC*)(*iscdVar))->availableVlanTags;
+				if(!availableVlanTags->IsEmpty())
+				{
+					rangStr=availableVlanTags->GetRangeString();
+					pri_type_encoder_ptr->encodeString(PCE_SWITCHINGVLANRANGEAVAI, rangStr);
+					cout<<"availableVlanTags="<<rangStr<<endl;
+				}
+				suggestedVlanTags = &((ISCD_L2SC*)(*iscdVar))->suggestedVlanTags;
+				if(!suggestedVlanTags->IsEmpty())
+				{
+					rangStr=suggestedVlanTags->GetRangeString();
+					pri_type_encoder_ptr->encodeString(PCE_SWITCHINGVLANRANGESUGG, rangStr);
+					cout<<"suggestedVlanTags="<<rangStr<<endl;
+				}
+				assignedVlanTags = &((ISCD_L2SC*)(*iscdVar))->assignedVlanTags;
+				if(!assignedVlanTags->IsEmpty())
+				{
+					rangStr=assignedVlanTags->GetRangeString();
+					pri_type_encoder_ptr->encodeString(PCE_SWITCHINGVLANRANGEASSI, rangStr);
+					cout<<"assignedVlanTags="<<rangStr<<endl;
+				}
+				break;
 			}
-			suggestedVlanTags = &((ISCD_L2SC*)sw_cap_descriptors)->suggestedVlanTags;
-			if(!suggestedVlanTags->IsEmpty())
+			case LINK_IFSWCAP_PSC1:
 			{
-				rangStr=suggestedVlanTags->GetRangeString();
-				pri_type_encoder_ptr->encodeString(PCE_SWITCHINGVLANRANGESUGG, rangStr);
-				cout<<"suggestedVlanTags="<<rangStr<<endl;
+				//iscd = new ISCD_PSC(1, capacity, mtu);
+				cout<<"LINK_IFSWCAP_PSC1"<<endl;
+				break;
 			}
-			assignedVlanTags = &((ISCD_L2SC*)sw_cap_descriptors)->assignedVlanTags;
-			if(!assignedVlanTags->IsEmpty())
+			case LINK_IFSWCAP_TDM:
 			{
-				rangStr=assignedVlanTags->GetRangeString();
-				pri_type_encoder_ptr->encodeString(PCE_SWITCHINGVLANRANGEASSI, rangStr);
-				cout<<"assignedVlanTags="<<rangStr<<endl;
+				TDMConcatenationType concatenationType;
+				ConstraintTagSet* availableTimeSlots;
+				ConstraintTagSet* assignedTimeSlots;
+				ConstraintTagSet* suggestedTimeSlots;
+				bool tsiEnabled;
+				bool vcatEnabled;
+				string concatenationTypeStr="";
+
+				pri_type_encoder_ptr->encodeString(PCE_SWITCHINGCAPTYPE, "tdm");
+				concatenationType = ((ISCD_TDM*)(*iscdVar))->concatenationType;
+
+				switch (concatenationType)
+				{
+				case STS1:
+					concatenationTypeStr = "sts1";
+					break;
+				case STS3C:
+					concatenationTypeStr = "sts3c";
+				default:
+					break;
+				}
+
+				pri_type_encoder_ptr->encodeString(PCE_CONCATENATIONTYPE,concatenationTypeStr);
+				cout<<"concatenationTypeStr="<<concatenationTypeStr<<endl;
+
+				availableTimeSlots = &((ISCD_TDM*)(*iscdVar))->availableTimeSlots;
+				if(!availableTimeSlots->IsEmpty())
+				{
+					rangStr=availableTimeSlots->GetRangeString();
+					pri_type_encoder_ptr->encodeString(PCE_SWITCHINGTIMESLOTAVAI, rangStr);
+					cout<<"availableTimeSlots="<<rangStr<<endl;
+				}
+
+				assignedTimeSlots = &((ISCD_TDM*)(*iscdVar))->assignedTimeSlots;
+				if(!assignedTimeSlots->IsEmpty())
+				{
+					rangStr=assignedTimeSlots->GetRangeString();
+					pri_type_encoder_ptr->encodeString(PCE_SWITCHINGTIMESLOTASSI, rangStr);
+					cout<<"assignedTimeSlots="<<rangStr<<endl;
+				}
+
+				suggestedTimeSlots = &((ISCD_TDM*)(*iscdVar))->suggestedTimeSlots;
+				if(!suggestedTimeSlots->IsEmpty())
+				{
+					rangStr=suggestedTimeSlots->GetRangeString();
+					pri_type_encoder_ptr->encodeString(PCE_SWITCHINGTIMESLOTSUGG, rangStr);
+					cout<<"suggestedTimeSlots="<<rangStr<<endl;
+				}
+
+				tsiEnabled = ((ISCD_TDM*)(*iscdVar))->tsiEnabled;
+				pri_type_encoder_ptr->encodeBoolean(PCE_TSIENABLED,tsiEnabled);
+				cout<<"tsiEnabled="<<tsiEnabled<<endl;
+
+				vcatEnabled = ((ISCD_TDM*)(*iscdVar))->vcatEnabled;
+				pri_type_encoder_ptr->encodeBoolean(PCE_VCATENABLED,vcatEnabled);
+				cout<<"vcatEnabled="<<vcatEnabled<<endl;
+				break;
+			}
+			case LINK_IFSWCAP_LSC:
+			{
+				WDMChannelRepresentationType channelRepresentation;
+				ConstraintTagSet* availableWavelengths;
+				ConstraintTagSet* assignedWavelengths;
+				ConstraintTagSet* suggestedWavelengths;
+				bool wavelengthConversion;
+				string channelRepresentationStr="";
+
+				pri_type_encoder_ptr->encodeString(PCE_SWITCHINGCAPTYPE, "lsc");
+				channelRepresentation = ((ISCD_LSC*)(*iscdVar))->channelRepresentation;
+
+				switch (channelRepresentation)
+				{
+				case FREQUENCY_GHZ:
+					channelRepresentationStr = "frequency-ghz";
+					break;
+				case WAVELENGTH_NM:
+					channelRepresentationStr = "wavelength-nm";
+					break;
+				case ITU_GRID_100GHZ:
+					channelRepresentationStr = "itu-channel-grid-100ghz";
+					break;
+				case ITU_GRID_50GHZ:
+					channelRepresentationStr = "itu-channel-grid-50ghz";
+					break;
+				default:
+					break;
+				}
+
+				pri_type_encoder_ptr->encodeString(PCE_CHANNELREPRESENTATION,channelRepresentationStr);
+				cout<<"channelRepresentationStr="<<channelRepresentationStr<<endl;
+
+				availableWavelengths = &((ISCD_LSC*)(*iscdVar))->availableWavelengths;
+				if(!availableWavelengths->IsEmpty())
+				{
+					rangStr=availableWavelengths->GetRangeString();
+					pri_type_encoder_ptr->encodeString(PCE_SWITCHINGWAVELENAVAI, rangStr);
+					cout<<"availableWavelengths="<<rangStr<<endl;
+				}
+
+				assignedWavelengths = &((ISCD_LSC*)(*iscdVar))->assignedWavelengths;
+				if(!assignedWavelengths->IsEmpty())
+				{
+					rangStr=assignedWavelengths->GetRangeString();
+					pri_type_encoder_ptr->encodeString(PCE_SWITCHINGWAVELENASSI, rangStr);
+					cout<<"assignedWavelengths="<<rangStr<<endl;
+				}
+
+				suggestedWavelengths = &((ISCD_LSC*)(*iscdVar))->suggestedWavelengths;
+				if(!suggestedWavelengths->IsEmpty())
+				{
+					rangStr=suggestedWavelengths->GetRangeString();
+					pri_type_encoder_ptr->encodeString(PCE_SWITCHINGWAVELENSUGG, rangStr);
+					cout<<"suggestedWavelengths="<<rangStr<<endl;
+				}
+
+				wavelengthConversion = ((ISCD_LSC*)(*iscdVar))->wavelengthConversion;
+				pri_type_encoder_ptr->encodeBoolean(PCE_WAVELENGTHCONVERSION,wavelengthConversion);
+				cout<<"wavelengthConversion="<<wavelengthConversion<<endl;
+				break;
+			}
+			default:
+				// type not supported
+				cout<<"other"<<endl;
+				//return NULL;
+				break;
 			}
 
-			//iscd = new ISCD_L2SC(capacity, mtu);
-			//((ISCD_L2SC*)iscd)->availableVlanTags.LoadRangeString(vlanRange);
-			//((ISCD_L2SC*)iscd)->vlanTranslation = vlanTranslation;
-			break;
-		case LINK_IFSWCAP_PSC1:
-			//iscd = new ISCD_PSC(1, capacity, mtu);
-			cout<<"LINK_IFSWCAP_PSC1"<<endl;
-			break;
-		case LINK_IFSWCAP_TDM:
-			//iscd = new ISCD_TDM(capacity, minBandwidth);
-			//((ISCD_TDM*)iscd)->availableTimeSlots.LoadRangeString(timeslotRange);
-			cout<<"LINK_IFSWCAP_TDM"<<endl;
-			break;
-		case LINK_IFSWCAP_LSC:
-			//iscd = new ISCD_LSC(capacity);
-			//((ISCD_LSC*)iscd)->availableWavelengths.LoadRangeString(wavelengthRange);
-			//((ISCD_LSC*)iscd)->wavelengthTranslation = wavelengthTranslation;
-			cout<<"LINK_IFSWCAP_LSC"<<endl;
-			break;
-		default:
-			// type not supported
-			cout<<"other"<<endl;
-			//return NULL;
+			switch (encodingType)
+			{
+			case LINK_IFSWCAP_ENC_PKT:
+				break;
+			case LINK_IFSWCAP_ENC_ETH:
+				pri_type_encoder_ptr->encodeString(PCE_SWITCHINGENCTYPE, "ethernet");
+				break;
+			case LINK_IFSWCAP_ENC_PDH:
+				break;
+			case LINK_IFSWCAP_ENC_RESV1:
+				break;
+			case LINK_IFSWCAP_ENC_SONETSDH:
+				break;
+			case LINK_IFSWCAP_ENC_RESV2:
+				break;
+			case LINK_IFSWCAP_ENC_DIGIWRAP:
+				break;
+			case LINK_IFSWCAP_ENC_LAMBDA:
+				break;
+			case LINK_IFSWCAP_ENC_FIBER:
+				break;
+			case LINK_IFSWCAP_ENC_RESV3:
+				break;
+			case LINK_IFSWCAP_ENC_FIBRCHNL:
+				break;
+			case LINK_IFSWCAP_ENC_G709ODUK:
+				break;
+			case LINK_IFSWCAP_ENC_G709OCH:
+				break;
+			default:
+				break;
+			}
+
+			capacity = (*iscdVar)->capacity;
+			pri_type_encoder_ptr->encodeLong(PCE_CAPACITY, capacity);
+			cout<<"capacity="<<capacity<<endl;
+
+			if ((*iscdVar)->vendorSpecInfoParser != NULL)
+			{
+				string xmlVendorSpecInfo= (*iscdVar)->vendorSpecInfoParser->GetXmlByString();
+				pri_type_encoder_ptr->encodeString(PCE_VENDORSPECIFICINFO, xmlVendorSpecInfo);
+				cout<<"vendorSpecificInfo="<<xmlVendorSpecInfo<<endl;
+			}
+
 		}
 
-		switch (encodingType)
+		adjCapDescriptors = (*it)->GetAdjCapDescriptors();
+		for(list<IACD*>::iterator iacdVar=adjCapDescriptors.begin();iacdVar!=adjCapDescriptors.end();iacdVar++)
 		{
-		case LINK_IFSWCAP_ENC_PKT:
-			break;
-		case LINK_IFSWCAP_ENC_ETH:
-			pri_type_encoder_ptr->encodeString(PCE_SWITCHINGENCTYPE, "ethernet");
-			break;
-		case LINK_IFSWCAP_ENC_PDH:
-			break;
-		case LINK_IFSWCAP_ENC_RESV1:
-			break;
-		case LINK_IFSWCAP_ENC_SONETSDH:
-			break;
-		case LINK_IFSWCAP_ENC_RESV2:
-			break;
-		case LINK_IFSWCAP_ENC_DIGIWRAP:
-			break;
-		case LINK_IFSWCAP_ENC_LAMBDA:
-			break;
-		case LINK_IFSWCAP_ENC_FIBER:
-			break;
-		case LINK_IFSWCAP_ENC_RESV3:
-			break;
-		case LINK_IFSWCAP_ENC_FIBRCHNL:
-			break;
-		case LINK_IFSWCAP_ENC_G709ODUK:
-			break;
-		case LINK_IFSWCAP_ENC_G709OCH:
-			break;
-		default:
-			break;
+		    u_char	lowerLayerSwitchingType;
+		    u_char	lowerLayerEncodingType;
+		    u_char  upperLayerSwitchingType;
+		    u_char	upperLayerEncodingType;
+		    u_int64_t maxAdaptBandwidth;
+
+		    pri_type_encoder_ptr->encodeString(PCE_IACD_START,"IACD_START");
+
+		    lowerLayerSwitchingType = (*iacdVar)->lowerLayerSwitchingType;
+		    pri_type_encoder_ptr->encodeString(PCE_LOWERLAYERSWITCHINGTYPE, this->get_switchtype(lowerLayerSwitchingType));
+		    cout<<"lowerLayerSwitchingType="<<this->get_switchtype(lowerLayerSwitchingType)<<endl;
+
+		    lowerLayerEncodingType = (*iacdVar)->lowerLayerEncodingType;
+		    pri_type_encoder_ptr->encodeString(PCE_LOWERLAYERENCODINGTYPE, this->get_encodetype(lowerLayerEncodingType));
+		    cout<<"lowerLayerEncodingType="<<this->get_encodetype(lowerLayerEncodingType)<<endl;
+
+		    upperLayerSwitchingType = (*iacdVar)->upperLayerSwitchingType;
+		    pri_type_encoder_ptr->encodeString(PCE_UPPERLAYERSWITCHINGTYPE, this->get_switchtype(upperLayerSwitchingType));
+		    cout<<"upperLayerSwitchingType="<<this->get_switchtype(upperLayerSwitchingType)<<endl;
+
+		    upperLayerEncodingType = (*iacdVar)->upperLayerEncodingType;
+		    pri_type_encoder_ptr->encodeString(PCE_UPPERLAYERENCODINGTYPE, this->get_encodetype(upperLayerEncodingType));
+		    cout<<"upperLayerEncodingType="<<this->get_encodetype(upperLayerEncodingType)<<endl;
+
+		    maxAdaptBandwidth = (*iacdVar)->maxAdaptBandwidth;
+		    pri_type_encoder_ptr->encodeLong(PCE_MAXADAPTBANDWIDTH,maxAdaptBandwidth);
+		    cout<<"maxAdaptBandwidth="<<maxAdaptBandwidth<<endl;
 		}
+
+
 	}
 
 
 
 	if(opti_flag==1)
 	{
+		BandwidthAvailabilityGraph* bag=NULL;
 		time_t new_time = 0;
 		//time_t last_time = 0;
 		u_int64_t bandwidth;
 		int bag_size;
 		int counter=0;
+		map<time_t, u_int64_t>::iterator it;
+
 		bag=path_info->GetBAG();
 		if (bag != NULL)
 		{
@@ -551,4 +700,77 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 
 	pri_type_encoder_ptr->encodeString(PCE_PATH_END_TAG, "pathend");
 
+}
+
+string Apireplymsg_encoder::get_switchtype(u_char switchingType)
+{
+	string swit_type="";
+	switch (switchingType)
+	{
+	case LINK_IFSWCAP_L2SC:
+	{
+		swit_type="l2sc";
+		break;
+	}
+	case LINK_IFSWCAP_PSC1:
+	{
+		swit_type="psc-1";
+		break;
+	}
+	case LINK_IFSWCAP_TDM:
+	{
+		swit_type="tdm";
+		break;
+	}
+	case LINK_IFSWCAP_LSC:
+	{
+		swit_type="lsc";
+		break;
+	}
+	default:
+		break;
+	}
+
+	return swit_type;
+}
+
+string Apireplymsg_encoder::get_encodetype(u_char encodingType)
+{
+	string enco_type="";
+	switch (encodingType)
+	{
+	case LINK_IFSWCAP_ENC_PKT:
+		enco_type="packet";
+		break;
+	case LINK_IFSWCAP_ENC_ETH:
+		enco_type="ethernet";
+		break;
+	case LINK_IFSWCAP_ENC_PDH:
+		break;
+	case LINK_IFSWCAP_ENC_RESV1:
+		break;
+	case LINK_IFSWCAP_ENC_SONETSDH:
+		break;
+	case LINK_IFSWCAP_ENC_RESV2:
+		break;
+	case LINK_IFSWCAP_ENC_DIGIWRAP:
+		break;
+	case LINK_IFSWCAP_ENC_LAMBDA:
+		enco_type="lambda";
+		break;
+	case LINK_IFSWCAP_ENC_FIBER:
+		break;
+	case LINK_IFSWCAP_ENC_RESV3:
+		break;
+	case LINK_IFSWCAP_ENC_FIBRCHNL:
+		break;
+	case LINK_IFSWCAP_ENC_G709ODUK:
+		break;
+	case LINK_IFSWCAP_ENC_G709OCH:
+		break;
+	default:
+		break;
+	}
+
+	return enco_type;
 }

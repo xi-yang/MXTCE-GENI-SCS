@@ -46,6 +46,9 @@ public:
 		return this->gri_value;
 	}
 
+	string get_switchtype(u_char);
+	string get_encodetype(u_char);
+
 };
 
 
