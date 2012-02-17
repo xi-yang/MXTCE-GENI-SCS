@@ -532,7 +532,14 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 				availableWavelengths = &((ISCD_LSC*)(*iscdVar))->availableWavelengths;
 				if(!availableWavelengths->IsEmpty())
 				{
-					rangStr=availableWavelengths->GetRangeString();
+					if(channelRepresentation == ITU_GRID_50GHZ)
+					{
+						rangStr=availableWavelengths->GetRangeString_WaveGrid_50GHz();
+					}
+					else
+					{
+						rangStr=availableWavelengths->GetRangeString();
+					}
 					pri_type_encoder_ptr->encodeString(PCE_SWITCHINGWAVELENAVAI, rangStr);
 					cout<<"availableWavelengths="<<rangStr<<endl;
 				}
@@ -540,7 +547,14 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 				assignedWavelengths = &((ISCD_LSC*)(*iscdVar))->assignedWavelengths;
 				if(!assignedWavelengths->IsEmpty())
 				{
-					rangStr=assignedWavelengths->GetRangeString();
+					if(channelRepresentation == ITU_GRID_50GHZ)
+					{
+						rangStr=assignedWavelengths->GetRangeString_WaveGrid_50GHz();
+					}
+					else
+					{
+						rangStr=assignedWavelengths->GetRangeString();
+					}
 					pri_type_encoder_ptr->encodeString(PCE_SWITCHINGWAVELENASSI, rangStr);
 					cout<<"assignedWavelengths="<<rangStr<<endl;
 				}
@@ -548,7 +562,14 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 				suggestedWavelengths = &((ISCD_LSC*)(*iscdVar))->suggestedWavelengths;
 				if(!suggestedWavelengths->IsEmpty())
 				{
-					rangStr=suggestedWavelengths->GetRangeString();
+					if(channelRepresentation == ITU_GRID_50GHZ)
+					{
+						rangStr=suggestedWavelengths->GetRangeString_WaveGrid_50GHz();
+					}
+					else
+					{
+						rangStr=suggestedWavelengths->GetRangeString();
+					}
 					pri_type_encoder_ptr->encodeString(PCE_SWITCHINGWAVELENSUGG, rangStr);
 					cout<<"suggestedWavelengths="<<rangStr<<endl;
 				}
