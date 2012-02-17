@@ -49,8 +49,8 @@ string VendorSpecificInfoParser::GetXmlByString()
     if (this->vendorSpecXmlNode == NULL)
         return string("");
     xmlDocPtr xmlDoc = xmlParseMemory(xmlBuf, sizeBuf);
-    xmlNodePtr oldXmlNode = xmlDocGetRootElement(xmlDoc);
-    xmlDocSetRootElement(xmlDoc, this->vendorSpecXmlNode);
+    xmlNodePtr copyNode = xmlCopyNode(this->vendorSpecXmlNode, 1);
+    xmlDocSetRootElement(xmlDoc, copyNode);
     xmlDocDumpMemory(xmlDoc, &memBuf, &sizeBuf);
     char* pStr = strstr((char*)memBuf, "?>");
     if (pStr == NULL)
@@ -59,7 +59,6 @@ string VendorSpecificInfoParser::GetXmlByString()
         pStr += 3;
     string xmlString = pStr;
     CleanupXmlString(xmlString);
-    xmlDocSetRootElement(xmlDoc, oldXmlNode);
     xmlFreeDoc(xmlDoc);
     xmlFree(memBuf);
     return xmlString;
