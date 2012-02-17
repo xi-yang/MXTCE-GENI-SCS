@@ -1196,14 +1196,20 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS)
         list<IACD*>::iterator ita;
         IACD* iacd = NULL;
         TSpec& tspecL = TWDATA(L->GetLocalEnd())->tspec;
+        // first hop
+        if (iterL == path.begin())
+        {
+            L->GetAdjCapDescriptors().clear();
+        }            
         // last hop
-        if(iterN == path.end())
+        if (iterN == path.end())
         {
             for (it = L->GetSwCapDescriptors().begin(); it !=  L->GetSwCapDescriptors().end(); it++)
             {
                 if ((*it)->switchingType != tspecL.SWtype || (*it)->encodingType != tspecL.ENCtype)
                     it = L->GetSwCapDescriptors().erase(it);
             }
+            L->GetAdjCapDescriptors().clear();
             break;
         }
         TLink* nextL = *iterN;
