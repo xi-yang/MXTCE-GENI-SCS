@@ -9,6 +9,9 @@ import net.es.oscars.pce.soap.gen.v06.*;
 
 import java.io.*;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
+
 /**
  *
  * @author xyang
@@ -38,7 +41,21 @@ public class TCEExampleReplyHandler extends TCECallbackHandler {
                 out.flush();
                 out.close();
             } catch (Exception e) {
-                System.err.println("Fail to write to mxtcePceReply.xml: " + e.getMessage());
+                System.err.println("Fail to write to mxtcePceReply_OC.xml: " + e.getMessage());
+            }
+            if (pceDataContent.getTopology() != null && pceDataContent.getUserRequestConstraint().getPathInfo().getPathType().equalsIgnoreCase("ServiceTopology")) {
+                try {
+                    FileWriter fstream = new FileWriter("mxtcePceReply_ST.xml");
+                    BufferedWriter out = new BufferedWriter(fstream);
+                    // marshall jaxb object into XML
+                    JAXBContext jc = JAXBContext.newInstance("org.ogf.schema.network.topology.ctrlplane.control");
+                    Marshaller m = jc.createMarshaller();
+                    m.marshal(pceDataContent.getTopology(), out);
+                    out.flush();
+                    out.close();
+                } catch (Exception e) {
+                    System.err.println("Fail to write to mxtcePceReply_ST.xml: " + e.getMessage());
+                }
             }
         }
 
