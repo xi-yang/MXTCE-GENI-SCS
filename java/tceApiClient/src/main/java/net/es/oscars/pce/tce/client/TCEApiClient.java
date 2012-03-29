@@ -9,8 +9,6 @@ package net.es.oscars.pce.tce.client;
  * @author xyang
  */
 
-import java.io.*;
-import java.util.*;
 import org.apache.log4j.Logger;
 import java.net.URL;
 import java.net.MalformedURLException;
@@ -41,7 +39,6 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.JAXBElement;
 
 import java.io.*;
-
 import java.util.*;
 
 import java.text.SimpleDateFormat;
@@ -379,29 +376,17 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
         //unmarshal handle <topology> XML with JAXB and add to pceData 
         CtrlPlaneTopologyContent topology = null;
         try {
-            //Document infoDoc = null;
-            //DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            //dbf.setNamespaceAware(false);
-            //DocumentBuilder db = dbf.newDocumentBuilder();
             StringReader reader = new StringReader(reqTopologyXml);
-            //infoDoc = db.parse(new InputSource(reader));
-            //Node topologyNode = infoDoc.getFirstChild();
-
-            JAXBContext jc = JAXBContext.newInstance("org.ogf.schema.network.topology.ctrlplane.topology");
-
+            JAXBContext jc = JAXBContext.newInstance("org.ogf.schema.network.topology.ctrlplane");
             Unmarshaller unm = jc.createUnmarshaller();
-
             JAXBElement<CtrlPlaneTopologyContent> jaxbTopology = (JAXBElement<CtrlPlaneTopologyContent>) unm.unmarshal(reader);
-            //JAXBElement<CtrlPlaneTopologyContent> jaxbTopology = (JAXBElement<CtrlPlaneTopologyContent>)unm.unmarshal(topologyNode, org.ogf.schema.network.topology.ctrlplane.CtrlPlaneTopologyContent.class);
             topology = jaxbTopology.getValue();
-            reader.close();
         } catch (Exception e) {
             System.err.println("Error in unmarshling RequestTopology: " + e.getMessage());
         }
         pceDataContent.setTopology(topology);
         return pceDataContent;
     }
-
 
     @SuppressWarnings("unchecked")
     public static ResCreateContent configureRequstFromYaml(String configFile, String optionalConstraint) {

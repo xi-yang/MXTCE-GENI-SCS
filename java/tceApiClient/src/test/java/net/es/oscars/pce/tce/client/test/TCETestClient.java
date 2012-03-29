@@ -78,7 +78,9 @@ public class TCETestClient {
                 + "<bandwidthAvailabilityGraph>true</bandwidthAvailabilityGraph>"
                 + "<contiguousVlan>true</contiguousVlan>"
                 + "</coScheduleRequest>";
-            String requestTopology = "<topology id=\"service-reply-seq-1234a\">"
+            String requestTopology = "<topology id=\"service-reply-seq-1234a\""
+                // must add the namespace
+                + " xmlns=\"http://ogf.org/schema/network/topology/ctrlPlane/20110826/\">" 
                 // skip the acutal contents
                 +  "</topology>";
             PCEDataContent pceData;
@@ -104,7 +106,7 @@ public class TCETestClient {
                 if (!topofile.isEmpty()) {
                     try {
                         File xmlFile = new File(topofile);
-                        JAXBContext jc = JAXBContext.newInstance("org.ogf.schema.network.topology.ctrlplane.topology");
+                        JAXBContext jc = JAXBContext.newInstance("org.ogf.schema.network.topology.ctrlplane");
                         Unmarshaller unm = jc.createUnmarshaller();
                         JAXBElement<CtrlPlaneTopologyContent> jaxbTopology = (JAXBElement<CtrlPlaneTopologyContent>) unm.unmarshal(xmlFile);
                         CtrlPlaneTopologyContent topology = jaxbTopology.getValue();

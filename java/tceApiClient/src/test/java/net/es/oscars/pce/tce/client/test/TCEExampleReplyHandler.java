@@ -47,8 +47,8 @@ public class TCEExampleReplyHandler extends TCECallbackHandler {
                 try {
                     FileWriter fstream = new FileWriter("mxtcePceReply_ST.xml");
                     BufferedWriter out = new BufferedWriter(fstream);
-                    // marshall jaxb object into XML
-                    JAXBContext jc = JAXBContext.newInstance("org.ogf.schema.network.topology.ctrlplane.control");
+                    // marshall jaxb object <topology> into XML
+                    JAXBContext jc = JAXBContext.newInstance("org.ogf.schema.network.topology.ctrlplane");
                     Marshaller m = jc.createMarshaller();
                     m.marshal(pceDataContent.getTopology(), out);
                     out.flush();
