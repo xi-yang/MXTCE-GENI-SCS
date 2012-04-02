@@ -347,23 +347,8 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
         userConstraint.setPathInfo(pathInfo);
 
        
-        ReservedConstraintType reservedConstraint = new ReservedConstraintType();
-        // startTime, endTime and bandwidth in userReqConstraint no longer matter
-        //reservedConstraint.setStartTime(0);
-        //reservedConstraint.setEndTime(0);
-        //reservedConstraint.setBandwidth(0);
-        pathInfo = new PathInfo();
-        // no more Layer2Info or Layer3Info at in pathInfo of userReqConstraint
-        pathInfo.setPathType("RequestTopology");
-        pathInfo.setPathSetupMode("timer-automatic");
-        pathContent = new CtrlPlanePathContent();
-        pathContent.setId(pathId);
-        pathInfo.setPath(pathContent);
-        userConstraint.setPathInfo(pathInfo);
-        reservedConstraint.setPathInfo(pathInfo);        
         PCEDataContent pceDataContent = new PCEDataContent();
         pceDataContent.setUserRequestConstraint(userConstraint);
-        pceDataContent.setReservedConstraint(reservedConstraint);
         if (optionalConstraint != null) {
             OptionalConstraintValue optValue = new OptionalConstraintValue();
             optValue.setStringValue(optionalConstraint);

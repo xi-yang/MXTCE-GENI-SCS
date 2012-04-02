@@ -50,7 +50,7 @@ class MxTCEAPIServer: public APIServer
 {
 protected:
     APIServerThread* apiThread;
-    //map<string, APIReader*, strcmpless> apiClientConns;
+    map<string, list<Apimsg_user_constraint*>*, strcmpless> userConsGroupCache; 
 
 public:
     map<string, APIReader*, strcmpless> apiClientConns;
@@ -59,6 +59,9 @@ public:
     }
     virtual ~MxTCEAPIServer() { } 
     virtual int HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter, api_msg* apiMsg);
+    void AddGroup(Apimsg_user_constraint* userCons);
+    list<Apimsg_user_constraint*>* GetGroup(string& gri);
+    void DeleteGroup(string& gri);
 };
 
 class APIServerThread: public ThreadPortScheduler

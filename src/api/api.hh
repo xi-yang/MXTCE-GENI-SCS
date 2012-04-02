@@ -50,6 +50,12 @@ enum api_msg_type
     API_MSG_RESV_PUSH = 0x0011,
 };   
 
+enum api_msg_option
+{
+    API_OPT_GROUP = 0x00000001, // indicaate the message belong to a group
+    API_OPT_GROUP_LAST = 0x00000002, // indicate the message is the last in a group
+};
+
 struct api_msg_header
 {
     u_int16_t type;

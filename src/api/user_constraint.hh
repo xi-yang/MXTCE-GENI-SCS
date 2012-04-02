@@ -10,6 +10,7 @@
 
 #include "api_constraint.hh"
 #include "stornet_constraint.hh"
+#include "reservation.hh"
 
 class Hop_req
 {
@@ -110,11 +111,15 @@ protected:
 	string protocol;
 	string dscp;
 	u_int32_t burst_limit;
-	string lsp_class;
+ 	string lsp_class;
 	Path_req* path;
-
+    //optional constraints
 	Apimsg_stornet_constraint* co_schedule_request;
-
+    //flexible constraints
+    list<TSchedule*> flexSchedules;
+    u_int64_t flexMaxBandwidth;
+    u_int64_t flexMinBandwidth;
+    
 public:
 	Apimsg_user_constraint()
 	{

@@ -48,10 +48,6 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
 
     Apireqmsg_decoder* api_decoder = new Apireqmsg_decoder();
     Apimsg_user_constraint* user_cons = api_decoder->test_decode_msg(apiMsg->body, ntohs(apiMsg->header.length));
-    TLV* tlv_ptr = (TLV*)(new u_int8_t[TLV_HEAD_SIZE + sizeof(user_cons)]);
-    tlv_ptr->type = 1;
-    tlv_ptr->length = sizeof(user_cons);
-    memcpy(tlv_ptr->value, &user_cons, sizeof(user_cons));
     if (user_cons->getGri().empty())
     {
         char cstrClientConnId[32];
@@ -61,12 +57,69 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
     }
     string queueName="CORE";
     string topicName="API_REQUEST";
-    Message* tMsg = new Message(MSG_REQ, queueName, topicName);
-    tMsg->AddTLV(tlv_ptr);
+    Message* tMsg = NULL;
+    TLV* tlv_ptr = NULL;
+    if (((ntohl(apiMsg->header.options) & API_OPT_GROUP)) == 0) // none group
+    {
+        tlv_ptr = (TLV*)(new u_int8_t[TLV_HEAD_SIZE + sizeof(user_cons)]);
+        tlv_ptr->type = MSG_TLV_VOID_PTR;
+        tlv_ptr->length = sizeof(user_cons);
+        memcpy(tlv_ptr->value, &user_cons, sizeof(user_cons));
+        tMsg->AddTLV(tlv_ptr);
+        tMsg = new Message(MSG_REQ, queueName, topicName);
+        apiThread->GetMessagePort()->PostMessage(tMsg);
+        apiClientConns[user_cons->getGri()] = apiReader;
+        return 0;
+    }
+
+    this->AddGroup(user_cons);
+    if (((ntohl(apiMsg->header.options) & API_OPT_GROUP_LAST)) != 0) // complete group
+    {
+        list<Apimsg_user_constraint*>* userConsGroup = this->GetGroup(user_cons->getGri());
+        for (list<Apimsg_user_constraint*>::iterator it  = userConsGroup->begin(); it != userConsGroup->end(); it++)
+        {
+             tlv_ptr = (TLV*)(new u_int8_t[TLV_HEAD_SIZE + sizeof(user_cons)]);
+             tlv_ptr->type = MSG_TLV_VOID_PTR;
+             tlv_ptr->length = sizeof(user_cons);
+             memcpy(tlv_ptr->value, &user_cons, sizeof(user_cons));
+             tMsg->AddTLV(tlv_ptr);
+        }
+        this->DeleteGroup(user_cons->getGri());
+    }
+    tMsg = new Message(MSG_REQ, queueName, topicName);
     apiThread->GetMessagePort()->PostMessage(tMsg);
     apiClientConns[user_cons->getGri()] = apiReader;
-
     return 0;
+}
+
+void MxTCEAPIServer::AddGroup(Apimsg_user_constraint* userCons)
+{
+    map<string, list<Apimsg_user_constraint*>*, strcmpless>::iterator  groupIter = userConsGroupCache.find(userCons->getGri());
+    if (groupIter == userConsGroupCache.end()) 
+    {
+        list<Apimsg_user_constraint*>* group = new list<Apimsg_user_constraint*>;
+        group->push_back(userCons);
+        userConsGroupCache[userCons->getGri()] = group;
+    }
+    else
+    {
+        userConsGroupCache[userCons->getGri()]->push_back(userCons);
+    }
+}
+
+list<Apimsg_user_constraint*>* MxTCEAPIServer::GetGroup(string& gri)
+{
+    map<string, list<Apimsg_user_constraint*>*, strcmpless>::iterator  groupIter = userConsGroupCache.find(gri);
+    if (groupIter != userConsGroupCache.end()) 
+        return userConsGroupCache[gri];
+    return NULL;
+}
+
+void MxTCEAPIServer::DeleteGroup(string& gri)
+{
+    map<string, list<Apimsg_user_constraint*>*, strcmpless>::iterator  groupIter = userConsGroupCache.find(gri);
+    if (groupIter != userConsGroupCache.end()) 
+        userConsGroupCache.erase(groupIter);
 }
 
 
@@ -97,50 +150,10 @@ void APIServerThread::hookHandleMessage()
         msg_body_len = api_encoder->test_encode_msg(msg,apiMsg->body);
 
         api_encoder->encode_msg_header(apiMsg->header, msg_body_len);
-
-        /*
-        ofstream outfile("/home/wind/encodebin.txt", ios::binary);
-        if(! outfile)
-        {
-            cerr<<"open error!"<<endl;
-            exit(1);
-        }
-
-        outfile.write((char*)apiMsg->body, msg_body_len);
-        outfile.close();
-        */
-
-
-        //cout<<"test1"<<endl;
-
-        //@@@@ Example code
-        //$$ get reply object from msg 
-        //$$ encode into api_msg below
-        /*
-                api_msg_header* apiMsgHeader = &(apiMsg->header);
-
-                apiMsgHeader->type = htons(API_MSG_REPLY);
-                apiMsgHeader->ucid = htonl(0x0002);
-                apiMsgHeader->length = htons(0);
-                apiMsgHeader->seqnum = htonl(0);
-                apiMsgHeader->chksum = htonl(MSG_CHKSUM(apiMsg->header));
-                apiMsgHeader->options = htonl(0);
-                apiMsgHeader->tag = htonl(0);
-              */
-        //$$ get gri from the reply object  <== ComputeResult
-        //$$ map<string, APIReader*, strcmpless>::iterator itClientConn = apiClientConns.find(gri);
-        //$$ APIReader* clientConn = (itClientConn !=  apiClientConns.end() ?  apiClientConns[gri] : NULL);
-        //$$ if (!clientConn || !clientConn->GetWriter()) 
-        //$$          throw exception ...
-        //$$ apiConn->GetWriter()->PostMessage(apiMsg);
-        //$$ apiClientConns.erase(itClientConn);
-
+  
         gri = api_encoder->get_gri();
-        //cout<<"test2"<<endl;
         map<string, APIReader*, strcmpless>::iterator itClientConn = this->apiServer.apiClientConns.find(gri);
-        //cout<<"test3"<<endl;
         APIReader* clientConn = (itClientConn !=  this->apiServer.apiClientConns.end() ?  this->apiServer.apiClientConns[gri] : NULL);
-        //cout<<"test4"<<endl;
         if (!clientConn || !clientConn->GetWriter())
         {
         	cout<<"can not get APIReader"<<endl;
@@ -148,14 +161,9 @@ void APIServerThread::hookHandleMessage()
             LOG(buf<<endl);
             throw APIException(buf);
         }
-        //cout<<"test5"<<endl;
-
-        clientConn->GetWriter()->PostMessage(apiMsg);
-        //cout<<"test6"<<endl;
-        this->apiServer.apiClientConns.erase(itClientConn);
-        //cout<<"test7"<<endl;
-
-        //delete msg; //msg consumed ?
+         clientConn->GetWriter()->PostMessage(apiMsg);
+         this->apiServer.apiClientConns.erase(itClientConn);
+         //delete msg; //msg consumed ?
     }
 }
 

@@ -161,11 +161,30 @@ void MxTCEMessageHandler::Run()
         msg->LogDump();
         if (msg->GetType() == MSG_REQ && msg->GetTopic() == "API_REQUEST") {
             // creating computeWorkerThread and pass user request parameters
-            ComputeWorker* computingThread = ComputeWorkerFactory::CreateComputeWorker(MxTCE::defaultComputeWorkerType); 
-            string paramName = "USER_CONSTRAINT";
-            Apimsg_user_constraint* userConstraint;
-            memcpy(&userConstraint, msg->GetTLVList().front()->value, sizeof(void*));
-            computingThread->SetParameter(paramName, userConstraint);
+            ComputeWorker* computingThread = NULL;
+            if (msg->GetTLVList().size() == 1) 
+            {
+                computingThread = ComputeWorkerFactory::CreateComputeWorker(MxTCE::defaultComputeWorkerType); 
+                string paramName = "USER_CONSTRAINT";
+                Apimsg_user_constraint* userConstraint;
+                memcpy(&userConstraint, msg->GetTLVList().front()->value, sizeof(void*));
+                computingThread->SetParameter(paramName, userConstraint);
+            }
+            else if (msg->GetTLVList().size() > 1) 
+            {
+                computingThread = ComputeWorkerFactory::CreateComputeWorker("multiP2PComputeWorker"); 
+                string paramName = "USER_CONSTRAINT_LIST";
+                list<Apimsg_user_constraint*>* userConsList = new list<Apimsg_user_constraint*>;
+                for (list<Apimsg_user_constraint*>::iterator it = userConsList->begin(); it != userConsList->end(); it++)
+                    userConsList->push_back(*(Apimsg_user_constraint**)(msg->GetTLVList().front()->value));
+                computingThread->SetParameter(paramName, userConsList);
+            }
+            else 
+            {
+                char buf[128];
+                snprintf(buf, 128, "Empty TLV list in API_REQUEST message from : %s", msg->GetPort()->GetName().c_str());
+                throw TCEException(buf);
+            }
 
             // init computing thread port and routes on messge router and start thread
             string computeThreadPortName = computingThread->GetName();
