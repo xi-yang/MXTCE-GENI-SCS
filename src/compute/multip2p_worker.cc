@@ -32,10 +32,15 @@
  */
 
 #include "compute_actions.hh"
-#include "schedule_worker.hh"
+#include "multip2p_worker.hh"
+
+MultiP2PComputeWorker::~MultiP2PComputeWorker()
+{
+    // TODO: free userConsList
+}
 
 // Thread specific logic
-void* ScheduleComputeWorker::hookRun()
+void* MultiP2PComputeWorker::hookRun()
 {
     // create workflow with action list (construct relationships)
     string actionName = "Simple_Action_Process_RT";
@@ -52,28 +57,18 @@ void* ScheduleComputeWorker::hookRun()
     actions.push_back(actionNext2);
     actionNext->AddChild(actionNext2);
 
-    actionName = "Simple_Action_Create_OrderedATS";
-    Action* actionNext3 = new Action_CreateOrderedATS(actionName, this);
+    actionName = "Simple_Action_Finalize_ST";
+    Action* actionNext3 = new Action_FinalizeServiceTopology(actionName, this);
     actions.push_back(actionNext3);
     actionNext2->AddChild(actionNext3);
-
-    actionName = "Simple_Action_Compute_Schedules";
-    Action* actionNext4 = new Action_ComputeSchedulesWithKSP(actionName, this);
-    actions.push_back(actionNext4);
-    actionNext3->AddChild(actionNext4);
-
-    actionName = "Simple_Action_Finalize_ST";
-    Action* actionNext5 = new Action_FinalizeServiceTopology(actionName, this);
-    actions.push_back(actionNext5);
-    actionNext4->AddChild(actionNext5);
-
+        
     // schedule the top level action(s)
     eventMaster->Schedule(actionRoot);
     //## eventMaster->Run() will be called by parent Run() 
 }
 
 // Handle message from thread message router
-void ScheduleComputeWorker::hookHandleMessage()
+void MultiP2PComputeWorker::hookHandleMessage()
 {
     Message* msg = NULL;
     while ((msg = msgPort->GetMessage()) != NULL)
@@ -101,18 +96,18 @@ void ScheduleComputeWorker::hookHandleMessage()
 
 }
 
-void ScheduleComputeWorker::SetParameter(string& paramName, void* paramPtr)
+void MultiP2PComputeWorker::SetParameter(string& paramName, void* paramPtr)
 {
-    if (paramName == "ORDERED_ATS")
-        orderedATS = (vector<time_t>*)paramPtr;
+    if (paramName == "USER_CONSTRAINT_LIST")
+        userConsList = (list<Apimsg_user_constraint*>*)paramPtr;
     else 
         ComputeWorker::SetParameter(paramName, paramPtr);
 }
 
-void* ScheduleComputeWorker::GetParameter(string& paramName)
+void* MultiP2PComputeWorker::GetParameter(string& paramName)
 {
-    if (paramName == "ORDERED_ATS")
-        return orderedATS;
+    if (paramName == "USER_CONSTRAINT_LIST")
+        return userConsList;
     else 
         return ComputeWorker::GetParameter(paramName);
 }

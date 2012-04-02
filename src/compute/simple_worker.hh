@@ -32,8 +32,8 @@
  */
 
 
-#ifndef __EXAMPLE_WORKER_HH__
-#define __EXAMPLE_WORKER_HH__
+#ifndef __SIMPLE_WORKER_HH__
+#define __SIMPLE_WORKER_HH__
 
 #include "types.hh"
 #include "event.hh"
@@ -44,13 +44,13 @@
 
 using namespace std;
 
-class ExampleComputeWorker: public ComputeWorker
+class SimpleComputeWorker: public ComputeWorker
 {
 protected:
 
 public:
-    ExampleComputeWorker(string n):ComputeWorker(n){ }
-    virtual ~ExampleComputeWorker() { }
+    SimpleComputeWorker(string n):ComputeWorker(n){ }
+    virtual ~SimpleComputeWorker() { }
     virtual void* hookRun();
     virtual void hookHandleMessage();
     virtual void SetParameter(string& paramName, void* paramPtr);

@@ -19,5 +19,5 @@ DEFS = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)/\"
 INSTALL_SDATA=@INSTALL@ -m 600
 
 # -- Library Sources
-libcompute_a_SOURCES  = action.hh scheduling.hh compute_actions.hh compute_worker.hh example_worker.hh schedule_worker.hh
-libcompute_a_SOURCES  += action.cc scheduling.cc compute_actions.cc compute_worker.cc example_worker.cc schedule_worker.cc
+libcompute_a_SOURCES  = action.hh scheduling.hh compute_actions.hh compute_worker.hh simple_worker.hh schedule_worker.hh multip2p_worker.hh
+libcompute_a_SOURCES  += action.cc scheduling.cc compute_actions.cc compute_worker.cc simple_worker.cc schedule_worker.cc multip2p_worker.cc

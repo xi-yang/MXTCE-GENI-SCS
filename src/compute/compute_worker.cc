@@ -32,7 +32,7 @@
  */
 
 #include "compute_worker.hh"
-#include "example_worker.hh"
+#include "simple_worker.hh"
 
 list<ComputeWorker*> ComputeWorkerFactory::workers;
 int ComputeWorkerFactory::serialNum = 0;
@@ -140,8 +140,8 @@ ComputeWorker* ComputeWorkerFactory::CreateComputeWorker(string type)
     snprintf(buf, 128, "%s(%d)", type.c_str(), NewWorkerNum());
 
     ComputeWorker* worker;
-    if (type =="exampleComputeWorker") 
-        worker = new ExampleComputeWorker(buf);
+    if (type =="simpleComputeWorker") 
+        worker = new SimpleComputeWorker(buf);
     else 
     {   
         snprintf(buf, 128, "Unknown computeWorkerThread type: %s", type.c_str());

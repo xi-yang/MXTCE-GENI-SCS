@@ -32,27 +32,27 @@
  */
 
 #include "compute_actions.hh"
-#include "example_worker.hh"
+#include "simple_worker.hh"
 
 // Thread specific logic
-void* ExampleComputeWorker::hookRun()
+void* SimpleComputeWorker::hookRun()
 {
     // create workflow with action list (construct relationships)
-    string actionName = "Example_Action_Process_RT";
+    string actionName = "Simple_Action_Process_RT";
     Action* actionRoot = new Action_ProcessRequestTopology(actionName, this);
     actions.push_back(actionRoot);
 
-    actionName = "Example_Action_Create_TEWG";
+    actionName = "Simple_Action_Create_TEWG";
     Action* actionNext = new Action_CreateTEWG(actionName, this);
     actions.push_back(actionNext);
     actionRoot->AddChild(actionNext);
 
-    actionName = "Example_Action_Compute_KSP";
+    actionName = "Simple_Action_Compute_KSP";
     Action* actionNext2 = new Action_ComputeKSP(actionName, this);
     actions.push_back(actionNext2);
     actionNext->AddChild(actionNext2);
 
-    actionName = "Example_Action_Finalize_ST";
+    actionName = "Simple_Action_Finalize_ST";
     Action* actionNext3 = new Action_FinalizeServiceTopology(actionName, this);
     actions.push_back(actionNext3);
     actionNext2->AddChild(actionNext3);
@@ -63,7 +63,7 @@ void* ExampleComputeWorker::hookRun()
 }
 
 // Handle message from thread message router
-void ExampleComputeWorker::hookHandleMessage()
+void SimpleComputeWorker::hookHandleMessage()
 {
     Message* msg = NULL;
     while ((msg = msgPort->GetMessage()) != NULL)
@@ -91,7 +91,7 @@ void ExampleComputeWorker::hookHandleMessage()
 
 }
 
-void ExampleComputeWorker::SetParameter(string& paramName, void* paramPtr)
+void SimpleComputeWorker::SetParameter(string& paramName, void* paramPtr)
 {
     //if (paramName == "KSP")
     //    ksp = (vector<TPath*>*)paramPtr;
@@ -99,7 +99,7 @@ void ExampleComputeWorker::SetParameter(string& paramName, void* paramPtr)
         ComputeWorker::SetParameter(paramName, paramPtr);
 }
 
-void* ExampleComputeWorker::GetParameter(string& paramName)
+void* SimpleComputeWorker::GetParameter(string& paramName)
 {
     //if (paramName == "KSP")
     //    return ksp;
