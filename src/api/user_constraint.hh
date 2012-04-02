@@ -115,11 +115,13 @@ protected:
 	Path_req* path;
     //optional constraints
 	Apimsg_stornet_constraint* co_schedule_request;
-    //flexible constraints
+    // flexible constraints
     list<TSchedule*> flexSchedules;
     u_int64_t flexMaxBandwidth;
     u_int64_t flexMinBandwidth;
-    
+    // mp_constraints
+    string path_id;
+
 public:
 	Apimsg_user_constraint()
 	{

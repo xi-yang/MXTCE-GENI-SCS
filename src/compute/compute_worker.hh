@@ -89,6 +89,7 @@ class ComputeResult
 {
 protected:
     string gri;
+    string pathId;
     TPath* pathInfo;
     list<TPath*> alterPaths;
     string errMsg;

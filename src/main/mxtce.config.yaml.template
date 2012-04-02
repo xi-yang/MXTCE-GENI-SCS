@@ -20,5 +20,5 @@ resvManager:
 policyManager:
 
 computeWorker:
-    type: 'exampleComputeWorker'
+    type: 'simpleComputeWorker'
 ...

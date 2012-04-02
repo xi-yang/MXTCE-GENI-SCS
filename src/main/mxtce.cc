@@ -48,7 +48,7 @@ string MxTCE::resvManPortName = "MX-TCE_RESV_MANAGER";
 string MxTCE::policyManPortName = "MX-TCE_POLICY_MANAGER";
 string MxTCE::loopbackPortName = "MX-TCE_CORE_LOOPBACK";
 string MxTCE::computeThreadPrefix = "COMPUTE_THREAD_";
-string MxTCE::defaultComputeWorkerType = "exampleComputeWorker";
+string MxTCE::defaultComputeWorkerType = "simpleComputeWorker";
 list<string> MxTCE::xmlDomainFileList;
 
 
@@ -161,10 +161,9 @@ void MxTCEMessageHandler::Run()
         msg->LogDump();
         if (msg->GetType() == MSG_REQ && msg->GetTopic() == "API_REQUEST") {
             // creating computeWorkerThread and pass user request parameters
-            ComputeWorker* computingThread = NULL;
+            ComputeWorker* computingThread = ComputeWorkerFactory::CreateComputeWorker(MxTCE::defaultComputeWorkerType);
             if (msg->GetTLVList().size() == 1) 
             {
-                computingThread = ComputeWorkerFactory::CreateComputeWorker(MxTCE::defaultComputeWorkerType); 
                 string paramName = "USER_CONSTRAINT";
                 Apimsg_user_constraint* userConstraint;
                 memcpy(&userConstraint, msg->GetTLVList().front()->value, sizeof(void*));
@@ -172,11 +171,16 @@ void MxTCEMessageHandler::Run()
             }
             else if (msg->GetTLVList().size() > 1) 
             {
-                computingThread = ComputeWorkerFactory::CreateComputeWorker("multiP2PComputeWorker"); 
-                string paramName = "USER_CONSTRAINT_LIST";
+                string paramName = "USER_CONSTRAINT";
+                Apimsg_user_constraint* userConstraint;
+                memcpy(&userConstraint, msg->GetTLVList().front()->value, sizeof(void*));
+                computingThread->SetParameter(paramName, userConstraint);
+                paramName = "USER_CONSTRAINT_LIST";
                 list<Apimsg_user_constraint*>* userConsList = new list<Apimsg_user_constraint*>;
                 for (list<Apimsg_user_constraint*>::iterator it = userConsList->begin(); it != userConsList->end(); it++)
+                {
                     userConsList->push_back(*(Apimsg_user_constraint**)(msg->GetTLVList().front()->value));
+                }
                 computingThread->SetParameter(paramName, userConsList);
             }
             else 
