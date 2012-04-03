@@ -105,6 +105,8 @@ void MultiP2PComputeWorker::SetParameter(string& paramName, void* paramPtr)
 {
     if (paramName == "USER_CONSTRAINT_LIST")
         userConsList = (list<Apimsg_user_constraint*>*)paramPtr;
+    if (paramName == "COMMITTED_RESERVATIONS")
+        committedResvs = (list<TReservation*>*)paramPtr;
     else 
         ComputeWorker::SetParameter(paramName, paramPtr);
 }
@@ -113,6 +115,8 @@ void* MultiP2PComputeWorker::GetParameter(string& paramName)
 {
     if (paramName == "USER_CONSTRAINT_LIST")
         return userConsList;
+    if (paramName == "COMMITTED_RESERVATIONS")
+        return committedResvs;
     else 
         return ComputeWorker::GetParameter(paramName);
 }

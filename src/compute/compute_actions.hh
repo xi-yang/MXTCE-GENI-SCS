@@ -99,10 +99,12 @@ class Action_CreateOrderedATS: public Action
 protected:
     u_int64_t _bandwidth; //bps
     u_int64_t _volume; // sec*bps
+    vector<time_t>* _orderedATS;
     inline void AddUniqueTimePoint(vector<time_t>* ats, time_t t);
     void _Init() {
         _bandwidth = 0;
         _volume = 0;
+        _orderedATS = NULL;
     }
     
 public:
@@ -113,6 +115,7 @@ public:
     void SetReqBandwidth(u_int64_t b) { _bandwidth = b; }
     u_int64_t GetReqVolume() { return _volume; } 
     void SetReqVolume(u_int64_t v) { _volume = v; }
+    virtual void* GetData(string& dataName);
 
     virtual void Process();
     virtual bool ProcessChildren();
@@ -124,33 +127,40 @@ public:
 
 #define MAX_ATS_SIZE 100 // change / configurable
 class Apimsg_user_constraint;
+class TPath;
 class Action_ComputeSchedulesWithKSP: public Action
 {
 protected:
-    Apimsg_user_constraint* userConstraint;
-    bool blComputeBAG;
     u_int64_t _bandwidth; //bps
     u_int64_t _volume; // sec*bps
-    
+    vector<TPath*>* _feasiblePaths;
+    Apimsg_user_constraint* _userConstraint;
+    bool blComputeBAG;
+    bool blCommitBestPathToTEWG; // TODO: Improve path selection crieria (using bestPath and first available schedule for now)
     void _Init() {
-        userConstraint = NULL;
-        blComputeBAG = false;
         _bandwidth = 0;
         _volume = 0;
+        _feasiblePaths = NULL;
+        _userConstraint = NULL;
+        blComputeBAG = false;
+        blCommitBestPathToTEWG = false;
     }
 
 public:
     Action_ComputeSchedulesWithKSP(): Action(){ _Init(); }
     Action_ComputeSchedulesWithKSP(string& n, ComputeWorker* w): Action(n, w) { _Init(); }
     virtual ~Action_ComputeSchedulesWithKSP() { }
-    Apimsg_user_constraint*  GetUserConstraint() { return userConstraint; }
-    void SetUserConstraint(Apimsg_user_constraint* u) { userConstraint = u; }
-    bool yesComputeBAG() { return blComputeBAG; }
-    bool setComputeBAG(bool b) { blComputeBAG = b; }
     u_int64_t GetReqBandwidth() { return _bandwidth; } 
     void SetReqBandwidth(u_int64_t b) { _bandwidth = b; }
     u_int64_t GetReqVolume() { return _volume; } 
     void SetReqVolume(u_int64_t v) { _volume = v; }
+    Apimsg_user_constraint*  GetUserConstraint() { return _userConstraint; }
+    void SetUserConstraint(Apimsg_user_constraint* u) { _userConstraint = u; }
+    bool yesComputeBAG() { return blComputeBAG; }
+    bool setComputeBAG(bool b) { blComputeBAG = b; }
+    bool yesCommitBestPathToTEWG() { return blCommitBestPathToTEWG; }
+    bool setCommitBestPathToTEWG(bool b) { blCommitBestPathToTEWG = b; }
+    virtual void* GetData(string& dataName);
 
     virtual void Process();
     virtual bool ProcessChildren();

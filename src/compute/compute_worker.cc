@@ -44,7 +44,7 @@ ComputeWorker::~ComputeWorker()
     ComputeWorkerFactory::RemoveComputeWorker(this->GetName());
 }
 
-Action* ComputeWorker::LookupAction(string& name, string& context)
+Action* ComputeWorker::LookupAction(string& context, string& name)
 {
     list<Action*>::iterator it = actions.begin();
     for (; it != actions.end(); it++)
@@ -144,6 +144,13 @@ void* ComputeWorker::GetParameter(string& paramName)
     return NULL;
 }
 
+void* ComputeWorker::GetContextData(string& contextName, string& actionName, string& dataName)
+{
+    Action* action = LookupAction(contextName,actionName);
+    if (action == NULL)
+        return NULL;
+    return action->GetData(dataName);
+}
 
 ComputeWorker* ComputeWorkerFactory::CreateComputeWorker(string type)
 {

@@ -41,6 +41,7 @@
 #include "api.hh"
 #include "compute_worker.hh"
 #include "tewg.hh"
+#include "reservation.hh"
 
 using namespace std;
 
@@ -48,6 +49,8 @@ class MultiP2PComputeWorker: public ComputeWorker
 {
 protected:
     list<Apimsg_user_constraint*>* userConsList;
+    list<TReservation*>* committedResvs;
+
 public:
     MultiP2PComputeWorker(string n):ComputeWorker(n), userConsList(NULL) { }
     virtual ~MultiP2PComputeWorker();

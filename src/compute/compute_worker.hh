@@ -61,12 +61,13 @@ public:
     virtual ~ComputeWorker();
     string& GetName() { return portName;}
     list<Action*>& GetActions() { return actions; }
-    Action* LookupAction(string& name, string& context);
+    Action* LookupAction(string& context, string& name);
     void* Run();
     virtual void* hookRun();
     virtual void hookHandleMessage();
     virtual void SetParameter(string& paramName, void* paramPtr);
     virtual void* GetParameter(string& paramName);
+    virtual void* GetContextData(string& contextName, string& actionName, string& dataName);
 };
 
 

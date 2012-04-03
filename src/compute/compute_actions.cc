@@ -271,8 +271,8 @@ void Action_ComputeKSP::Process()
     // for current OSCARS implementation, tcePCE should pass startTime==endTime==0
     time_t startTime = userConstraint->getStarttime();
     time_t endTime = userConstraint->getEndtime();
+    list<TLink*>::iterator itL;
     if (startTime > 0 && endTime > startTime) {
-        list<TLink*>::iterator itL;
         for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
         {
             TLink* L = *itL;
@@ -413,8 +413,12 @@ void Action_ComputeKSP::Process()
                     (*itP)->SetBAG(NULL);
                 }
             }
-            feasiblePaths->push_back(feasiblePath);
+            // modify bandwidth to service bw
+            for (itL = feasiblePath->GetPath().begin(); itL != feasiblePath->GetPath().end(); itL++)
+                (*itL)->SetMaxBandwidth(bw);
+            // modify layer spec info
             feasiblePath->UpdateLayerSpecInfo(ingTSS, egrTSS);
+            feasiblePaths->push_back(feasiblePath);
             itP++;
         }
     }
@@ -490,6 +494,13 @@ inline void Action_CreateOrderedATS::AddUniqueTimePoint(vector<time_t>* ats, tim
     ats->push_back(t);
 }
 
+void* Action_CreateOrderedATS::GetData(string& dataName)
+{
+    if (dataName == "ORDERED_ATS")
+        return _orderedATS;
+    return NULL;
+}
+
 void Action_CreateOrderedATS::Process()
 {
     LOG(name<<"Process() called"<<endl);
@@ -505,7 +516,6 @@ void Action_CreateOrderedATS::Process()
     paramName = "TEWG";
     TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetParameter(paramName);
 
-    vector<time_t>* orderedATS = new vector<time_t>;
     vector<TPath*>::iterator itP;
     list<TLink*>::iterator itL;
     int* piVal = new int(0);
@@ -546,10 +556,7 @@ void Action_CreateOrderedATS::Process()
         (*itL)->GetWorkData()->SetData("ATS_Order_Counter", NULL);
     }
 
-    paramName = "ORDERED_ATS";
-    vector<time_t>* ats = new vector<time_t>;
-    this->GetComputeWorker()->SetParameter(paramName, ats);
-
+    _orderedATS = new vector<time_t>;
     for (itL2 = orderedLinks.begin(); itL2 != orderedLinks.end(); itL2++)
     {
         TLink* L = *itL2;
@@ -580,7 +587,7 @@ void Action_CreateOrderedATS::Process()
             //$$ judge whether link resource between (t_start, t_end) can satisfy request (before current delta)
             if (maxRemainBW*(t_end - t_start) > this->GetReqVolume())
             {
-                AddUniqueTimePoint(ats, t_start);
+                AddUniqueTimePoint(_orderedATS, t_start);
                 t_start = t_next;
             }
 
@@ -599,14 +606,13 @@ void Action_CreateOrderedATS::Process()
             }
             if (maxRemainBW*(t_end - t_start) > this->GetReqVolume())
             {
-                AddUniqueTimePoint(ats, t_start);
+                AddUniqueTimePoint(_orderedATS, t_start);
                 t_start = t_next;
             }
         }
-        if (ats->size() >= MAX_ATS_SIZE)
+        if (_orderedATS->size() >= MAX_ATS_SIZE)
             break;
     }
-    // TODO: store ATS and ADS to Action local objects
 }
 
 
@@ -654,55 +660,63 @@ void Action_CreateOrderedATS::Finish()
 
 ///////////////////// class Action_ComputeSchedulesWithKSP ///////////////////////////
 
+void* Action_ComputeSchedulesWithKSP::GetData(string& dataName)
+{
+    if (dataName == "FEASIBLE_PATHS")
+        return _feasiblePaths;
+    return NULL;
+}
+
+
 void Action_ComputeSchedulesWithKSP::Process()
 {
     LOG(name<<"Process() called"<<endl);
     assert(_bandwidth > 0 && _volume > 0);
 
+    // workflow data
     string paramName = "TEWG";
     TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetParameter(paramName);
     if (tewg == NULL)
         throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() No TEWG available for computation!");
-    
-    paramName = "ORDERED_ATS";
-    vector<time_t>* orderedATS = (vector<time_t>*)this->GetComputeWorker()->GetParameter(paramName);
+    paramName = "USER_CONSTRAINT";
+    if (_userConstraint == NULL)
+        _userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetParameter(paramName);
+
+    // context data
+    string actionName = "Action_CreateOrderedATS";
+    string dataName = "ORDERED_ATS";
+    vector<time_t>* orderedATS = (vector<time_t>*)this->GetComputeWorker()->GetContextData(this->context, actionName, dataName);
     if (tewg == NULL)
         throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() No Ordered Aggregate Time Series available for computation!");
 
-    paramName = "USER_CONSTRAINT";
-    if (userConstraint == NULL)
-        userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetParameter(paramName);
-    TNode* srcNode = tewg->LookupNodeByURN(userConstraint->getSrcendpoint());
+    TNode* srcNode = tewg->LookupNodeByURN(_userConstraint->getSrcendpoint());
     if (srcNode == NULL)
         throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() unknown source URN!");
-    TNode* dstNode = tewg->LookupNodeByURN(userConstraint->getDestendpoint());
+    TNode* dstNode = tewg->LookupNodeByURN(_userConstraint->getDestendpoint());
     if (dstNode == NULL)
         throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() unknown destination URN!");
-    u_int64_t bw = (this->GetReqBandwidth() == 0 ? userConstraint->getBandwidth():this->GetReqBandwidth());
-    time_t duration = (this->GetReqVolume() == 0 ? userConstraint->getEndtime()-userConstraint->getStarttime():this->GetReqVolume()/this->GetReqBandwidth());
-    if (userConstraint->getCoschedreq()&& userConstraint->getCoschedreq()->getMinbandwidth() > bw)
-        bw = userConstraint->getCoschedreq()->getMinbandwidth();
+    u_int64_t bw = (this->GetReqBandwidth() == 0 ? _userConstraint->getBandwidth():this->GetReqBandwidth());
+    int duration = (this->GetReqVolume() == 0 ? _userConstraint->getEndtime()-_userConstraint->getStarttime():this->GetReqVolume()/this->GetReqBandwidth());
+    if (_userConstraint->getCoschedreq()&& _userConstraint->getCoschedreq()->getMinbandwidth() > bw)
+        bw = _userConstraint->getCoschedreq()->getMinbandwidth();
     u_int32_t srcVtag, dstVtag;
-    if (userConstraint->getSrcvlantag() == "any" || userConstraint->getSrcvlantag() == "ANY")
+    if (_userConstraint->getSrcvlantag() == "any" || _userConstraint->getSrcvlantag() == "ANY")
         srcVtag = ANY_TAG;
     else
-        sscanf(userConstraint->getSrcvlantag().c_str(), "%d", &srcVtag);
-    if (userConstraint->getDestvlantag() == "any" || userConstraint->getDestvlantag() == "ANY")
+        sscanf(_userConstraint->getSrcvlantag().c_str(), "%d", &srcVtag);
+    if (_userConstraint->getDestvlantag() == "any" || _userConstraint->getDestvlantag() == "ANY")
         dstVtag = ANY_TAG;
     else
-        sscanf(userConstraint->getDestvlantag().c_str(), "%d", &dstVtag);
+        sscanf(_userConstraint->getDestvlantag().c_str(), "%d", &dstVtag);
     TSpec tspec;
-    if (userConstraint->getLayer() == "3")
+    if (_userConstraint->getLayer() == "3")
         tspec.Update(LINK_IFSWCAP_PSC1, LINK_IFSWCAP_ENC_PKT, bw);
     else
         tspec.Update(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);
-    
-    paramName = "FEASIBLE_PATHS";
-    vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
-    if (feasiblePaths == NULL)
+
+    if (_feasiblePaths == NULL)
     {
-        feasiblePaths = new vector<TPath*>;
-        this->GetComputeWorker()->SetParameter(paramName, feasiblePaths);
+        _feasiblePaths = new vector<TPath*>;
     }
 
     vector<TPath*> KSP;
@@ -724,10 +738,10 @@ void Action_ComputeSchedulesWithKSP::Process()
         // $$ pruning bandwidth
         tewg->PruneByBandwidth(this->GetReqBandwidth());
         
-        TLink* ingressLink = tewg->LookupLinkByURN(userConstraint->getSrcendpoint());
+        TLink* ingressLink = tewg->LookupLinkByURN(_userConstraint->getSrcendpoint());
         if (!ingressLink || !ingressLink->IsAvailableForTspec(tspec))
             throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Ingress Edge Link is not available for requested TSpec!");
-        TLink* egressLink = tewg->LookupLinkByURN(userConstraint->getDestendpoint());
+        TLink* egressLink = tewg->LookupLinkByURN(_userConstraint->getDestendpoint());
         if (!egressLink || !egressLink->IsAvailableForTspec(tspec))
             throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Egress Edge Link is not available for requested TSpec!");
         
@@ -803,8 +817,8 @@ void Action_ComputeSchedulesWithKSP::Process()
             else
             {
                 TSchedule* schedule = new TSchedule(startTime, endTime);
-                vector<TPath*>::iterator itFP = feasiblePaths->begin();
-                for (; itFP != feasiblePaths->end(); itFP++)
+                vector<TPath*>::iterator itFP = _feasiblePaths->begin();
+                for (; itFP != _feasiblePaths->end(); itFP++)
                 {
                     if ((*(*itFP)) == (*(*itP)))
                     {
@@ -817,10 +831,10 @@ void Action_ComputeSchedulesWithKSP::Process()
                 // Caution: Clone() will inherit the orignal localEnd and remoteEnd nodes from work set.
                 TPath* feasiblePath = (*itP)->Clone();
                 // check whether BAG is requested
-                if (yesComputeBAG() && userConstraint->getCoschedreq() && userConstraint->getCoschedreq()->getBandwidthavaigraph()) 
+                if (yesComputeBAG() && _userConstraint->getCoschedreq() && _userConstraint->getCoschedreq()->getBandwidthavaigraph()) 
                 {
-                    BandwidthAvailabilityGraph* bag = (*itP)->CreatePathBAG(userConstraint->getCoschedreq()->getStarttime(), 
-                        userConstraint->getCoschedreq()->getEndtime());
+                    BandwidthAvailabilityGraph* bag = (*itP)->CreatePathBAG(_userConstraint->getCoschedreq()->getStarttime(), 
+                        _userConstraint->getCoschedreq()->getEndtime());
                     if (bag != NULL) 
                     {
                         feasiblePath->SetBAG(bag);
@@ -828,8 +842,12 @@ void Action_ComputeSchedulesWithKSP::Process()
                     }
                 }
                 feasiblePath->GetSchedules().push_back(schedule);
+                // modify bandwidth to service bw
+                for (itL = feasiblePath->GetPath().begin(); itL != feasiblePath->GetPath().end(); itL++)
+                    (*itL)->SetMaxBandwidth(bw);
+                // modify layer spec info
                 feasiblePath->UpdateLayerSpecInfo(ingTSS, egrTSS);
-                feasiblePaths->push_back(feasiblePath);
+                _feasiblePaths->push_back(feasiblePath);
                 itP++;
             }
         }
@@ -844,7 +862,37 @@ void Action_ComputeSchedulesWithKSP::Process()
         }
         // $$ break if feasiblePaths.size() == requested_num; Or get more paths then sort and return the best ones ?
     }
-    // TODO: store feasiblePaths to Action local object
+    if (_feasiblePaths->size() == 0)
+    {
+        delete _feasiblePaths;
+        _feasiblePaths = NULL;
+        throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() No feasible path found after being applied with TE constraints!");
+    }
+    sort(_feasiblePaths->begin(), _feasiblePaths->end(), cmp_tpath);
+    // $$ commit a selected (best) feasible path into the TEWG as constraint for multi-P2P request
+    if (this->yesCommitBestPathToTEWG())
+    {
+        TPath* committedPath = _feasiblePaths->front();
+        TReservation* resv = new TReservation(_userConstraint->getGri());
+        TSchedule* schedule = new TSchedule(committedPath->GetSchedules().front()->GetStartTime(), duration);
+        resv->GetSchedules().push_back(schedule);
+        TGraph* serviceTopo = new TGraph(_userConstraint->getGri());
+        serviceTopo->LoadPath(committedPath->GetPath()); 
+        resv->SetServiceTopology(serviceTopo);
+        string status = "RESERVED"; resv->SetStatus(status);
+        resv->BuildDeltaCache();
+        paramName = "COMMITTED_RESERVATIONS"; // workflow level data
+        list<TReservation*>* committedResvations = (list<TReservation*>*)this->GetComputeWorker()->GetParameter(paramName);
+        if (committedResvations == NULL)
+        {
+            committedResvations = new list<TReservation*>;
+            this->GetComputeWorker()->SetParameter(paramName, (void*)committedResvations);
+        }
+        committedResvations->push_back(resv);
+        list<TReservation*>::iterator itR = committedResvations->begin();
+        for (; itR != committedResvations->end(); itR++)
+            tewg->AddResvDeltas(*itR);
+    }
 }
 
 
@@ -972,4 +1020,11 @@ void Action_FinalizeServiceTopology::Finish()
     Action::Finish();
 }
 
+///////////////////// class Action_MP2P_ProcessRequestTopology ///////////////////////////
+
+
+///////////////////// class Action_MP2P_ReorderPaths  ///////////////////////////
+
+
+///////////////////// class Action_MP2P_FinalizeServiceTopology ///////////////////////////
 
