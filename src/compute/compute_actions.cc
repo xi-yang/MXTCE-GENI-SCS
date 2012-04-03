@@ -490,14 +490,12 @@ inline void Action_CreateOrderedATS::AddUniqueTimePoint(vector<time_t>* ats, tim
     ats->push_back(t);
 }
 
-// TODO: Add request parameters (max-bandwidth, max-duration, volume)
-#define _BW_ 100000000 //100M
-#define _Volume_ 1000000000*8 //1GB
-
 void Action_CreateOrderedATS::Process()
 {
     LOG(name<<"Process() called"<<endl);
 
+    assert(_bandwidth > 0 && _volume > 0);
+    
     string paramName = "KSP";
     vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
 
@@ -572,9 +570,6 @@ void Action_CreateOrderedATS::Process()
         time_t t_next = 0; // for sliding t_start
         u_int64_t maxRemainBW = L->GetMaxReservableBandwidth() - ((TLinkDelta*)ads->GetADS().front())->GetBandwidth();
 
-        // TODO: change selection and order of ATS based on request constraints and objectives!
-        // the current logic prefers max-bandwidth criterion
-
         for (itD = ads->GetADS().begin(); itD != ads->GetADS().end(); itD++)
         {
             TDelta* delta = *itD;
@@ -583,7 +578,7 @@ void Action_CreateOrderedATS::Process()
                 t_next = t_end;
 
             //$$ judge whether link resource between (t_start, t_end) can satisfy request (before current delta)
-            if (maxRemainBW*(t_end - t_start) > _Volume_)
+            if (maxRemainBW*(t_end - t_start) > this->GetReqVolume())
             {
                 AddUniqueTimePoint(ats, t_start);
                 t_start = t_next;
@@ -596,13 +591,13 @@ void Action_CreateOrderedATS::Process()
                 t_next = t_end;
 
             //$$ judge whether link resource between (t_start, t_end) can satisfy request (including current delta)
-            if (maxRemainBW < _BW_)
+            if (maxRemainBW < this->GetReqBandwidth())
             {
                 t_start = t_end = delta->GetEndTime();
                 maxRemainBW = L->GetMaxReservableBandwidth();
                 continue;
             }
-            if (maxRemainBW*(t_end - t_start) > _Volume_)
+            if (maxRemainBW*(t_end - t_start) > this->GetReqVolume())
             {
                 AddUniqueTimePoint(ats, t_start);
                 t_start = t_next;
@@ -611,6 +606,7 @@ void Action_CreateOrderedATS::Process()
         if (ats->size() >= MAX_ATS_SIZE)
             break;
     }
+    // TODO: store ATS and ADS to Action local objects
 }
 
 
@@ -661,6 +657,8 @@ void Action_CreateOrderedATS::Finish()
 void Action_ComputeSchedulesWithKSP::Process()
 {
     LOG(name<<"Process() called"<<endl);
+    assert(_bandwidth > 0 && _volume > 0);
+
     string paramName = "TEWG";
     TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetParameter(paramName);
     if (tewg == NULL)
@@ -671,23 +669,41 @@ void Action_ComputeSchedulesWithKSP::Process()
     if (tewg == NULL)
         throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() No Ordered Aggregate Time Series available for computation!");
 
-    // TODO: should get the following params from API request
-    u_int64_t bw = 1000000000; // 100M
-    TNode* srcNode = tewg->GetNodes().front();
-    TNode* dstNode = tewg->GetNodes().back();
-    time_t duration = 3600;
-    TServiceSpec ingTSS, egrTSS;
-    ingTSS.Update(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);
-    ingTSS.GetVlanSet().AddTag(4001); //placeholder
-    egrTSS.Update(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);
-    egrTSS.GetVlanSet().AddTag(4001); // placeholder
-
+    paramName = "USER_CONSTRAINT";
+    if (userConstraint == NULL)
+        userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetParameter(paramName);
+    TNode* srcNode = tewg->LookupNodeByURN(userConstraint->getSrcendpoint());
+    if (srcNode == NULL)
+        throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() unknown source URN!");
+    TNode* dstNode = tewg->LookupNodeByURN(userConstraint->getDestendpoint());
+    if (dstNode == NULL)
+        throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() unknown destination URN!");
+    u_int64_t bw = (this->GetReqBandwidth() == 0 ? userConstraint->getBandwidth():this->GetReqBandwidth());
+    time_t duration = (this->GetReqVolume() == 0 ? userConstraint->getEndtime()-userConstraint->getStarttime():this->GetReqVolume()/this->GetReqBandwidth());
+    if (userConstraint->getCoschedreq()&& userConstraint->getCoschedreq()->getMinbandwidth() > bw)
+        bw = userConstraint->getCoschedreq()->getMinbandwidth();
+    u_int32_t srcVtag, dstVtag;
+    if (userConstraint->getSrcvlantag() == "any" || userConstraint->getSrcvlantag() == "ANY")
+        srcVtag = ANY_TAG;
+    else
+        sscanf(userConstraint->getSrcvlantag().c_str(), "%d", &srcVtag);
+    if (userConstraint->getDestvlantag() == "any" || userConstraint->getDestvlantag() == "ANY")
+        dstVtag = ANY_TAG;
+    else
+        sscanf(userConstraint->getDestvlantag().c_str(), "%d", &dstVtag);
+    TSpec tspec;
+    if (userConstraint->getLayer() == "3")
+        tspec.Update(LINK_IFSWCAP_PSC1, LINK_IFSWCAP_ENC_PKT, bw);
+    else
+        tspec.Update(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);
     
-    // TODO: verify ingress/egress edge Tspec
-
     paramName = "FEASIBLE_PATHS";
-    vector<TPath*>* feasiblePaths = new vector<TPath*>;
-    this->GetComputeWorker()->SetParameter(paramName, feasiblePaths);
+    vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+    if (feasiblePaths == NULL)
+    {
+        feasiblePaths = new vector<TPath*>;
+        this->GetComputeWorker()->SetParameter(paramName, feasiblePaths);
+    }
 
     vector<TPath*> KSP;
     for (int i = 0; i < orderedATS->size(); i++)
@@ -706,19 +722,78 @@ void Action_ComputeSchedulesWithKSP::Process()
             conjDelta->Apply();
         }
         // $$ pruning bandwidth
-        tewg->PruneByBandwidth(bw);
-        // $$ search KSP
+        tewg->PruneByBandwidth(this->GetReqBandwidth());
+        
+        TLink* ingressLink = tewg->LookupLinkByURN(userConstraint->getSrcendpoint());
+        if (!ingressLink || !ingressLink->IsAvailableForTspec(tspec))
+            throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Ingress Edge Link is not available for requested TSpec!");
+        TLink* egressLink = tewg->LookupLinkByURN(userConstraint->getDestendpoint());
+        if (!egressLink || !egressLink->IsAvailableForTspec(tspec))
+            throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Egress Edge Link is not available for requested TSpec!");
+        
+        // compute KSP
         KSP.clear();
         try {
-             tewg->ComputeKShortestPaths(srcNode, dstNode, tewg->GetNodes().size()>20?20:tewg->GetNodes().size(), KSP);
+            tewg->ComputeKShortestPaths(srcNode, dstNode, tewg->GetNodes().size()*2>20?20:tewg->GetNodes().size()*2, KSP);
         } catch (TCEException e) {
             //some debug logging here but do not throw exception upward
             LOG_DEBUG("Action_ComputeSchedulesWithKSP::Process() at TimePoint=" << startTime << " raised exception: " << e.GetMessage() <<endl);
         }
-        // $$ verify candidate paths
+        // verify constraints with switchingType / layer adaptation / VLAN etc.
         vector<TPath*>::iterator itP = KSP.begin(); 
         while (itP != KSP.end())
         {
+            if (!(*ingressLink == *(*itP)->GetPath().front()))
+            {
+                // create artificial source node and link to handle edge ingress link
+                if (ingressLink->GetRemoteEnd() == NULL)
+                {
+                    TLink* newSrcLink = ingressLink->Clone();
+                    TNode* newSrcNode = ((TNode*)ingressLink->GetPort()->GetNode())->Clone();
+                    newSrcNode->GetLocalLinks().push_back(newSrcLink);
+                    newSrcNode->GetRemoteLinks().push_back(ingressLink);
+                    ((TNode*)ingressLink->GetPort()->GetNode())->GetRemoteLinks().push_back(newSrcLink);
+                    ingressLink->SetRemoteEnd(newSrcNode);
+                    ingressLink->SetRemoteLink(newSrcLink);
+                    newSrcLink->SetRemoteLink(ingressLink);
+                    newSrcLink->SetLocalEnd(newSrcNode);
+                    newSrcLink->SetRemoteEnd((TNode*)ingressLink->GetPort()->GetNode());
+                    tewg->GetLinks().push_back(newSrcLink);
+                    tewg->GetNodes().push_back(newSrcNode);
+                    newSrcLink->SetWorkData(new TWorkData());
+                    newSrcNode->SetWorkData(new TWorkData());
+                }
+                (*itP)->GetPath().push_front(ingressLink);
+            }
+            if (!(*egressLink == *(*itP)->GetPath().back()))
+            {
+                // create artificial destination node and link to handle edge ingress link
+                if (egressLink->GetRemoteEnd() == NULL)
+                {
+                    TLink* newDstLink = egressLink->Clone();
+                    TNode* newDstNode = ((TNode*)egressLink->GetPort()->GetNode())->Clone();
+                    newDstNode->GetLocalLinks().push_back(newDstLink);
+                    newDstNode->GetRemoteLinks().push_back(egressLink);
+                    ((TNode*)egressLink->GetPort()->GetNode())->GetRemoteLinks().push_back(newDstLink);
+                    egressLink->SetRemoteEnd(newDstNode);
+                    egressLink->SetRemoteLink(newDstLink);
+                    newDstLink->SetRemoteLink(egressLink);
+                    newDstLink->SetLocalEnd(newDstNode);
+                    newDstLink->SetRemoteEnd((TNode*)egressLink->GetPort()->GetNode());
+                    tewg->GetLinks().push_back(newDstLink);
+                    tewg->GetNodes().push_back(newDstNode);
+                    newDstLink->SetWorkData(new TWorkData());
+                    newDstNode->SetWorkData(new TWorkData());
+                }
+                (*itP)->GetPath().push_back(egressLink);
+            }
+                
+            TServiceSpec ingTSS, egrTSS;
+            ingTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+            ingTSS.GetVlanSet().AddTag(srcVtag);
+            egrTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+            egrTSS.GetVlanSet().AddTag(dstVtag);
+            (*itP)->ExpandWithRemoteLinks();
             if (!(*itP)->VerifyTEConstraints(ingTSS, egrTSS))
             {
                 TPath* path2erase = *itP;
@@ -727,7 +802,6 @@ void Action_ComputeSchedulesWithKSP::Process()
             }
             else
             {
-                // TODO: collect results into feasible paths
                 TSchedule* schedule = new TSchedule(startTime, endTime);
                 vector<TPath*>::iterator itFP = feasiblePaths->begin();
                 for (; itFP != feasiblePaths->end(); itFP++)
@@ -739,12 +813,27 @@ void Action_ComputeSchedulesWithKSP::Process()
                         continue;
                     }
                 }
-                (*itP)->GetSchedules().push_back(schedule);
-                feasiblePaths->push_back(*itP);
+                // make a copy of TPath from work set. Then do twists on the copy to satisfy reply format.
+                // Caution: Clone() will inherit the orignal localEnd and remoteEnd nodes from work set.
+                TPath* feasiblePath = (*itP)->Clone();
+                // check whether BAG is requested
+                if (yesComputeBAG() && userConstraint->getCoschedreq() && userConstraint->getCoschedreq()->getBandwidthavaigraph()) 
+                {
+                    BandwidthAvailabilityGraph* bag = (*itP)->CreatePathBAG(userConstraint->getCoschedreq()->getStarttime(), 
+                        userConstraint->getCoschedreq()->getEndtime());
+                    if (bag != NULL) 
+                    {
+                        feasiblePath->SetBAG(bag);
+                        (*itP)->SetBAG(NULL);
+                    }
+                }
+                feasiblePath->GetSchedules().push_back(schedule);
+                feasiblePath->UpdateLayerSpecInfo(ingTSS, egrTSS);
+                feasiblePaths->push_back(feasiblePath);
                 itP++;
             }
         }
-        
+
         // $$ resore TEWG by adding back conjoined delta
         for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
         {
@@ -755,6 +844,7 @@ void Action_ComputeSchedulesWithKSP::Process()
         }
         // $$ break if feasiblePaths.size() == requested_num; Or get more paths then sort and return the best ones ?
     }
+    // TODO: store feasiblePaths to Action local object
 }
 
 

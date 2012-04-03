@@ -55,6 +55,7 @@ class Action: public Timer
 {
 protected:
     string name;
+    string context;
     ActionState state;
     ComputeWorker* worker;
     Action* parent;
@@ -73,6 +74,8 @@ public:
     virtual ~Action() { }
     string& GetName() { return name; }
     void SetName(string& n) { name = n; }
+    string& GetContext() { return context; }
+    void SetContext(string& c) { context = c; }
     ActionState GetState() { return state; }
     void SetState(ActionState s) { this->state = s; }
     ComputeWorker* GetComputeWorker() { return worker; }

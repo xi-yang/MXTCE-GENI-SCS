@@ -33,6 +33,7 @@
 
 #include "compute_worker.hh"
 #include "simple_worker.hh"
+#include "multip2p_worker.hh"
 
 list<ComputeWorker*> ComputeWorkerFactory::workers;
 int ComputeWorkerFactory::serialNum = 0;
@@ -41,6 +42,17 @@ Lock ComputeWorkerFactory::cwfLock;
 ComputeWorker::~ComputeWorker()
 {
     ComputeWorkerFactory::RemoveComputeWorker(this->GetName());
+}
+
+Action* ComputeWorker::LookupAction(string& name, string& context)
+{
+    list<Action*>::iterator it = actions.begin();
+    for (; it != actions.end(); it++)
+    {
+        if ((*it)->GetName() == name && (*it)->GetContext() == context)
+            return (*it);
+    }
+    return NULL;
 }
 
 void* ComputeWorker::Run()
@@ -142,6 +154,8 @@ ComputeWorker* ComputeWorkerFactory::CreateComputeWorker(string type)
     ComputeWorker* worker;
     if (type =="simpleComputeWorker") 
         worker = new SimpleComputeWorker(buf);
+    else if (type =="multip2pComputeWorker") 
+        worker = new MultiP2PComputeWorker(buf);
     else 
     {   
         snprintf(buf, 128, "Unknown computeWorkerThread type: %s", type.c_str());

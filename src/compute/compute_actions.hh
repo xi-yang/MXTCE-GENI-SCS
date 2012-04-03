@@ -92,17 +92,28 @@ class Action_ComputeKSP: public Action
 
 
 ///////////// scheduling workflow actions //////////
-
+// ATS: Aggregate Time Series
+// ADS: Aggregate Delta Series 
 class Action_CreateOrderedATS: public Action
 {
 protected:
+    u_int64_t _bandwidth; //bps
+    u_int64_t _volume; // sec*bps
     inline void AddUniqueTimePoint(vector<time_t>* ats, time_t t);
+    void _Init() {
+        _bandwidth = 0;
+        _volume = 0;
+    }
     
 public:
-    Action_CreateOrderedATS(): Action(){ }
-    Action_CreateOrderedATS(string& n, ComputeWorker* w): Action(n, w) { }
+    Action_CreateOrderedATS(): Action(){ _Init(); }
+    Action_CreateOrderedATS(string& n, ComputeWorker* w): Action(n, w) { _Init(); }
     virtual ~Action_CreateOrderedATS() { }
-    
+    u_int64_t GetReqBandwidth() { return _bandwidth; } 
+    void SetReqBandwidth(u_int64_t b) { _bandwidth = b; }
+    u_int64_t GetReqVolume() { return _volume; } 
+    void SetReqVolume(u_int64_t v) { _volume = v; }
+
     virtual void Process();
     virtual bool ProcessChildren();
     virtual bool ProcessMessages();
@@ -112,16 +123,35 @@ public:
 
 
 #define MAX_ATS_SIZE 100 // change / configurable
-
+class Apimsg_user_constraint;
 class Action_ComputeSchedulesWithKSP: public Action
 {
 protected:
+    Apimsg_user_constraint* userConstraint;
+    bool blComputeBAG;
+    u_int64_t _bandwidth; //bps
+    u_int64_t _volume; // sec*bps
+    
+    void _Init() {
+        userConstraint = NULL;
+        blComputeBAG = false;
+        _bandwidth = 0;
+        _volume = 0;
+    }
 
 public:
-    Action_ComputeSchedulesWithKSP(): Action(){ }
-    Action_ComputeSchedulesWithKSP(string& n, ComputeWorker* w): Action(n, w) { }
+    Action_ComputeSchedulesWithKSP(): Action(){ _Init(); }
+    Action_ComputeSchedulesWithKSP(string& n, ComputeWorker* w): Action(n, w) { _Init(); }
     virtual ~Action_ComputeSchedulesWithKSP() { }
-    
+    Apimsg_user_constraint*  GetUserConstraint() { return userConstraint; }
+    void SetUserConstraint(Apimsg_user_constraint* u) { userConstraint = u; }
+    bool yesComputeBAG() { return blComputeBAG; }
+    bool setComputeBAG(bool b) { blComputeBAG = b; }
+    u_int64_t GetReqBandwidth() { return _bandwidth; } 
+    void SetReqBandwidth(u_int64_t b) { _bandwidth = b; }
+    u_int64_t GetReqVolume() { return _volume; } 
+    void SetReqVolume(u_int64_t v) { _volume = v; }
+
     virtual void Process();
     virtual bool ProcessChildren();
     virtual bool ProcessMessages();

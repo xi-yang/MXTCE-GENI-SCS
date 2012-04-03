@@ -61,6 +61,7 @@ public:
     virtual ~ComputeWorker();
     string& GetName() { return portName;}
     list<Action*>& GetActions() { return actions; }
+    Action* LookupAction(string& name, string& context);
     void* Run();
     virtual void* hookRun();
     virtual void hookHandleMessage();
@@ -92,6 +93,7 @@ protected:
     string pathId;
     TPath* pathInfo;
     list<TPath*> alterPaths;
+    list<TPath*> flexAlterPaths;
     string errMsg;
 
 public:
@@ -102,6 +104,7 @@ public:
     TPath* GetPathInfo() { return pathInfo; }
     void SetPathInfo(TPath* p) { pathInfo = p; }
     list<TPath*>& GetAlterPaths() { return alterPaths; }
+    list<TPath*>& GetFlexAlterPaths() { return flexAlterPaths; }
     string& GetErrMessage() { return errMsg; }
     void SetErrMessage(string& s) {errMsg = s; }
     static void RegulatePathInfo(TPath* path);
