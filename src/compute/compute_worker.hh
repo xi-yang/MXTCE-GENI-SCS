@@ -102,6 +102,8 @@ public:
     virtual ~ComputeResult() { delete pathInfo; }
     string& GetGri() { return gri; }
     void SetGri(string& g) { gri = g; }
+    string& GetPathId() { return pathId; }
+    void SetPathId(string& s) { pathId = s; }
     TPath* GetPathInfo() { return pathInfo; }
     void SetPathInfo(TPath* p) { pathInfo = p; }
     list<TPath*>& GetAlterPaths() { return alterPaths; }

@@ -227,17 +227,22 @@ class Action_ReorderPaths_MP2P: public Action
         virtual void CleanUp();
 };
 
-
+class ComputeResult;
 class Action_FinalizeServiceTopology_MP2P: public Action
 {
     protected:
-    
+        list<ComputeResult*>* _computeResultList;
+        void _Init(){
+            _computeResultList = NULL;
+        }
+
     public:
-        Action_FinalizeServiceTopology_MP2P(): Action(){ }
-        Action_FinalizeServiceTopology_MP2P(string& n, ComputeWorker* w): Action(n, w) { }
-        Action_FinalizeServiceTopology_MP2P(string& c, string& n, ComputeWorker* w): Action(c, n, w) { }
+        Action_FinalizeServiceTopology_MP2P(): Action(){ _Init(); }
+        Action_FinalizeServiceTopology_MP2P(string& n, ComputeWorker* w): Action(n, w) { _Init(); }
+        Action_FinalizeServiceTopology_MP2P(string& c, string& n, ComputeWorker* w): Action(c, n, w) { _Init(); }
         virtual ~Action_FinalizeServiceTopology_MP2P() { }
-    
+        virtual void* GetData(string& dataName);
+
         virtual void Process();
         virtual bool ProcessChildren();
         virtual bool ProcessMessages();

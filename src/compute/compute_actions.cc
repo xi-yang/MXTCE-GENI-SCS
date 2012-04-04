@@ -1111,7 +1111,8 @@ void Action_ProcessRequestTopology_MP2P::Process()
         }
 
         // each Action_FinalizeServiceTopology_MP2P handle result for one sub-workflow
-        actionName = "Action_FinalizeServiceTopology_MP2P";
+        actionName = "Action_FinalizeServiceTopology_MP2P_";
+        actionName += (*it)->getPathId();
         Action_FinalizeServiceTopology_MP2P* actionFinal = new Action_FinalizeServiceTopology_MP2P(contextNameSet[i], actionName, this->GetComputeWorker());
         this->GetComputeWorker()->GetActions().push_back(actionFinal);
         prevAction->AddChild(actionFinal);
@@ -1155,9 +1156,36 @@ void Action_ProcessRequestTopology_MP2P::Finish()
 {
     LOG(name<<"Finish() called"<<endl);
 
-    //$$ collect results from exceptions (failuare) and  multiple Action_FinalizeServiceTopology_MP2P (success)
+    // collect results from exceptions (failuare) and  multiple Action_FinalizeServiceTopology_MP2P (success)
+    string actionName = "Action_ComputeSchedulesWithKSP_Round2_";
+    string paramName = "USER_CONSTRAINT_LIST";
+    list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetParameter(paramName);
+    list<Apimsg_user_constraint*>::iterator itU = userConsList->begin();
+    list<ComputeResult*> multip2pResultList;
+    list<ComputeResult*>::iterator itR;
+    for (; itU != userConsList->end(); itU++)
+    {
+        string actionName = "Action_FinalizeServiceTopology_MP2P_";
+        actionName += (*itU)->getPathId();
+        string dataName = "COMPUTE_RESULT_LIST";
+        list<ComputeResult*>* computeResultList = (list<ComputeResult*>*)this->GetComputeWorker()->GetContextData(this->context, actionName, dataName);
+        for (itR = computeResultList->begin(); itR != computeResultList->end(); itR++)
+            multip2pResultList.push_back(*itR);
+    }
 
-    //$$ create reply TLVs and message and send back to core thread
+    list<TLV*> tlvList;
+    for (itR = multip2pResultList.begin(); itR != multip2pResultList.end(); itR++)
+    {
+        ComputeResult* result = *itR;
+        TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
+        tlv->type = MSG_TLV_VOID_PTR;
+        tlv->length = sizeof(void*);
+        memcpy(tlv->value, &result, sizeof(void*));
+        tlvList.push_back(tlv);
+    }
+    string queue = MxTCE::computeThreadPrefix + worker->GetName();
+    string topic = "COMPUTE_REPLY";
+    SendMessage(MSG_REPLY, queue, topic, tlvList);
 
     // stop out from event loop
     Action::Finish();
@@ -1220,13 +1248,81 @@ void Action_ReorderPaths_MP2P::Finish()
 
 ///////////////////// class Action_MP2P_FinalizeServiceTopology_MP2P ///////////////////////////
 
+
+void* Action_FinalizeServiceTopology_MP2P::GetData(string& dataName)
+{
+    if (dataName == "COMPUTE_RESULT_LIST")
+        return _computeResultList;
+    return NULL;
+}
+
+
+// normalize result for multi-p2p of one sub-workflow (fixed bw)
 void Action_FinalizeServiceTopology_MP2P::Process()
 {
     LOG(name<<"Process() called"<<endl);
     
-    //$$ compose MP2P ComputeResult data
+    // compose MP2P ComputeResult data
+    _computeResultList = new list<ComputeResult*>;
 
-    //$$ clean up tewg etc.
+    // collect feasible paths for all p2p sub-flows
+    string actionName = "Action_ComputeSchedulesWithKSP_Round2_";
+    string paramName = "USER_CONSTRAINT_LIST";
+    list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetParameter(paramName);
+    list<Apimsg_user_constraint*>::iterator it = userConsList->begin();
+    for (; it != userConsList->end(); it++)
+    {   
+        Apimsg_user_constraint* userConstraint = *it;
+        actionName += userConstraint->getPathId();
+        string dataName = "FEASIBLE_PATHS";
+        vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetContextData(this->context, actionName, dataName);
+        ComputeResult* result = new ComputeResult(userConstraint->getGri());
+        result->SetPathId(userConstraint->getPathId());
+        _computeResultList->push_back(result);
+        if (feasiblePaths && feasiblePaths->size() > 0)
+        {
+            TPath* resultPath = feasiblePaths->front()->Clone();
+            resultPath->LogDump();
+            resultPath->SetIndependent(true); 
+            ComputeResult::RegulatePathInfo(resultPath);
+            result->SetPathInfo(resultPath);
+            if (userConstraint->getCoschedreq()&& feasiblePaths->size() > 1) 
+            {
+                result->GetAlterPaths().clear();
+                for (int k = 1; k < feasiblePaths->size() && k < userConstraint->getCoschedreq()->getMaxnumofaltpaths(); k++)
+                {
+                    resultPath = (*feasiblePaths)[k]->Clone();
+                    resultPath->LogDump();
+                    resultPath->SetIndependent(true); 
+                    ComputeResult::RegulatePathInfo(resultPath);
+                    result->GetAlterPaths().push_back(resultPath);
+                }
+            }
+        }
+        else
+        {
+            char buf[256];
+            snprintf(buf, 256, "Action_FinalizeServiceTopology_MP2P::Process() No feasible path found for GRI: %s, Path: %s!", 
+                userConstraint->getGri().c_str(), userConstraint->getPathId().c_str());
+            LOG(buf << endl);
+            paramName = "TEWG";
+            TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetParameter(paramName);
+            if (tewg)
+            {
+                delete tewg;
+                this->GetComputeWorker()->SetParameter(paramName, NULL);
+            }
+            throw ComputeThreadException(buf);
+        }
+    }
+
+    paramName = "TEWG";
+    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetParameter(paramName);
+    if (tewg)
+    {
+        delete tewg;
+        this->GetComputeWorker()->SetParameter(paramName, NULL);
+    }
 }
 
 
