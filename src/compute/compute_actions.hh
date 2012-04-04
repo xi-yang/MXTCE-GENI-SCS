@@ -91,6 +91,26 @@ class Action_ComputeKSP: public Action
 };
 
 
+class TPath;
+class BandwidthAvailabilityGraph;
+class Action_FinalizeServiceTopology: public Action
+{
+protected:
+
+public:
+    Action_FinalizeServiceTopology(): Action(){ }
+    Action_FinalizeServiceTopology(string& n, ComputeWorker* w): Action(n, w) { }
+    virtual ~Action_FinalizeServiceTopology() { }
+    
+    virtual void Process();
+    virtual bool ProcessChildren();
+    virtual bool ProcessMessages();
+    virtual void Finish();
+    virtual void CleanUp();
+};
+
+
+
 ///////////// scheduling workflow actions //////////
 // ATS: Aggregate Time Series
 // ADS: Aggregate Delta Series 
@@ -110,6 +130,7 @@ protected:
 public:
     Action_CreateOrderedATS(): Action(){ _Init(); }
     Action_CreateOrderedATS(string& n, ComputeWorker* w): Action(n, w) { _Init(); }
+    Action_CreateOrderedATS(string& c, string& n, ComputeWorker* w): Action(c, n, w) { _Init(); }
     virtual ~Action_CreateOrderedATS() { }
     u_int64_t GetReqBandwidth() { return _bandwidth; } 
     void SetReqBandwidth(u_int64_t b) { _bandwidth = b; }
@@ -127,7 +148,6 @@ public:
 
 #define MAX_ATS_SIZE 100 // change / configurable
 class Apimsg_user_constraint;
-class TPath;
 class Action_ComputeSchedulesWithKSP: public Action
 {
 protected:
@@ -149,6 +169,7 @@ protected:
 public:
     Action_ComputeSchedulesWithKSP(): Action(){ _Init(); }
     Action_ComputeSchedulesWithKSP(string& n, ComputeWorker* w): Action(n, w) { _Init(); }
+    Action_ComputeSchedulesWithKSP(string& c, string& n, ComputeWorker* w): Action(c, n, w) { _Init(); }
     virtual ~Action_ComputeSchedulesWithKSP() { }
     u_int64_t GetReqBandwidth() { return _bandwidth; } 
     void SetReqBandwidth(u_int64_t b) { _bandwidth = b; }
@@ -157,9 +178,9 @@ public:
     Apimsg_user_constraint*  GetUserConstraint() { return _userConstraint; }
     void SetUserConstraint(Apimsg_user_constraint* u) { _userConstraint = u; }
     bool yesComputeBAG() { return blComputeBAG; }
-    bool setComputeBAG(bool b) { blComputeBAG = b; }
+    bool SetComputeBAG(bool b) { blComputeBAG = b; }
     bool yesCommitBestPathToTEWG() { return blCommitBestPathToTEWG; }
-    bool setCommitBestPathToTEWG(bool b) { blCommitBestPathToTEWG = b; }
+    bool SetCommitBestPathToTEWG(bool b) { blCommitBestPathToTEWG = b; }
     virtual void* GetData(string& dataName);
 
     virtual void Process();
@@ -170,22 +191,58 @@ public:
 };
 
 
-class TPath;
-class BandwidthAvailabilityGraph;
-class Action_FinalizeServiceTopology: public Action
+class Action_ProcessRequestTopology_MP2P: public Action
 {
-protected:
-
-public:
-    Action_FinalizeServiceTopology(): Action(){ }
-    Action_FinalizeServiceTopology(string& n, ComputeWorker* w): Action(n, w) { }
-    virtual ~Action_FinalizeServiceTopology() { }
+    protected:
     
-    virtual void Process();
-    virtual bool ProcessChildren();
-    virtual bool ProcessMessages();
-    virtual void Finish();
-    virtual void CleanUp();
+    public:
+        Action_ProcessRequestTopology_MP2P(): Action(){ }
+        Action_ProcessRequestTopology_MP2P(string& n, ComputeWorker* w): Action(n, w) { }
+        Action_ProcessRequestTopology_MP2P(string& c, string& n, ComputeWorker* w): Action(c, n, w) { }
+        virtual ~Action_ProcessRequestTopology_MP2P() { }
+    
+        virtual void Process();
+        virtual bool ProcessChildren();
+        virtual bool ProcessMessages();
+        virtual void Finish();
+        virtual void CleanUp();
+};
+
+
+
+class Action_ReorderPaths_MP2P: public Action
+{
+    protected:
+    
+    public:
+        Action_ReorderPaths_MP2P(): Action(){ }
+        Action_ReorderPaths_MP2P(string& n, ComputeWorker* w): Action(n, w) { }
+        Action_ReorderPaths_MP2P(string& c, string& n, ComputeWorker* w): Action(c, n, w) { }
+        virtual ~Action_ReorderPaths_MP2P() { }
+    
+        virtual void Process();
+        virtual bool ProcessChildren();
+        virtual bool ProcessMessages();
+        virtual void Finish();
+        virtual void CleanUp();
+};
+
+
+class Action_FinalizeServiceTopology_MP2P: public Action
+{
+    protected:
+    
+    public:
+        Action_FinalizeServiceTopology_MP2P(): Action(){ }
+        Action_FinalizeServiceTopology_MP2P(string& n, ComputeWorker* w): Action(n, w) { }
+        Action_FinalizeServiceTopology_MP2P(string& c, string& n, ComputeWorker* w): Action(c, n, w) { }
+        virtual ~Action_FinalizeServiceTopology_MP2P() { }
+    
+        virtual void Process();
+        virtual bool ProcessChildren();
+        virtual bool ProcessMessages();
+        virtual void Finish();
+        virtual void CleanUp();
 };
 
 

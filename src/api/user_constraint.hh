@@ -210,6 +210,16 @@ public:
 	void setCoschedreq(Apimsg_stornet_constraint* t_co_schedule_request) {this->co_schedule_request = t_co_schedule_request;}
 	Apimsg_stornet_constraint* getCoschedreq() {return this->co_schedule_request;}
 
+    list<TSchedule*>& getFlexSchedules() { return flexSchedules; }
+
+    u_int64_t getFlexMaxBandwidth() { return flexMaxBandwidth; }
+    void setFlexMaxBandwidth(u_int64_t max_bw) { this->flexMaxBandwidth = max_bw; }
+
+    u_int64_t getFlexMinBandwidth() { return flexMinBandwidth; }
+    void setFlexMinBandwidth(u_int64_t min_bw) { this->flexMinBandwidth = min_bw; }
+
+    string& getPathId() { return path_id; }
+    void setPathId(string& id) { path_id = id; }
 
 };
 

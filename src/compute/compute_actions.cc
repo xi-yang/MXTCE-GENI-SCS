@@ -481,7 +481,91 @@ void Action_ComputeKSP::Finish()
 }
 
 
+///////////////////// class Action_FinalizeServiceTopology ///////////////////////////
+
+void Action_FinalizeServiceTopology::Process()
+{
+    LOG(name<<"Process() called"<<endl);
+
+    string paramName = "FEASIBLE_PATHS";
+
+    vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+
+    if (feasiblePaths != NULL)
+    {
+        if (feasiblePaths->size() == 0)
+            throw ComputeThreadException((char*)"Action_FinalizeServiceTopology::Process() No feasible path found!");
+        LOG_DEBUG("Feasible Paths and Schedules: "<<endl);
+        vector<TPath*>::iterator itP = feasiblePaths->begin();
+        for (; itP != feasiblePaths->end(); itP++)
+        {
+            (*itP)->LogDump();
+        }
+    }
+    else 
+    {
+        paramName = "KSP";
+        vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+
+        // TODO: pick one or multiple paths (or return failure)
+        // TODO: combine with feasible paths above?
+        if (KSP == NULL || KSP->size() == 0)
+            throw ComputeThreadException((char*)"Action_FinalizeServiceTopology::Process() No path found!");
+        
+        // TODO:  translate into format API requires
+        (*min_element(KSP->begin(), KSP->end(), cmp_tpath))->LogDump();
+        //$$ generate path BAG too ?
+    }
+}
+
+
+bool Action_FinalizeServiceTopology::ProcessChildren()
+{
+    LOG(name<<"ProcessChildren() called"<<endl);
+    //$$$$ loop through all children to look for states
+
+    // return true if all children have finished; otherwise false
+    return Action::ProcessChildren();
+}
+
+
+bool Action_FinalizeServiceTopology::ProcessMessages()
+{
+    LOG(name<<"ProcessMessages() called"<<endl);
+    //$$$$ process messages if received
+    //$$$$ run current action logic based on received messages 
+
+    //return true if all messages received and processed; otherwise false
+    return Action::ProcessMessages();
+}
+
+
+void Action_FinalizeServiceTopology::CleanUp()
+{
+    LOG(name<<"CleanUp() called"<<endl);
+    //$$$$ cleanup logic for current action
+
+    // TODO: clean up work data such as KSP, feasiblePaths and ATS 
+
+    // cancel and cleanup children
+    Action::CleanUp();
+}
+
+
+void Action_FinalizeServiceTopology::Finish()
+{
+    LOG(name<<"Finish() called"<<endl);
+    //$$$$ finish logic for current action
+
+    // stop out from event loop
+    Action::Finish();
+}
+
+///////////////////////////////////////////////////////////////////////////
+
 ///////////////////// class Action_CreateOrderedATS ///////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
 
 inline void Action_CreateOrderedATS::AddUniqueTimePoint(vector<time_t>* ats, time_t t)
 {
@@ -642,6 +726,7 @@ void Action_CreateOrderedATS::CleanUp()
     LOG(name<<"CleanUp() called"<<endl);
     //$$$$ cleanup logic for current action
     // TODO: clean up link AggregateDeltaSeries in TEWG
+    // TODO: clean up local _orderedATS
 
     // cancel and cleanup children
     Action::CleanUp();
@@ -923,7 +1008,7 @@ void Action_ComputeSchedulesWithKSP::CleanUp()
     //$$$$ cleanup logic for current action
     // TODO: clean up link AggregateDeltaSeries in TEWG
     // TODO: this has to happen after BAG / RAF have been generated
-
+    // TODO: clean up local _feasiblePaths
     // cancel and cleanup children
     Action::CleanUp();
 }
@@ -939,46 +1024,103 @@ void Action_ComputeSchedulesWithKSP::Finish()
 }
 
 
+///////////////////// class Action_ProcessRequestTopology_MP2P  ///////////////////////////
 
-///////////////////// class Action_FinalizeServiceTopology ///////////////////////////
-
-void Action_FinalizeServiceTopology::Process()
+void Action_ProcessRequestTopology_MP2P::Process()
 {
-    LOG(name<<"Process() called"<<endl);
+    LOG(name<<"Process() called"<<endl);   
+    //$$ retrieve userConstrinat list
 
-    string paramName = "FEASIBLE_PATHS";
+    string paramName = "USER_CONSTRAINT_LIST";
+    list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetParameter(paramName);
+    if (userConsList)
+        throw ComputeThreadException((char*)"Action_ProcessRequestTopology_MP2P::Process() No USER_CONSTRAINT_LIST data from compute worker.");
 
-    vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
-
-    if (feasiblePaths != NULL)
+    Apimsg_user_constraint* userConstraint = userConsList->front(); // assume all p2p paths have same flexible requirement
+    u_int64_t volume = (userConstraint->getFlexSchedules().size() > 0) ? userConstraint->getBandwidth()*userConstraint->getFlexSchedules().front()->GetDuration() : 0;
+    vector<u_int64_t> flexBandwidthSet;
+    vector<string> contextNameSet;
+    flexBandwidthSet.push_back(userConstraint->getBandwidth());
+    contextNameSet.push_back("cxt_user_preferred_bw");
+    if (volume > 0 && userConstraint->getFlexMaxBandwidth() > 0 && userConstraint->getFlexMaxBandwidth() != userConstraint->getBandwidth()) 
     {
-        if (feasiblePaths->size() == 0)
-            throw ComputeThreadException((char*)"Action_FinalizeServiceTopology::Process() No feasible path found!");
-        LOG_DEBUG("Feasible Paths and Schedules: "<<endl);
-        vector<TPath*>::iterator itP = feasiblePaths->begin();
-        for (; itP != feasiblePaths->end(); itP++)
-        {
-            (*itP)->LogDump();
-        }
+        flexBandwidthSet.push_back(userConstraint->getFlexMaxBandwidth());
+        contextNameSet.push_back("cxt_user_maximum_bw");
+    }    
+    if (volume > 0 && userConstraint->getFlexMinBandwidth() > 0 && userConstraint->getFlexMinBandwidth() != userConstraint->getBandwidth()) 
+    {
+        flexBandwidthSet.push_back(userConstraint->getFlexMinBandwidth());
+        contextNameSet.push_back("cxt_user_minimum_bw");
     }
-    else 
-    {
-        paramName = "KSP";
-        vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
 
-        // TODO: pick one or multiple paths (or return failure)
-        // TODO: combine with feasible paths above?
-        if (KSP == NULL || KSP->size() == 0)
-            throw ComputeThreadException((char*)"Action_FinalizeServiceTopology::Process() No path found!");
+    // multi-flows for flexible requests
+    string actionName = "Action_CreateTEWG";
+    for (int i = 0; i < flexBandwidthSet.size(); i++)
+    {
+        Action_CreateTEWG* actionTewg = new Action_CreateTEWG(actionName, this->GetComputeWorker());
+        this->GetComputeWorker()->GetActions().push_back(actionTewg);
+        this->AddChild(actionTewg);
         
-        // TODO:  translate into format API requires
-        (*min_element(KSP->begin(), KSP->end(), cmp_tpath))->LogDump();
-        //$$ generate path BAG too ?
+        actionName = "Action_CreateOrderedATS";
+        Action_CreateOrderedATS* actionAts = new Action_CreateOrderedATS(contextNameSet[i], actionName, this->GetComputeWorker());
+        actionAts->SetReqBandwidth(flexBandwidthSet[i]);
+        actionAts->SetReqVolume(volume);
+        this->GetComputeWorker()->GetActions().push_back(actionAts);
+        actionTewg->AddChild(actionAts);
+
+        // KSP w/ scheduling computation - first round (non-concurrent)
+        list<Apimsg_user_constraint*>::iterator it = userConsList->begin();
+        Action* prevAction = actionAts;
+        for (; it != userConsList->end(); it++)
+        {
+            actionName = "Action_ComputeSchedulesWithKSP";
+            actionName += "_Round1_";
+            actionName += (*it)->getPathId();
+            Action_ComputeSchedulesWithKSP* actionKsp = new Action_ComputeSchedulesWithKSP(contextNameSet[i], actionName, this->GetComputeWorker());
+            actionKsp->SetReqBandwidth(flexBandwidthSet[i]);
+            actionKsp->SetReqVolume(volume);
+            actionKsp->SetUserConstraint(*it);
+            actionKsp->SetComputeBAG(false);
+            actionKsp->SetCommitBestPathToTEWG(false);
+            this->GetComputeWorker()->GetActions().push_back(actionKsp);
+            prevAction->AddChild(actionKsp);
+            prevAction = actionKsp;
+        }
+
+        actionName = "Action_ReorderPaths_MP2P";
+        Action* actionReorder = new Action_ReorderPaths_MP2P(contextNameSet[i], actionName, this->GetComputeWorker());
+        this->GetComputeWorker()->GetActions().push_back(actionReorder);
+        prevAction->AddChild(actionReorder);
+
+        // KSP w/ scheduling computation - second round (concurrent)
+        prevAction = actionReorder;
+        for (it = userConsList->begin(); it != userConsList->end(); it++)
+        {
+            actionName = "Action_ComputeSchedulesWithKSP";
+            actionName += "_Round2_";
+            actionName += (*it)->getPathId();
+            Action_ComputeSchedulesWithKSP* actionKsp = new Action_ComputeSchedulesWithKSP(contextNameSet[i], actionName, this->GetComputeWorker());
+            actionKsp->SetReqBandwidth(flexBandwidthSet[i]);
+            actionKsp->SetReqVolume(volume);
+            actionKsp->SetUserConstraint(*it);
+            actionKsp->SetComputeBAG(true);
+            actionKsp->SetCommitBestPathToTEWG(true);
+            this->GetComputeWorker()->GetActions().push_back(actionKsp);
+            prevAction->AddChild(actionKsp);
+            prevAction = actionKsp;
+        }
+
+        // each Action_FinalizeServiceTopology_MP2P handle result for one sub-workflow
+        actionName = "Action_FinalizeServiceTopology_MP2P";
+        Action_FinalizeServiceTopology_MP2P* actionFinal = new Action_FinalizeServiceTopology_MP2P(contextNameSet[i], actionName, this->GetComputeWorker());
+        this->GetComputeWorker()->GetActions().push_back(actionFinal);
+        prevAction->AddChild(actionFinal);
     }
+    
 }
 
 
-bool Action_FinalizeServiceTopology::ProcessChildren()
+bool Action_ProcessRequestTopology_MP2P::ProcessChildren()
 {
     LOG(name<<"ProcessChildren() called"<<endl);
     //$$$$ loop through all children to look for states
@@ -988,7 +1130,7 @@ bool Action_FinalizeServiceTopology::ProcessChildren()
 }
 
 
-bool Action_FinalizeServiceTopology::ProcessMessages()
+bool Action_ProcessRequestTopology_MP2P::ProcessMessages()
 {
     LOG(name<<"ProcessMessages() called"<<endl);
     //$$$$ process messages if received
@@ -999,32 +1141,133 @@ bool Action_FinalizeServiceTopology::ProcessMessages()
 }
 
 
-void Action_FinalizeServiceTopology::CleanUp()
+void Action_ProcessRequestTopology_MP2P::CleanUp()
 {
     LOG(name<<"CleanUp() called"<<endl);
     //$$$$ cleanup logic for current action
-
-    // TODO: clean up work data such as KSP, feasiblePaths and ATS 
 
     // cancel and cleanup children
     Action::CleanUp();
 }
 
 
-void Action_FinalizeServiceTopology::Finish()
+void Action_ProcessRequestTopology_MP2P::Finish()
 {
     LOG(name<<"Finish() called"<<endl);
+
+    //$$ collect results from exceptions (failuare) and  multiple Action_FinalizeServiceTopology_MP2P (success)
+
+    //$$ create reply TLVs and message and send back to core thread
+
+    // stop out from event loop
+    Action::Finish();
+}
+
+
+
+
+///////////////////// class Action_MP2P_ReorderPaths_MP2P  ///////////////////////////
+
+
+void Action_ReorderPaths_MP2P::Process()
+{
+    LOG(name<<"Process() called"<<endl);
+    
+}
+
+
+bool Action_ReorderPaths_MP2P::ProcessChildren()
+{
+    LOG(name<<"ProcessChildren() called"<<endl);
+    //$$$$ loop through all children to look for states
+
+    // return true if all children have finished; otherwise false
+    return Action::ProcessChildren();
+}
+
+
+bool Action_ReorderPaths_MP2P::ProcessMessages()
+{
+    LOG(name<<"ProcessMessages() called"<<endl);
+    //$$$$ process messages if received
+    //$$$$ run current action logic based on received messages 
+
+    //return true if all messages received and processed; otherwise false
+    return Action::ProcessMessages();
+}
+
+
+void Action_ReorderPaths_MP2P::CleanUp()
+{
+    LOG(name<<"CleanUp() called"<<endl);
+    //$$$$ cleanup logic for current action
+
+    // cancel and cleanup children
+    Action::CleanUp();
+}
+
+
+void Action_ReorderPaths_MP2P::Finish()
+{
+    LOG(name<<"Finish() called"<<endl);
+
     //$$$$ finish logic for current action
 
     // stop out from event loop
     Action::Finish();
 }
 
-///////////////////// class Action_MP2P_ProcessRequestTopology ///////////////////////////
+
+///////////////////// class Action_MP2P_FinalizeServiceTopology_MP2P ///////////////////////////
+
+void Action_FinalizeServiceTopology_MP2P::Process()
+{
+    LOG(name<<"Process() called"<<endl);
+    
+    //$$ compose MP2P ComputeResult data
+
+    //$$ clean up tewg etc.
+}
 
 
-///////////////////// class Action_MP2P_ReorderPaths  ///////////////////////////
+bool Action_FinalizeServiceTopology_MP2P::ProcessChildren()
+{
+    LOG(name<<"ProcessChildren() called"<<endl);
+    //$$$$ loop through all children to look for states
+
+    // return true if all children have finished; otherwise false
+    return Action::ProcessChildren();
+}
 
 
-///////////////////// class Action_MP2P_FinalizeServiceTopology ///////////////////////////
+bool Action_FinalizeServiceTopology_MP2P::ProcessMessages()
+{
+    LOG(name<<"ProcessMessages() called"<<endl);
+    //$$$$ process messages if received
+    //$$$$ run current action logic based on received messages 
+
+    //return true if all messages received and processed; otherwise false
+    return Action::ProcessMessages();
+}
+
+
+void Action_FinalizeServiceTopology_MP2P::CleanUp()
+{
+    LOG(name<<"CleanUp() called"<<endl);
+    //$$$$ cleanup logic for current action
+
+    // cancel and cleanup children
+    Action::CleanUp();
+}
+
+
+void Action_FinalizeServiceTopology_MP2P::Finish()
+{
+    LOG(name<<"Finish() called"<<endl);
+
+    //$$$$ finish logic for current action
+
+    // stop out from event loop
+    Action::Finish();
+}
 

@@ -54,8 +54,8 @@ class ComputeWorker;
 class Action: public Timer
 {
 protected:
-    string name;
     string context;
+    string name;
     ActionState state;
     ComputeWorker* worker;
     Action* parent;
@@ -71,6 +71,7 @@ public:
     Action(): state(_Idle), worker(NULL), parent(NULL) { SetType(EVENT_PRIORITY); SetNice(true); }
     Action(ComputeWorker* w): state(_Idle), worker(w), parent(NULL) { assert(w != NULL); SetType(EVENT_PRIORITY); SetNice(true); }
     Action(string& n, ComputeWorker* w): name(n), state(_Idle), worker(w), parent(NULL) { assert(w != NULL); SetType(EVENT_PRIORITY);  SetNice(true); }
+    Action(string &c, string& n, ComputeWorker* w): context(c), name(n), state(_Idle), worker(w), parent(NULL) { assert(w != NULL); SetType(EVENT_PRIORITY);  SetNice(true); }
     virtual ~Action() { }
     string& GetName() { return name; }
     void SetName(string& n) { name = n; }
