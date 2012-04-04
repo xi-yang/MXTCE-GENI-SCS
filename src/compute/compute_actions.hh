@@ -210,10 +210,18 @@ class Action_ProcessRequestTopology_MP2P: public Action
 
 
 
+#define MAX_SCHEDULE_DURATION 1314000 // 365 days
+#define BANDWIDTH_TIME_FACTOR 1.0 // 0.5 ?
+
 class Action_ReorderPaths_MP2P: public Action
 {
     protected:
-    
+        time_t OverlappingTime(time_t st1, time_t et1, time_t st2, time_t et2);
+        time_t GetPathOverlappingTime(TPath* path1, TPath* path2);
+        double BandwidthWeightedHopLength(TPath* P);
+        double SumOfBandwidthTimeWeightedCommonLinks(TPath* P, vector<TPath*>& Paths);
+        void Swap(Action_ComputeSchedulesWithKSP* &ksp_i, Action_ComputeSchedulesWithKSP* &ksp_j);
+
     public:
         Action_ReorderPaths_MP2P(): Action(){ }
         Action_ReorderPaths_MP2P(string& n, ComputeWorker* w): Action(n, w) { }

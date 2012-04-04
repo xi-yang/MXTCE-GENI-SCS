@@ -1036,54 +1036,61 @@ void Action_ProcessRequestTopology_MP2P::Process()
     if (userConsList)
         throw ComputeThreadException((char*)"Action_ProcessRequestTopology_MP2P::Process() No USER_CONSTRAINT_LIST data from compute worker.");
 
-    Apimsg_user_constraint* userConstraint = userConsList->front(); // assume all p2p paths have same flexible requirement
-    u_int64_t volume = (userConstraint->getFlexSchedules().size() > 0) ? userConstraint->getBandwidth()*userConstraint->getFlexSchedules().front()->GetDuration() : 0;
-    vector<u_int64_t> flexBandwidthSet;
     vector<string> contextNameSet;
-    flexBandwidthSet.push_back(userConstraint->getBandwidth());
     contextNameSet.push_back("cxt_user_preferred_bw");
-    if (volume > 0 && userConstraint->getFlexMaxBandwidth() > 0 && userConstraint->getFlexMaxBandwidth() != userConstraint->getBandwidth()) 
-    {
-        flexBandwidthSet.push_back(userConstraint->getFlexMaxBandwidth());
-        contextNameSet.push_back("cxt_user_maximum_bw");
-    }    
-    if (volume > 0 && userConstraint->getFlexMinBandwidth() > 0 && userConstraint->getFlexMinBandwidth() != userConstraint->getBandwidth()) 
-    {
-        flexBandwidthSet.push_back(userConstraint->getFlexMinBandwidth());
-        contextNameSet.push_back("cxt_user_minimum_bw");
-    }
+    contextNameSet.push_back("cxt_user_maximum_bw");
+    contextNameSet.push_back("cxt_user_minimum_bw");
 
     // multi-flows for flexible requests
     string actionName = "Action_CreateTEWG";
-    for (int i = 0; i < flexBandwidthSet.size(); i++)
+    for (int i = 0; i < contextNameSet.size(); i++)
     {
         Action_CreateTEWG* actionTewg = new Action_CreateTEWG(actionName, this->GetComputeWorker());
         this->GetComputeWorker()->GetActions().push_back(actionTewg);
         this->AddChild(actionTewg);
         
-        actionName = "Action_CreateOrderedATS";
-        Action_CreateOrderedATS* actionAts = new Action_CreateOrderedATS(contextNameSet[i], actionName, this->GetComputeWorker());
-        actionAts->SetReqBandwidth(flexBandwidthSet[i]);
-        actionAts->SetReqVolume(volume);
-        this->GetComputeWorker()->GetActions().push_back(actionAts);
-        actionTewg->AddChild(actionAts);
-
         // KSP w/ scheduling computation - first round (non-concurrent)
         list<Apimsg_user_constraint*>::iterator it = userConsList->begin();
-        Action* prevAction = actionAts;
+        Action* prevAction = actionTewg;
         for (; it != userConsList->end(); it++)
         {
-            actionName = "Action_ComputeSchedulesWithKSP";
-            actionName += "_Round1_";
+            Apimsg_user_constraint* userConstraint = *it;
+
+            u_int64_t volume = (userConstraint->getFlexSchedules().size() > 0) ? userConstraint->getBandwidth()*userConstraint->getFlexSchedules().front()->GetDuration() : 0;
+            u_int64_t flexBandwidth = userConstraint->getBandwidth();
+            if (contextNameSet[i]=="cxt_user_maximum_bw")
+            {
+                if(volume > 0 && userConstraint->getFlexMaxBandwidth() > 0 && userConstraint->getFlexMaxBandwidth() > userConstraint->getBandwidth()) 
+                    flexBandwidth = userConstraint->getFlexMaxBandwidth();
+                else
+                    continue;
+            }
+            else if (contextNameSet[i]=="cxt_user_minimum_bw")
+            {
+                if (volume > 0 && userConstraint->getFlexMinBandwidth() > 0 && userConstraint->getFlexMinBandwidth() < userConstraint->getBandwidth()) 
+                    flexBandwidth = userConstraint->getFlexMinBandwidth();
+                else
+                    continue;
+            }
+            // else use userConstraint->getBandwidth and follow down
+
+            actionName = "Action_CreateOrderedATS";
+            Action_CreateOrderedATS* actionAts = new Action_CreateOrderedATS(contextNameSet[i], actionName, this->GetComputeWorker());
+            actionAts->SetReqBandwidth(flexBandwidth);
+            actionAts->SetReqVolume(volume);
+            this->GetComputeWorker()->GetActions().push_back(actionAts);
+            prevAction->AddChild(actionAts);
+            
+            actionName = "Action_ComputeSchedulesWithKSP_Round1_";
             actionName += (*it)->getPathId();
             Action_ComputeSchedulesWithKSP* actionKsp = new Action_ComputeSchedulesWithKSP(contextNameSet[i], actionName, this->GetComputeWorker());
-            actionKsp->SetReqBandwidth(flexBandwidthSet[i]);
+            actionKsp->SetReqBandwidth(flexBandwidth);
             actionKsp->SetReqVolume(volume);
             actionKsp->SetUserConstraint(*it);
             actionKsp->SetComputeBAG(false);
             actionKsp->SetCommitBestPathToTEWG(false);
             this->GetComputeWorker()->GetActions().push_back(actionKsp);
-            prevAction->AddChild(actionKsp);
+            actionAts->AddChild(actionKsp);
             prevAction = actionKsp;
         }
 
@@ -1091,31 +1098,6 @@ void Action_ProcessRequestTopology_MP2P::Process()
         Action* actionReorder = new Action_ReorderPaths_MP2P(contextNameSet[i], actionName, this->GetComputeWorker());
         this->GetComputeWorker()->GetActions().push_back(actionReorder);
         prevAction->AddChild(actionReorder);
-
-        // KSP w/ scheduling computation - second round (concurrent)
-        prevAction = actionReorder;
-        for (it = userConsList->begin(); it != userConsList->end(); it++)
-        {
-            actionName = "Action_ComputeSchedulesWithKSP";
-            actionName += "_Round2_";
-            actionName += (*it)->getPathId();
-            Action_ComputeSchedulesWithKSP* actionKsp = new Action_ComputeSchedulesWithKSP(contextNameSet[i], actionName, this->GetComputeWorker());
-            actionKsp->SetReqBandwidth(flexBandwidthSet[i]);
-            actionKsp->SetReqVolume(volume);
-            actionKsp->SetUserConstraint(*it);
-            actionKsp->SetComputeBAG(true);
-            actionKsp->SetCommitBestPathToTEWG(true);
-            this->GetComputeWorker()->GetActions().push_back(actionKsp);
-            prevAction->AddChild(actionKsp);
-            prevAction = actionKsp;
-        }
-
-        // each Action_FinalizeServiceTopology_MP2P handle result for one sub-workflow
-        actionName = "Action_FinalizeServiceTopology_MP2P_";
-        actionName += (*it)->getPathId();
-        Action_FinalizeServiceTopology_MP2P* actionFinal = new Action_FinalizeServiceTopology_MP2P(contextNameSet[i], actionName, this->GetComputeWorker());
-        this->GetComputeWorker()->GetActions().push_back(actionFinal);
-        prevAction->AddChild(actionFinal);
     }
     
 }
@@ -1196,11 +1178,170 @@ void Action_ProcessRequestTopology_MP2P::Finish()
 
 ///////////////////// class Action_MP2P_ReorderPaths_MP2P  ///////////////////////////
 
+inline time_t Action_ReorderPaths_MP2P::OverlappingTime(time_t st1, time_t et1, time_t st2, time_t et2)
+{
+    if (st1 == 0 && st2 == 0)
+        return MAX_SCHEDULE_DURATION;
+    else if (st1 != 0 && st2 == 0)
+        return (et1 - st1) > MAX_SCHEDULE_DURATION ? MAX_SCHEDULE_DURATION : et1 - st1;
+    else if (st1 == 0 && st2 != 0)
+        return (et2 - st2) > MAX_SCHEDULE_DURATION ? MAX_SCHEDULE_DURATION : et2 - st2;
+    //else
+    time_t duration = 0;
+    if (st1 <= st2 && et1 <= et2)
+        duration = et1 - st2;
+    else if (st1 >= st2 && et1 <= et2)
+       duration = et1 - st1;
+    else if (st1 <= st2 && et1 >= et2)
+       duration = et2 - st2;
+    else
+       duration = et2 - st1;
+    //return
+    if (duration <= 0)
+       return 0;
+    if (duration > MAX_SCHEDULE_DURATION)
+       return MAX_SCHEDULE_DURATION;
+    return duration;
+}
+
+
+inline time_t Action_ReorderPaths_MP2P::GetPathOverlappingTime(TPath* path1, TPath* path2)
+{
+    list<TSchedule*>::iterator itS1 = path1->GetSchedules().begin();
+    list<TSchedule*>::iterator itS2 = path2->GetSchedules().begin();
+    time_t total = 0;
+    for (; itS1 != path1->GetSchedules().end(); itS1 ++) 
+    {
+        for (; itS2 != path2->GetSchedules().end(); itS2 ++) 
+        {
+            total += OverlappingTime((*itS1)->GetStartTime(), (*itS1)->GetEndTime(), (*itS2)->GetStartTime(), (*itS2)->GetEndTime());
+        }
+    }
+    return total;
+}
+
+
+inline double Action_ReorderPaths_MP2P::BandwidthWeightedHopLength(TPath* P)
+{
+    return P->GetPath().front()->GetMaxBandwidth()*P->GetPath().size();
+}
+
+inline double Action_ReorderPaths_MP2P::SumOfBandwidthTimeWeightedCommonLinks(TPath* P, vector<TPath*>& Paths)
+{
+    if (P->GetPath().size() == 0)
+        return 0;
+    int i, numPaths = Paths.size();
+
+    for (i = 0; i < numPaths; i++)
+    {
+        if (*P == *Paths[i])
+            break;
+    }
+    //assert (i < numPaths);
+    if (i == numPaths) return 0;
+    TPath* path1 = Paths[i];
+
+    double sum = 0;
+    list<TLink*>::iterator iter1, iter2;
+    for (iter1 = path1->GetPath().begin(); iter1 != path1->GetPath().end(); iter1++)
+    {
+        for (i = 0; i < numPaths; i++)
+        {
+            if (path1== Paths[i])
+                continue;
+            double overlap = GetPathOverlappingTime(path1, Paths[i]);
+            for (iter2 = Paths[i]->GetPath().begin(); iter2 != Paths[i]->GetPath().end(); iter2++)
+            {
+                if ((*iter1) == (*iter2))
+                {
+                    u_int64_t bw1 = (*iter1)->GetMaxBandwidth();
+                    u_int64_t bw2 = (*iter2)->GetMaxBandwidth();
+                    sum += (bw1<bw2?bw1:bw2)*(1.0-BANDWIDTH_TIME_FACTOR+BANDWIDTH_TIME_FACTOR*(double)overlap/(double)MAX_SCHEDULE_DURATION);
+                }
+            }
+        }
+    }
+    return sum;
+}
+
+// TODO: verify if the list elements are actually swapped 
+inline void Action_ReorderPaths_MP2P::Swap(Action_ComputeSchedulesWithKSP* &ksp_i, Action_ComputeSchedulesWithKSP* &ksp_j)
+{
+    Action_ComputeSchedulesWithKSP* p;
+    p = ksp_i;
+    ksp_i = ksp_j;
+    ksp_j = p;
+}
+
 
 void Action_ReorderPaths_MP2P::Process()
 {
     LOG(name<<"Process() called"<<endl);
+
+    string actionName;
+    string paramName = "USER_CONSTRAINT_LIST";
+    list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetParameter(paramName);
+
+    // find first-round KSP actions
+    vector<Action_ComputeSchedulesWithKSP*> round1KspActions;
+    vector<TPath*> path1All;
+    list<Apimsg_user_constraint*>::iterator itU = userConsList->begin();
+    for (itU = userConsList->begin(); itU != userConsList->end(); itU++)
+    {
+        actionName = "Action_ComputeSchedulesWithKSP_Round1_";
+        actionName += (*itU)->getPathId();
+        Action_ComputeSchedulesWithKSP* actionKspR1 = (Action_ComputeSchedulesWithKSP*)this->GetComputeWorker()->LookupAction(context, actionName);
+        assert(actionKspR1);
+        round1KspActions.push_back(actionKspR1);
+        string dataName = "FEASIBLE_PATHS";
+        path1All.push_back(((list<TPath*>*)actionKspR1->GetData(dataName))->front());
+    }
     
+    // re-order the first-round KSP actions
+    for (int i = 0; i < round1KspActions.size(); i++)
+    {
+        for (int j = 0; j < round1KspActions.size(); j++)
+        {
+            if (j > i)
+            {
+                Action_ComputeSchedulesWithKSP *ksp_i = round1KspActions[i], *ksp_j = round1KspActions[j];
+                string dataName = "FEASIBLE_PATHS";
+                TPath* path1_i = ((list<TPath*>*)ksp_i->GetData(dataName))->front();
+                TPath* path1_j = ((list<TPath*>*)ksp_j->GetData(dataName))->front();
+                if (BandwidthWeightedHopLength(path1_i) < BandwidthWeightedHopLength(path1_j))
+                    Swap(ksp_i, ksp_j);
+                else if (SumOfBandwidthTimeWeightedCommonLinks(path1_i, path1All) < SumOfBandwidthTimeWeightedCommonLinks(path1_j, path1All))
+                    Swap(ksp_i, ksp_j);
+            }
+        }
+    }
+
+    // KSP w/ scheduling computation - second round (concurrent)
+    vector<Action_ComputeSchedulesWithKSP*>::iterator itK;
+    Action* prevAction = this;
+    for (itK = round1KspActions.begin(); itK != round1KspActions.end(); itK++)
+    {
+        Action_ComputeSchedulesWithKSP* actionKspR1 = *itK;
+        actionName = "Action_ComputeSchedulesWithKSP_Round2_";
+        actionName += actionKspR1->GetUserConstraint()->getPathId();
+        Action_ComputeSchedulesWithKSP* actionKspR2 = new Action_ComputeSchedulesWithKSP(this->context, actionName, this->GetComputeWorker());
+        actionKspR2->SetReqBandwidth(actionKspR1->GetReqBandwidth());
+        actionKspR2->SetReqVolume(actionKspR1->GetReqVolume());
+        actionKspR2->SetUserConstraint(actionKspR1->GetUserConstraint());
+        actionKspR2->SetComputeBAG(true);
+        actionKspR2->SetCommitBestPathToTEWG(true);
+        this->GetComputeWorker()->GetActions().push_back(actionKspR2);
+        prevAction->AddChild(actionKspR2);
+        prevAction = actionKspR2;
+    }
+    
+    // each Action_FinalizeServiceTopology_MP2P handle result for one sub-workflow
+    actionName = "Action_FinalizeServiceTopology_MP2P_";
+    actionName += ((Action_ComputeSchedulesWithKSP*)prevAction)->GetUserConstraint()->getPathId();
+    Action_FinalizeServiceTopology_MP2P* actionFinal = new Action_FinalizeServiceTopology_MP2P(this->context, actionName, this->GetComputeWorker());
+    this->GetComputeWorker()->GetActions().push_back(actionFinal);
+    prevAction->AddChild(actionFinal);
+
 }
 
 
