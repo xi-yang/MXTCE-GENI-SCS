@@ -147,6 +147,8 @@ public:
 
 
 #define MAX_ATS_SIZE 100 // change / configurable
+#define MAX_KSP_K 20 // change / configurable
+
 class Apimsg_user_constraint;
 class Action_ComputeSchedulesWithKSP: public Action
 {

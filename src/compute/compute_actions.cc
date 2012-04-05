@@ -303,7 +303,7 @@ void Action_ComputeKSP::Process()
     // compute KSP
     vector<TPath*>* KSP = new vector<TPath*>;
     try {
-        tewg->ComputeKShortestPaths(srcNode, dstNode, tewg->GetNodes().size()*2>20?20:tewg->GetNodes().size()*2, *KSP);
+        tewg->ComputeKShortestPaths(srcNode, dstNode, tewg->GetNodes().size()*2>MAX_KSP_K?MAX_KSP_K:tewg->GetNodes().size()*2, *KSP);
     } catch (TCEException e) {
         LOG_DEBUG("Action_ComputeKSP::Process raised exception: " << e.GetMessage() <<endl);
         throw ComputeThreadException(e.GetMessage());
@@ -815,7 +815,7 @@ void Action_ComputeSchedulesWithKSP::Process()
         // compute KSP
         KSP.clear();
         try {
-            tewg->ComputeKShortestPaths(srcNode, dstNode, tewg->GetNodes().size()*2>20?20:tewg->GetNodes().size()*2, KSP);
+            tewg->ComputeKShortestPaths(srcNode, dstNode, tewg->GetNodes().size()*2>MAX_KSP_K?MAX_KSP_K:tewg->GetNodes().size()*2, KSP);
         } catch (TCEException e) {
             //some debug logging here but do not throw exception upward
             LOG_DEBUG("Action_ComputeSchedulesWithKSP::Process() at TimePoint=" << startTime << " raised exception: " << e.GetMessage() <<endl);
@@ -919,15 +919,15 @@ void Action_ComputeSchedulesWithKSP::Process()
             }
         }
 
-        // $$ resore TEWG by adding back conjoined delta
+        // resore TEWG by adding back conjoined delta
         for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
         {
             TDelta* conjDelta = (TDelta*)(*itL)->GetWorkData()->GetData("CONJOINED_DELTA");
-            // $$ add to resource
+            // add to resource
             if (conjDelta != NULL)
                 conjDelta->Revoke();
         }
-        // $$ break if feasiblePaths.size() == requested_num; Or get more paths then sort and return the best ones ?
+        // break if feasiblePaths.size() == requested_num; Or get more paths then sort and return the best ones ?
     }
     if (_feasiblePaths->size() == 0)
     {
@@ -936,7 +936,8 @@ void Action_ComputeSchedulesWithKSP::Process()
         throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() No feasible path found after being applied with TE constraints!");
     }
     sort(_feasiblePaths->begin(), _feasiblePaths->end(), cmp_tpath);
-    // $$ commit a selected (best) feasible path into the TEWG as constraint for multi-P2P request
+    
+    // Commit a selected (best) feasible path into the TEWG as concurrent constraint for subsequent paths in the same multi-P2P request
     if (this->yesCommitBestPathToTEWG())
     {
         TPath* committedPath = _feasiblePaths->front();
@@ -958,6 +959,8 @@ void Action_ComputeSchedulesWithKSP::Process()
         list<TReservation*>::iterator itR = committedResvations->begin();
         for (; itR != committedResvations->end(); itR++)
             tewg->AddResvDeltas(*itR);
+        tewg->RevokeResvDeltas(_userConstraint->getGri());
+        tewg->ApplyResvDeltas(_userConstraint->getGri());
     }
 }
 
@@ -1007,26 +1010,29 @@ void Action_ComputeSchedulesWithKSP::Finish()
 
 ///////////////////// class Action_ProcessRequestTopology_MP2P  ///////////////////////////
 
+// TODO: Verify TEWG is clean after each round of KSP processing
+
 void Action_ProcessRequestTopology_MP2P::Process()
 {
     LOG(name<<"Process() called"<<endl);   
-    //$$ retrieve userConstrinat list
 
+    // retrieve userConstrinat list
     list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT_LIST");
-    if (userConsList)
+    if (userConsList == NULL)
         throw ComputeThreadException((char*)"Action_ProcessRequestTopology_MP2P::Process() No USER_CONSTRAINT_LIST data from compute worker.");
 
+    // multiple sub-workflows for flexible requests
     vector<string> contextNameSet;
     contextNameSet.push_back("cxt_user_preferred_bw");
     contextNameSet.push_back("cxt_user_maximum_bw");
     contextNameSet.push_back("cxt_user_minimum_bw");
-
-    // multi-flows for flexible requests
-    string actionName = "Action_CreateTEWG";
     for (int i = 0; i < contextNameSet.size(); i++)
     {
+        string actionName = "Action_CreateTEWG";
         Action_CreateTEWG* actionTewg = new Action_CreateTEWG(actionName, this->GetComputeWorker());
         this->GetComputeWorker()->GetActions().push_back(actionTewg);
+        // Each sub-workflow start from common root (Action_ProcessRequestTopology_MP2P). 
+        // They are parallel and thus can fail independently
         this->AddChild(actionTewg);
         
         // KSP w/ scheduling computation - first round (non-concurrent)
@@ -1122,21 +1128,56 @@ void Action_ProcessRequestTopology_MP2P::Finish()
     string actionName = "Action_ComputeSchedulesWithKSP_Round2_";
     list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT_LIST");
     list<Apimsg_user_constraint*>::iterator itU = userConsList->begin();
-    list<ComputeResult*> multip2pResultList;
-    list<ComputeResult*>::iterator itR;
-    for (; itU != userConsList->end(); itU++)
-    {
-        string actionName = "Action_FinalizeServiceTopology_MP2P_";
-        actionName += (*itU)->getPathId();
-        list<ComputeResult*>* computeResultList = (list<ComputeResult*>*)this->GetComputeWorker()->GetContextActionData(this->context, actionName, "COMPUTE_RESULT_LIST");
-        for (itR = computeResultList->begin(); itR != computeResultList->end(); itR++)
-            multip2pResultList.push_back(*itR);
-    }
-
+    vector<string> contextNameSet;
+    contextNameSet.push_back("cxt_user_preferred_bw");
+    contextNameSet.push_back("cxt_user_maximum_bw");
+    contextNameSet.push_back("cxt_user_minimum_bw");
     list<TLV*> tlvList;
-    for (itR = multip2pResultList.begin(); itR != multip2pResultList.end(); itR++)
+    for (int i = 0; i < contextNameSet.size(); i++) 
     {
-        ComputeResult* result = *itR;
+        list<ComputeResult*> multip2pResultList;
+        list<ComputeResult*>::iterator itR;
+        bool allSuccess = true;
+        for (; itU != userConsList->end(); itU++)
+        {
+            string actionName = "Action_FinalizeServiceTopology_MP2P_";
+            actionName += (*itU)->getPathId();
+            list<ComputeResult*>* computeResultList = (list<ComputeResult*>*)this->GetComputeWorker()->GetContextActionData(contextNameSet[i], actionName, "COMPUTE_RESULT_LIST");
+            if (computeResultList != NULL && computeResultList->size() > 0)
+            {
+                for (itR = computeResultList->begin(); itR != computeResultList->end(); itR++)
+                    multip2pResultList.push_back(*itR);
+            }
+            else
+            {
+                allSuccess = false;
+                break;
+            }
+        }
+        if (allSuccess) 
+        {
+            // success case(s)
+            for (itR = multip2pResultList.begin(); itR != multip2pResultList.end(); itR++)
+            {
+                ComputeResult* result = *itR;
+                TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
+                tlv->type = MSG_TLV_VOID_PTR;
+                tlv->length = sizeof(void*);
+                memcpy(tlv->value, &result, sizeof(void*));
+                tlvList.push_back(tlv);
+            }
+        }
+        else
+        {
+            // TODO: clean up multip2pResultList
+        }
+    }
+    // failure case
+    if (tlvList.size() == 0)
+    {
+        ComputeResult* result = new ComputeResult(userConsList->front()->getGri());
+        string errMsg = "Action_ProcessRequestTopology_MP2P::Finish() Cannot find the set of paths to satisfy any of the flexbile requests.";
+        result->SetErrMessage(errMsg);
         TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
         tlv->type = MSG_TLV_VOID_PTR;
         tlv->length = sizeof(void*);
@@ -1242,7 +1283,6 @@ inline double Action_ReorderPaths_MP2P::SumOfBandwidthTimeWeightedCommonLinks(TP
     return sum;
 }
 
-// TODO: verify if the list elements are actually swapped 
 inline void Action_ReorderPaths_MP2P::Swap(Action_ComputeSchedulesWithKSP* &ksp_i, Action_ComputeSchedulesWithKSP* &ksp_j)
 {
     Action_ComputeSchedulesWithKSP* p;
@@ -1293,7 +1333,8 @@ void Action_ReorderPaths_MP2P::Process()
         }
     }
 
-    // KSP w/ scheduling computation - second round (concurrent)
+    // array round1KspActions has been reordered
+    // run KSP w/ scheduling computation - second round (concurrent after reordering )
     vector<Action_ComputeSchedulesWithKSP*>::iterator itK;
     Action* prevAction = this;
     for (itK = round1KspActions.begin(); itK != round1KspActions.end(); itK++)
@@ -1421,16 +1462,11 @@ void Action_FinalizeServiceTopology_MP2P::Process()
             snprintf(buf, 256, "Action_FinalizeServiceTopology_MP2P::Process() No feasible path found for GRI: %s, Path: %s!", 
                 userConstraint->getGri().c_str(), userConstraint->getPathId().c_str());
             LOG(buf << endl);
-            TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
-            if (tewg)
-            {
-                delete tewg;
-                this->GetComputeWorker()->SetWorkflowData("TEWG", NULL);
-            }
-            throw ComputeThreadException(buf);
+            // TODO: set conext-action error msg 
+            break;
         }
     }
-
+    // _computeResultList contains all the results for all the p2p connections
     TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
     if (tewg)
     {
