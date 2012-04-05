@@ -133,7 +133,8 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
             tMsg->AddTLV(tlv_ptr);
         }
         apiThread->GetMessagePort()->PostMessage(tMsg);
-        apiClientConns[user_cons->getGri()] = apiReader;
+        apiClientConns[userCons[0].getGri()] = apiReader;
+        return 0;
     }
     
     if (((ntohl(apiMsg->header.options) & API_OPT_GROUP)) == 0) // none group
