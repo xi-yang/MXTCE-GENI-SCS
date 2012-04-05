@@ -65,8 +65,8 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
         tlv_ptr->type = MSG_TLV_VOID_PTR;
         tlv_ptr->length = sizeof(user_cons);
         memcpy(tlv_ptr->value, &user_cons, sizeof(user_cons));
-        tMsg->AddTLV(tlv_ptr);
         tMsg = new Message(MSG_REQ, queueName, topicName);
+        tMsg->AddTLV(tlv_ptr);
         apiThread->GetMessagePort()->PostMessage(tMsg);
         apiClientConns[user_cons->getGri()] = apiReader;
         return 0;
@@ -75,6 +75,7 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
     this->AddGroup(user_cons);
     if (((ntohl(apiMsg->header.options) & API_OPT_GROUP_LAST)) != 0) // complete group
     {
+        tMsg = new Message(MSG_REQ, queueName, topicName);
         list<Apimsg_user_constraint*>* userConsGroup = this->GetGroup(user_cons->getGri());
         for (list<Apimsg_user_constraint*>::iterator it  = userConsGroup->begin(); it != userConsGroup->end(); it++)
         {
@@ -85,10 +86,9 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
              tMsg->AddTLV(tlv_ptr);
         }
         this->DeleteGroup(user_cons->getGri());
+        apiThread->GetMessagePort()->PostMessage(tMsg);
+        apiClientConns[user_cons->getGri()] = apiReader;
     }
-    tMsg = new Message(MSG_REQ, queueName, topicName);
-    apiThread->GetMessagePort()->PostMessage(tMsg);
-    apiClientConns[user_cons->getGri()] = apiReader;
     return 0;
 }
 
