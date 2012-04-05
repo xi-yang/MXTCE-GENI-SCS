@@ -48,15 +48,13 @@ using namespace std;
 class ScheduleComputeWorker: public ComputeWorker
 {
 protected:
-    vector<time_t>* orderedATS;
+    //vector<time_t>* orderedATS;
 
 public:
-    ScheduleComputeWorker(string n):ComputeWorker(n), orderedATS(NULL) { }
+    ScheduleComputeWorker(string n):ComputeWorker(n){ }
     virtual ~ScheduleComputeWorker() { }
     virtual void* hookRun();
     virtual void hookHandleMessage();
-    virtual void SetParameter(string& paramName, void* paramPtr);
-    virtual void* GetParameter(string& paramName);
 };
 
 #endif

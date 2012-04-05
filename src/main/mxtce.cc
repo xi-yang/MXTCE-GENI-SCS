@@ -164,24 +164,21 @@ void MxTCEMessageHandler::Run()
             ComputeWorker* computingThread = ComputeWorkerFactory::CreateComputeWorker(MxTCE::defaultComputeWorkerType);
             if (msg->GetTLVList().size() == 1) 
             {
-                string paramName = "USER_CONSTRAINT";
                 Apimsg_user_constraint* userConstraint;
                 memcpy(&userConstraint, msg->GetTLVList().front()->value, sizeof(void*));
-                computingThread->SetParameter(paramName, userConstraint);
+                computingThread->SetWorkflowData("USER_CONSTRAINT", userConstraint);
             }
             else if (msg->GetTLVList().size() > 1) 
             {
-                string paramName = "USER_CONSTRAINT";
                 Apimsg_user_constraint* userConstraint;
                 memcpy(&userConstraint, msg->GetTLVList().front()->value, sizeof(void*));
-                computingThread->SetParameter(paramName, userConstraint);
-                paramName = "USER_CONSTRAINT_LIST";
+                computingThread->SetWorkflowData("USER_CONSTRAINT", userConstraint);
                 list<Apimsg_user_constraint*>* userConsList = new list<Apimsg_user_constraint*>;
                 for (list<Apimsg_user_constraint*>::iterator it = userConsList->begin(); it != userConsList->end(); it++)
                 {
                     userConsList->push_back(*(Apimsg_user_constraint**)(msg->GetTLVList().front()->value));
                 }
-                computingThread->SetParameter(paramName, userConsList);
+                computingThread->SetWorkflowData("USER_CONSTRAINT_LIST", userConsList);
             }
             else 
             {

@@ -88,14 +88,11 @@ void Action_ProcessRequestTopology::Finish()
 {
     LOG(name<<"Finish() called"<<endl);
 
-    string paramName = "USER_CONSTRAINT";
-    Apimsg_user_constraint* userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetParameter(paramName);
+    Apimsg_user_constraint* userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT");
     ComputeResult* result = new ComputeResult(userConstraint->getGri());
 
-    paramName = "KSP";
-    vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
-    paramName = "FEASIBLE_PATHS";
-    vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+    vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetWorkflowData("KSP");
+    vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetWorkflowData("FEASIBLE_PATHS");
     if (feasiblePaths == NULL)
         feasiblePaths = KSP;
 
@@ -121,8 +118,7 @@ void Action_ProcessRequestTopology::Finish()
     }
     else
     {
-        paramName = "ERROR_MSG";
-        result->SetErrMessage(*(string*)(this->GetComputeWorker()->GetParameter(paramName)));
+        result->SetErrMessage(*(string*)(this->GetComputeWorker()->GetWorkflowData("ERROR_MSG")));
     }
     TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
     tlv->type = MSG_TLV_VOID_PTR;
@@ -138,14 +134,13 @@ void Action_ProcessRequestTopology::Finish()
     if (KSP)
     {
         delete KSP;
-        this->GetComputeWorker()->SetParameter(paramName, NULL);
+        this->GetComputeWorker()->SetWorkflowData("KSP", NULL);
     }
-    paramName = "TEWG";
-    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetParameter(paramName);
+    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
     if (tewg)
     {
         delete tewg;
-        this->GetComputeWorker()->SetParameter(paramName, NULL);
+        this->GetComputeWorker()->SetWorkflowData("TEWG", NULL);
     }
 
     // destroy feasiblePaths ? 
@@ -196,8 +191,7 @@ bool Action_CreateTEWG::ProcessMessages()
             TEWG* tewg; 
             memcpy(&tewg, (TEWG*)tlvList.front()->value, sizeof(void*));
             // store TEWG
-            string paramName = "TEWG";
-            this->GetComputeWorker()->SetParameter(paramName, (void*)tewg);
+            this->GetComputeWorker()->SetWorkflowData("TEWG", (void*)tewg);
         }
         //delete msg; //msg consumed 
         itm = messages.erase(itm);
@@ -234,14 +228,12 @@ void Action_CreateTEWG::Finish()
 void Action_ComputeKSP::Process()
 {
     LOG(name<<"Process() called"<<endl);
-    string paramName = "TEWG";
-    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetParameter(paramName);
+    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
     if (tewg == NULL)
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No TEWG available for computation!");
 
     //  the user request parameters
-    paramName = "USER_CONSTRAINT";
-    Apimsg_user_constraint* userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetParameter(paramName);
+    Apimsg_user_constraint* userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT");
     TNode* srcNode = tewg->LookupNodeByURN(userConstraint->getSrcendpoint());
     if (srcNode == NULL)
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown source URN!");
@@ -317,15 +309,14 @@ void Action_ComputeKSP::Process()
         throw ComputeThreadException(e.GetMessage());
     }
 
-    paramName = "KSP";
     if (KSP->size() == 0)
     {
         delete KSP;
-        this->GetComputeWorker()->SetParameter(paramName, NULL);
+        this->GetComputeWorker()->SetWorkflowData("KSP", NULL);
         LOG_DEBUG("Action_ComputeKSP::Process() No KSP found after bandwidh pruning!" <<endl);
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No KSP found after bandwidh pruning!");
     }
-    this->GetComputeWorker()->SetParameter(paramName, KSP);
+    this->GetComputeWorker()->SetWorkflowData("KSP", KSP);
 
     // verify constraints with switchingType / layer adaptation / VLAN etc.
     vector<TPath*>::iterator itP = KSP->begin(); 
@@ -392,12 +383,11 @@ void Action_ComputeKSP::Process()
         }
         else
         {
-            paramName = "FEASIBLE_PATHS";
-            vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+            vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetWorkflowData("FEASIBLE_PATHS");
             if (feasiblePaths == NULL)
             {
                 feasiblePaths = new vector<TPath*>;
-                this->GetComputeWorker()->SetParameter(paramName, feasiblePaths);
+                this->GetComputeWorker()->SetWorkflowData("FEASIBLE_PATHS", feasiblePaths);
             }
 			// make a copy of TPath from work set. Then do twists on the copy to satisfy reply format.
 			// Caution: Clone() will inherit the orignal localEnd and remoteEnd nodes from work set.
@@ -426,7 +416,7 @@ void Action_ComputeKSP::Process()
     if (KSP->size() == 0)
     {
         delete KSP;
-        this->GetComputeWorker()->SetParameter(paramName, NULL);
+        this->GetComputeWorker()->SetWorkflowData("KSP", NULL);
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No KSP found after being applied with TE constraints!");
     }
     // debugging output
@@ -487,9 +477,7 @@ void Action_FinalizeServiceTopology::Process()
 {
     LOG(name<<"Process() called"<<endl);
 
-    string paramName = "FEASIBLE_PATHS";
-
-    vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+    vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetWorkflowData("FEASIBLE_PATHS");
 
     if (feasiblePaths != NULL)
     {
@@ -504,8 +492,7 @@ void Action_FinalizeServiceTopology::Process()
     }
     else 
     {
-        paramName = "KSP";
-        vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+        vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetWorkflowData("KSP");
 
         // TODO: pick one or multiple paths (or return failure)
         // TODO: combine with feasible paths above?
@@ -591,14 +578,12 @@ void Action_CreateOrderedATS::Process()
 
     assert(_bandwidth > 0 && _volume > 0);
     
-    string paramName = "KSP";
-    vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetParameter(paramName);
+    vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetWorkflowData("KSP");
 
     if (KSP == NULL || KSP->size() == 0)
         throw ComputeThreadException((char*)"Action_CreateOrderedATS::Process() Empty KSP list: no path found!");
 
-    paramName = "TEWG";
-    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetParameter(paramName);
+    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
 
     vector<TPath*>::iterator itP;
     list<TLink*>::iterator itL;
@@ -759,18 +744,15 @@ void Action_ComputeSchedulesWithKSP::Process()
     assert(_bandwidth > 0 && _volume > 0);
 
     // workflow data
-    string paramName = "TEWG";
-    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetParameter(paramName);
+    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
     if (tewg == NULL)
         throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() No TEWG available for computation!");
-    paramName = "USER_CONSTRAINT";
     if (_userConstraint == NULL)
-        _userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetParameter(paramName);
+        _userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT");
 
     // context data
     string actionName = "Action_CreateOrderedATS";
-    string dataName = "ORDERED_ATS";
-    vector<time_t>* orderedATS = (vector<time_t>*)this->GetComputeWorker()->GetContextData(this->context, actionName, dataName);
+    vector<time_t>* orderedATS = (vector<time_t>*)this->GetComputeWorker()->GetContextActionData(this->context, actionName, "ORDERED_ATS");
     if (tewg == NULL)
         throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() No Ordered Aggregate Time Series available for computation!");
 
@@ -966,12 +948,11 @@ void Action_ComputeSchedulesWithKSP::Process()
         resv->SetServiceTopology(serviceTopo);
         string status = "RESERVED"; resv->SetStatus(status);
         resv->BuildDeltaCache();
-        paramName = "COMMITTED_RESERVATIONS"; // workflow level data
-        list<TReservation*>* committedResvations = (list<TReservation*>*)this->GetComputeWorker()->GetParameter(paramName);
+        list<TReservation*>* committedResvations = (list<TReservation*>*)this->GetComputeWorker()->GetWorkflowData("COMMITTED_RESERVATIONS");
         if (committedResvations == NULL)
         {
             committedResvations = new list<TReservation*>;
-            this->GetComputeWorker()->SetParameter(paramName, (void*)committedResvations);
+            this->GetComputeWorker()->SetWorkflowData("COMMITTED_RESERVATIONS", (void*)committedResvations);
         }
         committedResvations->push_back(resv);
         list<TReservation*>::iterator itR = committedResvations->begin();
@@ -1031,8 +1012,7 @@ void Action_ProcessRequestTopology_MP2P::Process()
     LOG(name<<"Process() called"<<endl);   
     //$$ retrieve userConstrinat list
 
-    string paramName = "USER_CONSTRAINT_LIST";
-    list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetParameter(paramName);
+    list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT_LIST");
     if (userConsList)
         throw ComputeThreadException((char*)"Action_ProcessRequestTopology_MP2P::Process() No USER_CONSTRAINT_LIST data from compute worker.");
 
@@ -1140,8 +1120,7 @@ void Action_ProcessRequestTopology_MP2P::Finish()
 
     // collect results from exceptions (failuare) and  multiple Action_FinalizeServiceTopology_MP2P (success)
     string actionName = "Action_ComputeSchedulesWithKSP_Round2_";
-    string paramName = "USER_CONSTRAINT_LIST";
-    list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetParameter(paramName);
+    list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT_LIST");
     list<Apimsg_user_constraint*>::iterator itU = userConsList->begin();
     list<ComputeResult*> multip2pResultList;
     list<ComputeResult*>::iterator itR;
@@ -1149,8 +1128,7 @@ void Action_ProcessRequestTopology_MP2P::Finish()
     {
         string actionName = "Action_FinalizeServiceTopology_MP2P_";
         actionName += (*itU)->getPathId();
-        string dataName = "COMPUTE_RESULT_LIST";
-        list<ComputeResult*>* computeResultList = (list<ComputeResult*>*)this->GetComputeWorker()->GetContextData(this->context, actionName, dataName);
+        list<ComputeResult*>* computeResultList = (list<ComputeResult*>*)this->GetComputeWorker()->GetContextActionData(this->context, actionName, "COMPUTE_RESULT_LIST");
         for (itR = computeResultList->begin(); itR != computeResultList->end(); itR++)
             multip2pResultList.push_back(*itR);
     }
@@ -1279,8 +1257,7 @@ void Action_ReorderPaths_MP2P::Process()
     LOG(name<<"Process() called"<<endl);
 
     string actionName;
-    string paramName = "USER_CONSTRAINT_LIST";
-    list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetParameter(paramName);
+    list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT_LIST");
 
     // find first-round KSP actions
     vector<Action_ComputeSchedulesWithKSP*> round1KspActions;
@@ -1408,15 +1385,13 @@ void Action_FinalizeServiceTopology_MP2P::Process()
 
     // collect feasible paths for all p2p sub-flows
     string actionName = "Action_ComputeSchedulesWithKSP_Round2_";
-    string paramName = "USER_CONSTRAINT_LIST";
-    list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetParameter(paramName);
+    list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT_LIST");
     list<Apimsg_user_constraint*>::iterator it = userConsList->begin();
     for (; it != userConsList->end(); it++)
     {   
         Apimsg_user_constraint* userConstraint = *it;
         actionName += userConstraint->getPathId();
-        string dataName = "FEASIBLE_PATHS";
-        vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetContextData(this->context, actionName, dataName);
+        vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetContextActionData(this->context, actionName, "FEASIBLE_PATHS");
         ComputeResult* result = new ComputeResult(userConstraint->getGri());
         result->SetPathId(userConstraint->getPathId());
         _computeResultList->push_back(result);
@@ -1446,23 +1421,21 @@ void Action_FinalizeServiceTopology_MP2P::Process()
             snprintf(buf, 256, "Action_FinalizeServiceTopology_MP2P::Process() No feasible path found for GRI: %s, Path: %s!", 
                 userConstraint->getGri().c_str(), userConstraint->getPathId().c_str());
             LOG(buf << endl);
-            paramName = "TEWG";
-            TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetParameter(paramName);
+            TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
             if (tewg)
             {
                 delete tewg;
-                this->GetComputeWorker()->SetParameter(paramName, NULL);
+                this->GetComputeWorker()->SetWorkflowData("TEWG", NULL);
             }
             throw ComputeThreadException(buf);
         }
     }
 
-    paramName = "TEWG";
-    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetParameter(paramName);
+    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
     if (tewg)
     {
         delete tewg;
-        this->GetComputeWorker()->SetParameter(paramName, NULL);
+        this->GetComputeWorker()->SetWorkflowData("TEWG", NULL);
     }
 }
 

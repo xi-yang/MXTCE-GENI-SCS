@@ -48,16 +48,14 @@ using namespace std;
 class MultiP2PComputeWorker: public ComputeWorker
 {
 protected:
-    list<Apimsg_user_constraint*>* userConsList;
-    list<TReservation*>* committedResvs;
+    //list<Apimsg_user_constraint*>* userConsList;
+    //list<TReservation*>* committedResvs;
 
 public:
-    MultiP2PComputeWorker(string n):ComputeWorker(n), userConsList(NULL) { }
+    MultiP2PComputeWorker(string n):ComputeWorker(n) { }
     virtual ~MultiP2PComputeWorker();
     virtual void* hookRun();
     virtual void hookHandleMessage();
-    virtual void SetParameter(string& paramName, void* paramPtr);
-    virtual void* GetParameter(string& paramName);
 };
 
 #endif

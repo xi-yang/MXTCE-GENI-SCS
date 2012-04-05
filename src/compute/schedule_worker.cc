@@ -101,20 +101,3 @@ void ScheduleComputeWorker::hookHandleMessage()
 
 }
 
-void ScheduleComputeWorker::SetParameter(string& paramName, void* paramPtr)
-{
-    if (paramName == "ORDERED_ATS")
-        orderedATS = (vector<time_t>*)paramPtr;
-    else 
-        ComputeWorker::SetParameter(paramName, paramPtr);
-}
-
-void* ScheduleComputeWorker::GetParameter(string& paramName)
-{
-    if (paramName == "ORDERED_ATS")
-        return orderedATS;
-    else 
-        return ComputeWorker::GetParameter(paramName);
-}
-
-

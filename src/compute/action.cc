@@ -43,7 +43,6 @@ void Action::Run()
 {
     list<Action*>::iterator ita;
     char buf[256];
-    string paramName;
     string errMsg;
 
     if (!worker->GetMessagePort()->IsUp())
@@ -71,8 +70,7 @@ void Action::Run()
             LOG(buf << endl);
             //throw ComputeThreadException(buf);
             errMsg = buf;
-            paramName = "ERROR_MSG";
-            this->GetComputeWorker()->SetParameter(paramName, &errMsg);
+            this->GetComputeWorker()->SetWorkflowData("ERROR_MSG", &errMsg);
             break;
         }
 
@@ -115,8 +113,7 @@ void Action::Run()
             LOG(buf << endl);
             //throw ComputeThreadException(buf);
             errMsg = buf;
-            paramName = "ERROR_MSG";
-            this->GetComputeWorker()->SetParameter(paramName, &errMsg);
+            this->GetComputeWorker()->SetWorkflowData("ERROR_MSG", &errMsg);
         }
 
         //schedule children actions
@@ -139,8 +136,7 @@ void Action::Run()
             LOG(buf << endl);
             //throw ComputeThreadException(buf);
             errMsg = buf;
-            paramName = "ERROR_MSG";
-            this->GetComputeWorker()->SetParameter(paramName, &errMsg);
+            this->GetComputeWorker()->SetWorkflowData("ERROR_MSG", &errMsg);
             break;
         }
         

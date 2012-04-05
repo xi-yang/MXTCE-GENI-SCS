@@ -91,19 +91,4 @@ void SimpleComputeWorker::hookHandleMessage()
 
 }
 
-void SimpleComputeWorker::SetParameter(string& paramName, void* paramPtr)
-{
-    //if (paramName == "KSP")
-    //    ksp = (vector<TPath*>*)paramPtr;
-    //else 
-        ComputeWorker::SetParameter(paramName, paramPtr);
-}
-
-void* SimpleComputeWorker::GetParameter(string& paramName)
-{
-    //if (paramName == "KSP")
-    //    return ksp;
-    //else 
-        return ComputeWorker::GetParameter(paramName);
-}
 

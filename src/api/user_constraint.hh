@@ -119,6 +119,7 @@ protected:
     list<TSchedule*> flexSchedules;
     u_int64_t flexMaxBandwidth;
     u_int64_t flexMinBandwidth;
+    u_int64_t flexGranularity;
     // mp_constraints
     string path_id;
 
@@ -217,6 +218,9 @@ public:
 
     u_int64_t getFlexMinBandwidth() { return flexMinBandwidth; }
     void setFlexMinBandwidth(u_int64_t min_bw) { this->flexMinBandwidth = min_bw; }
+
+    u_int64_t getFlexGranularity() { return flexGranularity; }
+    void setFlexGranularity(u_int64_t g) { this->flexGranularity = g; }
 
     string& getPathId() { return path_id; }
     void setPathId(string& id) { path_id = id; }

@@ -84,9 +84,8 @@ void* ComputeWorker::Run()
     try {
         eventMaster->Run();
     } catch (ComputeThreadException e) {
-        string paramName = "ERRPR_MSG";
         string& errMsg = e.GetMessage();
-        SetParameter(paramName,&errMsg);
+        this->SetWorkflowData("ERRPR_MSG",&errMsg);
         // TODO: Tell mxTCE core to detach the pipes ?
     }
 
@@ -114,42 +113,49 @@ void ComputeWorker::hookHandleMessage()
     }
 }
 
-
-void ComputeWorker::SetParameter(string& paramName, void* paramPtr)
+//  data global for the workflow. Who sets the data will be responsible for cleanning them up.
+void ComputeWorker::SetWorkflowData(const char* paramName, void* paramPtr)
 {
-    if (paramName == "TEWG")
-        tewg = (TEWG*)paramPtr;
-    else if (paramName == "USER_CONSTRAINT")
-        userConstraint = (Apimsg_user_constraint*)paramPtr;
-    else if (paramName == "ERROR_MSG")
-        errMsg = *(string*)paramPtr;
-    else if (paramName == "KSP")
-        ksp = (vector<TPath*>*)paramPtr;
-    else if (paramName == "FEASIBLE_PATHS")
-        feasiblePaths= (vector<TPath*>*)paramPtr;
+    workflowData.SetData(paramName, paramPtr);
 }
 
-void* ComputeWorker::GetParameter(string& paramName)
+void ComputeWorker::SetWorkflowData(string& paramName, void* paramPtr)
 {
-    if (paramName == "TEWG")
-        return tewg;    
-    else if (paramName == "USER_CONSTRAINT")
-        return userConstraint;
-    else if (paramName == "ERROR_MSG")
-        return &errMsg;
-    else if (paramName == "KSP")
-        return ksp;
-    else if (paramName == "FEASIBLE_PATHS")
-        return feasiblePaths;
-    return NULL;
+    workflowData.SetData(paramName, paramPtr);
 }
 
-void* ComputeWorker::GetContextData(string& contextName, string& actionName, string& dataName)
+void* ComputeWorker::GetWorkflowData(const char* paramName)
+{
+    return workflowData.GetData(paramName);
+}
+
+void* ComputeWorker::GetWorkflowData(string& paramName)
+{
+    return workflowData.GetData(paramName);
+}
+
+// data for sub-level context (typically a path, connection or subset of the workflow) 
+// stored in Action(s), who creates the data and will be responsible for cleanning them.
+void* ComputeWorker::GetContextActionData(string& contextName, string& actionName, string& dataName)
 {
     Action* action = LookupAction(contextName,actionName);
     if (action == NULL)
         return NULL;
     return action->GetData(dataName);
+}
+
+void* ComputeWorker::GetContextActionData(const char* contextName, const char* actionName, const char* dataName)
+{
+    string cn = contextName;
+    string an = actionName;
+    string dn = dataName;
+    return GetContextActionData(cn, an, dn);
+}
+
+void* ComputeWorker::GetContextActionData(string& contextName, string& actionName, const char* dataName)
+{
+    string dn = dataName;
+    return GetContextActionData(contextName, actionName, dn);
 }
 
 ComputeWorker* ComputeWorkerFactory::CreateComputeWorker(string type)

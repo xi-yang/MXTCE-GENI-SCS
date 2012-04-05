@@ -46,18 +46,39 @@
 
 using namespace std;
 
-class ComputeWorker: public ThreadPortScheduler
+class ComputeWorkflowData: public WorkData
 {
-protected:
-    list<Action*> actions;//workflow-actions
+public:
     Apimsg_user_constraint* userConstraint;
+    list<Apimsg_user_constraint*>* userConsList;
     TEWG* tewg;
     string errMsg;
     vector<TPath*>* ksp;
     vector<TPath*>* feasiblePaths;
+    void _Init() {
+        userConstraint = NULL;
+        userConsList = NULL;
+        tewg = NULL;
+        ksp = NULL;
+        feasiblePaths = NULL;
+    }
 
 public:
-    ComputeWorker(string n):ThreadPortScheduler(n), userConstraint(NULL), tewg(NULL), ksp(NULL), feasiblePaths(NULL) { }
+    ComputeWorkflowData(): WorkData() { _Init(); }
+    ~ComputeWorkflowData() {}
+    void Cleanup() {
+        // TODO: 
+    }
+};
+
+class ComputeWorker: public ThreadPortScheduler
+{
+protected:
+    ComputeWorkflowData workflowData; //  data global for the workflow.
+    list<Action*> actions;//workflow-actions
+
+public:
+    ComputeWorker(string n):ThreadPortScheduler(n) { }
     virtual ~ComputeWorker();
     string& GetName() { return portName;}
     list<Action*>& GetActions() { return actions; }
@@ -65,9 +86,13 @@ public:
     void* Run();
     virtual void* hookRun();
     virtual void hookHandleMessage();
-    virtual void SetParameter(string& paramName, void* paramPtr);
-    virtual void* GetParameter(string& paramName);
-    virtual void* GetContextData(string& contextName, string& actionName, string& dataName);
+    virtual void* GetWorkflowData(const char* paramName);
+    virtual void* GetWorkflowData(string& paramName);
+    virtual void SetWorkflowData(const char* paramName, void* paramPtr);
+    virtual void SetWorkflowData(string& paramName, void* paramPtr);
+    virtual void* GetContextActionData(string& contextName, string& actionName, string& dataName);
+    virtual void* GetContextActionData(const char* contextName, const char* actionName, const char* dataName);
+    virtual void* GetContextActionData(string& contextName, string& actionName, const char* dataName);
 };
 
 
