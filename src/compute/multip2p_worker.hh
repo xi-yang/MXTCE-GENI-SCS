@@ -55,7 +55,6 @@ public:
     MultiP2PComputeWorker(string n):ComputeWorker(n) { }
     virtual ~MultiP2PComputeWorker();
     virtual void* hookRun();
-    virtual void hookHandleMessage();
 };
 
 #endif

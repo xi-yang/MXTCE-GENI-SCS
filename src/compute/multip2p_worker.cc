@@ -52,32 +52,4 @@ void* MultiP2PComputeWorker::hookRun()
     //## eventMaster->Run() will be called by parent Run() 
 }
 
-// Handle message from thread message router
-void MultiP2PComputeWorker::hookHandleMessage()
-{
-    Message* msg = NULL;
-    while ((msg = msgPort->GetMessage()) != NULL)
-    {
-        msg->LogDump();
-
-        // loop through action list to match expectMessageTopics and deliver the message to action object
-        list<Action*>::iterator ita;
-        Action* action;
-        for (ita = actions.begin(); ita != actions.end(); ita++) 
-        {
-            action = *ita;
-            list<string>::iterator its = action->GetExpectMessageTopics().begin();
-            for (; its != action->GetExpectMessageTopics().end(); its++)
-            {
-                if ((*its) == msg->GetTopic())
-                {
-                    action->GetMessages().push_back(msg->Duplicate());
-                    its = action->GetExpectMessageTopics().erase(its);
-                }
-            }
-        }
-        //delete msg in Action::ProcessMessages()
-    }
-
-}
 

@@ -54,7 +54,6 @@ public:
     ScheduleComputeWorker(string n):ComputeWorker(n){ }
     virtual ~ScheduleComputeWorker() { }
     virtual void* hookRun();
-    virtual void hookHandleMessage();
 };
 
 #endif
