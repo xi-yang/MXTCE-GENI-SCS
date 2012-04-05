@@ -162,6 +162,7 @@ void MxTCEMessageHandler::Run()
         if (msg->GetType() == MSG_REQ && msg->GetTopic() == "API_REQUEST") {
             // creating computeWorkerThread and pass user request parameters
             ComputeWorker* computingThread = ComputeWorkerFactory::CreateComputeWorker(MxTCE::defaultComputeWorkerType);
+            // TODO: consolidate userConstrtaint and userConsList
             if (msg->GetTLVList().size() == 1) 
             {
                 Apimsg_user_constraint* userConstraint;
@@ -174,9 +175,10 @@ void MxTCEMessageHandler::Run()
                 memcpy(&userConstraint, msg->GetTLVList().front()->value, sizeof(void*));
                 computingThread->SetWorkflowData("USER_CONSTRAINT", userConstraint);
                 list<Apimsg_user_constraint*>* userConsList = new list<Apimsg_user_constraint*>;
-                for (list<Apimsg_user_constraint*>::iterator it = userConsList->begin(); it != userConsList->end(); it++)
+                for (list<TLV*>::iterator it = msg->GetTLVList().begin(); it != msg->GetTLVList().end(); it++)
                 {
-                    userConsList->push_back(*(Apimsg_user_constraint**)(msg->GetTLVList().front()->value));
+                    memcpy(&userConstraint, (*it)->value, sizeof(void*));
+                    userConsList->push_back(userConstraint);
                 }
                 computingThread->SetWorkflowData("USER_CONSTRAINT_LIST", userConsList);
             }
