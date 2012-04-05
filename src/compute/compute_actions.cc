@@ -1042,7 +1042,7 @@ void Action_ProcessRequestTopology_MP2P::Process()
         {
             Apimsg_user_constraint* userConstraint = *it;
 
-            u_int64_t volume = (userConstraint->getFlexSchedules().size() > 0) ? userConstraint->getBandwidth()*userConstraint->getFlexSchedules().front()->GetDuration() : 0;
+            u_int64_t volume = ((userConstraint->getFlexSchedules() && userConstraint->getFlexSchedules()->size() > 0)) ? userConstraint->getBandwidth()*userConstraint->getFlexSchedules()->front()->GetDuration() : 0;
             u_int64_t flexBandwidth = userConstraint->getBandwidth();
             if (contextNameSet[i]=="cxt_user_maximum_bw")
             {

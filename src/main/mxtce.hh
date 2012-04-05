@@ -67,6 +67,7 @@ public:
     static string computeThreadPrefix;
     static string defaultComputeWorkerType;
     static list<string> xmlDomainFileList;
+    static bool tempTest;
 
 public:
 	MxTCE( const string& configFile);

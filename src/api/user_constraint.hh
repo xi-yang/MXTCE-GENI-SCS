@@ -116,7 +116,7 @@ protected:
     //optional constraints
 	Apimsg_stornet_constraint* co_schedule_request;
     // flexible constraints
-    list<TSchedule*> flexSchedules;
+    list<TSchedule*>* flexSchedules;
     u_int64_t flexMaxBandwidth;
     u_int64_t flexMinBandwidth;
     u_int64_t flexGranularity;
@@ -151,7 +151,11 @@ public:
 		this->lsp_class = "";
 		this->path = NULL;
 		this->co_schedule_request = NULL;
-
+        this->flexSchedules = NULL;
+        this->flexMaxBandwidth = 0;
+        this->flexMinBandwidth = 0;
+        this->flexGranularity = 0;
+        this->path_id = "";
 	}
 
 	void setGri(string t_gri) {this->gri = t_gri;}
@@ -211,7 +215,8 @@ public:
 	void setCoschedreq(Apimsg_stornet_constraint* t_co_schedule_request) {this->co_schedule_request = t_co_schedule_request;}
 	Apimsg_stornet_constraint* getCoschedreq() {return this->co_schedule_request;}
 
-    list<TSchedule*>& getFlexSchedules() { return flexSchedules; }
+    list<TSchedule*>* getFlexSchedules() { return flexSchedules; }
+    void setFlexSchedules(list<TSchedule*>* fs) { this->flexSchedules = fs; }
 
     u_int64_t getFlexMaxBandwidth() { return flexMaxBandwidth; }
     void setFlexMaxBandwidth(u_int64_t max_bw) { this->flexMaxBandwidth = max_bw; }
@@ -223,7 +228,7 @@ public:
     void setFlexGranularity(u_int64_t g) { this->flexGranularity = g; }
 
     string& getPathId() { return path_id; }
-    void setPathId(string& id) { path_id = id; }
+    void setPathId(string id) { path_id = id; }
 
 };
 
