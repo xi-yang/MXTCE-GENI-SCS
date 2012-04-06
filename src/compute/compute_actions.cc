@@ -225,6 +225,8 @@ void* Action_ComputeKSP::GetData(string& dataName)
 {
     if (dataName == "FEASIBLE_PATHS")
         return _feasiblePaths;
+    if (dataName == "FEASIBLE_PATHS_TEWG")
+        return _feasiblePathsTewg;
     else if (dataName == "USER_CONSTRAINT")
         return _userConstraint;
     return NULL;
@@ -386,6 +388,13 @@ void Action_ComputeKSP::Process()
         }
         else
         {
+            if (this->_feasiblePathsTewg == NULL)
+            {
+                this->_feasiblePathsTewg = new vector<TPath*>;
+                this->GetComputeWorker()->SetWorkflowData("FEASIBLE_PATHS_TEWG", this->_feasiblePathsTewg);
+            }            
+            this->_feasiblePathsTewg->push_back(*itP);
+
             if (this->_feasiblePaths == NULL)
             {
                 this->_feasiblePaths = new vector<TPath*>;
@@ -568,9 +577,10 @@ void Action_CreateOrderedATS::Process()
     LOG(name<<"Process() called"<<endl);
 
     assert(_bandwidth > 0 && _volume > 0);
-    
-    vector<TPath*>* KSP = this->context.empty() ? (vector<TPath*>*)this->GetComputeWorker()->GetWorkflowData("FEASIBLE_PATHS") 
-        : (vector<TPath*>*)this->GetComputeWorker()->GetContextActionData(this->context.c_str(), "Action_ComputeKSP", "FEASIBLE_PATHS");
+
+    // get the K-Paths from previous computation: use the ones pointing to orinal links in TEWG instead of the cloned feasiblePaths
+    vector<TPath*>* KSP = this->context.empty() ? (vector<TPath*>*)this->GetComputeWorker()->GetWorkflowData("FEASIBLE_PATHS_TEWG") 
+        : (vector<TPath*>*)this->GetComputeWorker()->GetContextActionData(this->context.c_str(), "Action_ComputeKSP", "FEASIBLE_PATHS_TEWG");
 
     if (KSP == NULL || KSP->size() == 0)
         throw ComputeThreadException((char*)"Action_CreateOrderedATS::Process() Empty KSP list: no path found!");

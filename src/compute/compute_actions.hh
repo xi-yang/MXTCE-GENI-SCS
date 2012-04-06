@@ -88,11 +88,13 @@ protected:
     u_int64_t _bandwidth; //bps
     u_int64_t _volume; // sec*bps
     vector<TPath*>* _feasiblePaths;
+    vector<TPath*>* _feasiblePathsTewg;
     Apimsg_user_constraint* _userConstraint;
     void _Init() {
         _bandwidth = 0;
         _volume = 0;
         _feasiblePaths = NULL;
+        _feasiblePathsTewg = NULL;
         _userConstraint = NULL;
     }
 
