@@ -298,7 +298,7 @@ void Action_ComputeKSP::Process()
     }
 
     // prune bandwidth
-    tewg->LogDump();
+    //tewg->LogDump();
     tewg->PruneByBandwidth(bw);
 
     TLink* ingressLink = tewg->LookupLinkByURN(userConstraint->getSrcendpoint());
@@ -602,9 +602,8 @@ void Action_CreateOrderedATS::Process()
         TPath* P = *itP;
         for (itL = P->GetPath().begin(); itL != P->GetPath().end(); itL++)
         {
-            int* piVal = (int*)((*itL)->GetWorkData()->GetInt("ATS_Order_Counter"));
+            int* piVal = (int*)((*itL)->GetWorkData()->GetData("ATS_Order_Counter"));
             (*piVal)++;
-            //(*itL)->GetWorkData()->SetData("ATS_Order_Counter", piVal);
         }
     }
 
@@ -751,14 +750,14 @@ void Action_ComputeSchedulesWithKSP::Process()
     LOG(name<<"Process() called"<<endl);
     assert(_bandwidth > 0 && _volume > 0);
 
-    // workflow data
-    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
+    TEWG* tewg = this->context.empty() ? (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG") :
+        (TEWG*)this->GetComputeWorker()->GetContextActionData(this->context.c_str(), "Action_CreateTEWG", "TEWG");
+
     if (tewg == NULL)
         throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() No TEWG available for computation!");
     if (_userConstraint == NULL)
         _userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT");
 
-    // context data
     string actionName = "Action_CreateOrderedATS";
     vector<time_t>* orderedATS = (vector<time_t>*)this->GetComputeWorker()->GetContextActionData(this->context, actionName, "ORDERED_ATS");
     if (tewg == NULL)
@@ -945,6 +944,8 @@ void Action_ComputeSchedulesWithKSP::Process()
     }
     sort(_feasiblePaths->begin(), _feasiblePaths->end(), cmp_tpath);
     
+    LOG_DEBUG("Action_ComputeSchedulesWithKSP::Process() found feasible paths for context=" << this->context << "path=" << this->_userConstraint->getPathId() <<endl);
+
     // Commit a selected (best) feasible path into the TEWG as concurrent constraint for subsequent paths in the same multi-P2P request
     if (this->yesCommitBestPathToTEWG())
     {
