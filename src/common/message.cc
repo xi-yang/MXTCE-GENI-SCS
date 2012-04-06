@@ -52,6 +52,7 @@ Message* Message::Duplicate()
 {
     Message* msg = new Message((MessageType)this->type, this->queueName, this->topicName);
     msg->flagUrgent = this->flagUrgent;
+    msg->contextTag = this->contextTag;
     bool flagUrgent;
     msg->port = this->port;
     list<TLV*>::iterator itlv; 
@@ -76,6 +77,7 @@ void Message::Transmit(int fd)
     header->length = sizeof(MessageHeader);
     strncpy(header->queue, queueName.c_str(), 64);
     strncpy(header->topic, topicName.c_str(), 64);
+    strncpy(header->context, contextTag.c_str(), 64);
     if (flagUrgent)
         header->flags |= MSG_FLAG_URGENT;
 
@@ -165,6 +167,7 @@ void Message::Receive(int fd)
     this->type = header->type;
     this->queueName = header->queue;
     this->topicName = header->topic;
+    this->contextTag = header->context;
     this->flagUrgent = !((header->flags & MSG_FLAG_URGENT) == 0);
 
     int offset = sizeof(MessageHeader);

@@ -57,6 +57,7 @@ typedef struct {
     u_int16_t length;
     char queue[64];
     char topic[64];
+    char context[64];
     u_int32_t flags;
 } MessageHeader;
 
@@ -88,13 +89,14 @@ protected:
     u_int16_t type;
     string queueName;
     string topicName;
+    string contextTag;
     bool flagUrgent;
     list<TLV*> tlvList;
     MessagePort* port;
 
 public:
-    Message(): type(0), queueName(""), topicName(""), port(NULL) { }
-    Message(MessageType ty, string& qn, string& tn): type(ty), queueName(qn), topicName(tn), port(NULL) 
+    Message(): type(0), queueName(""), topicName(""), contextTag(""), port(NULL) { }
+    Message(MessageType ty, string& qn, string& tn): type(ty), queueName(qn), topicName(tn), contextTag(""), port(NULL) 
         { flagUrgent = false; }
     virtual ~Message();
     u_int16_t GetType() { return type; }
@@ -103,6 +105,8 @@ public:
     void SetQueue(string& qn) { queueName = qn; }
     string& GetTopic() { return topicName; }
     void SetTopic(string& tn) { topicName = tn; }
+    string& GetContextTag() { return contextTag; }
+    void SetContextTag(string& ct) { contextTag = ct; }
     MessagePort* GetPort() { return port; }
     void SetPort(MessagePort* p) { port = p; }
     bool IsUrgent() { return flagUrgent; }

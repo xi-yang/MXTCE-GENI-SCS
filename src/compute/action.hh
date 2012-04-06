@@ -88,7 +88,9 @@ public:
     list<Action*>& GetChildren() { return children; } 
     void AddChild(Action* child) { child->SetComputeWorker(worker);  child->SetParent(this); children.push_back(child); } 
     void SendMessage(MessageType type, string& queue, string& topic, list<TLV*>& tlvs);
+    void SendMessage(MessageType type, string& queue, string& topic, string& contextTag, list<TLV*>& tlvs);
     void SendMessage(MessageType type, string& queue, string& topic, list<TLV*>& tlvs, string& expectReturnTopic);
+    void SendMessage(MessageType type, string& queue, string& topic, string& contextTag, list<TLV*>& tlvs, string& expectReturnTopic);
     virtual void* GetData(string& dataName) {}
 
     virtual void Run();

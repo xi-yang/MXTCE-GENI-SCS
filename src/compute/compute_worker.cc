@@ -116,6 +116,10 @@ void ComputeWorker::hookHandleMessage()
         for (ita = actions.begin(); ita != actions.end(); ita++) 
         {
             action = *ita;
+            // context filtering
+            if (!msg->GetContextTag().empty() && msg->GetContextTag() != action->GetContext())
+                continue;
+            // expected msg topic filtering
             list<string>::iterator its = action->GetExpectMessageTopics().begin();
             for (; its != action->GetExpectMessageTopics().end(); its++)
             {

@@ -180,6 +180,15 @@ void Action::SendMessage(MessageType type, string& queue, string& topic, list<TL
     GetComputeWorker()->GetMessagePort()->PostMessage(msg);
 }
 
+void Action::SendMessage(MessageType type, string& queue, string& topic, string& contextTag, list<TLV*>& tlvs)
+{
+    Message* msg = new Message(type, queue, topic);
+    msg->SetContextTag(contextTag);
+    list<TLV*>::iterator itlv;
+    for (itlv = tlvs.begin(); itlv != tlvs.end(); itlv++)
+        msg->AddTLV(*itlv);
+    GetComputeWorker()->GetMessagePort()->PostMessage(msg);
+}
 
 void Action::SendMessage(MessageType type, string& queue, string& topic, list<TLV*>& tlvs, string& expectReturnTopic)
 {
@@ -187,6 +196,11 @@ void Action::SendMessage(MessageType type, string& queue, string& topic, list<TL
     expectMesssageTopics.push_back(expectReturnTopic);
 }
 
+void Action::SendMessage(MessageType type, string& queue, string& topic, string& contextTag, list<TLV*>& tlvs, string& expectReturnTopic)
+{
+    SendMessage(type, queue, topic, contextTag, tlvs);
+    expectMesssageTopics.push_back(expectReturnTopic);
+}
 
 void Action::Process()
 {

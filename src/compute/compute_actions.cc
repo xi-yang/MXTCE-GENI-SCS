@@ -91,11 +91,7 @@ void Action_ProcessRequestTopology::Finish()
     Apimsg_user_constraint* userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT");
     ComputeResult* result = new ComputeResult(userConstraint->getGri());
 
-    vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetWorkflowData("KSP");
     vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetWorkflowData("FEASIBLE_PATHS");
-    if (feasiblePaths == NULL)
-        feasiblePaths = KSP;
-
     if (feasiblePaths && feasiblePaths->size() > 0)
     {
         TPath* resultPath = feasiblePaths->front()->Clone();
@@ -130,12 +126,6 @@ void Action_ProcessRequestTopology::Finish()
     tlvList.push_back(tlv);
     SendMessage(MSG_REPLY, queue, topic, tlvList);
 
-    // destroy stored data including tewg
-    if (KSP)
-    {
-        delete KSP;
-        this->GetComputeWorker()->SetWorkflowData("KSP", NULL);
-    }
     TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
     if (tewg)
     {
@@ -153,6 +143,13 @@ void Action_ProcessRequestTopology::Finish()
 
 ///////////////////// class Action_CreateTEWG ///////////////////////////
 
+void* Action_CreateTEWG::GetData(string& dataName)
+{
+    if (dataName == "TEWG")
+        return _tewg;
+    return NULL;
+}
+
 void Action_CreateTEWG::Process()
 {
     LOG(name<<"Process() called"<<endl);
@@ -162,7 +159,7 @@ void Action_CreateTEWG::Process()
     string topic = "TEWG_REQUEST";
     string expectReturnTopic = "TEWG_REPLY";
     list<TLV*> noTLVs;
-    SendMessage(MSG_REQ, queue, topic, noTLVs, expectReturnTopic);
+    SendMessage(MSG_REQ, queue, topic, this->context, noTLVs, expectReturnTopic);
 }
 
 
@@ -188,10 +185,9 @@ bool Action_CreateTEWG::ProcessMessages()
         if (msg->GetTopic() == "TEWG_REPLY") 
         {
             list<TLV*>& tlvList = msg->GetTLVList();
-            TEWG* tewg; 
-            memcpy(&tewg, (TEWG*)tlvList.front()->value, sizeof(void*));
+            memcpy(&_tewg, (TEWG*)tlvList.front()->value, sizeof(void*));
             // store TEWG
-            this->GetComputeWorker()->SetWorkflowData("TEWG", (void*)tewg);
+            this->GetComputeWorker()->SetWorkflowData("TEWG", (void*)_tewg);
         }
         //delete msg; //msg consumed 
         itm = messages.erase(itm);
@@ -225,15 +221,25 @@ void Action_CreateTEWG::Finish()
 
 ///////////////////// class Action_ComputeKSP ///////////////////////////
 
+void* Action_ComputeKSP::GetData(string& dataName)
+{
+    if (dataName == "FEASIBLE_PATHS")
+        return _feasiblePaths;
+    else if (dataName == "USER_CONSTRAINT")
+        return _userConstraint;
+    return NULL;
+}
+
 void Action_ComputeKSP::Process()
 {
     LOG(name<<"Process() called"<<endl);
-    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
+    TEWG* tewg = this->context.empty() ? (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG") : 
+        (TEWG*)this->GetComputeWorker()->GetContextActionData(this->context.c_str(), "Action_CreateTEWG", "TEWG");
     if (tewg == NULL)
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No TEWG available for computation!");
 
     //  the user request parameters
-    Apimsg_user_constraint* userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT");
+    Apimsg_user_constraint* userConstraint = this->_userConstraint == NULL ? (Apimsg_user_constraint*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT") : this->_userConstraint;
     TNode* srcNode = tewg->LookupNodeByURN(userConstraint->getSrcendpoint());
     if (srcNode == NULL)
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown source URN!");
@@ -301,26 +307,23 @@ void Action_ComputeKSP::Process()
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Egress Edge Link is not available for requested TSpec!");
 
     // compute KSP
-    vector<TPath*>* KSP = new vector<TPath*>;
+    vector<TPath*> KSP;
     try {
-        tewg->ComputeKShortestPaths(srcNode, dstNode, tewg->GetNodes().size()*2>MAX_KSP_K?MAX_KSP_K:tewg->GetNodes().size()*2, *KSP);
+        tewg->ComputeKShortestPaths(srcNode, dstNode, tewg->GetNodes().size()*2>MAX_KSP_K?MAX_KSP_K:tewg->GetNodes().size()*2, KSP);
     } catch (TCEException e) {
         LOG_DEBUG("Action_ComputeKSP::Process raised exception: " << e.GetMessage() <<endl);
         throw ComputeThreadException(e.GetMessage());
     }
 
-    if (KSP->size() == 0)
+    if (KSP.size() == 0)
     {
-        delete KSP;
-        this->GetComputeWorker()->SetWorkflowData("KSP", NULL);
         LOG_DEBUG("Action_ComputeKSP::Process() No KSP found after bandwidh pruning!" <<endl);
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No KSP found after bandwidh pruning!");
     }
-    this->GetComputeWorker()->SetWorkflowData("KSP", KSP);
 
     // verify constraints with switchingType / layer adaptation / VLAN etc.
-    vector<TPath*>::iterator itP = KSP->begin(); 
-    while (itP != KSP->end())
+    vector<TPath*>::iterator itP = KSP.begin(); 
+    while (itP != KSP.end())
     {
         if (!(*ingressLink == *(*itP)->GetPath().front()))
         {
@@ -378,16 +381,15 @@ void Action_ComputeKSP::Process()
         if (!(*itP)->VerifyTEConstraints(ingTSS, egrTSS))
         {
             TPath* path2erase = *itP;
-            itP = KSP->erase(itP);
+            itP = KSP.erase(itP);
             delete path2erase;
         }
         else
         {
-            vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetWorkflowData("FEASIBLE_PATHS");
-            if (feasiblePaths == NULL)
+            if (this->_feasiblePaths == NULL)
             {
-                feasiblePaths = new vector<TPath*>;
-                this->GetComputeWorker()->SetWorkflowData("FEASIBLE_PATHS", feasiblePaths);
+                this->_feasiblePaths = new vector<TPath*>;
+                this->GetComputeWorker()->SetWorkflowData("FEASIBLE_PATHS", this->_feasiblePaths);
             }
 			// make a copy of TPath from work set. Then do twists on the copy to satisfy reply format.
 			// Caution: Clone() will inherit the orignal localEnd and remoteEnd nodes from work set.
@@ -408,21 +410,19 @@ void Action_ComputeKSP::Process()
                 (*itL)->SetMaxBandwidth(bw);
             // modify layer spec info
             feasiblePath->UpdateLayerSpecInfo(ingTSS, egrTSS);
-            feasiblePaths->push_back(feasiblePath);
+            this->_feasiblePaths->push_back(feasiblePath);
             itP++;
         }
     }
     // store a list of ordered result paths 
-    if (KSP->size() == 0)
+    if (this->_feasiblePaths->size() == 0)
     {
-        delete KSP;
-        this->GetComputeWorker()->SetWorkflowData("KSP", NULL);
-        throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No KSP found after being applied with TE constraints!");
+        throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No feasible path found after KSP being applied with TE constraints!");
     }
-    // debugging output
-    sort(KSP->begin(), KSP->end(), cmp_tpath);
-    for (itP = KSP->begin(); itP != KSP->end(); itP++)
+    sort(_feasiblePaths->begin(), _feasiblePaths->end(), cmp_tpath);
+    for (itP = _feasiblePaths->begin(); itP != _feasiblePaths->end(); itP++)
     {
+        // debugging output
         (*itP)->LogDump();
     }
 }
@@ -492,16 +492,7 @@ void Action_FinalizeServiceTopology::Process()
     }
     else 
     {
-        vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetWorkflowData("KSP");
-
-        // TODO: pick one or multiple paths (or return failure)
-        // TODO: combine with feasible paths above?
-        if (KSP == NULL || KSP->size() == 0)
-            throw ComputeThreadException((char*)"Action_FinalizeServiceTopology::Process() No path found!");
-        
-        // TODO:  translate into format API requires
-        (*min_element(KSP->begin(), KSP->end(), cmp_tpath))->LogDump();
-        //$$ generate path BAG too ?
+        throw ComputeThreadException((char*)"Action_FinalizeServiceTopology::Process() No path found!");
     }
 }
 
@@ -578,7 +569,8 @@ void Action_CreateOrderedATS::Process()
 
     assert(_bandwidth > 0 && _volume > 0);
     
-    vector<TPath*>* KSP = (vector<TPath*>*)this->GetComputeWorker()->GetWorkflowData("KSP");
+    vector<TPath*>* KSP = this->context.empty() ? (vector<TPath*>*)this->GetComputeWorker()->GetWorkflowData("FEASIBLE_PATHS") 
+        : (vector<TPath*>*)this->GetComputeWorker()->GetContextActionData(this->context.c_str(), "Action_ComputeKSP", "FEASIBLE_PATHS");
 
     if (KSP == NULL || KSP->size() == 0)
         throw ComputeThreadException((char*)"Action_CreateOrderedATS::Process() Empty KSP list: no path found!");
@@ -662,11 +654,12 @@ void Action_CreateOrderedATS::Process()
 
             if (maxRemainBW > L->GetMaxReservableBandwidth() - (((TLinkDelta*)delta)->GetBandwidth()))
                 maxRemainBW = L->GetMaxReservableBandwidth() - (((TLinkDelta*)delta)->GetBandwidth());
-             t_end = delta->GetEndTime();
-             if (t_next <= t_start)
+            t_end = delta->GetEndTime();
+            if (t_next <= t_start)
                 t_next = t_end;
 
             //$$ judge whether link resource between (t_start, t_end) can satisfy request (including current delta)
+            //     with both ReqVolume and ReqBandwidth crieria
             if (maxRemainBW < this->GetReqBandwidth())
             {
                 t_start = t_end = delta->GetEndTime();
@@ -1029,7 +1022,7 @@ void Action_ProcessRequestTopology_MP2P::Process()
     for (int i = 0; i < contextNameSet.size(); i++)
     {
         string actionName = "Action_CreateTEWG";
-        Action_CreateTEWG* actionTewg = new Action_CreateTEWG(actionName, this->GetComputeWorker());
+        Action_CreateTEWG* actionTewg = new Action_CreateTEWG(contextNameSet[i], actionName, this->GetComputeWorker());
         this->GetComputeWorker()->GetActions().push_back(actionTewg);
         // Each sub-workflow start from common root (Action_ProcessRequestTopology_MP2P). 
         // They are parallel and thus can fail independently
@@ -1057,27 +1050,33 @@ void Action_ProcessRequestTopology_MP2P::Process()
                     flexBandwidth = userConstraint->getFlexMinBandwidth();
                 else
                     continue;
-            }
-            // else use userConstraint->getBandwidth and follow down
+            } // else use userConstraint->getBandwidth and follow down
 
+            actionName = "Action_ComputeKSP";
+            Action_ComputeKSP* actionKsp = new Action_ComputeKSP(contextNameSet[i], actionName, this->GetComputeWorker());
+            actionKsp->SetReqBandwidth(flexBandwidth);
+            actionKsp->SetReqVolume(volume);
+            this->GetComputeWorker()->GetActions().push_back(actionKsp);
+            prevAction->AddChild(actionKsp);
+            
             actionName = "Action_CreateOrderedATS";
             Action_CreateOrderedATS* actionAts = new Action_CreateOrderedATS(contextNameSet[i], actionName, this->GetComputeWorker());
             actionAts->SetReqBandwidth(flexBandwidth);
             actionAts->SetReqVolume(volume);
             this->GetComputeWorker()->GetActions().push_back(actionAts);
-            prevAction->AddChild(actionAts);
-            
+            actionKsp->AddChild(actionAts);
+
             actionName = "Action_ComputeSchedulesWithKSP_Round1_";
             actionName += (*it)->getPathId();
-            Action_ComputeSchedulesWithKSP* actionKsp = new Action_ComputeSchedulesWithKSP(contextNameSet[i], actionName, this->GetComputeWorker());
-            actionKsp->SetReqBandwidth(flexBandwidth);
-            actionKsp->SetReqVolume(volume);
-            actionKsp->SetUserConstraint(*it);
-            actionKsp->SetComputeBAG(false);
-            actionKsp->SetCommitBestPathToTEWG(false);
-            this->GetComputeWorker()->GetActions().push_back(actionKsp);
-            actionAts->AddChild(actionKsp);
-            prevAction = actionKsp;
+            Action_ComputeSchedulesWithKSP* actionSchedKsp = new Action_ComputeSchedulesWithKSP(contextNameSet[i], actionName, this->GetComputeWorker());
+            actionSchedKsp->SetReqBandwidth(flexBandwidth);
+            actionSchedKsp->SetReqVolume(volume);
+            actionSchedKsp->SetUserConstraint(*it);
+            actionSchedKsp->SetComputeBAG(false);
+            actionSchedKsp->SetCommitBestPathToTEWG(false);
+            this->GetComputeWorker()->GetActions().push_back(actionSchedKsp);
+            actionAts->AddChild(actionSchedKsp);
+            prevAction = actionSchedKsp;
         }
 
         actionName = "Action_ReorderPaths_MP2P";
@@ -1307,11 +1306,11 @@ void Action_ReorderPaths_MP2P::Process()
     {
         actionName = "Action_ComputeSchedulesWithKSP_Round1_";
         actionName += (*itU)->getPathId();
-        Action_ComputeSchedulesWithKSP* actionKspR1 = (Action_ComputeSchedulesWithKSP*)this->GetComputeWorker()->LookupAction(context, actionName);
-        assert(actionKspR1);
-        round1KspActions.push_back(actionKspR1);
+        Action_ComputeSchedulesWithKSP* actionSchedKspR1 = (Action_ComputeSchedulesWithKSP*)this->GetComputeWorker()->LookupAction(context, actionName);
+        assert(actionSchedKspR1);
+        round1KspActions.push_back(actionSchedKspR1);
         string dataName = "FEASIBLE_PATHS";
-        path1All.push_back(((list<TPath*>*)actionKspR1->GetData(dataName))->front());
+        path1All.push_back(((list<TPath*>*)actionSchedKspR1->GetData(dataName))->front());
     }
     
     // re-order the first-round KSP actions
@@ -1339,18 +1338,18 @@ void Action_ReorderPaths_MP2P::Process()
     Action* prevAction = this;
     for (itK = round1KspActions.begin(); itK != round1KspActions.end(); itK++)
     {
-        Action_ComputeSchedulesWithKSP* actionKspR1 = *itK;
+        Action_ComputeSchedulesWithKSP* actionSchedKspR1 = *itK;
         actionName = "Action_ComputeSchedulesWithKSP_Round2_";
-        actionName += actionKspR1->GetUserConstraint()->getPathId();
-        Action_ComputeSchedulesWithKSP* actionKspR2 = new Action_ComputeSchedulesWithKSP(this->context, actionName, this->GetComputeWorker());
-        actionKspR2->SetReqBandwidth(actionKspR1->GetReqBandwidth());
-        actionKspR2->SetReqVolume(actionKspR1->GetReqVolume());
-        actionKspR2->SetUserConstraint(actionKspR1->GetUserConstraint());
-        actionKspR2->SetComputeBAG(true);
-        actionKspR2->SetCommitBestPathToTEWG(true);
-        this->GetComputeWorker()->GetActions().push_back(actionKspR2);
-        prevAction->AddChild(actionKspR2);
-        prevAction = actionKspR2;
+        actionName += actionSchedKspR1->GetUserConstraint()->getPathId();
+        Action_ComputeSchedulesWithKSP* actionSchedKspR2 = new Action_ComputeSchedulesWithKSP(this->context, actionName, this->GetComputeWorker());
+        actionSchedKspR2->SetReqBandwidth(actionSchedKspR1->GetReqBandwidth());
+        actionSchedKspR2->SetReqVolume(actionSchedKspR1->GetReqVolume());
+        actionSchedKspR2->SetUserConstraint(actionSchedKspR1->GetUserConstraint());
+        actionSchedKspR2->SetComputeBAG(true);
+        actionSchedKspR2->SetCommitBestPathToTEWG(true);
+        this->GetComputeWorker()->GetActions().push_back(actionSchedKspR2);
+        prevAction->AddChild(actionSchedKspR2);
+        prevAction = actionSchedKspR2;
     }
     
     // each Action_FinalizeServiceTopology_MP2P handle result for one sub-workflow

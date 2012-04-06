@@ -55,17 +55,22 @@ class Action_ProcessRequestTopology: public Action
 };
 
 
+class TEWG;
 class Action_CreateTEWG: public Action
 {
 protected:
+    TEWG* _tewg;
+    void _Init() {
+        _tewg = NULL;
+    }
 
 public:
-    Action_CreateTEWG(): Action(){ }
-    Action_CreateTEWG(string& n, ComputeWorker* w): Action(n, w) { }
+    Action_CreateTEWG(): Action(){ _Init(); }
+    Action_CreateTEWG(string& n, ComputeWorker* w): Action(n, w) { _Init(); }
+    Action_CreateTEWG(string& c, string& n, ComputeWorker* w): Action(c, n, w) { _Init(); }
     virtual ~Action_CreateTEWG() { }
+    virtual void* GetData(string& dataName);
 
-    //virtual void Run();
-    //virtual void Wait();
     virtual void Process();
     virtual bool ProcessChildren();
     virtual bool ProcessMessages();
@@ -74,24 +79,42 @@ public:
 };
 
 
+#define MAX_KSP_K 20 // change / configurable
+class TPath;
+class Apimsg_user_constraint;
 class Action_ComputeKSP: public Action
 {
-    protected:
-    
-    public:
-        Action_ComputeKSP(): Action(){ }
-        Action_ComputeKSP(string& n, ComputeWorker* w): Action(n, w) { }
-        virtual ~Action_ComputeKSP() { }
-    
-        virtual void Process();
-        virtual bool ProcessChildren();
-        virtual bool ProcessMessages();
-        virtual void Finish();
-        virtual void CleanUp();
+protected:
+    u_int64_t _bandwidth; //bps
+    u_int64_t _volume; // sec*bps
+    vector<TPath*>* _feasiblePaths;
+    Apimsg_user_constraint* _userConstraint;
+    void _Init() {
+        _bandwidth = 0;
+        _volume = 0;
+        _feasiblePaths = NULL;
+        _userConstraint = NULL;
+    }
+
+public:
+    Action_ComputeKSP(): Action(){ _Init(); }
+    Action_ComputeKSP(string& n, ComputeWorker* w): Action(n, w) { _Init(); }
+    Action_ComputeKSP(string& c, string& n, ComputeWorker* w): Action(c, n, w) { _Init(); }
+    virtual ~Action_ComputeKSP() { }
+    u_int64_t GetReqBandwidth() { return _bandwidth; } 
+    void SetReqBandwidth(u_int64_t b) { _bandwidth = b; }
+    u_int64_t GetReqVolume() { return _volume; } 
+    void SetReqVolume(u_int64_t v) { _volume = v; }
+    virtual void* GetData(string& dataName);
+
+    virtual void Process();
+    virtual bool ProcessChildren();
+    virtual bool ProcessMessages();
+    virtual void Finish();
+    virtual void CleanUp();
 };
 
 
-class TPath;
 class BandwidthAvailabilityGraph;
 class Action_FinalizeServiceTopology: public Action
 {
@@ -114,6 +137,9 @@ public:
 ///////////// scheduling workflow actions //////////
 // ATS: Aggregate Time Series
 // ADS: Aggregate Delta Series 
+
+#define MAX_ATS_SIZE 100 // change / configurable
+
 class Action_CreateOrderedATS: public Action
 {
 protected:
@@ -146,10 +172,6 @@ public:
 };
 
 
-#define MAX_ATS_SIZE 100 // change / configurable
-#define MAX_KSP_K 20 // change / configurable
-
-class Apimsg_user_constraint;
 class Action_ComputeSchedulesWithKSP: public Action
 {
 protected:
@@ -195,19 +217,19 @@ public:
 
 class Action_ProcessRequestTopology_MP2P: public Action
 {
-    protected:
-    
-    public:
-        Action_ProcessRequestTopology_MP2P(): Action(){ }
-        Action_ProcessRequestTopology_MP2P(string& n, ComputeWorker* w): Action(n, w) { }
-        Action_ProcessRequestTopology_MP2P(string& c, string& n, ComputeWorker* w): Action(c, n, w) { }
-        virtual ~Action_ProcessRequestTopology_MP2P() { }
-    
-        virtual void Process();
-        virtual bool ProcessChildren();
-        virtual bool ProcessMessages();
-        virtual void Finish();
-        virtual void CleanUp();
+protected:
+
+public:
+    Action_ProcessRequestTopology_MP2P(): Action(){ }
+    Action_ProcessRequestTopology_MP2P(string& n, ComputeWorker* w): Action(n, w) { }
+    Action_ProcessRequestTopology_MP2P(string& c, string& n, ComputeWorker* w): Action(c, n, w) { }
+    virtual ~Action_ProcessRequestTopology_MP2P() { }
+
+    virtual void Process();
+    virtual bool ProcessChildren();
+    virtual bool ProcessMessages();
+    virtual void Finish();
+    virtual void CleanUp();
 };
 
 
@@ -217,47 +239,47 @@ class Action_ProcessRequestTopology_MP2P: public Action
 
 class Action_ReorderPaths_MP2P: public Action
 {
-    protected:
-        time_t OverlappingTime(time_t st1, time_t et1, time_t st2, time_t et2);
-        time_t GetPathOverlappingTime(TPath* path1, TPath* path2);
-        double BandwidthWeightedHopLength(TPath* P);
-        double SumOfBandwidthTimeWeightedCommonLinks(TPath* P, vector<TPath*>& Paths);
-        void Swap(Action_ComputeSchedulesWithKSP* &ksp_i, Action_ComputeSchedulesWithKSP* &ksp_j);
+protected:
+    time_t OverlappingTime(time_t st1, time_t et1, time_t st2, time_t et2);
+    time_t GetPathOverlappingTime(TPath* path1, TPath* path2);
+    double BandwidthWeightedHopLength(TPath* P);
+    double SumOfBandwidthTimeWeightedCommonLinks(TPath* P, vector<TPath*>& Paths);
+    void Swap(Action_ComputeSchedulesWithKSP* &ksp_i, Action_ComputeSchedulesWithKSP* &ksp_j);
 
-    public:
-        Action_ReorderPaths_MP2P(): Action(){ }
-        Action_ReorderPaths_MP2P(string& n, ComputeWorker* w): Action(n, w) { }
-        Action_ReorderPaths_MP2P(string& c, string& n, ComputeWorker* w): Action(c, n, w) { }
-        virtual ~Action_ReorderPaths_MP2P() { }
-    
-        virtual void Process();
-        virtual bool ProcessChildren();
-        virtual bool ProcessMessages();
-        virtual void Finish();
-        virtual void CleanUp();
+public:
+    Action_ReorderPaths_MP2P(): Action(){ }
+    Action_ReorderPaths_MP2P(string& n, ComputeWorker* w): Action(n, w) { }
+    Action_ReorderPaths_MP2P(string& c, string& n, ComputeWorker* w): Action(c, n, w) { }
+    virtual ~Action_ReorderPaths_MP2P() { }
+
+    virtual void Process();
+    virtual bool ProcessChildren();
+    virtual bool ProcessMessages();
+    virtual void Finish();
+    virtual void CleanUp();
 };
 
 class ComputeResult;
 class Action_FinalizeServiceTopology_MP2P: public Action
 {
-    protected:
-        list<ComputeResult*>* _computeResultList;
-        void _Init(){
-            _computeResultList = NULL;
-        }
+protected:
+    list<ComputeResult*>* _computeResultList;
+    void _Init(){
+        _computeResultList = NULL;
+    }
 
-    public:
-        Action_FinalizeServiceTopology_MP2P(): Action(){ _Init(); }
-        Action_FinalizeServiceTopology_MP2P(string& n, ComputeWorker* w): Action(n, w) { _Init(); }
-        Action_FinalizeServiceTopology_MP2P(string& c, string& n, ComputeWorker* w): Action(c, n, w) { _Init(); }
-        virtual ~Action_FinalizeServiceTopology_MP2P() { }
-        virtual void* GetData(string& dataName);
+public:
+    Action_FinalizeServiceTopology_MP2P(): Action(){ _Init(); }
+    Action_FinalizeServiceTopology_MP2P(string& n, ComputeWorker* w): Action(n, w) { _Init(); }
+    Action_FinalizeServiceTopology_MP2P(string& c, string& n, ComputeWorker* w): Action(c, n, w) { _Init(); }
+    virtual ~Action_FinalizeServiceTopology_MP2P() { }
+    virtual void* GetData(string& dataName);
 
-        virtual void Process();
-        virtual bool ProcessChildren();
-        virtual bool ProcessMessages();
-        virtual void Finish();
-        virtual void CleanUp();
+    virtual void Process();
+    virtual bool ProcessChildren();
+    virtual bool ProcessMessages();
+    virtual void Finish();
+    virtual void CleanUp();
 };
 
 
