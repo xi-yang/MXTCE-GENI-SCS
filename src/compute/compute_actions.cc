@@ -245,7 +245,7 @@ void Action_ComputeKSP::Process()
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No TEWG available for computation!");
 
     //  the user request parameters
-    if (this->_userConstraint != NULL) 
+    if (this->_userConstraint == NULL) 
     {
         list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT_LIST");
         if (userConsList == NULL || userConsList->size() == 0)
@@ -699,6 +699,12 @@ void Action_CreateOrderedATS::Process()
         if (_orderedATS->size() >= MAX_ATS_SIZE)
             break;
     }
+
+    // TODO: 
+    // Add T_0 if diff (remove all <= T_0 first)
+    // If T_i in schedule, keep only if trailed by enough duration (mark 'keep')
+    // If T_i in gap, remove it (unmark)
+    // If T_s (schedule start time) diff from any T_i and has enough duration before next T_i and , insert it. (mark 'insert')
 }
 
 
@@ -1207,7 +1213,7 @@ void Action_ProcessRequestTopology_MP2P::Finish()
     if (tlvList.size() == 0)
     {
         ComputeResult* result = new ComputeResult(userConsList->front()->getGri());
-        string errMsg = "Action_ProcessRequestTopology_MP2P::Finish() Cannot find the set of paths to satisfy any of the flexbile requests.";
+        string errMsg = "Action_ProcessRequestTopology_MP2P::Finish() Cannot find the set of paths for the RequestTopology.";
         result->SetErrMessage(errMsg);
         TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
         tlv->type = MSG_TLV_VOID_PTR;

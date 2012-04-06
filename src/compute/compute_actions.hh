@@ -142,7 +142,7 @@ public:
 // ATS: Aggregate Time Series
 // ADS: Aggregate Delta Series 
 
-#define MAX_ATS_SIZE 100 // change / configurable
+#define MAX_ATS_SIZE 50 // change / configurable
 
 class Action_CreateOrderedATS: public Action
 {
