@@ -162,18 +162,9 @@ void MxTCEMessageHandler::Run()
         if (msg->GetType() == MSG_REQ && msg->GetTopic() == "API_REQUEST") {
             // creating computeWorkerThread and pass user request parameters
             ComputeWorker* computingThread = ComputeWorkerFactory::CreateComputeWorker(MxTCE::defaultComputeWorkerType);
-            // TODO: consolidate userConstrtaint and userConsList
-            if (msg->GetTLVList().size() == 1) 
+            if (msg->GetTLVList().size() > 0) 
             {
                 Apimsg_user_constraint* userConstraint;
-                memcpy(&userConstraint, msg->GetTLVList().front()->value, sizeof(void*));
-                computingThread->SetWorkflowData("USER_CONSTRAINT", userConstraint);
-            }
-            else if (msg->GetTLVList().size() > 1) 
-            {
-                Apimsg_user_constraint* userConstraint;
-                memcpy(&userConstraint, msg->GetTLVList().front()->value, sizeof(void*));
-                computingThread->SetWorkflowData("USER_CONSTRAINT", userConstraint);
                 list<Apimsg_user_constraint*>* userConsList = new list<Apimsg_user_constraint*>;
                 for (list<TLV*>::iterator it = msg->GetTLVList().begin(); it != msg->GetTLVList().end(); it++)
                 {
@@ -185,7 +176,7 @@ void MxTCEMessageHandler::Run()
             else 
             {
                 char buf[128];
-                snprintf(buf, 128, "Empty TLV list in API_REQUEST message from : %s", msg->GetPort()->GetName().c_str());
+                snprintf(buf, 128, "Empty TLV list (USER_CONSTRAINT_LIST) in API_REQUEST message from : %s", msg->GetPort()->GetName().c_str());
                 throw TCEException(buf);
             }
 

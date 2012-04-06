@@ -88,7 +88,11 @@ void Action_ProcessRequestTopology::Finish()
 {
     LOG(name<<"Finish() called"<<endl);
 
-    Apimsg_user_constraint* userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT");
+    list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT_LIST");
+    if (userConsList == NULL || userConsList->size() == 0)
+        throw ComputeThreadException((char*)"Action_ProcessRequestTopology_MP2P::Process() No USER_CONSTRAINT_LIST data from compute worker.");
+
+    Apimsg_user_constraint* userConstraint = userConsList->front();
     ComputeResult* result = new ComputeResult(userConstraint->getGri());
 
     vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetWorkflowData("FEASIBLE_PATHS");
@@ -241,36 +245,42 @@ void Action_ComputeKSP::Process()
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No TEWG available for computation!");
 
     //  the user request parameters
-    Apimsg_user_constraint* userConstraint = this->_userConstraint == NULL ? (Apimsg_user_constraint*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT") : this->_userConstraint;
-    TNode* srcNode = tewg->LookupNodeByURN(userConstraint->getSrcendpoint());
+    if (this->_userConstraint != NULL) 
+    {
+        list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT_LIST");
+        if (userConsList == NULL || userConsList->size() == 0)
+            throw ComputeThreadException((char*)"Action_ProcessRequestTopology_MP2P::Process() No USER_CONSTRAINT_LIST data from compute worker.");
+        this->_userConstraint = userConsList->front();
+    }
+    TNode* srcNode = tewg->LookupNodeByURN(this->_userConstraint->getSrcendpoint());
     if (srcNode == NULL)
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown source URN!");
-    TNode* dstNode = tewg->LookupNodeByURN(userConstraint->getDestendpoint());
+    TNode* dstNode = tewg->LookupNodeByURN(this->_userConstraint->getDestendpoint());
     if (dstNode == NULL)
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown destination URN!");
-    u_int64_t bw = (u_int64_t)userConstraint->getBandwidth();
-    if (userConstraint->getCoschedreq()&& userConstraint->getCoschedreq()->getMinbandwidth() > bw)
-        bw = userConstraint->getCoschedreq()->getMinbandwidth();
+    u_int64_t bw = (u_int64_t)this->_userConstraint->getBandwidth();
+    if (this->_userConstraint->getCoschedreq()&& this->_userConstraint->getCoschedreq()->getMinbandwidth() > bw)
+        bw = this->_userConstraint->getCoschedreq()->getMinbandwidth();
     u_int32_t srcVtag, dstVtag;
-    if (userConstraint->getSrcvlantag() == "any" || userConstraint->getSrcvlantag() == "ANY")
+    if (this->_userConstraint->getSrcvlantag() == "any" || this->_userConstraint->getSrcvlantag() == "ANY")
         srcVtag = ANY_TAG;
     else
-        sscanf(userConstraint->getSrcvlantag().c_str(), "%d", &srcVtag);
-    if (userConstraint->getDestvlantag() == "any" || userConstraint->getDestvlantag() == "ANY")
+        sscanf(this->_userConstraint->getSrcvlantag().c_str(), "%d", &srcVtag);
+    if (this->_userConstraint->getDestvlantag() == "any" || this->_userConstraint->getDestvlantag() == "ANY")
         dstVtag = ANY_TAG;
     else
-        sscanf(userConstraint->getDestvlantag().c_str(), "%d", &dstVtag);
+        sscanf(this->_userConstraint->getDestvlantag().c_str(), "%d", &dstVtag);
 
     TSpec tspec;
-    if (userConstraint->getLayer() == "3")
+    if (this->_userConstraint->getLayer() == "3")
         tspec.Update(LINK_IFSWCAP_PSC1, LINK_IFSWCAP_ENC_PKT, bw);
     else
         tspec.Update(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);
 
     // reservations pruning
     // for current OSCARS implementation, tcePCE should pass startTime==endTime==0
-    time_t startTime = userConstraint->getStarttime();
-    time_t endTime = userConstraint->getEndtime();
+    time_t startTime = this->_userConstraint->getStarttime();
+    time_t endTime = this->_userConstraint->getEndtime();
     list<TLink*>::iterator itL;
     if (startTime > 0 && endTime > startTime) {
         for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
@@ -301,10 +311,10 @@ void Action_ComputeKSP::Process()
     //tewg->LogDump();
     tewg->PruneByBandwidth(bw);
 
-    TLink* ingressLink = tewg->LookupLinkByURN(userConstraint->getSrcendpoint());
+    TLink* ingressLink = tewg->LookupLinkByURN(this->_userConstraint->getSrcendpoint());
     if (!ingressLink || !ingressLink->IsAvailableForTspec(tspec))
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Ingress Edge Link is not available for requested TSpec!");
-    TLink* egressLink = tewg->LookupLinkByURN(userConstraint->getDestendpoint());
+    TLink* egressLink = tewg->LookupLinkByURN(this->_userConstraint->getDestendpoint());
     if (!egressLink || !egressLink->IsAvailableForTspec(tspec))
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Egress Edge Link is not available for requested TSpec!");
 
@@ -404,10 +414,10 @@ void Action_ComputeKSP::Process()
 			// Caution: Clone() will inherit the orignal localEnd and remoteEnd nodes from work set.
             TPath* feasiblePath = (*itP)->Clone();
             // check whether BAG is requested
-            if (userConstraint->getCoschedreq() && userConstraint->getCoschedreq()->getBandwidthavaigraph()) 
+            if (this->_userConstraint->getCoschedreq() && this->_userConstraint->getCoschedreq()->getBandwidthavaigraph()) 
             {
-                BandwidthAvailabilityGraph* bag = (*itP)->CreatePathBAG(userConstraint->getCoschedreq()->getStarttime(), 
-                    userConstraint->getCoschedreq()->getEndtime());
+                BandwidthAvailabilityGraph* bag = (*itP)->CreatePathBAG(this->_userConstraint->getCoschedreq()->getStarttime(), 
+                    this->_userConstraint->getCoschedreq()->getEndtime());
                 if (bag != NULL) 
                 {
                     feasiblePath->SetBAG(bag);
@@ -755,8 +765,14 @@ void Action_ComputeSchedulesWithKSP::Process()
 
     if (tewg == NULL)
         throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() No TEWG available for computation!");
+
     if (_userConstraint == NULL)
-        _userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT");
+    {
+        list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT_LIST");
+        if (userConsList == NULL || userConsList->size() == 0)
+            throw ComputeThreadException((char*)"Action_ProcessRequestTopology_MP2P::Process() No USER_CONSTRAINT_LIST data from compute worker.");
+        this->_userConstraint = userConsList->front();
+    }
 
     string actionName = "Action_CreateOrderedATS";
     vector<time_t>* orderedATS = (vector<time_t>*)this->GetComputeWorker()->GetContextActionData(this->context, actionName, "ORDERED_ATS");

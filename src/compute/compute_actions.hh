@@ -107,6 +107,8 @@ public:
     void SetReqBandwidth(u_int64_t b) { _bandwidth = b; }
     u_int64_t GetReqVolume() { return _volume; } 
     void SetReqVolume(u_int64_t v) { _volume = v; }
+    Apimsg_user_constraint*  GetUserConstraint() { return _userConstraint; }
+    void SetUserConstraint(Apimsg_user_constraint* u) { _userConstraint = u; }
     virtual void* GetData(string& dataName);
 
     virtual void Process();
