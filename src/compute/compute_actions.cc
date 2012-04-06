@@ -590,11 +590,11 @@ void Action_CreateOrderedATS::Process()
 
     vector<TPath*>::iterator itP;
     list<TLink*>::iterator itL;
-    int* piVal = new int(0);
     for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
     {
         if ((*itL)->GetWorkData() == NULL)
             (*itL)->SetWorkData(new TWorkData);
+        int* piVal = new int(0);
         (*itL)->GetWorkData()->SetData("ATS_Order_Counter", (void*)piVal);
     }
     for (itP = KSP->begin(); itP != KSP->end(); itP++)
@@ -602,9 +602,9 @@ void Action_CreateOrderedATS::Process()
         TPath* P = *itP;
         for (itL = P->GetPath().begin(); itL != P->GetPath().end(); itL++)
         {
-            piVal = new int ((*itL)->GetWorkData()->GetInt("ATS_Order_Counter"));
+            int* piVal = (int*)((*itL)->GetWorkData()->GetInt("ATS_Order_Counter"));
             (*piVal)++;
-            (*itL)->GetWorkData()->SetData("ATS_Order_Counter", piVal);
+            //(*itL)->GetWorkData()->SetData("ATS_Order_Counter", piVal);
         }
     }
 
