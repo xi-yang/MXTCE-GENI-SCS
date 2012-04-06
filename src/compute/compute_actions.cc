@@ -585,14 +585,16 @@ void Action_CreateOrderedATS::Process()
     if (KSP == NULL || KSP->size() == 0)
         throw ComputeThreadException((char*)"Action_CreateOrderedATS::Process() Empty KSP list: no path found!");
 
-    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
+    TEWG* tewg = this->context.empty() ? (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG") : 
+        (TEWG*)this->GetComputeWorker()->GetContextActionData(this->context.c_str(), "Action_CreateTEWG", "TEWG");
 
     vector<TPath*>::iterator itP;
     list<TLink*>::iterator itL;
     int* piVal = new int(0);
     for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
     {
-        (*itL)->SetWorkData(new TWorkData);
+        if ((*itL)->GetWorkData() == NULL)
+            (*itL)->SetWorkData(new TWorkData);
         (*itL)->GetWorkData()->SetData("ATS_Order_Counter", (void*)piVal);
     }
     for (itP = KSP->begin(); itP != KSP->end(); itP++)
