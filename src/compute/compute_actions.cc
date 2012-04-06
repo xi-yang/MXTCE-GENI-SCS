@@ -423,7 +423,7 @@ void Action_ComputeKSP::Process()
     for (itP = _feasiblePaths->begin(); itP != _feasiblePaths->end(); itP++)
     {
         // debugging output
-        (*itP)->LogDump();
+        //(*itP)->LogDump();
     }
 }
 
@@ -581,7 +581,10 @@ void Action_CreateOrderedATS::Process()
     list<TLink*>::iterator itL;
     int* piVal = new int(0);
     for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
+    {
+        (*itL)->SetWorkData(new TWorkData);
         (*itL)->GetWorkData()->SetData("ATS_Order_Counter", (void*)piVal);
+    }
     for (itP = KSP->begin(); itP != KSP->end(); itP++)
     {
         TPath* P = *itP;
