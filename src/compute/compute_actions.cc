@@ -207,6 +207,8 @@ void Action_CreateTEWG::CleanUp()
     LOG(name<<"CleanUp() called"<<endl);
     //$$$$ cleanup logic for current action
 
+    // TODO: clean up TEWG data
+
     // cancel and cleanup children
     Action::CleanUp();    
 }
@@ -1551,13 +1553,6 @@ void Action_FinalizeServiceTopology_MP2P::Process()
             // TODO: set conext-action error msg 
             break;
         }
-    }
-    // _computeResultList contains all the results for all the p2p connections
-    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
-    if (tewg)
-    {
-        delete tewg;
-        this->GetComputeWorker()->SetWorkflowData("TEWG", NULL);
     }
 }
 
