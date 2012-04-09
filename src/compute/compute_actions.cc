@@ -867,6 +867,8 @@ void Action_ComputeSchedulesWithKSP::Process()
         {
             // $$ get conjoined ADS delta list in window
             AggregateDeltaSeries* ads = (AggregateDeltaSeries*)((*itL)->GetWorkData()->GetData("ADS"));
+            if (ads == NULL)
+                continue;
             TDelta* conjDelta = ads->JoinADSInWindow(startTime, endTime);
             (*itL)->GetWorkData()->SetData("CONJOINED_DELTA", conjDelta);
             // $$ deduct resource by conjoined delta
