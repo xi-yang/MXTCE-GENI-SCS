@@ -829,18 +829,28 @@ void TGraph::LoadPath(list<TLink*> path)
     {
         TLink* link = *itL;
         string urn = link->GetName();
-        ParseFQUrn(urn, domainName, nodeName, portName, linkName);
-        if (domainName.length() == 0 || nodeName.length() == 0 || portName.length() == 0 || linkName.length() == 0)
+        if (urn.find("urn") == string::npos)
         {
-            snprintf(buf, 256, "TGraph::LoadPath raises Excaption: invalid link urn '%s'", urn.c_str());
-            throw TEDBException(buf);
+            linkName = link->GetName();
+            portName = link->GetPort()->GetName();
+            nodeName = link->GetPort()->GetNode()->GetName();
+            domainName = link->GetPort()->GetNode()->GetDomain()->GetName();   
         }
-        if (LookupLinkByURN(urn) != NULL || LookupPortByURN(urn) != NULL)
+        else
         {
-            snprintf(buf, 256, "TGraph::LoadPath raises Excaption: duplicate link '%s' in path", urn.c_str());
-            throw TEDBException(buf);
+            ParseFQUrn(urn, domainName, nodeName, portName, linkName);
+            if (domainName.length() == 0 || nodeName.length() == 0 || portName.length() == 0 || linkName.length() == 0)
+            {
+                snprintf(buf, 256, "TGraph::LoadPath raises Excaption: invalid link urn '%s'", urn.c_str());
+                throw TEDBException(buf);
+            }
+            if (LookupLinkByURN(urn) != NULL || LookupPortByURN(urn) != NULL)
+            {
+                snprintf(buf, 256, "TGraph::LoadPath raises Excaption: duplicate link '%s' in path", urn.c_str());
+                throw TEDBException(buf);
+            }
+            link->SetName(linkName);
         }
-        link->SetName(linkName);
         TDomain* domain = LookupDomainByName(domainName);
         if (domain == NULL)
         {
