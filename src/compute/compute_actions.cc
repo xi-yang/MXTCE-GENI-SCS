@@ -564,9 +564,9 @@ void Action_FinalizeServiceTopology::Finish()
 
 ///////////////////////////////////////////////////////////////////////////
 
-inline void Action_CreateOrderedATS::AddUniqueTimePoint(vector<time_t>* ats, time_t t)
+inline void Action_CreateOrderedATS::AddUniqueTimePoint(list<time_t>* ats, time_t t)
 {
-    vector<time_t>::iterator it;
+    list<time_t>::iterator it;
     for (it = ats->begin(); it != ats->end(); it++)
     {
         if ((*it) == t)
@@ -641,7 +641,7 @@ void Action_CreateOrderedATS::Process()
         (*itL)->GetWorkData()->SetData("ATS_Order_Counter", NULL);
     }
 
-    _orderedATS = new vector<time_t>;
+    _orderedATS = new list<time_t>;
     for (itL2 = orderedLinks.begin(); itL2 != orderedLinks.end(); itL2++)
     {
         TLink* L = *itL2;
@@ -700,11 +700,52 @@ void Action_CreateOrderedATS::Process()
             break;
     }
 
-    // TODO: 
-    // Add T_0 if diff (remove all <= T_0 first)
-    // If T_i in schedule, keep only if trailed by enough duration (mark 'keep')
-    // If T_i in gap, remove it (unmark)
-    // If T_s (schedule start time) diff from any T_i and has enough duration before next T_i and , insert it. (mark 'insert')
+
+    time_t t0 = time(0);
+    list<time_t>::iterator itT = _orderedATS->begin();
+    for (; itT != _orderedATS->end(); itT++)
+    {
+        // trim ATS before current time points
+        if (*itT <= time(0)) {
+            itT = _orderedATS->erase(itT);
+            continue;
+        }
+        // trim ATS out of schedule time points
+        if (_userConstraint != NULL && _userConstraint->getFlexSchedules() != NULL) 
+        {
+            list<TSchedule*>::iterator itS = _userConstraint->getFlexSchedules()->begin();
+            for (; itS != _userConstraint->getFlexSchedules()->end(); itS++)
+            {
+                TSchedule * schedule = *itS;
+                if (schedule->WithinSchedule(*itT))
+                {
+                    itT = _orderedATS->erase(itT);
+                    break;
+                }                    
+            }
+        }
+    }
+    // add current time and max_duration time
+    _orderedATS->push_front(t0);
+    _orderedATS->push_front(t0+MAX_SCHEDULE_DURATION);
+
+    // insert qualified schedule starting time
+    if (_userConstraint != NULL && _userConstraint->getFlexSchedules() != NULL && _volume != 0 && _bandwidth != 0) 
+    {
+        list<TSchedule*>::iterator itS = _userConstraint->getFlexSchedules()->begin();
+        for (; itS != _userConstraint->getFlexSchedules()->end(); itS++)
+        {
+            TSchedule * schedule = *itS;
+            for (; itT != _orderedATS->end(); itT++)
+            {
+                if (schedule->WithinSchedule(*itT) && schedule->GetStartTime()-(_volume/_bandwidth))
+                {
+                    itT = _orderedATS->insert(itT, schedule->GetStartTime());
+                    break;
+                }                    
+            }
+        }
+    }
 }
 
 
@@ -781,7 +822,7 @@ void Action_ComputeSchedulesWithKSP::Process()
     }
 
     string actionName = "Action_CreateOrderedATS";
-    vector<time_t>* orderedATS = (vector<time_t>*)this->GetComputeWorker()->GetContextActionData(this->context, actionName, "ORDERED_ATS");
+    list<time_t>* orderedATS = (list<time_t>*)this->GetComputeWorker()->GetContextActionData(this->context, actionName, "ORDERED_ATS");
     if (tewg == NULL)
         throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() No Ordered Aggregate Time Series available for computation!");
 
@@ -816,9 +857,10 @@ void Action_ComputeSchedulesWithKSP::Process()
     }
 
     vector<TPath*> KSP;
-    for (int i = 0; i < orderedATS->size(); i++)
+    list<time_t>::iterator itT = orderedATS->begin();
+    for (; itT != orderedATS->end(); itT++)
     {
-        time_t startTime = (*orderedATS)[i];
+        time_t startTime = (*itT);
         time_t endTime = startTime + duration;
         list<TLink*>::iterator itL;
         for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
@@ -1101,6 +1143,7 @@ void Action_ProcessRequestTopology_MP2P::Process()
             Action_CreateOrderedATS* actionAts = new Action_CreateOrderedATS(contextNameSet[i], actionName, this->GetComputeWorker());
             actionAts->SetReqBandwidth(flexBandwidth);
             actionAts->SetReqVolume(volume);
+            actionAts->SetUserConstraint(userConstraint);
             this->GetComputeWorker()->GetActions().push_back(actionAts);
             actionKsp->AddChild(actionAts);
 

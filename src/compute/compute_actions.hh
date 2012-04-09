@@ -149,12 +149,14 @@ class Action_CreateOrderedATS: public Action
 protected:
     u_int64_t _bandwidth; //bps
     u_int64_t _volume; // sec*bps
-    vector<time_t>* _orderedATS;
-    inline void AddUniqueTimePoint(vector<time_t>* ats, time_t t);
+    list<time_t>* _orderedATS;
+    Apimsg_user_constraint* _userConstraint;
+    inline void AddUniqueTimePoint(list<time_t>* ats, time_t t);
     void _Init() {
         _bandwidth = 0;
         _volume = 0;
         _orderedATS = NULL;
+        _userConstraint = NULL;
     }
     
 public:
@@ -166,6 +168,8 @@ public:
     void SetReqBandwidth(u_int64_t b) { _bandwidth = b; }
     u_int64_t GetReqVolume() { return _volume; } 
     void SetReqVolume(u_int64_t v) { _volume = v; }
+    Apimsg_user_constraint*  GetUserConstraint() { return _userConstraint; }
+    void SetUserConstraint(Apimsg_user_constraint* u) { _userConstraint = u; }
     virtual void* GetData(string& dataName);
 
     virtual void Process();
