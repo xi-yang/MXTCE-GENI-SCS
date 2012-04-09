@@ -71,10 +71,7 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
         string ep3 = "urn:ogf:network:domain=es.net:node=bnl-mr3:port=xe-1/2/0:link=*";
         string vtag = "any";
         
-        struct timeval tv;
-        time_t curtime;      
-        gettimeofday(&tv, NULL); 
-        time_t starttime = tv.tv_sec; 
+        time_t starttime = time(0); 
         time_t endtime = starttime + 10800;
         int duration = 3600;
         TSchedule* ts1 = new TSchedule(starttime, endtime, duration);

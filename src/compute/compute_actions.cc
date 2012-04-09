@@ -986,7 +986,10 @@ void Action_ComputeSchedulesWithKSP::Process()
                 feasiblePath->GetSchedules().push_back(schedule);
                 // modify bandwidth to service bw
                 for (itL = feasiblePath->GetPath().begin(); itL != feasiblePath->GetPath().end(); itL++)
+                {
                     (*itL)->SetMaxBandwidth(bw);
+                    (*itL)->SetMaxReservableBandwidth(bw);
+                }
                 // modify layer spec info
                 feasiblePath->UpdateLayerSpecInfo(ingTSS, egrTSS);
                 _feasiblePaths->push_back(feasiblePath);
