@@ -1229,8 +1229,7 @@ void Action_ProcessRequestTopology_MP2P::Finish()
         bool allSuccess = true;
         for (; itU != userConsList->end(); itU++)
         {
-            string actionName = "Action_FinalizeServiceTopology_MP2P_";
-            actionName += (*itU)->getPathId();
+            string actionName = "Action_FinalizeServiceTopology_MP2P";
             list<ComputeResult*>* computeResultList = (list<ComputeResult*>*)this->GetComputeWorker()->GetContextActionData(contextNameSet[i], actionName, "COMPUTE_RESULT_LIST");
             if (computeResultList != NULL && computeResultList->size() > 0)
             {
