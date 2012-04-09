@@ -870,6 +870,8 @@ void Action_ComputeSchedulesWithKSP::Process()
             if (ads == NULL)
                 continue;
             TDelta* conjDelta = ads->JoinADSInWindow(startTime, endTime);
+            if (conjDelta == NULL)
+                continue;
             (*itL)->GetWorkData()->SetData("CONJOINED_DELTA", conjDelta);
             // $$ deduct resource by conjoined delta
             conjDelta->SetTargetResource(*itL);
