@@ -1843,7 +1843,7 @@ void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<T
     list<TLink*>::iterator pathend;
 
     try {
-        this->ComputeDijkstraPath(srcNode, dstNode);
+        this->ComputeDijkstraPath(srcNode, dstNode, true);
     } catch (TCEException e) {
         throw TCEException((char*)"TEWG::ComputeKShortestPaths() Initial call of ComputeDijkstraPath found no path.");
     }    
