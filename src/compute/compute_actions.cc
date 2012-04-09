@@ -1441,8 +1441,7 @@ void Action_ReorderPaths_MP2P::Process()
     }
     
     // each Action_FinalizeServiceTopology_MP2P handle result for one sub-workflow
-    actionName = "Action_FinalizeServiceTopology_MP2P_";
-    actionName += ((Action_ComputeSchedulesWithKSP*)prevAction)->GetUserConstraint()->getPathId();
+    actionName = "Action_FinalizeServiceTopology_MP2P";
     Action_FinalizeServiceTopology_MP2P* actionFinal = new Action_FinalizeServiceTopology_MP2P(this->context, actionName, this->GetComputeWorker());
     this->GetComputeWorker()->GetActions().push_back(actionFinal);
     prevAction->AddChild(actionFinal);
@@ -1512,12 +1511,12 @@ void Action_FinalizeServiceTopology_MP2P::Process()
     _computeResultList = new list<ComputeResult*>;
 
     // collect feasible paths for all p2p sub-flows
-    string actionName = "Action_ComputeSchedulesWithKSP_Round2_";
     list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT_LIST");
     list<Apimsg_user_constraint*>::iterator it = userConsList->begin();
     for (; it != userConsList->end(); it++)
     {   
         Apimsg_user_constraint* userConstraint = *it;
+        string actionName = "Action_ComputeSchedulesWithKSP_Round2_";
         actionName += userConstraint->getPathId();
         vector<TPath*>* feasiblePaths = (vector<TPath*>*)this->GetComputeWorker()->GetContextActionData(this->context, actionName, "FEASIBLE_PATHS");
         ComputeResult* result = new ComputeResult(userConstraint->getGri());
@@ -1546,8 +1545,8 @@ void Action_FinalizeServiceTopology_MP2P::Process()
         else
         {
             char buf[256];
-            snprintf(buf, 256, "Action_FinalizeServiceTopology_MP2P::Process() No feasible path found for GRI: %s, Path: %s!", 
-                userConstraint->getGri().c_str(), userConstraint->getPathId().c_str());
+            snprintf(buf, 256, "Action_FinalizeServiceTopology_MP2P::Process() No feasible path found for GRI: %s, Path: %s under Context: %s!", 
+                userConstraint->getGri().c_str(), userConstraint->getPathId().c_str(), this->context.c_str());
             LOG(buf << endl);
             // TODO: set conext-action error msg 
             break;
