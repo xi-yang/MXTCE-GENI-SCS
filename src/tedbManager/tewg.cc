@@ -834,7 +834,15 @@ void TGraph::LoadPath(list<TLink*> path)
             linkName = link->GetName();
             portName = link->GetPort()->GetName();
             nodeName = link->GetPort()->GetNode()->GetName();
-            domainName = link->GetPort()->GetNode()->GetDomain()->GetName();   
+            domainName = link->GetPort()->GetNode()->GetDomain()->GetName();
+            urn = "urn:ogf:network:domain=";
+            urn += domainName;
+            urn += ":node=";
+            urn += nodeName;
+            urn += ":port=";
+            urn += portName;
+            urn += ":link=";
+            urn += linkName;
         }
         else
         {
