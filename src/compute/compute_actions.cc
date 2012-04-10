@@ -740,7 +740,7 @@ void Action_CreateOrderedATS::Process()
             TSchedule * schedule = *itS;
             for (; itT != _orderedATS->end(); itT++)
             {
-                if (schedule->WithinSchedule(*itT) && schedule->GetStartTime()-(_volume/_bandwidth))
+                if (schedule->WithinSchedule(*itT) && schedule->GetStartTime()-(*itT) >= (_volume/_bandwidth))
                 {
                     itT = _orderedATS->insert(itT, schedule->GetStartTime());
                     break;
@@ -1110,22 +1110,30 @@ void Action_ProcessRequestTopology_MP2P::Process()
     contextNameSet.push_back("cxt_user_minimum_bw");
     for (int i = 0; i < contextNameSet.size(); i++)
     {
+        // skip the context if first userConstraint (sub-path) does not have the corresponding flexible request
+        // ?? should we go through the whole userConsList (all sub-paths) and then make the judgement? 
+        Apimsg_user_constraint* userConstraint = userConsList->front();
+        u_int64_t flexBandwidth = userConstraint->getBandwidth();
+        if (contextNameSet[i]=="cxt_user_maximum_bw" && (userConstraint->getFlexMaxBandwidth() == 0 || userConstraint->getFlexMaxBandwidth() <= userConstraint->getBandwidth()))
+            continue;
+        else if (contextNameSet[i]=="cxt_user_minimum_bw" && (userConstraint->getFlexMinBandwidth() == 0 || userConstraint->getFlexMinBandwidth() >= userConstraint->getBandwidth()))
+            continue;
+
         string actionName = "Action_CreateTEWG";
         Action_CreateTEWG* actionTewg = new Action_CreateTEWG(contextNameSet[i], actionName, this->GetComputeWorker());
         this->GetComputeWorker()->GetActions().push_back(actionTewg);
         // Each sub-workflow start from common root (Action_ProcessRequestTopology_MP2P). 
         // They are parallel and thus can fail independently
         this->AddChild(actionTewg);
-        
+
         // KSP w/ scheduling computation - first round (non-concurrent)
         list<Apimsg_user_constraint*>::iterator it = userConsList->begin();
         Action* prevAction = actionTewg;
         for (; it != userConsList->end(); it++)
         {
-            Apimsg_user_constraint* userConstraint = *it;
-
+            userConstraint = *it;
+            flexBandwidth = userConstraint->getBandwidth();
             u_int64_t volume = ((userConstraint->getFlexSchedules() && userConstraint->getFlexSchedules()->size() > 0)) ? userConstraint->getBandwidth()*userConstraint->getFlexSchedules()->front()->GetDuration() : 0;
-            u_int64_t flexBandwidth = userConstraint->getBandwidth();
             if (contextNameSet[i]=="cxt_user_maximum_bw")
             {
                 if(volume > 0 && userConstraint->getFlexMaxBandwidth() > 0 && userConstraint->getFlexMaxBandwidth() > userConstraint->getBandwidth()) 
