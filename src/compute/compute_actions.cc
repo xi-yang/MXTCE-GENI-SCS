@@ -260,9 +260,9 @@ void Action_ComputeKSP::Process()
     TNode* dstNode = tewg->LookupNodeByURN(this->_userConstraint->getDestendpoint());
     if (dstNode == NULL)
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown destination URN!");
-    u_int64_t bw = (u_int64_t)this->_userConstraint->getBandwidth();
-    if (this->_userConstraint->getCoschedreq()&& this->_userConstraint->getCoschedreq()->getMinbandwidth() > bw)
-        bw = this->_userConstraint->getCoschedreq()->getMinbandwidth();
+    u_int64_t bw = (this->_bandwidth == 0 ? (u_int64_t)this->_userConstraint->getBandwidth() : this->_bandwidth);
+    //if (this->_userConstraint->getCoschedreq()&& this->_userConstraint->getCoschedreq()->getMinbandwidth() > bw)
+    //    bw = this->_userConstraint->getCoschedreq()->getMinbandwidth();
     u_int32_t srcVtag, dstVtag;
     if (this->_userConstraint->getSrcvlantag() == "any" || this->_userConstraint->getSrcvlantag() == "ANY")
         srcVtag = ANY_TAG;
@@ -279,7 +279,7 @@ void Action_ComputeKSP::Process()
     else
         tspec.Update(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);
 
-    // reservations pruning
+    // reservations pruning (good for simpleComputeWorker workflow)
     // for current OSCARS implementation, tcePCE should pass startTime==endTime==0
     time_t startTime = this->_userConstraint->getStarttime();
     time_t endTime = this->_userConstraint->getEndtime();
@@ -1122,7 +1122,7 @@ void Action_ProcessRequestTopology_MP2P::Process()
         string actionName = "Action_CreateTEWG";
         Action_CreateTEWG* actionTewg = new Action_CreateTEWG(contextNameSet[i], actionName, this->GetComputeWorker());
         this->GetComputeWorker()->GetActions().push_back(actionTewg);
-        // Each sub-workflow start from common root (Action_ProcessRequestTopology_MP2P). 
+        // Each sub-workflow starts from common root (Action_ProcessRequestTopology_MP2P). 
         // They are parallel and thus can fail independently
         this->AddChild(actionTewg);
 
