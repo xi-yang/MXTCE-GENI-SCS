@@ -1103,6 +1103,12 @@ void Action_ProcessRequestTopology_MP2P::Process()
     if (userConsList == NULL)
         throw ComputeThreadException((char*)"Action_ProcessRequestTopology_MP2P::Process() No USER_CONSTRAINT_LIST data from compute worker.");
 
+    Apimsg_user_constraint* userConstraint = userConsList->front();
+    u_int64_t volume = ((userConstraint->getFlexSchedules() && userConstraint->getFlexSchedules()->size() > 0)) ? userConstraint->getBandwidth()*userConstraint->getFlexSchedules()->front()->GetDuration() : 0;
+    u_int64_t flexBandwidth = userConstraint->getBandwidth();
+    if (volume == 0 || flexBandwidth == 0)
+        throw ComputeThreadException((char*)"Action_ProcessRequestTopology_MP2P::Process() Zero bandwidth or transfer size. (Try simpleComputeWorker instead?)");
+ 
     // multiple sub-workflows for flexible requests
     vector<string> contextNameSet;
     contextNameSet.push_back("cxt_user_preferred_bw");
@@ -1112,8 +1118,6 @@ void Action_ProcessRequestTopology_MP2P::Process()
     {
         // skip the context if first userConstraint (sub-path) does not have the corresponding flexible request
         // ?? should we go through the whole userConsList (all sub-paths) and then make the judgement? 
-        Apimsg_user_constraint* userConstraint = userConsList->front();
-        u_int64_t flexBandwidth = userConstraint->getBandwidth();
         if (contextNameSet[i]=="cxt_user_maximum_bw" && (userConstraint->getFlexMaxBandwidth() == 0 || userConstraint->getFlexMaxBandwidth() <= userConstraint->getBandwidth()))
             continue;
         else if (contextNameSet[i]=="cxt_user_minimum_bw" && (userConstraint->getFlexMinBandwidth() == 0 || userConstraint->getFlexMinBandwidth() >= userConstraint->getBandwidth()))
@@ -1133,7 +1137,7 @@ void Action_ProcessRequestTopology_MP2P::Process()
         {
             userConstraint = *it;
             flexBandwidth = userConstraint->getBandwidth();
-            u_int64_t volume = ((userConstraint->getFlexSchedules() && userConstraint->getFlexSchedules()->size() > 0)) ? userConstraint->getBandwidth()*userConstraint->getFlexSchedules()->front()->GetDuration() : 0;
+            volume = ((userConstraint->getFlexSchedules() && userConstraint->getFlexSchedules()->size() > 0)) ? userConstraint->getBandwidth()*userConstraint->getFlexSchedules()->front()->GetDuration() : 0;
             if (contextNameSet[i]=="cxt_user_maximum_bw")
             {
                 if(volume > 0 && userConstraint->getFlexMaxBandwidth() > 0 && userConstraint->getFlexMaxBandwidth() > userConstraint->getBandwidth()) 
