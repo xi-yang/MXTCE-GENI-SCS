@@ -55,7 +55,7 @@ const string Log::Preamble(LogOption option)
     switch (option)
     {
     case LOG_LOGFILE:
-        s = "MXTCE";
+        s = "MXTCE ";
         break;
     case LOG_STDOUT:
         s = "MXTCE_OUTPUT ";
@@ -71,7 +71,7 @@ const string Log::Preamble(LogOption option)
     }
 
     static char buf[30];    
-    strftime (buf, 30, "@[%Y/%m/%d %H:%M:%S] : ", ltime);
+    strftime (buf, 30, "%m/%d %H:%M:%S ", ltime);
     s += buf;
 
     if (!more_info.empty())

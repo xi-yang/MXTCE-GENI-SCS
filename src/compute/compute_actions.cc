@@ -960,6 +960,7 @@ void Action_ComputeSchedulesWithKSP::Process()
             }
             else
             {
+                // TODO:  the time window may be increased if available 
                 TSchedule* schedule = new TSchedule(startTime, endTime);
                 vector<TPath*>::iterator itFP = _feasiblePaths->begin();
                 for (; itFP != _feasiblePaths->end(); itFP++)

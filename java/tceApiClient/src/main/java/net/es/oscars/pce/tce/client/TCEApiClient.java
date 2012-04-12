@@ -328,8 +328,8 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
         return topoBuilder.getTopology();
     }
 
-    // ARCHSTONE Request Topology
-    public PCEDataContent assemblePceData(String reqTopologyXml, 
+    // assemble ARCHSTONE Request Topology
+    public PCEDataContent assemblePceData(CtrlPlaneTopologyContent topology, 
             String optionalConstraint) {
         UserRequestConstraintType userConstraint = new UserRequestConstraintType();
         String pathId = "path-"+ UUID.randomUUID().toString();
@@ -358,6 +358,13 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
             pceDataContent.getOptionalConstraint().add(optType);
         }
         
+        pceDataContent.setTopology(topology);
+        return pceDataContent;
+    }
+
+    // assemble ARCHSTONE Request Topology from XML string
+    public PCEDataContent assemblePceData(String reqTopologyXml, 
+            String optionalConstraint) {
         //unmarshal handle <topology> XML with JAXB and add to pceData 
         CtrlPlaneTopologyContent topology = null;
         try {
@@ -369,8 +376,7 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
         } catch (Exception e) {
             System.err.println("Error in unmarshling RequestTopology: " + e.getMessage());
         }
-        pceDataContent.setTopology(topology);
-        return pceDataContent;
+        return assemblePceData(topology, optionalConstraint);
     }
 
     @SuppressWarnings("unchecked")
