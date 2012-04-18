@@ -36,8 +36,8 @@ import net.es.oscars.utils.sharedConstants.ErrorCodes;
  * @author xyang
  */
 
-    @javax.jws.WebService(
-                      serviceName = "PCEService",
+@javax.jws.WebService(
+                      serviceName = "PCERuntimeService",
                       portName = "PCEPortType",
                       targetNamespace = "http://oscars.es.net/OSCARS/PCE/20090922",
                       endpointInterface = "net.es.oscars.pce.soap.gen.v06.PCEPortType")

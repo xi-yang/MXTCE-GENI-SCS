@@ -87,6 +87,12 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
         if (runtimeServer == null)
             runtimeServer = TCERuntimeSoapServer.getInstance();
         runtimeServer.setCallbackHandler(replyHandler);
+        String cxfServerPath = System.getenv("OSCARS_HOME")+"/PCERuntimeService/conf/server-cxf-http.xml";
+        try {
+            OSCARSSoapService.setSSLBusConfiguration(new URL("file:" + cxfServerPath));
+        } catch (MalformedURLException e) {
+            throw new OSCARSServiceException(e.getMessage());
+        }
         runtimeEndpoint = (EndpointImpl)runtimeServer.startServer(false);
         Map soap = (Map)runtimeServer.getConfig().get("soap");
         if (soap != null && soap.get("publishTo") != null)
