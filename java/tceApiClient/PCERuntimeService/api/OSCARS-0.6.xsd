@@ -5,10 +5,10 @@
     xmlns:tns="http://oscars.es.net/OSCARS/06"
     xmlns:authP="http://oscars.es.net/OSCARS/authParams"
     xmlns:com="http://oscars.es.net/OSCARS/common"
-    xmlns:ctrlp="http://ogf.org/schema/network/topology/ctrlPlane/20080828/">
+    xmlns:ctrlp="http://ogf.org/schema/network/topology/ctrlPlane/20110826/">
 
     <xsd:import 
-        namespace="http://ogf.org/schema/network/topology/ctrlPlane/20080828/" 
+        namespace="http://ogf.org/schema/network/topology/ctrlPlane/20110826/" 
         schemaLocation="../nmtopo-ctrlp.xsd"/>
     <xsd:import 
         namespace="http://oscars.es.net/OSCARS/authParams" 

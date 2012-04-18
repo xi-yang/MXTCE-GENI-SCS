@@ -4,13 +4,13 @@
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     xmlns:api="http://oscars.es.net/OSCARS/06"
     xmlns:authP="http://oscars.es.net/OSCARS/authParams"
-    xmlns:ctrlp="http://ogf.org/schema/network/topology/ctrlPlane/20080828/"
+    xmlns:ctrlp="http://ogf.org/schema/network/topology/ctrlPlane/20110826/"
     xmlns:tns="http://oscars.es.net/OSCARS/PCE/20090922">
 
     <xsd:import namespace="http://oscars.es.net/OSCARS/06" schemaLocation="OSCARS-0.6.xsd"/>
     <xsd:import namespace="http://oscars.es.net/OSCARS/authParams" 
         schemaLocation="../authParams.xsd" />
-    <xsd:import namespace="http://ogf.org/schema/network/topology/ctrlPlane/20080828/" 
+    <xsd:import namespace="http://ogf.org/schema/network/topology/ctrlPlane/20110826/" 
         schemaLocation="../nmtopo-ctrlp.xsd"/>
     
     <!-- Element definitions -->

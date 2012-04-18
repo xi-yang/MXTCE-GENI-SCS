@@ -3,9 +3,9 @@
     elementFormDefault="qualified"
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     xmlns:tns="http://oscars.es.net/OSCARS"
-    xmlns:ctrlp="http://ogf.org/schema/network/topology/ctrlPlane/20080828/">
+    xmlns:ctrlp="http://ogf.org/schema/network/topology/ctrlPlane/20110826/">
 
-    <xsd:import namespace="http://ogf.org/schema/network/topology/ctrlPlane/20080828/" schemaLocation="../nmtopo-ctrlp.xsd"/>
+    <xsd:import namespace="http://ogf.org/schema/network/topology/ctrlPlane/20110826/" schemaLocation="../nmtopo-ctrlp.xsd"/>
 
     <!-- Element definitions -->
     <xsd:element name="createReservation" type="tns:resCreateContent" />

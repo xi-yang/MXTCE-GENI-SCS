@@ -3,8 +3,8 @@
 <xs:schema 
     xmlns:xs="http://www.w3.org/2001/XMLSchema" 
     elementFormDefault="qualified" 
-    targetNamespace="http://ogf.org/schema/network/topology/ctrlPlane/20080828/" 
-    xmlns:CtrlPlane="http://ogf.org/schema/network/topology/ctrlPlane/20080828/">
+    targetNamespace="http://ogf.org/schema/network/topology/ctrlPlane/20110826/" 
+    xmlns:CtrlPlane="http://ogf.org/schema/network/topology/ctrlPlane/20110826/">
   
     <xs:annotation>
       <xs:documentation>
