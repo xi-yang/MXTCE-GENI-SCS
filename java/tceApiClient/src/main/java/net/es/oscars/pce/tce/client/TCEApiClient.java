@@ -84,7 +84,8 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
     }
 
     public void initClient(TCECallbackHandler replyHandler) throws OSCARSServiceException {
-        runtimeServer = TCERuntimeSoapServer.getInstance();
+        if (runtimeServer == null)
+            runtimeServer = TCERuntimeSoapServer.getInstance();
         runtimeServer.setCallbackHandler(replyHandler);
         runtimeEndpoint = (EndpointImpl)runtimeServer.startServer(false);
         Map soap = (Map)runtimeServer.getConfig().get("soap");
@@ -95,6 +96,10 @@ public class TCEApiClient extends OSCARSSoapService<PCEService, PCEPortType> {
     public void stopClient() {
         if (runtimeEndpoint != null)
             runtimeEndpoint.stop();
+    }
+
+    public TCECallbackHandler getReplyHandler() {
+        return runtimeServer.getCallbackHandler();
     }
 
     private String getAutoGRI() {
