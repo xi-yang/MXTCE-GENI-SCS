@@ -20,6 +20,7 @@ protected:
 	u_int32_t max_num_of_alt_paths;
 	bool bandwidth_avai_graph;
 	bool contiguous_vlan;
+    bool require_link_bag;
 	u_int32_t max_duration;
 	u_int64_t max_bandwidth;
 	u_int32_t data_size_bytes;
@@ -41,6 +42,7 @@ public:
 		this->max_num_of_alt_paths = 0;
 		this->bandwidth_avai_graph = false;
 		this->contiguous_vlan = false;
+		this->require_link_bag = false;
 		this->max_bandwidth = 0L;
 		this->max_duration = 0;
 		this->data_size_bytes = 0;
@@ -67,6 +69,9 @@ public:
 
 	void setContiguousvlan(bool t_contiguous_vlan) {this->contiguous_vlan = t_contiguous_vlan;}
 	bool getContiguousvlan() {return this->contiguous_vlan;}
+
+	void setRequireLinkBag(bool link_bag) {this->require_link_bag = link_bag;}
+	bool getRequireLinkBag() {return this->require_link_bag;}
 
 	void setMaxduration(u_int32_t t_max_duration) {this->max_duration = t_max_duration;}
 	u_int32_t getMaxduration() {return this->max_duration;}

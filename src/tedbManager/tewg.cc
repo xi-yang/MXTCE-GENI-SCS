@@ -183,6 +183,8 @@ TLink* TLink::Clone()
     tl->minReservableBandwidth = this->minReservableBandwidth;
     tl->bandwidthGranularity = this->minReservableBandwidth;
     tl->remoteLink = this->remoteLink;
+    if (this->bag != NULL)
+        tl->bag = this->bag->Clone();
     for (int i = 0; i < 8; i++)
         tl->unreservedBandwidth[i] = this->unreservedBandwidth[i];
     list<ISCD*>::iterator its = swCapDescriptors.begin();
@@ -1481,6 +1483,22 @@ BandwidthAvailabilityGraph* TPath::CreatePathBAG(time_t start, time_t end)
     BandwidthAvailabilityGraph* bag = new BandwidthAvailabilityGraph();
     bag->LoadADS(*ads, start, end, capacity);
     return bag;
+}
+
+void TPath::CreateLinkBAG(time_t start, time_t end)
+{
+    assert(path.size() > 0);
+    list<TLink*>::iterator itL = path.begin();
+    for (; itL != path.end(); itL++)
+    {
+        AggregateDeltaSeries* ads = (AggregateDeltaSeries*)((*itL)->GetWorkData()->GetData("ADS"));
+        if (ads == NULL)
+            continue;
+        u_int64_t capacity = (*itL)->GetMaxReservableBandwidth();
+        BandwidthAvailabilityGraph* bag = new BandwidthAvailabilityGraph();
+        bag->LoadADS(*ads, start, end, capacity);
+        (*itL)->SetBAG(bag);
+    }
 }
 
 TPath* TPath::Clone(bool doExpandRemoteLink)

@@ -256,7 +256,7 @@ protected:
 public:
     Link(u_int32_t id, string& name): Resource(RTYPE_LINK, id, name) { _Init(); }
     Link(u_int32_t id, string& name, string& address): Resource(RTYPE_LINK, id, name, address) { _Init(); }
-    virtual ~Link() { }
+    virtual ~Link() { } // TODO: clean up swCapDescriptors, adjCapDescriptors
     Port* GetPort() { return port; }
     void SetPort(Port* p) { port = p; }
     int GetMetric() {return metric;}

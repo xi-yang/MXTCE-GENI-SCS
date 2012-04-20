@@ -425,6 +425,10 @@ void Action_ComputeKSP::Process()
                     feasiblePath->SetBAG(bag);
                     (*itP)->SetBAG(NULL);
                 }
+                if (_userConstraint->getCoschedreq()->getRequireLinkBag())
+                {
+                    (*itP)->CreateLinkBAG(_userConstraint->getCoschedreq()->getStarttime(), _userConstraint->getCoschedreq()->getEndtime());
+                }
             }
             // modify bandwidth to service bw
             for (itL = feasiblePath->GetPath().begin(); itL != feasiblePath->GetPath().end(); itL++)
@@ -984,6 +988,10 @@ void Action_ComputeSchedulesWithKSP::Process()
                     {
                         feasiblePath->SetBAG(bag);
                         (*itP)->SetBAG(NULL);
+                    }
+                    if (_userConstraint->getCoschedreq()->getRequireLinkBag())
+                    {
+                        (*itP)->CreateLinkBAG(_userConstraint->getCoschedreq()->getStarttime(), _userConstraint->getCoschedreq()->getEndtime());
                     }
                 }
                 feasiblePath->GetSchedules().push_back(schedule);

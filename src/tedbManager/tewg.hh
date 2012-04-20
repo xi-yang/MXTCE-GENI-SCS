@@ -213,7 +213,7 @@ public:
     }
 };
 
-
+class BandwidthAvailabilityGraph;
 class TLink: public Link
 {
 protected:
@@ -222,11 +222,12 @@ protected:
     bool edgeOnly;
     TNode* lclEnd;
     TNode* rmtEnd;
+    BandwidthAvailabilityGraph* bag;
 
 public:
-    TLink(u_int32_t id, string& name): Link(id, name),disabled(false), visited(false), edgeOnly(false), lclEnd(NULL), rmtEnd(NULL) { }
-    TLink(u_int32_t id, string& name, string& address): Link(id, name, address), disabled(false), edgeOnly(false), lclEnd(NULL), rmtEnd(NULL) { }
-    virtual ~TLink() { }
+    TLink(u_int32_t id, string& name): Link(id, name),disabled(false), visited(false), edgeOnly(false), lclEnd(NULL), rmtEnd(NULL), bag(NULL) { }
+    TLink(u_int32_t id, string& name, string& address): Link(id, name, address), disabled(false), edgeOnly(false), lclEnd(NULL), rmtEnd(NULL), bag(NULL) { }
+    virtual ~TLink() { } // TODO: clean up bag
     bool IsDisabled() { return disabled; }
     void SetDisabled(bool d) { disabled = d; }
     bool IsEdge() { return edgeOnly; }
@@ -239,6 +240,8 @@ public:
     bool VerifyRemoteLink();
     bool VerifyFullLink();
     ISCD* GetTheISCD();
+    BandwidthAvailabilityGraph* GetBAG() { return bag; }
+    void SetBAG(BandwidthAvailabilityGraph* b) { bag = b; }
     TLink* Clone();
     // path computation helpers
     bool IsAvailableForTspec(TSpec& tspec);
@@ -303,7 +306,6 @@ public:
 
 
 class TSchedule;
-class BandwidthAvailabilityGraph;
 class TPath {
 protected:
     list<TLink*> path;
@@ -351,6 +353,7 @@ public:
     bool VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS);
     void UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS);
     BandwidthAvailabilityGraph* CreatePathBAG(time_t start, time_t end);
+    void CreateLinkBAG(time_t start, time_t end);
     void Cleanup() {
         path.clear();
         cost = _INF_;
