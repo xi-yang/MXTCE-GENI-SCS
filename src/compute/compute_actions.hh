@@ -90,12 +90,14 @@ protected:
     vector<TPath*>* _feasiblePaths;
     vector<TPath*>* _feasiblePathsTewg;
     Apimsg_user_constraint* _userConstraint;
+    bool blComputeBAG;
     void _Init() {
         _bandwidth = 0;
         _volume = 0;
         _feasiblePaths = NULL;
         _feasiblePathsTewg = NULL;
         _userConstraint = NULL;
+        blComputeBAG = false;
     }
 
 public:
@@ -109,6 +111,8 @@ public:
     void SetReqVolume(u_int64_t v) { _volume = v; }
     Apimsg_user_constraint*  GetUserConstraint() { return _userConstraint; }
     void SetUserConstraint(Apimsg_user_constraint* u) { _userConstraint = u; }
+    bool yesComputeBAG() { return blComputeBAG; }
+    bool SetComputeBAG(bool b) { blComputeBAG = b; }
     virtual void* GetData(string& dataName);
 
     virtual void Process();

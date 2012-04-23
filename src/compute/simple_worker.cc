@@ -49,6 +49,7 @@ void* SimpleComputeWorker::hookRun()
 
     actionName = "Simple_Action_Compute_KSP";
     Action* actionNext2 = new Action_ComputeKSP(actionName, this);
+    ((Action_ComputeKSP*)actionNext2)->SetComputeBAG(true);
     actions.push_back(actionNext2);
     actionNext->AddChild(actionNext2);
 

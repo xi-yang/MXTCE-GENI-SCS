@@ -1492,8 +1492,15 @@ void TPath::CreateLinkBAG(time_t start, time_t end)
     for (; itL != path.end(); itL++)
     {
         AggregateDeltaSeries* ads = (AggregateDeltaSeries*)((*itL)->GetWorkData()->GetData("ADS"));
-        if (ads == NULL)
-            continue;
+        if (ads == NULL) {
+            ads = new AggregateDeltaSeries;
+            list<TDelta*>::iterator itD;
+            for (itD = (*itL)->GetDeltaList().begin(); itD != (*itL)->GetDeltaList().end(); itD++)
+            {
+                TDelta* delta = *itD;
+                ads->AddDelta(delta);
+            }
+        }
         u_int64_t capacity = (*itL)->GetMaxReservableBandwidth();
         BandwidthAvailabilityGraph* bag = new BandwidthAvailabilityGraph();
         bag->LoadADS(*ads, start, end, capacity);

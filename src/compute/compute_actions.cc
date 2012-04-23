@@ -416,7 +416,7 @@ void Action_ComputeKSP::Process()
 			// Caution: Clone() will inherit the orignal localEnd and remoteEnd nodes from work set.
             TPath* feasiblePath = (*itP)->Clone();
             // check whether BAG is requested
-            if (this->_userConstraint->getCoschedreq() && this->_userConstraint->getCoschedreq()->getBandwidthavaigraph()) 
+            if (yesComputeBAG() && _userConstraint->getCoschedreq() && _userConstraint->getCoschedreq()->getBandwidthavaigraph()) 
             {
                 BandwidthAvailabilityGraph* bag = (*itP)->CreatePathBAG(this->_userConstraint->getCoschedreq()->getStarttime(), 
                     this->_userConstraint->getCoschedreq()->getEndtime());
@@ -1166,6 +1166,7 @@ void Action_ProcessRequestTopology_MP2P::Process()
             Action_ComputeKSP* actionKsp = new Action_ComputeKSP(contextNameSet[i], actionName, this->GetComputeWorker());
             actionKsp->SetReqBandwidth(flexBandwidth);
             actionKsp->SetReqVolume(volume);
+            actionKsp->SetComputeBAG(false);
             this->GetComputeWorker()->GetActions().push_back(actionKsp);
             prevAction->AddChild(actionKsp);
             
