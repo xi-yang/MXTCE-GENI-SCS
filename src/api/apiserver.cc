@@ -92,6 +92,15 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
         userCons[0].setFlexGranularity(100000000);
         userCons[0].setFlexSchedules(tsList);
 
+        Apimsg_stornet_constraint* coscheduleOptConstraint = new Apimsg_stornet_constraint;
+        coscheduleOptConstraint->setStarttime(1335282854);
+        coscheduleOptConstraint->setEndtime(1335287000);
+        coscheduleOptConstraint->setBandwidthavaigraph(true);
+        coscheduleOptConstraint->setMaxnumofaltpaths(3);
+        coscheduleOptConstraint->setRequireLinkBag(true);
+        coscheduleOptConstraint->setMinbandwidth(1);
+        userCons[0].setCoschedreq(coscheduleOptConstraint);
+
         userCons[1].setGri("test1");
         userCons[1].setPathId("test1-path2");
         userCons[1].setSrcendpoint(ep1);
