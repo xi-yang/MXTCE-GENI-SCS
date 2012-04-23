@@ -428,6 +428,14 @@ void Action_ComputeKSP::Process()
                 if (_userConstraint->getCoschedreq()->getRequireLinkBag())
                 {
                     (*itP)->CreateLinkBAG(_userConstraint->getCoschedreq()->getStarttime(), _userConstraint->getCoschedreq()->getEndtime());
+                    // copying over link BAGs
+                    list<TLink*>::iterator itLF = feasiblePath->GetPath().begin();
+                    for (itL = (*itP)->GetPath().begin(); itL != (*itP)->GetPath().end(); itL++) 
+                    {
+                        (*itLF)->SetBAG((*itL)->GetBAG());
+                        (*itL)->SetBAG(NULL);
+                        itLF++;
+                    }
                 }
             }
             // modify bandwidth to service bw
@@ -992,6 +1000,14 @@ void Action_ComputeSchedulesWithKSP::Process()
                     if (_userConstraint->getCoschedreq()->getRequireLinkBag())
                     {
                         (*itP)->CreateLinkBAG(_userConstraint->getCoschedreq()->getStarttime(), _userConstraint->getCoschedreq()->getEndtime());
+                        // copying over link BAGs
+                        list<TLink*>::iterator itLF = feasiblePath->GetPath().begin();
+                        for (itL = (*itP)->GetPath().begin(); itL != (*itP)->GetPath().end(); itL++) 
+                        {
+                            (*itLF)->SetBAG((*itL)->GetBAG());
+                            (*itL)->SetBAG(NULL);
+                            itLF++;
+                        }
                     }
                 }
                 feasiblePath->GetSchedules().push_back(schedule);
