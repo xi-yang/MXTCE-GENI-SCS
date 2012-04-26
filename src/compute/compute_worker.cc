@@ -113,7 +113,7 @@ void ComputeWorker::HandleException(ComputeThreadException& e)
     Message* msg = new Message(MSG_REPLY, queue, topic);
     list<TLV*>::iterator itlv;
     msg->AddTLV(tlv);
-    this->msgPort->PostMessage(msg);
+    this->msgPort->GetWriter()->WriteMessage(msg);
 }
 
 
