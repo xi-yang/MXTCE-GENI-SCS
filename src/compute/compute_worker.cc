@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
+ 
+#include "mxtce.hh"
 #include "compute_worker.hh"
 #include "simple_worker.hh"
 #include "multip2p_worker.hh"
@@ -84,12 +85,35 @@ void* ComputeWorker::Run()
     try {
         eventMaster->Run();
     } catch (ComputeThreadException e) {
-        string& errMsg = e.GetMessage();
-        this->SetWorkflowData("ERRPR_MSG",&errMsg);
+        this->HandleException(e);
         // TODO: Tell mxTCE core to detach the pipes ?
     }
 
     return pReturn;
+}
+
+
+void ComputeWorker::HandleException(ComputeThreadException& e)
+{
+    string gri = "";
+    list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetWorkflowData("USER_CONSTRAINT_LIST");
+    if (userConsList && userConsList->size() > 0)
+    {
+        Apimsg_user_constraint* userConstraint = userConsList->front();
+        gri = userConstraint->getGri();
+    }
+    TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
+    tlv->type = MSG_TLV_VOID_PTR;
+    tlv->length = sizeof(void*);
+    ComputeResult* result = new ComputeResult(gri);
+    result->SetErrMessage(e.GetMessage());
+    memcpy(tlv->value, &result, sizeof(void*));
+    string queue = MxTCE::computeThreadPrefix + this->GetName();
+    string topic = "COMPUTE_REPLY";
+    Message* msg = new Message(MSG_REPLY, queue, topic);
+    list<TLV*>::iterator itlv;
+    msg->AddTLV(tlv);
+    this->msgPort->PostMessage(msg);
 }
 
 

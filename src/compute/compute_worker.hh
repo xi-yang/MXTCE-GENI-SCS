@@ -77,6 +77,8 @@ protected:
     ComputeWorkflowData workflowData; //  data global for the workflow.
     list<Action*> actions;//workflow-actions
 
+    void HandleException(ComputeThreadException& e);
+
 public:
     ComputeWorker(string n):ThreadPortScheduler(n) { }
     virtual ~ComputeWorker();
