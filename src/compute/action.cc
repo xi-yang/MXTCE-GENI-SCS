@@ -68,7 +68,8 @@ void Action::Run()
             CleanUp();
             snprintf(buf, 256, "Action::Run caught Exception: %s", e.what());
             LOG(buf << endl);
-            //throw ComputeThreadException(buf);
+            if (parent == NULL) // root action will fail directly as no parent will clean up for it
+                throw ComputeThreadException(buf);
             errMsg = buf;
             this->GetComputeWorker()->SetWorkflowData("ERROR_MSG", &errMsg);
             break;
@@ -111,9 +112,11 @@ void Action::Run()
             CleanUp();
             snprintf(buf, 256, "Action::Run caught Exception: %s", e.what());
             LOG(buf << endl);
-            //throw ComputeThreadException(buf);
+            if (parent == NULL) // root action will fail directly as no parent will clean up for it
+                throw ComputeThreadException(buf);
             errMsg = buf;
             this->GetComputeWorker()->SetWorkflowData("ERROR_MSG", &errMsg);
+            break;
         }
 
         //schedule children actions
@@ -134,7 +137,8 @@ void Action::Run()
             CleanUp();
             snprintf(buf, 256, "Action::Run caught Exception: %s", e.what());
             LOG(buf << endl);
-            //throw ComputeThreadException(buf);
+            if (parent == NULL) // root action will fail directly as no parent will clean up for it
+                throw ComputeThreadException(buf);
             errMsg = buf;
             this->GetComputeWorker()->SetWorkflowData("ERROR_MSG", &errMsg);
             break;
