@@ -60,16 +60,22 @@ Apimsg_user_constraint* Apireqmsg_decoder::test_decode_msg(char* apimsg_body, in
         		cout<<"opti constraint"<<endl;
         		length_decoded = length_decoded + len_tag_len + length;
         	}
+        	else if(type==PCE_MULTIPLE_PATH)
+        	{
+        		//user_cons = new Apimsg_user_constraint();
+        		length=pri_type_decoder.getLen(decode_ptr, len_tag_len);
+
+        		this->decode_multiple_path(decode_ptr,length,user_cons);
+        		cout<<"multiple path"<<endl;
+
+        		length_decoded = length_decoded + len_tag_len + length;
+        	}
         	//cout<<"msg_leng="<<msg_length<<" decode_len="<<length_decoded<<endl;
         	//printf("\n test= %d\n",decode_ptr);
         	//break;
-
         }
-
-
-
-
     }
+
 
     return user_cons;
 
@@ -733,6 +739,355 @@ void Apireqmsg_decoder::decode_opitcons_coschedreq(char* & decode_ptr, int total
     outfile<<"max bandwidth="<<max_bandwidth<<endl;
     outfile<<"data size bytes="<<data_size_bytes<<endl;
 
+    outfile.close();
+
+
+}
+
+
+void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, Apimsg_user_constraint* user_cons)
+{
+	/*
+	int length=0;
+	int starttime=0;
+	int endtime=0;
+	u_int64_t bandwidth=0;
+	*/
+    //char bytevalue=0;
+	//int intvalue=0;
+	int length_offset=0;
+	u_int8_t type=0;
+	int len_tag_len=0;
+	char buf[API_MAX_MSG_SIZE];
+
+	Path_req* path=NULL;
+	bool lifetime_exist_flag=false;
+
+
+
+	memcpy(&type, decode_ptr++, sizeof(char));
+
+	if(type==PCE_GRI)
+	{
+		length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+		string gri = pri_type_decoder.decodeStr(decode_ptr,length);
+		length_offset=length_offset+length+len_tag_len+1;
+
+		user_cons.setGri(gri);
+	}
+	else
+	{
+        snprintf(buf, 128, "Gri is missed in multi-path message");
+        LOG(buf << endl);
+        throw APIException(buf);
+	}
+
+	memcpy(&type, decode_ptr++, sizeof(char));
+
+	if(type==PCE_PATH_ID)
+	{
+		path = new Path_req();
+
+		length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+		string path_id = pri_type_decoder.decodeStr(decode_ptr,length);
+		length_offset=length_offset+length+len_tag_len+1;
+
+		path->setPathid(path_id);
+	}
+	else
+	{
+        snprintf(buf, 128, "Path id is missed in multi-path message");
+        LOG(buf << endl);
+        throw APIException(buf);
+	}
+
+	memcpy(&type, decode_ptr++, sizeof(char));
+
+    if(type==PCE_LIFETIME_NUM)
+    {
+    	lifetime_exist_flag=true;
+
+    	length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    	int lifetime_num = pri_type_decoder.decodeInt(decode_ptr,length);
+    	length_offset=length_offset+length+len_tag_len+1;
+
+    	list<TSchedule*>* flexSchedules = new list<TSchedule>;
+
+    	for(int i=0;i<lifetime_num;i++)
+    	{
+    		TSchedule* t_schedule = new TSchedule();
+    		flexSchedules->push_back(t_schedule);
+
+    		memcpy(&type, decode_ptr++, sizeof(char));
+    		if(type==PCE_LIFETIME_START)
+    		{
+    			length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    			int lifetime_start = pri_type_decoder.decodeInt(decode_ptr,length);
+    			length_offset=length_offset+length+len_tag_len+1;
+
+    			if(lifetime_start != -1)
+    			{
+    				t_schedule->SetStartTime(time(lifetime_start));
+    			}
+    		}
+
+    		memcpy(&type, decode_ptr++, sizeof(char));
+    		if(type==PCE_LIFETIME_END)
+    		{
+    			length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    			int lifetime_end = pri_type_decoder.decodeInt(decode_ptr,length);
+    			length_offset=length_offset+length+len_tag_len+1;
+
+    			if(lifetime_end != -1)
+    			{
+    				t_schedule->SetEndTime(time(lifetime_end));
+    			}
+    		}
+
+    		memcpy(&type, decode_ptr++, sizeof(char));
+    		if(type==PCE_LIFETIME_DUR)
+    		{
+    			length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    			int lifetime_dur = pri_type_decoder.decodeInt(decode_ptr,length);
+    			length_offset=length_offset+length+len_tag_len+1;
+
+    			if(lifetime_dur != -1)
+    			{
+    				t_schedule->SetDuration(lifetime_dur);
+    			}
+    		}
+    	}
+    }
+
+    if(lifetime_exist_flag==true)
+    {
+    	memcpy(&type, decode_ptr++, sizeof(char));
+    }
+
+    if(type==PCE_MAXRESVCAPACITY)
+    {
+    	length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    	u_int64_t flexMaxBandwidth = pri_type_decoder.decodeLong(decode_ptr,length);
+    	length_offset=length_offset+length+len_tag_len+1;
+    	user_cons->setFlexMaxBandwidth(flexMaxBandwidth);
+
+    	memcpy(&type, decode_ptr++, sizeof(char));
+    }
+
+    if(type==PCE_MINRESVCAPACITY)
+    {
+    	length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    	u_int64_t flexMinBandwidth = pri_type_decoder.decodeLong(decode_ptr,length);
+    	length_offset=length_offset+length+len_tag_len+1;
+
+    	user_cons->setFlexMinBandwidth(flexMinBandwidth);
+
+    	memcpy(&type, decode_ptr++, sizeof(char));
+    }
+
+    if(type==PCE_GRANULARITY)
+    {
+    	length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    	u_int64_t flexGranularity = pri_type_decoder.decodeLong(decode_ptr,length);
+    	length_offset=length_offset+length+len_tag_len+1;
+
+    	user_cons->setFlexGranularity(flexGranularity);
+
+    	memcpy(&type, decode_ptr++, sizeof(char));
+    }
+
+    if(type!=PCE_PATH_LENGTH)
+    {
+    	snprintf(buf, 128, "Path length is missed in multipath request message");
+    	LOG(buf << endl);
+    	throw APIException(buf);
+    }
+
+    length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    int path_length = pri_type_decoder.decodeInt(decode_ptr,length);
+    length_offset=length_offset+length+len_tag_len+1;
+
+    path->setPathlength(path_length);
+
+    if(path_length!=0)
+    {
+    	Hop_req* hops = new Hop_req[path_length];
+    	path->setHops(hops);
+
+    	for(int i=0;i<path_length;i++)
+    	{
+    		bool hop_flag=true;
+    		while(hop_flag)
+    		{
+    			memcpy(&type, decode_ptr++, sizeof(char));
+    			switch(type)
+    			{
+    			case PCE_HOP_ID:
+    				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    				string hop_id = pri_type_decoder.decodeStr(decode_ptr,length);
+    				length_offset=length_offset+length+len_tag_len+1;
+    				hops[i].setHopid(hop_id);
+
+    				break;
+    			case PCE_LINK_ID:
+    				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    				string link_id = pri_type_decoder.decodeStr(decode_ptr,length);
+    				length_offset=length_offset+length+len_tag_len+1;
+    				hops[i].setLinkid(link_id);
+
+    				break;
+    			case PCE_SWITCHINGCAPTYPE:
+    				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    				string switching_cap_type = pri_type_decoder.decodeStr(decode_ptr,length);
+    				length_offset=length_offset+length+len_tag_len+1;
+    				hops[i].setSwitchingcaptype(switching_cap_type);
+
+    				break;
+    			case PCE_SWITCHINGENCTYPE:
+    				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    				string encoding_type = pri_type_decoder.decodeStr(decode_ptr,length);
+    				length_offset=length_offset+length+len_tag_len+1;
+    				hops[i].setEncodingtype(encoding_type);
+
+    				break;
+    			case PCE_SWITCHINGVLANRANGEAVAI:
+    				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    				string vlanRange_availability = pri_type_decoder.decodeStr(decode_ptr,length);
+    				length_offset=length_offset+length+len_tag_len+1;
+    				hops[i].setVlanrangeavailability(vlanRange_availability);
+
+    				break;
+    			case PCE_SWITCHINGVLANRANGESUGG:
+    				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    				string suggested_vlan_range = pri_type_decoder.decodeStr(decode_ptr,length);
+    				length_offset=length_offset+length+len_tag_len+1;
+    				hops[i].setSuggestedvlanrange(suggested_vlan_range);
+
+    				break;
+    			case PCE_VLANTRANSLATION:
+    				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    				bool vlanTranslation = pri_type_decoder.decodeBoolean(decode_ptr,length);
+    				length_offset=length_offset+length+len_tag_len+1;
+    				hops[i].setVlanTranslation(vlanTranslation);
+
+    				break;
+    				/*
+    			case PCE_MAXRESVCAPACITY:
+    				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    				u_int64_t flexMaxBandwidth = pri_type_decoder.decodeLong(decode_ptr,length);
+    				length_offset=length_offset+length+len_tag_len+1;
+
+    				user_cons->setFlexMaxBandwidth(flexMaxBandwidth);
+
+    				break;
+    			case PCE_MINRESVCAPACITY:
+    				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    				u_int64_t flexMinBandwidth = pri_type_decoder.decodeLong(decode_ptr,length);
+    				length_offset=length_offset+length+len_tag_len+1;
+
+    				user_cons->setFlexMinBandwidth(flexMinBandwidth);
+
+    				break;
+    			case PCE_GRANULARITY:
+    				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    				u_int64_t flexGranularity = pri_type_decoder.decodeLong(decode_ptr,length);
+    				length_offset=length_offset+length+len_tag_len+1;
+
+    				user_cons->setFlexGranularity(flexGranularity);
+
+    				break;
+    				*/
+    			case PCE_HOP_END_TAG:
+    				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    				pri_type_decoder.decodeInt(decode_ptr,length);
+    				length_offset=length_offset+length+len_tag_len+1;
+    				hop_flag=false;
+
+    				break;
+    			case PCE_NEXTHOP_LENGTH:
+    				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    				int next_hop_len=pri_type_decoder.decodeInt(decode_ptr,length);
+    				length_offset=length_offset+length+len_tag_len+1;
+    				for(int j=0;j<next_hop_len;j++)
+    				{
+    					memcpy(&type, decode_ptr++, sizeof(char));
+    					if(type==PCE_NEXTHOP)
+    					{
+    						length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    						string next_hop_name=pri_type_decoder.decodeStr(decode_ptr,length);
+    						length_offset=length_offset+length+len_tag_len+1;
+    						list<string>& next_hops_list = hops[i].getNextHopList();
+    						next_hops_list.push_back(next_hop_name);
+    					}
+    					else
+    					{
+    						snprintf(buf, 128, "Next hop is missed");
+    						LOG(buf << endl);
+    						throw APIException(buf);
+    					}
+
+    				}
+
+    				break;
+    			}
+    		}
+    	}
+    }
+    user_cons->setPath(path);
+
+
+
+	//cout<<"length_offset="<<length_offset<<endl;
+	//printf("\n test_2= %d\n",decode_ptr);
+
+
+
+	cout<<"decode multipath"<<endl;
+
+    //for debug issue output result to file
+	string debug_output_path = getenv("HOME");
+	string debug_filename = "/testoutput.txt";
+	string debug_output = debug_output_path+debug_filename;
+
+
+    ofstream outfile(debug_output.c_str(), ios::out | ios::app);
+    if(! outfile)
+    {
+        cerr<<"open error!"<<endl;
+        exit(1);
+    }
+
+    /*
+    outfile<<"reserved constraint"<<endl;
+    outfile<<"starttime="<<starttime<<endl;
+    outfile<<"endtime="<<endtime<<endl;
+    outfile<<"bandwidth="<<bandwidth<<endl;
+    */
+
+    if(user_cons->getPath()!=NULL)
+    {
+    	path = user_cons->getPath();
+    	outfile<<"path id="<<path->getPathid()<<endl;
+    	outfile<<"path length="<<path->getPathlength()<<endl;
+
+    	if(path->getPathlength()!=0)
+    	{
+    		hops = path->getHops();
+    		for(i=0;i<path->getPathlength();i++)
+    		{
+    			outfile<<"hop id="<<hops->getHopid()<<endl;
+    			outfile<<"link id="<<hops->getLinkid()<<endl;
+    			outfile<<"switching capability type="<<hops->getSwitchingcaptype()<<endl;
+    			outfile<<"encoding type="<<hops->getEncodingtype()<<endl;
+    			outfile<<"vlan range availability="<<hops->getVlanrangeavailability()<<endl;
+    			outfile<<"suggested vlan range="<<hops->getSuggestedvlanrange()<<endl;
+    			outfile<<"vlan translation="<<hops->getVlanTranslation()<<endl;
+    			hops = hops + 1;
+    		}
+    		hops = NULL;
+    	}
+
+    }
     outfile.close();
 
 

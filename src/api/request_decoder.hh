@@ -24,6 +24,7 @@ public:
 	void decode_usercons(char* &, int , Apimsg_user_constraint* );
 	void decode_resvcons(char* &, int , Apimsg_user_constraint* );
 	void decode_opitcons_coschedreq(char* &, int , Apimsg_user_constraint*);
+	void decode_multiple_path(char* & , int , Apimsg_user_constraint*);
 
 };
 

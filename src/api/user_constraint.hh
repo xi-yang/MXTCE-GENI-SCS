@@ -22,6 +22,8 @@ protected:
 	string vlan_range_availability;
 	string suggested_vlan_range;
 	bool vlanTranslation;
+	list<string> next_hops_list;
+
 
 public:
 	Hop_req()
@@ -60,6 +62,8 @@ public:
 
 	void setVlanTranslation(bool t_vlanTranslation) {this->vlanTranslation = t_vlanTranslation;}
 	bool getVlanTranslation() {return this->vlanTranslation;}
+
+	list<string>& getNextHopList() {return next_hops_list;}
 
 };
 
