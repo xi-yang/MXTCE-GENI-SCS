@@ -747,8 +747,9 @@ void Apireqmsg_decoder::decode_opitcons_coschedreq(char* & decode_ptr, int total
 
 void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, Apimsg_user_constraint* user_cons)
 {
-	/*
+
 	int length=0;
+	/*
 	int starttime=0;
 	int endtime=0;
 	u_int64_t bandwidth=0;
@@ -773,7 +774,7 @@ void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, 
 		string gri = pri_type_decoder.decodeStr(decode_ptr,length);
 		length_offset=length_offset+length+len_tag_len+1;
 
-		user_cons.setGri(gri);
+		user_cons->setGri(gri);
 	}
 	else
 	{
@@ -811,51 +812,58 @@ void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, 
     	int lifetime_num = pri_type_decoder.decodeInt(decode_ptr,length);
     	length_offset=length_offset+length+len_tag_len+1;
 
-    	list<TSchedule*>* flexSchedules = new list<TSchedule>;
+    	list<TSchedule*>* flexSchedules = new list<TSchedule*>;
 
     	for(int i=0;i<lifetime_num;i++)
     	{
-    		TSchedule* t_schedule = new TSchedule();
-    		flexSchedules->push_back(t_schedule);
+    		int lifetime_start=0;
+    		int lifetime_end=0;
+    		int lifetime_dur=0;
+
+    		TSchedule* t_schedule = NULL;
 
     		memcpy(&type, decode_ptr++, sizeof(char));
     		if(type==PCE_LIFETIME_START)
     		{
     			length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
-    			int lifetime_start = pri_type_decoder.decodeInt(decode_ptr,length);
+    			lifetime_start = pri_type_decoder.decodeInt(decode_ptr,length);
     			length_offset=length_offset+length+len_tag_len+1;
-
-    			if(lifetime_start != -1)
-    			{
-    				t_schedule->SetStartTime(time(lifetime_start));
-    			}
     		}
 
     		memcpy(&type, decode_ptr++, sizeof(char));
     		if(type==PCE_LIFETIME_END)
     		{
     			length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
-    			int lifetime_end = pri_type_decoder.decodeInt(decode_ptr,length);
+    			lifetime_end = pri_type_decoder.decodeInt(decode_ptr,length);
     			length_offset=length_offset+length+len_tag_len+1;
-
-    			if(lifetime_end != -1)
-    			{
-    				t_schedule->SetEndTime(time(lifetime_end));
-    			}
     		}
 
     		memcpy(&type, decode_ptr++, sizeof(char));
     		if(type==PCE_LIFETIME_DUR)
     		{
     			length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
-    			int lifetime_dur = pri_type_decoder.decodeInt(decode_ptr,length);
+    			lifetime_dur = pri_type_decoder.decodeInt(decode_ptr,length);
     			length_offset=length_offset+length+len_tag_len+1;
-
-    			if(lifetime_dur != -1)
-    			{
-    				t_schedule->SetDuration(lifetime_dur);
-    			}
     		}
+
+    		if(lifetime_start != -1 && lifetime_end != -1 && lifetime_dur != -1)
+    		{
+    			t_schedule = new TSchedule((time_t)lifetime_start,(time_t)lifetime_end,lifetime_dur);
+    		}
+    		else if(lifetime_start != -1 && lifetime_end != -1)
+    		{
+    			t_schedule = new TSchedule((time_t)lifetime_start,(time_t)lifetime_end);
+    		}
+    		else if(lifetime_start != -1 && lifetime_dur != -1)
+    		{
+    			t_schedule = new TSchedule((time_t)lifetime_start,lifetime_dur);
+    		}
+    		else
+    		{
+    			t_schedule = new TSchedule(time(0),time(0),0);
+    		}
+
+    		flexSchedules->push_back(t_schedule);
     	}
     }
 
@@ -923,88 +931,100 @@ void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, 
     			switch(type)
     			{
     			case PCE_HOP_ID:
+    			{
     				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
     				string hop_id = pri_type_decoder.decodeStr(decode_ptr,length);
     				length_offset=length_offset+length+len_tag_len+1;
     				hops[i].setHopid(hop_id);
-
+    			}
     				break;
     			case PCE_LINK_ID:
+    			{
     				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
     				string link_id = pri_type_decoder.decodeStr(decode_ptr,length);
     				length_offset=length_offset+length+len_tag_len+1;
     				hops[i].setLinkid(link_id);
-
+    			}
     				break;
     			case PCE_SWITCHINGCAPTYPE:
+    			{
     				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
     				string switching_cap_type = pri_type_decoder.decodeStr(decode_ptr,length);
     				length_offset=length_offset+length+len_tag_len+1;
     				hops[i].setSwitchingcaptype(switching_cap_type);
-
+    			}
     				break;
     			case PCE_SWITCHINGENCTYPE:
+    			{
     				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
     				string encoding_type = pri_type_decoder.decodeStr(decode_ptr,length);
     				length_offset=length_offset+length+len_tag_len+1;
     				hops[i].setEncodingtype(encoding_type);
-
+    			}
     				break;
     			case PCE_SWITCHINGVLANRANGEAVAI:
+    			{
     				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
     				string vlanRange_availability = pri_type_decoder.decodeStr(decode_ptr,length);
     				length_offset=length_offset+length+len_tag_len+1;
     				hops[i].setVlanrangeavailability(vlanRange_availability);
-
+    			}
     				break;
     			case PCE_SWITCHINGVLANRANGESUGG:
+    			{
     				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
     				string suggested_vlan_range = pri_type_decoder.decodeStr(decode_ptr,length);
     				length_offset=length_offset+length+len_tag_len+1;
     				hops[i].setSuggestedvlanrange(suggested_vlan_range);
-
+    			}
     				break;
     			case PCE_VLANTRANSLATION:
+    			{
     				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
     				bool vlanTranslation = pri_type_decoder.decodeBoolean(decode_ptr,length);
     				length_offset=length_offset+length+len_tag_len+1;
     				hops[i].setVlanTranslation(vlanTranslation);
-
+    			}
     				break;
     				/*
     			case PCE_MAXRESVCAPACITY:
+    			{
     				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
     				u_int64_t flexMaxBandwidth = pri_type_decoder.decodeLong(decode_ptr,length);
     				length_offset=length_offset+length+len_tag_len+1;
 
     				user_cons->setFlexMaxBandwidth(flexMaxBandwidth);
-
+                }
     				break;
     			case PCE_MINRESVCAPACITY:
+    			{
     				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
     				u_int64_t flexMinBandwidth = pri_type_decoder.decodeLong(decode_ptr,length);
     				length_offset=length_offset+length+len_tag_len+1;
 
     				user_cons->setFlexMinBandwidth(flexMinBandwidth);
-
+                }
     				break;
     			case PCE_GRANULARITY:
+    			{
     				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
     				u_int64_t flexGranularity = pri_type_decoder.decodeLong(decode_ptr,length);
     				length_offset=length_offset+length+len_tag_len+1;
 
     				user_cons->setFlexGranularity(flexGranularity);
-
+                }
     				break;
     				*/
     			case PCE_HOP_END_TAG:
+    			{
     				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
     				pri_type_decoder.decodeInt(decode_ptr,length);
     				length_offset=length_offset+length+len_tag_len+1;
     				hop_flag=false;
-
+    			}
     				break;
     			case PCE_NEXTHOP_LENGTH:
+    			{
     				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
     				int next_hop_len=pri_type_decoder.decodeInt(decode_ptr,length);
     				length_offset=length_offset+length+len_tag_len+1;
@@ -1027,7 +1047,7 @@ void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, 
     					}
 
     				}
-
+    			}
     				break;
     			}
     		}
@@ -1072,8 +1092,8 @@ void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, 
 
     	if(path->getPathlength()!=0)
     	{
-    		hops = path->getHops();
-    		for(i=0;i<path->getPathlength();i++)
+    		Hop_req* hops = path->getHops();
+    		for(int i=0;i<path->getPathlength();i++)
     		{
     			outfile<<"hop id="<<hops->getHopid()<<endl;
     			outfile<<"link id="<<hops->getLinkid()<<endl;
