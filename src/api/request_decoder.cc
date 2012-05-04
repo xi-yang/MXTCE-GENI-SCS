@@ -766,6 +766,7 @@ void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, 
 
 
 
+	/*(
 	memcpy(&type, decode_ptr++, sizeof(char));
 
 	if(type==PCE_GRI)
@@ -782,6 +783,7 @@ void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, 
         LOG(buf << endl);
         throw APIException(buf);
 	}
+   */
 
 	memcpy(&type, decode_ptr++, sizeof(char));
 
