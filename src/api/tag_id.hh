@@ -102,6 +102,8 @@
 #define PCE_LIFETIME_END 0xCE
 #define PCE_LIFETIME_DUR 0xCF
 
+#define PCE_FLEX_ALT_PATH_NUM 0xD0
+
 
 #define PCE_TEST1 0xE0
 #define PCE_TEST2 0xE1

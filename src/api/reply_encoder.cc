@@ -117,7 +117,7 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	    	if(!alterPaths.empty())
 	    	{
 	    		int alter_path_num = alterPaths.size();
-	    		int i=0;
+	    		//int i=0;
 
 	    		cout<<"alternate path below"<<endl;
 	    		pri_type_encoder->encodeInteger(PCE_ALT_PATH_NUM,alter_path_num);
@@ -136,6 +136,29 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	    	{
 	    		pri_type_encoder->encodeInteger(PCE_ALT_PATH_NUM,0); //set to 0 for decode side convenience
 
+	    	}
+
+	    	list<TPath*> flexAlterPaths = compute_result->GetFlexAlterPaths();
+
+	    	if(!flexAlterPaths.empty())
+	    	{
+	    		int flex_alter_path_num = flexAlterPaths.size();
+
+	    		cout<<"flex path below"<<endl;
+	    		pri_type_encoder->encodeInteger(PCE_FLEX_ALT_PATH_NUM, flex_alter_path_num);
+	    		cout<<"flex alter path number="<<flex_alter_path_num<<endl;
+
+	    		for(list<TPath*>::iterator it_path=flexAlterPaths.begin();it_path!=flexAlterPaths.end();it_path++)
+	    		{
+	    			if((*it_path)!=NULL)
+	    			{
+	    				encode_path((*it_path), pri_type_encoder, 0);
+	    			}
+	    		}
+	    	}
+	    	else
+	    	{
+	    		pri_type_encoder->encodeInteger(PCE_FLEX_ALT_PATH_NUM, 0);
 	    	}
 
 	    	msg_sub_ptr=pri_type_encoder->get_buff();
