@@ -225,28 +225,51 @@ void APIServerThread::hookHandleMessage()
     int msg_body_len = 0;
     string gri;
     char buf[128];
+    
     while ((msg = msgPort->GetMessage()) != NULL)
     {
         msg->LogDump();
-
-        api_msg* apiMsg = new api_msg();
-        Apireplymsg_encoder* api_encoder = new Apireplymsg_encoder();
-        msg_body_len = api_encoder->test_encode_msg(msg,apiMsg->body);
-
-        api_encoder->encode_msg_header(apiMsg->header, msg_body_len);
-  
-        gri = api_encoder->get_gri();
-        map<string, APIReader*, strcmpless>::iterator itClientConn = this->apiServer.apiClientConns.find(gri);
-        APIReader* clientConn = (itClientConn !=  this->apiServer.apiClientConns.end() ?  this->apiServer.apiClientConns[gri] : NULL);
-        if (!clientConn || !clientConn->GetWriter())
+        map<string, APIReader*, strcmpless>::iterator itClientConn;
+        list<TLV*>::iterator it = msg->GetTLVList().begin();
+        APIReader* clientConn = NULL;
+        for (; it != msg->GetTLVList().end(); it++) 
         {
-        	cout<<"can not get APIReader"<<endl;
-            snprintf(buf, 128, "APIServerThread::hookHandleMessage() can't get APIReader");
-            LOG(buf<<endl);
-            throw APIException(buf);
+            TLV* tlv = (*it);
+            ComputeResult* result;
+            memcpy(&result, tlv->value, sizeof(void*));
+            api_msg* apiMsg = new api_msg();
+            Apireplymsg_encoder* api_encoder = new Apireplymsg_encoder();
+            msg_body_len = api_encoder->test_encode_msg(result,apiMsg->body);
+            api_encoder->encode_msg_header(apiMsg->header, msg_body_len);
+            if (msg->GetTLVList().size() > 1) 
+            {
+                apiMsg->header.options |= htonl(API_OPT_GROUP);
+                list<TLV*>::iterator last = it;
+                last++;
+                if (last == msg->GetTLVList().end()) 
+                    apiMsg->header.options |= htonl(API_OPT_GROUP_LAST);
+            }
+            gri = api_encoder->get_gri();
+            itClientConn = this->apiServer.apiClientConns.find(gri);
+            if (it ==  msg->GetTLVList().begin()) 
+            {
+                if (itClientConn !=  this->apiServer.apiClientConns.end())
+                    clientConn = this->apiServer.apiClientConns[gri];
+                if (!clientConn || !clientConn->GetWriter())
+                {
+                    cout<<"can not get APIReader"<<endl;
+                    snprintf(buf, 128, "APIServerThread::hookHandleMessage() can't get APIReader");
+                    LOG(buf<<endl);
+                    throw APIException(buf);
+                }
+            }
+            clientConn->GetWriter()->PostMessage(apiMsg);
         }
-         clientConn->GetWriter()->PostMessage(apiMsg);
-         this->apiServer.apiClientConns.erase(itClientConn);
+        if (clientConn != NULL) 
+        {
+            this->apiServer.apiClientConns.erase(itClientConn);
+            // delete clientConn ?
+        }
          //delete msg; //msg consumed ?
     }
 }

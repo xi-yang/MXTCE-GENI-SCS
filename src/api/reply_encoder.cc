@@ -5,7 +5,7 @@
 
 int Apireplymsg_encoder::msg_seq_num=0;
 
-int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
+int Apireplymsg_encoder::test_encode_msg(ComputeResult* compute_result, char*& body)
 {
 	int msg_sublen=0;
 	int msg_sub_startlen=0;
@@ -19,8 +19,6 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
 	u_int16_t type;
 	u_int16_t length;
 	u_int8_t* value;
-
-	ComputeResult* compute_result;
 
 	string gri="";
 	string err_msg="";
@@ -56,8 +54,6 @@ int Apireplymsg_encoder::test_encode_msg(Message* msg, char*& body)
     //Encode_Pri_Type* pri_type_encoder = new Encode_Pri_Type();
 
 	char print_buff[200];
-
-    memcpy(&compute_result, msg->GetTLVList().front()->value, sizeof(void*));
 
     //cout<<"int="<<sizeof(int)<<" u_int64_t="<<sizeof(u_int64_t)<<endl;
 
