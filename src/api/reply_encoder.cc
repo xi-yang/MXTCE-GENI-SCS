@@ -307,30 +307,52 @@ void Apireplymsg_encoder::encode_msg_header(api_msg_header& apimsg_header, int m
 void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_type_encoder_ptr, int opti_flag)
 {
 
-	int msg_sublen=0;
-	int msg_sub_startlen=0;
-	int msg_len=0;
-	u_int8_t* msg_sub_ptr;
-	u_int8_t* msg_sub_start_ptr;
-	u_int8_t* msg_body_ptr;
-	u_int8_t pceType=PCE_REPLY;
-	u_int16_t type;
-	u_int16_t length;
-	u_int8_t* value;
-	string gri="";
-	string err_msg="";
-	list<TLink*> path;
+	//int msg_sublen=0;
+	//int msg_sub_startlen=0;
+	//int msg_len=0;
+	//u_int8_t* msg_sub_ptr;
+	//u_int8_t* msg_sub_start_ptr;
+	//u_int8_t* msg_body_ptr;
+	//u_int8_t pceType=PCE_REPLY;
+	//u_int16_t type;
+	//u_int16_t length;
+	//u_int8_t* value;
+	//string gri="";
+	//string err_msg="";
+
 	//TLink* link=NULL;
 	//ISCD* sw_cap_descriptors=NULL;
 	bool optional_cons_flag=true;
 	//list<TPath*> alterPaths;
 	char print_buff[200];
 
-	path = path_info->GetPath();
+	list<TLink*> path = path_info->GetPath();
 
 	pri_type_encoder_ptr->encodeString(PCE_PATH_ID, "path-1");
 
 	cout<<"path length="<<path.size()<<endl;
+
+	list<TSchedule*> schedules = path_info->GetSchedules();
+
+	if(((int)schedules.size())!=0)
+	{
+		pri_type_encoder_ptr->encodeInteger(PCE_LIFETIME_NUM,(int)schedules.size());
+
+		for(list<TSchedule*>::iterator it=schedules.begin();it!=schedules.end();it++)
+		{
+			int start_time = (int)(*it)->GetStartTime();
+			int end_time = (int)(*it)->GetEndTime();
+			int dur_time = (*it)->GetDuration();
+
+			pri_type_encoder_ptr->encodeInteger(PCE_LIFETIME_START, start_time);
+			pri_type_encoder_ptr->encodeInteger(PCE_LIFETIME_END, end_time);
+			pri_type_encoder_ptr->encodeInteger(PCE_LIFETIME_DUR, dur_time);
+		}
+	}
+	else
+	{
+		pri_type_encoder_ptr->encodeInteger(PCE_LIFETIME_NUM,0);
+	}
 
 	pri_type_encoder_ptr->encodeInteger(PCE_PATH_LENGTH, path.size());
 
@@ -686,6 +708,15 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 		}
 
 
+	}
+
+	if(opti_flag==1)
+	{
+		pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_INFO_NUM, 1);
+	}
+	else
+	{
+		pri_type_encoder_ptr->encodeString(PCE_OPT_BAG_INFO_NUM, 0);
 	}
 
 

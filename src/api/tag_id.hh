@@ -103,6 +103,8 @@
 #define PCE_LIFETIME_DUR 0xCF
 
 #define PCE_FLEX_ALT_PATH_NUM 0xD0
+#define PCE_OPT_BAG_INFO_NUM 0xD1
+#define PCE_OPT_BAG_SEG_NUM	0xD2
 
 
 #define PCE_TEST1 0xE0
