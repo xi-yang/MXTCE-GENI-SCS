@@ -712,7 +712,20 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 
 	if(opti_flag==1)
 	{
-		pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_INFO_NUM, 1);
+		int path_bag_info_num=0;
+		if(path_info->GetBAG() != NULL)
+		{
+			path_bag_info_num++;
+		}
+
+		for(list<TLink*>::iterator it=path_info->GetPath().begin();it!=path_info->GetPath().end();it++)
+		{
+			if((*it)->GetBAG() != NULL)
+			{
+				path_bag_info_num++;
+			}
+		}
+		pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_INFO_NUM, path_bag_info_num);
 	}
 	else
 	{
@@ -723,23 +736,25 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 
 	if(opti_flag==1)
 	{
-		BandwidthAvailabilityGraph* bag=NULL;
-		time_t new_time = 0;
-		//time_t last_time = 0;
-		u_int64_t bandwidth;
-		int bag_size;
-		int counter=0;
-		map<time_t, u_int64_t>::iterator it;
+		//BandwidthAvailabilityGraph* bag=NULL;
 
-		bag=path_info->GetBAG();
-		if (bag != NULL)
+		if (path_info->GetBAG() != NULL)
 		{
+			BandwidthAvailabilityGraph* bag=path_info->GetBAG();
+
+			time_t new_time = 0;
+			//time_t last_time = 0;
+			u_int64_t bandwidth;
+			int bag_size;
+			int counter=0;
     		map<time_t, u_int64_t> TBSF=bag->GetTBSF();
 
     		bag_size=TBSF.size();
     		cout<<"size of bag="<<TBSF.size()<<endl;
 
-    		for(it=TBSF.begin();it!=TBSF.end();it++)
+    		pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_SEG_NUM,bag_size);
+
+    		for(map<time_t, u_int64_t>::iterator it=TBSF.begin();it!=TBSF.end();it++)
     		{
 
     			new_time = (*it).first;
@@ -764,6 +779,54 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
     			counter++;
 			}
 		}
+
+		for(list<TLink*>::iterator ite=path_info->GetPath().begin();ite!=path_info->GetPath().end();ite++)
+		{
+			if((*ite)->GetBAG() != NULL)
+			{
+				BandwidthAvailabilityGraph* bag=(*ite)->GetBAG();
+
+				time_t new_time = 0;
+				//time_t last_time = 0;
+				u_int64_t bandwidth;
+				int bag_size;
+				int counter=0;
+				map<time_t, u_int64_t> TBSF=bag->GetTBSF();
+
+				bag_size=TBSF.size();
+				cout<<"size of bag="<<TBSF.size()<<endl;
+
+				pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_SEG_NUM,bag_size);
+
+				for(map<time_t, u_int64_t>::iterator it=TBSF.begin();it!=TBSF.end();it++)
+				{
+
+					new_time = (*it).first;
+					bandwidth = (*it).second;
+
+					if(it!=TBSF.begin())
+					{
+						pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_ENDTIME, new_time);
+						cout<<"bag endtime="<<new_time<<endl;
+					}
+
+					if(counter!=(bag_size-1))
+					{
+						pri_type_encoder_ptr->encodeLong(PCE_OPT_BAG_BANDWIDTH, bandwidth);
+						pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_STARTTIME, new_time);
+
+						cout<<"bag bandwith="<<bandwidth<<endl;
+						cout<<"bag starttime="<<new_time<<endl;
+					}
+
+					//last_time = new_time;
+					counter++;
+				}
+
+			}
+		}
+
+
 
 		//encode the last endtime for bag segment
 		//pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_ENDTIME, last_time);
