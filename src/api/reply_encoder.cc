@@ -716,7 +716,7 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 	}
 	else
 	{
-		pri_type_encoder_ptr->encodeString(PCE_OPT_BAG_INFO_NUM, 0);
+		pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_INFO_NUM, 0);
 	}
 
 
