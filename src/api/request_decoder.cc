@@ -867,6 +867,8 @@ void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, 
 
     		flexSchedules->push_back(t_schedule);
     	}
+
+    	user_cons->setFlexSchedules(flexSchedules);
     }
 
     if(lifetime_exist_flag==true)
@@ -1050,7 +1052,15 @@ void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, 
 
     				}
     			}
-    				break;
+    			break;
+    			case PCE_CAPACITY:
+    			{
+    				length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+    				u_int64_t capacity = pri_type_decoder.decodeLong(decode_ptr,length);
+    				length_offset=length_offset+length+len_tag_len+1;
+    				user_cons->setBandwidth(capacity);
+    			}
+    			break;
     			}
     		}
     	}
