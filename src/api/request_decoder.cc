@@ -948,6 +948,14 @@ void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, 
     				string link_id = pri_type_decoder.decodeStr(decode_ptr,length);
     				length_offset=length_offset+length+len_tag_len+1;
     				hops[i].setLinkid(link_id);
+    				if(i==0)
+    				{
+    					user_cons->setSrcendpoint(link_id);
+    				}
+    				else if(i==(path_length-1))
+    				{
+    					user_cons->setDestendpoint(link_id);
+    				}
     			}
     				break;
     			case PCE_SWITCHINGCAPTYPE:
@@ -972,6 +980,14 @@ void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, 
     				string vlanRange_availability = pri_type_decoder.decodeStr(decode_ptr,length);
     				length_offset=length_offset+length+len_tag_len+1;
     				hops[i].setVlanrangeavailability(vlanRange_availability);
+    				if(i==0)
+    				{
+    					user_cons->setSrcvlantag(vlanRange_availability);
+    				}
+    				else if(i==(path_length-1))
+    				{
+    					user_cons->setDestvlantag(vlanRange_availability);
+    				}
     			}
     				break;
     			case PCE_SWITCHINGVLANRANGESUGG:
