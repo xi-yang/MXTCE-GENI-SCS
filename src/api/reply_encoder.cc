@@ -337,6 +337,7 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 	if(((int)schedules.size())!=0)
 	{
 		pri_type_encoder_ptr->encodeInteger(PCE_LIFETIME_NUM,(int)schedules.size());
+		cout<<"lifetime num="<<(int)schedules.size()<<endl;
 
 		for(list<TSchedule*>::iterator it=schedules.begin();it!=schedules.end();it++)
 		{
@@ -752,7 +753,7 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
     		bag_size=TBSF.size();
     		cout<<"size of bag="<<TBSF.size()<<endl;
 
-    		pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_SEG_NUM,bag_size);
+    		pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_SEG_NUM,bag_size-1);
 
     		for(map<time_t, u_int64_t>::iterator it=TBSF.begin();it!=TBSF.end();it++)
     		{
@@ -834,7 +835,7 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 
 	}
 
-	pri_type_encoder_ptr->encodeString(PCE_PATH_END_TAG, "pathend");
+	//pri_type_encoder_ptr->encodeString(PCE_PATH_END_TAG, "pathend");
 
 }
 
