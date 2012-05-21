@@ -1260,42 +1260,45 @@ void Action_ProcessRequestTopology_MP2P::Finish()
     contextNameSet.push_back("cxt_user_maximum_bw");
     contextNameSet.push_back("cxt_user_minimum_bw");
     list<TLV*> tlvList;
-    for (int i = 0; i < contextNameSet.size(); i++) 
+    // combine results of multiple contexts by flexible request
+    // retrieve COMPUTE_RESULT_LIST for all contexts
+    string actionName = "Action_FinalizeServiceTopology_MP2P";
+    list<ComputeResult*>* computeResultList = (list<ComputeResult*>*)this->GetComputeWorker()->GetContextActionData(contextNameSet[0], actionName, "COMPUTE_RESULT_LIST");
+    list<ComputeResult*>* computeResultList_max = (list<ComputeResult*>*)this->GetComputeWorker()->GetContextActionData(contextNameSet[1], actionName, "COMPUTE_RESULT_LIST");
+    list<ComputeResult*>* computeResultList_min = (list<ComputeResult*>*)this->GetComputeWorker()->GetContextActionData(contextNameSet[2], actionName, "COMPUTE_RESULT_LIST");
+    // for each result in list, append flexible (min, max) result to flexAlterPaths
+    if (computeResultList != NULL && computeResultList->size() > 0)
     {
-        list<ComputeResult*> multip2pResultList;
-        list<ComputeResult*>::iterator itR;
-        bool allSuccess = true;
-        for (; itU != userConsList->end(); itU++)
+        list<ComputeResult*>::iterator itR, itR1, itR2;
+        bool appendMax = false, appendMin = false;
+        if (computeResultList_max != NULL && computeResultList_max->size() == computeResultList->size()) 
         {
-            string actionName = "Action_FinalizeServiceTopology_MP2P";
-            list<ComputeResult*>* computeResultList = (list<ComputeResult*>*)this->GetComputeWorker()->GetContextActionData(contextNameSet[i], actionName, "COMPUTE_RESULT_LIST");
-            if (computeResultList != NULL && computeResultList->size() > 0)
-            {
-                for (itR = computeResultList->begin(); itR != computeResultList->end(); itR++)
-                    multip2pResultList.push_back(*itR);
-            }
-            else
-            {
-                allSuccess = false;
-                break;
-            }
+            appendMax = true;
+            itR1 = computeResultList_max->begin();
         }
-        if (allSuccess) 
+        if (computeResultList_min != NULL && computeResultList_min->size() == computeResultList->size()) 
         {
-            // success case(s)
-            for (itR = multip2pResultList.begin(); itR != multip2pResultList.end(); itR++)
-            {
-                ComputeResult* result = *itR;
-                TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
-                tlv->type = MSG_TLV_VOID_PTR;
-                tlv->length = sizeof(void*);
-                memcpy(tlv->value, &result, sizeof(void*));
-                tlvList.push_back(tlv);
-            }
+            appendMin = true;
+            itR2 = computeResultList_max->begin();
         }
-        else
+        for (itR = computeResultList->begin(); itR != computeResultList->end(); itR++)
         {
-            // TODO: clean up multip2pResultList
+            ComputeResult* result = *itR;
+            if (appendMax)
+            {
+                result->GetFlexAlterPaths().push_back((*itR1)->GetPathInfo());
+                itR1++;
+            }
+            if (appendMin)
+            {
+                result->GetFlexAlterPaths().push_back((*itR2)->GetPathInfo());
+                itR2++;
+            }
+            TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
+            tlv->type = MSG_TLV_VOID_PTR;
+            tlv->length = sizeof(void*);
+            memcpy(tlv->value, &result, sizeof(void*));
+            tlvList.push_back(tlv);
         }
     }
     // failure case
@@ -1310,6 +1313,7 @@ void Action_ProcessRequestTopology_MP2P::Finish()
         memcpy(tlv->value, &result, sizeof(void*));
         tlvList.push_back(tlv);
     }
+    // TODO: clean up multip2pResultList
     string queue = MxTCE::computeThreadPrefix + worker->GetName();
     string topic = "COMPUTE_REPLY";
     SendMessage(MSG_REPLY, queue, topic, tlvList);
