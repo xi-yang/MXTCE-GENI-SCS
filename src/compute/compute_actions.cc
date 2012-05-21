@@ -1262,7 +1262,7 @@ void Action_ProcessRequestTopology_MP2P::Finish()
     list<TLV*> tlvList;
     // combine results of multiple contexts by flexible request
     // retrieve COMPUTE_RESULT_LIST for all contexts
-    string actionName = "Action_FinalizeServiceTopology_MP2P";
+    actionName = "Action_FinalizeServiceTopology_MP2P";
     list<ComputeResult*>* computeResultList = (list<ComputeResult*>*)this->GetComputeWorker()->GetContextActionData(contextNameSet[0], actionName, "COMPUTE_RESULT_LIST");
     list<ComputeResult*>* computeResultList_max = (list<ComputeResult*>*)this->GetComputeWorker()->GetContextActionData(contextNameSet[1], actionName, "COMPUTE_RESULT_LIST");
     list<ComputeResult*>* computeResultList_min = (list<ComputeResult*>*)this->GetComputeWorker()->GetContextActionData(contextNameSet[2], actionName, "COMPUTE_RESULT_LIST");
