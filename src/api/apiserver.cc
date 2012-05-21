@@ -163,6 +163,7 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
         list<Apimsg_user_constraint*>* userConsGroup = this->GetGroup(user_cons->getGri());
         for (list<Apimsg_user_constraint*>::iterator it  = userConsGroup->begin(); it != userConsGroup->end(); it++)
         {
+             user_cons = *it;
              tlv_ptr = (TLV*)(new u_int8_t[TLV_HEAD_SIZE + sizeof(user_cons)]);
              tlv_ptr->type = MSG_TLV_VOID_PTR;
              tlv_ptr->length = sizeof(user_cons);

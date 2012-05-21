@@ -1534,6 +1534,14 @@ TPath* TPath::Clone(bool doExpandRemoteLink)
         lastLink = L;
         P->GetPath().push_back(L);
     }
+    if (this->schedules.size() > 0) 
+    {
+        list<TSchedule*>::iterator itS = this->schedules.begin();
+        for ( ; itS != this->schedules.end(); itS++)
+        {
+            P->GetSchedules().push_back((*itS)->Clone());    
+        }
+    }
     if (bag != NULL)
         P->bag = bag->Clone();
     // TODO: set all port, lclEnd and rmtEnd to NULL
