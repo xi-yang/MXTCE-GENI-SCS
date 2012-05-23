@@ -630,6 +630,7 @@ void Apireqmsg_decoder::decode_opitcons_coschedreq(char* & decode_ptr, int total
 	int max_duration=0;
 	u_int64_t max_bandwidth=0L;
 	int data_size_bytes=0;
+	bool require_link_bag=false;
 
 	Apimsg_stornet_constraint* co_schedule_request = new Apimsg_stornet_constraint();
 
@@ -690,6 +691,9 @@ void Apireqmsg_decoder::decode_opitcons_coschedreq(char* & decode_ptr, int total
 			data_size_bytes = pri_type_decoder.decodeInt(decode_ptr, length);
 
 			break;
+		case PCE_OPT_REQ_LINK_BAG:
+			length = pri_type_decoder.getLen(decode_ptr, len_tag_len);
+			require_link_bag = pri_type_decoder.decodeBoolean(decode_ptr, length);
 
 		}//end of switch
 
@@ -709,6 +713,7 @@ void Apireqmsg_decoder::decode_opitcons_coschedreq(char* & decode_ptr, int total
 	co_schedule_request->setMaxduration(max_duration);
 	co_schedule_request->setMaxbandwidth(max_bandwidth);
 	co_schedule_request->setDatasizebytes(data_size_bytes);
+	co_schedule_request->setRequireLinkBag(require_link_bag);
 
 	user_cons->setCoschedreq(co_schedule_request);
 
@@ -738,6 +743,7 @@ void Apireqmsg_decoder::decode_opitcons_coschedreq(char* & decode_ptr, int total
     outfile<<"max duration="<<max_duration<<endl;
     outfile<<"max bandwidth="<<max_bandwidth<<endl;
     outfile<<"data size bytes="<<data_size_bytes<<endl;
+    outfile<<"require link bag="<<require_link_bag<<endl;
 
     outfile.close();
 

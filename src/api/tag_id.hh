@@ -106,6 +106,8 @@
 #define PCE_OPT_BAG_INFO_NUM 0xD1
 #define PCE_OPT_BAG_SEG_NUM	0xD2
 
+#define PCE_OPT_REQ_LINK_BAG 0xD3
+
 
 #define PCE_TEST1 0xE0
 #define PCE_TEST2 0xE1

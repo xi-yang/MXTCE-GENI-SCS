@@ -797,7 +797,7 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 				bag_size=TBSF.size();
 				cout<<"size of bag="<<TBSF.size()<<endl;
 
-				pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_SEG_NUM,bag_size);
+				pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_SEG_NUM,bag_size-1);
 
 				for(map<time_t, u_int64_t>::iterator it=TBSF.begin();it!=TBSF.end();it++)
 				{
