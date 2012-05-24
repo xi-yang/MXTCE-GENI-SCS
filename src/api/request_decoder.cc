@@ -802,6 +802,7 @@ void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, 
 		length_offset=length_offset+length+len_tag_len+1;
 
 		path->setPathid(path_id);
+		user_cons->setPathId(path_id);
 	}
 	else
 	{
@@ -1118,6 +1119,7 @@ void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, 
     outfile<<"bandwidth="<<bandwidth<<endl;
     */
 
+    outfile<<"multi path request"<<endl;
     if(user_cons->getPath()!=NULL)
     {
     	path = user_cons->getPath();
