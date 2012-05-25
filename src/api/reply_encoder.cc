@@ -23,6 +23,9 @@ int Apireplymsg_encoder::test_encode_msg(ComputeResult* compute_result, char*& b
 	string gri="";
 	string err_msg="";
 	TPath* path_info=NULL;
+
+	this->path_seq_num = 1;
+	this->alt_path_seq_num = 1;
 	/*
 	list<TLink*> path;
 
@@ -330,7 +333,25 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, string path_id, Encode_P
 
 	list<TLink*> path = path_info->GetPath();
 
-	pri_type_encoder_ptr->encodeString(PCE_PATH_ID, path_id);
+	string path_id_combine;
+	stringstream sstm;
+
+	if(opti_flag==1)
+	{
+		sstm << "-alt" << this->alt_path_seq_num;
+		path_id_combine=path_id + sstm.str();
+		this->alt_path_seq_num++;
+	}
+	else
+	{
+		sstm << "-" << this->path_seq_num;
+		path_id_combine=path_id + sstm.str();
+		this->path_seq_num++;
+	}
+
+	pri_type_encoder_ptr->encodeString(PCE_PATH_ID, path_id_combine);
+
+	cout<<"path_id="<<path_id_combine<<endl;
 
 	cout<<"path length="<<path.size()<<endl;
 
@@ -758,7 +779,7 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, string path_id, Encode_P
     		pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_SEG_NUM,bag_size-1);
 
     		pri_type_encoder_ptr->encodeString(PCE_OPT_BAG_TYPE,"path");
-    		pri_type_encoder_ptr->encodeString(PCE_OPT_BAG_ID,path_id);
+    		pri_type_encoder_ptr->encodeString(PCE_OPT_BAG_ID,path_id_combine);
 
     		for(map<time_t, u_int64_t>::iterator it=TBSF.begin();it!=TBSF.end();it++)
     		{

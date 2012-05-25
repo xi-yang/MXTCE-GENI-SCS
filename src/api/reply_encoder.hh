@@ -16,6 +16,8 @@ protected:
 	Encode_Pri_Type* pri_type_encoder;
 	int length;
 	static int msg_seq_num;
+	int path_seq_num;
+	int alt_path_seq_num;
 
 	string gri_value;
 
@@ -26,6 +28,8 @@ public:
 	Apireplymsg_encoder()
 	{
 		length=0;
+		path_seq_num=0;
+		alt_path_seq_num=0;
 
 		pri_type_encoder = new Encode_Pri_Type();
 	}
