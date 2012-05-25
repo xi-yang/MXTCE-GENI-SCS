@@ -75,13 +75,15 @@ int Apireplymsg_encoder::test_encode_msg(ComputeResult* compute_result, char*& b
 		pri_type_encoder->reset_length(); //reset encoder offset
 
 		path_info = compute_result->GetPathInfo();
+		string path_id = compute_result->GetPathId();
+
 		if(path_info == NULL)
 		{
 			cout<<"path info is null"<<endl;
 		}
 	    if (path_info != NULL)
 	    {
-	    	encode_path(path_info, pri_type_encoder, 0);
+	    	encode_path(path_info, path_id, pri_type_encoder, 0);
 	    }
 
 		msg_sub_ptr=pri_type_encoder->get_buff();
@@ -105,7 +107,7 @@ int Apireplymsg_encoder::test_encode_msg(ComputeResult* compute_result, char*& b
 	    	//pri_type_encoder->encodeString(PCE_OPTI_REPLY, "opti");
 	    	if(path_info != NULL)
 	    	{
-	    		encode_path(path_info, pri_type_encoder, 1);
+	    		encode_path(path_info, path_id, pri_type_encoder, 1);
 	    	}
 
 	    	alterPaths = compute_result->GetAlterPaths();
@@ -123,7 +125,7 @@ int Apireplymsg_encoder::test_encode_msg(ComputeResult* compute_result, char*& b
 	    		{
 	    			if((*it_path)!=NULL)
 	    			{
-	    				encode_path((*it_path), pri_type_encoder, 1);
+	    				encode_path((*it_path), path_id, pri_type_encoder, 1);
 
 	    			}
 	    		}
@@ -148,7 +150,7 @@ int Apireplymsg_encoder::test_encode_msg(ComputeResult* compute_result, char*& b
 	    		{
 	    			if((*it_path)!=NULL)
 	    			{
-	    				encode_path((*it_path), pri_type_encoder, 0);
+	    				encode_path((*it_path), path_id, pri_type_encoder, 0);
 	    			}
 	    		}
 	    	}
@@ -304,7 +306,7 @@ void Apireplymsg_encoder::encode_msg_header(api_msg_header& apimsg_header, int m
 
 }
 
-void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_type_encoder_ptr, int opti_flag)
+void Apireplymsg_encoder::encode_path(TPath* path_info, string path_id, Encode_Pri_Type* pri_type_encoder_ptr, int opti_flag)
 {
 
 	//int msg_sublen=0;
@@ -328,7 +330,7 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 
 	list<TLink*> path = path_info->GetPath();
 
-	pri_type_encoder_ptr->encodeString(PCE_PATH_ID, "path-1");
+	pri_type_encoder_ptr->encodeString(PCE_PATH_ID, path_id);
 
 	cout<<"path length="<<path.size()<<endl;
 
@@ -755,6 +757,9 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 
     		pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_SEG_NUM,bag_size-1);
 
+    		pri_type_encoder_ptr->encodeString(PCE_OPT_BAG_TYPE,"path");
+    		pri_type_encoder_ptr->encodeString(PCE_OPT_BAG_ID,path_id);
+
     		for(map<time_t, u_int64_t>::iterator it=TBSF.begin();it!=TBSF.end();it++)
     		{
 
@@ -798,6 +803,9 @@ void Apireplymsg_encoder::encode_path(TPath* path_info, Encode_Pri_Type* pri_typ
 				cout<<"size of bag="<<TBSF.size()<<endl;
 
 				pri_type_encoder_ptr->encodeInteger(PCE_OPT_BAG_SEG_NUM,bag_size-1);
+
+				pri_type_encoder_ptr->encodeString(PCE_OPT_BAG_TYPE,"hop");
+				pri_type_encoder_ptr->encodeString(PCE_OPT_BAG_ID,(*ite)->GetName());
 
 				for(map<time_t, u_int64_t>::iterator it=TBSF.begin();it!=TBSF.end();it++)
 				{

@@ -39,7 +39,7 @@ public:
 
 	void encode_msg_header(api_msg_header&, int);
 
-	void encode_path(TPath*, Encode_Pri_Type*, int);
+	void encode_path(TPath*, string, Encode_Pri_Type*, int);
 
 	string get_gri()
 	{
