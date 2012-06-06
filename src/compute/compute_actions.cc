@@ -1279,7 +1279,7 @@ void Action_ProcessRequestTopology_MP2P::Finish()
         if (computeResultList_min != NULL && computeResultList_min->size() == computeResultList->size()) 
         {
             appendMin = true;
-            itR2 = computeResultList_max->begin();
+            itR2 = computeResultList_min->begin();
         }
         for (itR = computeResultList->begin(); itR != computeResultList->end(); itR++)
         {
