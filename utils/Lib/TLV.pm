@@ -30,10 +30,10 @@ sub new {
                 'len' => undef,
                 'templ' => 'nn' #the header
         };
-        # type(16) length(16) gri(8*64) domain(8*32) start_time(32) end_time(32) bandwidth(32) status(8*16)
+        # type(16) length(16) gri(8*64) domain(8*36) start_time(32) end_time(32) bandwidth(64) status(8*16)
         if($a[0] == MSG_TLV_RESV_INFO) {
-                $$self{templ} .= 'a64a32LLLLa16';
-                $$self{len} = 128;
+                $$self{templ} .= 'a64a36LLLLa16';
+                $$self{len} = 132;
                 $$self{gri} = $a[1];
                 $$self{domain} = $a[2];
                 $$self{start_time} = $a[3];
