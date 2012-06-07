@@ -70,7 +70,7 @@ typedef struct {
     u_int16_t type;    // MSG_TLV_RESV_INFO  : ntohs for external to internal msg conversion
     u_int16_t length; //ntohs for external to internal msg conversion
     char gri[64]; //c_str
-    char domain[32]; //c_str
+    char domain[36]; //c_str
     u_int32_t start_time;
     u_int32_t end_time;
     u_int64_t bandwidth;
