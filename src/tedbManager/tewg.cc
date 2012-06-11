@@ -1467,7 +1467,13 @@ BandwidthAvailabilityGraph* TPath::CreatePathBAG(time_t start, time_t end)
     AggregateDeltaSeries* ads = (AggregateDeltaSeries*)((*itL)->GetWorkData()->GetData("ADS"));
     if (ads == NULL)
     {
-        return NULL;
+        ads = new AggregateDeltaSeries;
+        list<TDelta*>::iterator itD;
+        for (itD = (*itL)->GetDeltaList().begin(); itD != (*itL)->GetDeltaList().end(); itD++)
+        {
+            TDelta* delta = *itD;
+            ads->AddDelta(delta);
+        }
     }
     ads = ads->Duplicate();
     itL++;
@@ -1475,7 +1481,15 @@ BandwidthAvailabilityGraph* TPath::CreatePathBAG(time_t start, time_t end)
     for (; itL != path.end(); itL++)
     {
         if ((*itL)->GetWorkData()->GetData("ADS") == NULL)
-            return NULL;
+        {
+            ads = new AggregateDeltaSeries;
+            list<TDelta*>::iterator itD;
+            for (itD = (*itL)->GetDeltaList().begin(); itD != (*itL)->GetDeltaList().end(); itD++)
+            {
+                TDelta* delta = *itD;
+                ads->AddDelta(delta);
+            }
+        }
         ads->Join(*(AggregateDeltaSeries*)((*itL)->GetWorkData()->GetData("ADS")));
         if (capacity > (*itL)->GetMaxReservableBandwidth())
             capacity = (*itL)->GetMaxReservableBandwidth();
