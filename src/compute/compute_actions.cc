@@ -765,7 +765,10 @@ void Action_CreateOrderedATS::Process()
         // add flex schedule starting points to ATS
         for (itS = _userConstraint->getFlexSchedules()->begin(); itS != _userConstraint->getFlexSchedules()->end(); itS++)
         {
-            AddUniqueTimePoint(_orderedATS, (*itS)->GetStartTime());
+            if ((*itS)->GetStartTime() >= t0)
+            {
+                AddUniqueTimePoint(_orderedATS, (*itS)->GetStartTime());
+            }
         }
     }
 }
@@ -988,8 +991,7 @@ void Action_ComputeSchedulesWithKSP::Process()
                     if ((*(*itFP)) == (*(*itP)))
                     {
                         (*itFP)->GetSchedules().push_back(schedule);
-                        itP++;
-                        continue;
+                        //break;
                     }
                 }
                 // make a copy of TPath from work set. Then do twists on the copy to satisfy reply format.

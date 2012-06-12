@@ -367,7 +367,7 @@ public:
         list<TLink*>::const_iterator itL1 = this->path.begin();
         list<TLink*>::const_iterator itL2 = p.path.begin();
         for (; itL1 != path.end(); itL1++, itL2++)
-            if ((*itL1) != (*itL2))
+            if (!(*(*itL1) == *(*itL2)))
                 return false;
         return true;
     }
