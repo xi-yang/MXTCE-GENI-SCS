@@ -739,25 +739,33 @@ void Action_CreateOrderedATS::Process()
             }
         }
     }
-    // add current time and max_duration time
+    // add current time 
     _orderedATS->push_front(t0);
-    _orderedATS->push_front(t0+MAX_SCHEDULE_DURATION);
 
-    // insert qualified schedule starting time
-    if (_userConstraint != NULL && _userConstraint->getFlexSchedules() != NULL && _volume != 0 && _bandwidth != 0) 
+    // remove unqualified schedule starting times from the ATS
+    list<TSchedule*>::iterator itS;
+    if (_userConstraint != NULL && _userConstraint->getFlexSchedules() != NULL 
+        && _userConstraint->getFlexSchedules()->size() > 0 && _volume != 0 && _bandwidth != 0) 
     {
-        list<TSchedule*>::iterator itS = _userConstraint->getFlexSchedules()->begin();
-        for (; itS != _userConstraint->getFlexSchedules()->end(); itS++)
+        for (itT = _orderedATS->begin(); itT != _orderedATS->end(); itT++)
         {
-            TSchedule * schedule = *itS;
-            for (; itT != _orderedATS->end(); itT++)
+            for (itS = _userConstraint->getFlexSchedules()->begin(); itS != _userConstraint->getFlexSchedules()->end(); itS++)
             {
-                if (schedule->WithinSchedule(*itT) && schedule->GetStartTime()-(*itT) >= (_volume/_bandwidth))
+                TSchedule * schedule = *itS;
+                if (schedule->WithinSchedule(*itT) && (*itT)-schedule->GetEndTime() >= (_volume/_bandwidth))
                 {
-                    itT = _orderedATS->insert(itT, schedule->GetStartTime());
                     break;
                 }                    
             }
+            if (itS == _userConstraint->getFlexSchedules()->end()) 
+            {
+                _orderedATS->erase(itT);
+            }
+        }
+        // add flex schedule starting points to ATS
+        for (itS = _userConstraint->getFlexSchedules()->begin(); itS != _userConstraint->getFlexSchedules()->end(); itS++)
+        {
+            AddUniqueTimePoint(_orderedATS, (*itS)->GetStartTime());
         }
     }
 }

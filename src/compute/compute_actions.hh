@@ -246,7 +246,7 @@ public:
 
 
 
-#define MAX_SCHEDULE_DURATION 1314000 // 365 days
+#define MAX_SCHEDULE_DURATION 31536000 // 365 days
 #define BANDWIDTH_TIME_FACTOR 1.0 // 0.5 ?
 
 class Action_ReorderPaths_MP2P: public Action
