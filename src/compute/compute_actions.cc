@@ -759,7 +759,7 @@ void Action_CreateOrderedATS::Process()
             }
             if (itS == _userConstraint->getFlexSchedules()->end()) 
             {
-                _orderedATS->erase(itT);
+                itT = _orderedATS->erase(itT);
             }
         }
         // add flex schedule starting points to ATS
@@ -991,8 +991,13 @@ void Action_ComputeSchedulesWithKSP::Process()
                     if ((*(*itFP)) == (*(*itP)))
                     {
                         (*itFP)->GetSchedules().push_back(schedule);
-                        //break;
+                        break;
                     }
+                }
+                if (itFP != _feasiblePaths->end())
+                {
+                    itP++;
+                    continue; 
                 }
                 // make a copy of TPath from work set. Then do twists on the copy to satisfy reply format.
                 // Caution: Clone() will inherit the orignal localEnd and remoteEnd nodes from work set.
