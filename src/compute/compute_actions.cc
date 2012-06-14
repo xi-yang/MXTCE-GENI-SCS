@@ -765,7 +765,7 @@ void Action_CreateOrderedATS::Process()
         // add flex schedule starting points to ATS
         for (itS = _userConstraint->getFlexSchedules()->begin(); itS != _userConstraint->getFlexSchedules()->end(); itS++)
         {
-            if ((*itS)->GetStartTime() >= t0)
+            if ((*itS)->GetStartTime() >= t0 && (*itS)->GetEndTime()-(*itS)->GetStartTime() >= (_volume/_bandwidth))
             {
                 AddUniqueTimePoint(_orderedATS, (*itS)->GetStartTime());
             }
