@@ -56,92 +56,17 @@ int MxTCEAPIServer::HandleAPIMessage (APIReader* apiReader, APIWriter* apiWriter
         string gri = cstrClientConnId;
         user_cons->setGri(gri);
     }
+    if (user_cons->getFlexSchedules() == NULL && user_cons->getStarttime() > 0 && user_cons->getEndtime() > user_cons->getStarttime())
+    {
+        list<TSchedule*>* fs = new list<TSchedule*>;
+        TSchedule* sched = new TSchedule((time_t)user_cons->getStarttime(), (time_t)user_cons->getEndtime());
+        fs->push_back(sched);
+        user_cons->setFlexSchedules(fs);
+    }
     string queueName="CORE";
     string topicName="API_REQUEST";
     Message* tMsg = NULL;
     TLV* tlv_ptr = NULL;
-
-    // temp test code
-    if (MxTCE::tempTest)
-    {
-        tMsg = new Message(MSG_REQ, queueName, topicName);
-        Apimsg_user_constraint* userCons = new Apimsg_user_constraint[3];
-        string ep1 = "urn:ogf:network:domain=ion.internet2.edu:node=rtr.chic:port=xe-2/1/0:link=*";
-        string ep2 = "urn:ogf:network:domain=ion.internet2.edu:node=rtr.newy:port=xe-1/0/1:link=*";
-        string ep3 = "urn:ogf:network:domain=es.net:node=bnl-mr3:port=xe-1/2/0:link=*";
-        string vtag = "any";
-        
-        time_t starttime = time(0); 
-        time_t endtime = starttime + 10800;
-        int duration = 3600;
-        TSchedule* ts1 = new TSchedule(starttime, endtime, duration);
-        list<TSchedule*>* tsList = new list<TSchedule*>;
-        tsList->push_back(ts1);
-
-        userCons[0].setGri("test1");
-        userCons[0].setPathId("test1-path1");
-        userCons[0].setSrcendpoint(ep1);
-        userCons[0].setSrcvlantag(vtag);
-        userCons[0].setDestendpoint(ep2);
-        userCons[0].setDestvlantag(vtag);
-        userCons[0].setStarttime(0);
-        userCons[0].setEndtime(0);
-        userCons[0].setBandwidth(500000000);
-        userCons[0].setFlexMaxBandwidth(1000000000);
-        userCons[0].setFlexMinBandwidth(200000000);
-        userCons[0].setFlexGranularity(100000000);
-        userCons[0].setFlexSchedules(tsList);
-
-        Apimsg_stornet_constraint* coscheduleOptConstraint = new Apimsg_stornet_constraint;
-        coscheduleOptConstraint->setStarttime(1335282854);
-        coscheduleOptConstraint->setEndtime(1335287000);
-        coscheduleOptConstraint->setBandwidthavaigraph(true);
-        coscheduleOptConstraint->setMaxnumofaltpaths(3);
-        coscheduleOptConstraint->setRequireLinkBag(true);
-        coscheduleOptConstraint->setMinbandwidth(1);
-        userCons[0].setCoschedreq(coscheduleOptConstraint);
-
-        userCons[1].setGri("test1");
-        userCons[1].setPathId("test1-path2");
-        userCons[1].setSrcendpoint(ep1);
-        userCons[1].setSrcvlantag(vtag);
-        userCons[1].setDestendpoint(ep3);
-        userCons[1].setDestvlantag(vtag);
-        userCons[1].setStarttime(0);
-        userCons[1].setEndtime(0);
-        userCons[1].setBandwidth(500000000);
-        userCons[1].setFlexMaxBandwidth(1000000000);
-        userCons[1].setFlexMinBandwidth(200000000);
-        userCons[1].setFlexGranularity(100000000);
-        userCons[1].setFlexSchedules(tsList);
-
-        userCons[2].setGri("test1");
-        userCons[2].setPathId("test1-path3");
-        userCons[2].setSrcendpoint(ep2);
-        userCons[2].setSrcvlantag(vtag);
-        userCons[2].setDestendpoint(ep3);
-        userCons[2].setDestvlantag(vtag);
-        userCons[2].setStarttime(0);
-        userCons[2].setEndtime(0);
-        userCons[2].setBandwidth(500000000);
-        userCons[2].setFlexMaxBandwidth(1000000000);
-        userCons[2].setFlexMinBandwidth(200000000);
-        userCons[2].setFlexGranularity(100000000);
-        userCons[2].setFlexSchedules(tsList);
-
-        for (int i = 0; i < 3; i++)
-        {
-            void * ptr = userCons+i;
-            tlv_ptr = (TLV*)(new u_int8_t[TLV_HEAD_SIZE + sizeof(ptr)]);
-            tlv_ptr->type = MSG_TLV_VOID_PTR;
-            tlv_ptr->length = sizeof(ptr);
-            memcpy(tlv_ptr->value, &ptr, sizeof(ptr));
-            tMsg->AddTLV(tlv_ptr);
-        }
-        apiThread->GetMessagePort()->PostMessage(tMsg);
-        apiClientConns[userCons[0].getGri()] = apiReader;
-        return 0;
-    }
     
     if (((ntohl(apiMsg->header.options) & API_OPT_GROUP)) == 0) // none group
     {
