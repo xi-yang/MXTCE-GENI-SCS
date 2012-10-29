@@ -157,6 +157,14 @@ AC_CHECK_LIB(yaml, yaml_get_version_string, [], [
     ])
 
 dnl ---------------------------------------------------
+dnl Check existance of libxmlrpc_server
+dnl ---------------------------------------------------
+AC_CHECK_LIB(xmlrpc_server, xmlrpc_server_version_major, [], [
+    echo "Error! You need to install xmlrpc-c."
+    exit -1
+    ])
+
+dnl ---------------------------------------------------
 dnl BSD/OS 4.1 define inet_XtoY function as __inet_XtoY
 dnl ---------------------------------------------------
 AC_CHECK_FUNC(__inet_ntop, AC_DEFINE(HAVE_INET_NTOP))
