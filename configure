@@ -7669,7 +7669,6 @@ else
 fi
 
 
-
 { $as_echo "$as_me:$LINENO: checking for xmlrpc_server_version_major in -lxmlrpc_server" >&5
 $as_echo_n "checking for xmlrpc_server_version_major in -lxmlrpc_server... " >&6; }
 if test "${ac_cv_lib_xmlrpc_server_xmlrpc_server_version_major+set}" = set; then
@@ -7736,12 +7735,7 @@ fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_lib_xmlrpc_server_xmlrpc_server_version_major" >&5
 $as_echo "$ac_cv_lib_xmlrpc_server_xmlrpc_server_version_major" >&6; }
 if test "x$ac_cv_lib_xmlrpc_server_xmlrpc_server_version_major" = x""yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBXMLRPC_SERVER 1
-_ACEOF
-
-  LIBS="-lxmlrpc_server $LIBS"
-
+  LIBS="$LIBS -lxmlrpc_cpp -lxmlrpc_server_abyss++"
 else
 
     echo "Error! You need to install xmlrpc-c."
