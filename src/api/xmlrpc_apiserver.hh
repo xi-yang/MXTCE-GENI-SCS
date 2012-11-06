@@ -55,7 +55,6 @@ protected:
         
 public:
     XMLRPC_BaseMethod(MxTCE* tce):mxTCE(tce) { 
-        this->_signature = "Base";
         this->_help = "base method";
         msgPort = NULL;
     }
@@ -69,7 +68,7 @@ public:
 class XMLRPC_ComputePathMethod: public XMLRPC_BaseMethod {
 public:
     XMLRPC_ComputePathMethod(MxTCE* tce):XMLRPC_BaseMethod(tce) {
-        this->_signature = "ComputePath";
+        this->_signature = "?";
         this->_help = "compute path method";
     }
     void execute(xmlrpc_c::paramList const& paramList,
