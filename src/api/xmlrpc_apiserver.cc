@@ -40,7 +40,7 @@
 
 // Base class 
 // TODO: move msgPort to thread level ?
-void XMLRPC_BaseMethod::begin() 
+void XMLRPC_BaseMethod::init() 
 {
     mxTCE->GetMessageRouter()->AddPort(MxTCE::xmlrpcApiServerPortName);
     string routeQueue = "CORE", routeTopic1 = "XMLRPC_API_REQUEST", routeTopic2 = "XMLRPC_API_REPLY";
@@ -48,7 +48,8 @@ void XMLRPC_BaseMethod::begin()
     mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic2, MxTCE::xmlrpcApiServerPortName);
     msgPort = MessagePipeFactory::LookupMessagePipe(MxTCE::xmlrpcApiServerPortName)->GetClientPort();
     assert(msgPort);
-    msgPort->SetEventMaster(NULL);
+    evtMaster = new EventMaster;
+    msgPort->SetEventMaster(evtMaster);
     msgPort->SetThreadScheduler(NULL);
     if (!msgPort->IsUp())
     {
@@ -60,32 +61,49 @@ void XMLRPC_BaseMethod::begin()
     }
 }
 
+void XMLRPC_BaseMethod::begin() 
+{
+    XMLRPC_TimeoutTimer* timeoutTimer = new XMLRPC_TimeoutTimer(evtMaster);
+    assert(evtMaster);
+    evtMaster->Schedule(timeoutTimer);
+    evtMaster->Run();
+}
+
 void XMLRPC_BaseMethod::end() {
-    msgPort->DetachPipes();
-    delete msgPort;
-    msgPort = NULL;
+    if (msgPort != NULL) 
+    {
+        msgPort->DetachPipes();
+        delete msgPort;
+        msgPort = NULL;
+    }
+    if (evtMaster != NULL) 
+    {
+        delete evtMaster;
+        evtMaster = NULL;
+    }
 }
 
 // Actaul XMLRPC methods
 void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value *   const  retvalP) 
 {
-    this->begin();
-    // TODO: actual logic
-    // parse and send message to msgPort
+    this->init();
     
+    // TODO: parse and send message to msgPort
+
+    // test code
+    string queueName="CORE";
+    string topicName="XMLRPC_API_REQUEST";
+    Message* testMsg = new Message(MSG_REQ, queueName, topicName);
+    msgPort->PostMessage(testMsg);
+
+    this->begin();
     // poll MessagePort queue:
-    int t = 0;
-    for (; t < MAX_MSG_PORT_POLL_TIME; t++) 
+    if (msgPort->GetMsgInQueue().size() == 0) 
     {
-        sleep(1);
-        if (msgPort->GetMsgInQueue().size() == 0)
-            continue;
-        Message* msg = msgPort->GetMsgInQueue().front();
-        break;
+        // create error msg
     }
-    if (t == MAX_MSG_PORT_POLL_TIME) 
-    {
-        // return error msg
+    else {
+        // create reply msg
     }
     this->end();
 }

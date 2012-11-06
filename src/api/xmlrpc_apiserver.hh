@@ -52,17 +52,36 @@ class XMLRPC_BaseMethod: public xmlrpc_c::method {
 protected:
     MxTCE *mxTCE;
     MessagePort* msgPort;
+    EventMaster* evtMaster;
         
 public:
     XMLRPC_BaseMethod(MxTCE* tce):mxTCE(tce) { 
         this->_help = "base method";
         msgPort = NULL;
+        evtMaster = NULL;
     }
     void execute(xmlrpc_c::paramList const& paramList,
             xmlrpc_c::value *   const  retvalP) {
     }
+    void init();
     void begin();
     void end();
+};
+
+#define MAX_MSG_PORT_POLL_TIME 10 // seconds
+
+class XMLRPC_TimeoutTimer: public Timer {
+private:
+    EventMaster* evtMaster;
+    XMLRPC_TimeoutTimer() { }
+
+public:
+    XMLRPC_TimeoutTimer(EventMaster* em): Timer((int)MAX_MSG_PORT_POLL_TIME, (int)0), evtMaster(em) { }
+    virtual void Run() {
+        if (evtMaster != NULL);
+            evtMaster->Stop();
+    }
+    
 };
 
 class XMLRPC_ComputePathMethod: public XMLRPC_BaseMethod {
@@ -76,6 +95,8 @@ public:
 };
 
 
+#define XMLRPC_APIServerThread XMLRPC_APIServer
+
 class XMLRPC_APIServer: public Thread
 {
 protected:
@@ -87,8 +108,6 @@ public:
     virtual void* Run();
 };
 
-#define XMLRPC_APIServerThread XMLRPC_APIServer
-#define MAX_MSG_PORT_POLL_TIME 10 // seconds
 
 #endif
 
