@@ -41,8 +41,10 @@
 
 
 int MxTCE::apiServerPort = 2089;
+int MxTCE::xmlrpcApiServerPort = 8081;
 int MxTCE::resvApiServerPort = 2091;
 string MxTCE::apiServerPortName = "MX-TCE_API_SERVER";
+string MxTCE::xmlrpcApiServerPortName = "MX-TCE_XMLRPC_API_SERVER";
 string MxTCE::tedbManPortName = "MX-TCE_TEDB_MANAGER";
 string MxTCE::resvManPortName = "MX-TCE_RESV_MANAGER";
 string MxTCE::policyManPortName = "MX-TCE_POLICY_MANAGER";
@@ -67,6 +69,7 @@ MxTCE::MxTCE( const string& configFile)
     loopbackPort->SetEventMaster(eventMaster);
 
     apiServerThread = new APIServerThread(MxTCE::apiServerPortName, MxTCE::apiServerPort);
+    xmlrpcApiServerThread = new XMLRPC_APIServer(this);
     tedbManThread = new TEDBManThread(MxTCE::tedbManPortName);
     resvManThread = new ResvManThread(MxTCE::resvManPortName);
     policyManThread = new PolicyManThread(MxTCE::policyManPortName);
@@ -86,9 +89,15 @@ void MxTCE::Start()
     // exception could be thrown here and program will abort as expected
     configParser->ParseYamlConfig();
         
-    // init apiServer port and routes on messge router
+    // init binary apiServer port and routes on messge router
     messageRouter->AddPort(MxTCE::apiServerPortName);
     
+    // TODO: add xmlrpc ApiServer port on-demand by xmlrpc call
+    //messageRouter->AddPort(MxTCE::xmlrpcApiServerPortName);
+	//routeTopic1 = "XMLRPC_API_REQUEST", routeTopic2 = "XMLRPC_API_REPLY";
+    //messageRouter->AddRoute(routeQueue,routeTopic1, MxTCE::loopbackPortName);
+    //messageRouter->AddRoute(routeQueue,routeTopic2, MxTCE::xmlrpcApiServerPortName);
+
     // init TEDBMan port and routes on messge router
     messageRouter->AddPort(MxTCE::tedbManPortName);
 
@@ -104,6 +113,9 @@ void MxTCE::Start()
 
     // start binary API server thread 
     apiServerThread->Start(NULL);
+
+    // start xmlrpc API server thread 
+    xmlrpcApiServerThread->Start(NULL);
     
     // start TEDB thread
     tedbManThread->Start(NULL);
@@ -130,6 +142,7 @@ void MxTCE::Start()
 
     // join threads
     apiServerThread->Join();
+	xmlrpcApiServerThread->Join();
     tedbManThread->Join();
     resvManThread->Join();
     policyManThread->Join();
@@ -235,6 +248,7 @@ void MxTCEMessageHandler::Run()
             computingThread->GetEventMaster()->Stop();
             computingThread->Join();
         }
+		// TODO: handle XMLRPC_API_REQUEST and XMLRPC_API_REPLY
     }
 
     delete msg; //msg consumed

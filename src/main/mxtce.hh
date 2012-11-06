@@ -37,6 +37,7 @@
 
 #include "message.hh"
 #include "apiserver.hh"
+#include "xmlrpc_apiserver.hh"
 #include "tedb_man.hh"
 #include "resv_man.hh"
 #include "policy_man.hh"
@@ -52,15 +53,18 @@ private:
     EventMaster* eventMaster;
     MessageRouter* messageRouter;
     APIServerThread* apiServerThread;
+    XMLRPC_APIServer* xmlrpcApiServerThread;
     TEDBManThread* tedbManThread;
     ResvManThread* resvManThread;
     PolicyManThread* policyManThread;
     
 public:
     static int apiServerPort;
+    static int xmlrpcApiServerPort;
     static int resvApiServerPort;
     static string loopbackPortName;
     static string apiServerPortName;
+    static string xmlrpcApiServerPortName;
     static string tedbManPortName;
     static string resvManPortName;
     static string policyManPortName;
