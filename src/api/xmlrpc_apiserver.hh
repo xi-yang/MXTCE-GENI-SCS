@@ -64,8 +64,7 @@ public:
             xmlrpc_c::value *   const  retvalP) {
     }
     void init();
-    void begin();
-    void end();
+    void fire();
 };
 
 #define MAX_MSG_PORT_POLL_TIME 10 // seconds

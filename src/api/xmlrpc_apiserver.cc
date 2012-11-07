@@ -40,7 +40,7 @@
 
 
 // Base class 
-// TODO: move msgPort to thread level ?
+// TODO: move msgPort to thread level (or make class static) if more than one nethod
 void XMLRPC_BaseMethod::init() 
 {
     mxTCE->GetMessageRouter()->AddPort(MxTCE::xmlrpcApiServerPortName);
@@ -62,16 +62,14 @@ void XMLRPC_BaseMethod::init()
     }
 }
 
-void XMLRPC_BaseMethod::begin() 
+void XMLRPC_BaseMethod::fire() 
 {
+    // TODO: use callback to stop eventmaster (need to modify MessagePort to hook up extra callback)
     XMLRPC_TimeoutTimer* timeoutTimer = new XMLRPC_TimeoutTimer(evtMaster);
     assert(evtMaster);
     evtMaster->Schedule(timeoutTimer);
     evtMaster->Run();
     delete timeoutTimer;
-}
-
-void XMLRPC_BaseMethod::end() {
 }
 
 // Actaul XMLRPC methods
@@ -97,22 +95,23 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
         end_time = xmlrpc_c::value_i8(options["geni-end-time"]);
     }
 
-    // test code
     string queueName="CORE";
     string topicName="XMLRPC_API_REQUEST";
     Message* testMsg = new Message(MSG_REQ, queueName, topicName);
+    // TODO: parse RSpec XML and compose API request TLVs
+    
     msgPort->PostMessage(testMsg);
+    this->fire();
 
-    this->begin();
     // poll MessagePort queue:
     if (msgPort->GetMsgInQueue().size() == 0) 
     {
-        // create error msg
+        // TODO: create xmlrpc error
     }
     else {
+        // TODO: relate message using contextTag 
         // create reply msg
     }
-    this->end();
 }
 
 
