@@ -68,28 +68,19 @@ void XMLRPC_BaseMethod::begin()
     assert(evtMaster);
     evtMaster->Schedule(timeoutTimer);
     evtMaster->Run();
+    delete timeoutTimer;
 }
 
 void XMLRPC_BaseMethod::end() {
-    if (msgPort != NULL) 
-    {
-        msgPort->DetachPipes();
-        delete msgPort;
-        msgPort = NULL;
-    }
-    if (evtMaster != NULL) 
-    {
-        delete evtMaster;
-        evtMaster = NULL;
-    }
 }
 
 // Actaul XMLRPC methods
 void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value *   const  retvalP) 
-{
-    this->init();
-    
-    // TODO: parse and send message to msgPort
+{   
+    if (msgPort == NULL)
+        this->init();
+
+    // parse xmlrpc params
     map<string, xmlrpc_c::value> reqStruct = paramList.getStruct(0);
     string urn = xmlrpc_c::value_string(reqStruct["slice_urn"]);
     string rspec = xmlrpc_c::value_string(reqStruct["request_rspec"]);
