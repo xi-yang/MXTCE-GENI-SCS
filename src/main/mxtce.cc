@@ -172,7 +172,7 @@ void MxTCEMessageHandler::Run()
     if (msg)
     {
         msg->LogDump();
-        if (msg->GetType() == MSG_REQ && msg->GetTopic() == "API_REQUEST") {
+        if (msg->GetType() == MSG_REQ && (msg->GetTopic() == "API_REQUEST" || msg->GetTopic() == "XMLRPC_API_REQUEST" )) {
             // creating computeWorkerThread and pass user request parameters
             ComputeWorker* computingThread = ComputeWorkerFactory::CreateComputeWorker(MxTCE::defaultComputeWorkerType);
             if (msg->GetTLVList().size() > 0) 
@@ -185,6 +185,8 @@ void MxTCEMessageHandler::Run()
                     userConsList->push_back(userConstraint);
                 }
                 computingThread->SetWorkflowData("USER_CONSTRAINT_LIST", userConsList);
+                string* api_type = new string(msg->GetTopic());
+                computingThread->SetWorkflowData("API_TYPE", api_type);
             }
             else 
             {
@@ -227,15 +229,7 @@ void MxTCEMessageHandler::Run()
         } 
         else if (msg->GetType() == MSG_REPLY && msg->GetTopic() == "COMPUTE_REPLY") 
         {
-            string queue = "CORE";
-            string topic = "API_REPLY";
-            Message* msg_reply = msg->Duplicate();
-            msg_reply->SetType(MSG_REPLY);
-            msg_reply->SetQueue(queue);
-            msg_reply->SetTopic(topic);
-            mxTCE->GetLoopbackPort()->PostLocalMessage(msg_reply);
-
-            // find and join the computeWorker thread ? 
+            // find and join the computeWorker thread
             ComputeWorker* computingThread = ComputeWorkerFactory::LookupComputeWorker(msg->GetPort()->GetName());
             if (computingThread == NULL)
             {
@@ -243,12 +237,23 @@ void MxTCEMessageHandler::Run()
                 snprintf(buf, 128, "Unknown computeWorkerThread: %s", msg->GetPort()->GetName().c_str());
                 throw TCEException(buf);
             }
-            //TODO: fix dup free by DeletePort
+            string queue = "CORE";
+            string topic = "API_REPLY";
+            string* apiType = (string*)computingThread->GetWorkflowData("API_TYPE");
+            if (apiType != NULL && apiType->find("XMLRPC") != string::npos)
+           {
+                topic = "XMLRPC_API_REPLY";
+            }
+            Message* msg_reply = msg->Duplicate();
+            msg_reply->SetType(MSG_REPLY);
+            msg_reply->SetQueue(queue);
+            msg_reply->SetTopic(topic);
+            mxTCE->GetLoopbackPort()->PostLocalMessage(msg_reply);
+            // TODO: fix dup free by DeletePort
             mxTCE->GetMessageRouter()->DeletePort(computingThread->GetName());
             computingThread->GetEventMaster()->Stop();
             computingThread->Join();
         }
-		// TODO: handle XMLRPC_API_REQUEST and XMLRPC_API_REPLY
     }
 
     delete msg; //msg consumed

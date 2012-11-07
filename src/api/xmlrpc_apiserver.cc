@@ -99,7 +99,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     string topicName="XMLRPC_API_REQUEST";
     Message* testMsg = new Message(MSG_REQ, queueName, topicName);
     // TODO: parse RSpec XML and compose API request TLVs
-    
+        
     msgPort->PostMessage(testMsg);
     this->fire();
 
