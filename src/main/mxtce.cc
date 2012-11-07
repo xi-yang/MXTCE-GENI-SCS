@@ -185,8 +185,13 @@ void MxTCEMessageHandler::Run()
                     userConsList->push_back(userConstraint);
                 }
                 computingThread->SetWorkflowData("USER_CONSTRAINT_LIST", userConsList);
-                string* api_type = new string(msg->GetTopic());
-                computingThread->SetWorkflowData("API_TYPE", api_type);
+                // special handling for XMLRPC API
+                if (msg->GetTopic() == "XMLRPC_API_REQUEST" ) {
+                    string* apiType = new string("XMLRPC-API");
+                    computingThread->SetWorkflowData("API_TYPE", apiType);
+                    string* contextTag = new string(msg->GetContextTag());
+                    computingThread->SetWorkflowData("XMLRPC_API_CONTEXT_TAG", contextTag);
+                }
             }
             else 
             {
@@ -237,14 +242,18 @@ void MxTCEMessageHandler::Run()
                 snprintf(buf, 128, "Unknown computeWorkerThread: %s", msg->GetPort()->GetName().c_str());
                 throw TCEException(buf);
             }
+            Message* msg_reply = msg->Duplicate();
             string queue = "CORE";
             string topic = "API_REPLY";
             string* apiType = (string*)computingThread->GetWorkflowData("API_TYPE");
-            if (apiType != NULL && apiType->find("XMLRPC") != string::npos)
-           {
+            // special handling for XMLRPC API
+            if (apiType != NULL && *apiType == "XMLRPC-API")
+            {
                 topic = "XMLRPC_API_REPLY";
+                string* contextTag = (string*)computingThread->GetWorkflowData("XMLRPC_API_CONTEXT_TAG");
+                if (contextTag != NULL)
+                    msg_reply->SetContextTag(*contextTag);
             }
-            Message* msg_reply = msg->Duplicate();
             msg_reply->SetType(MSG_REPLY);
             msg_reply->SetQueue(queue);
             msg_reply->SetTopic(topic);
