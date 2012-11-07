@@ -100,10 +100,10 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
         hold_path = xmlrpc_c::value_boolean(options["geni-hold-path"]);
     }
     if (options.find("geni-start-time") != options.end()) {
-        start_time = xmlrpc_c::value_i8(reqStruct["geni-start-time"]);
+        start_time = xmlrpc_c::value_i8(options["geni-start-time"]);
     }
     if (options.find("geni-end-time") != options.end()) {
-        end_time = xmlrpc_c::value_i8(reqStruct["geni-end-time"]);
+        end_time = xmlrpc_c::value_i8(options["geni-end-time"]);
     }
 
     // test code
