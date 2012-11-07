@@ -94,6 +94,17 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     string urn = xmlrpc_c::value_string(reqStruct["slice_urn"]);
     string rspec = xmlrpc_c::value_string(reqStruct["request_rspec"]);
     map<string, xmlrpc_c::value> options = xmlrpc_c::value_struct(reqStruct["request_options"]);
+    bool hold_path = false;
+    u_int32_t start_time = 0, end_time = 0;
+    if (options.find("geni-hold-path") != options.end()) {
+        hold_path = xmlrpc_c::value_boolean(reqStruct["geni-hold-path"]);
+    }
+    if (options.find("geni-start-time") != options.end()) {
+        start_time = xmlrpc_c::value_i8(reqStruct["geni-start-time"]);
+    }
+    if (options.find("geni-end-time") != options.end()) {
+        end_time = xmlrpc_c::value_i8(reqStruct["geni-end-time"]);
+    }
 
     // test code
     string queueName="CORE";
