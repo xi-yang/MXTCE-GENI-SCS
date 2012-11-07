@@ -197,7 +197,10 @@ void MxTCEMessageHandler::Run()
             {
                 char buf[128];
                 snprintf(buf, 128, "Empty TLV list (USER_CONSTRAINT_LIST) in API_REQUEST message from : %s", msg->GetPort()->GetName().c_str());
-                throw TCEException(buf);
+                LOGF("!!Error: Empty TLV list (USER_CONSTRAINT_LIST) in API_REQUEST message from : %s", msg->GetPort()->GetName().c_str());
+                // TODO: catch this exception!
+                //throw TCEException(buf);
+                return;
             }
 
             // init computing thread port and routes on messge router and start thread
@@ -240,7 +243,10 @@ void MxTCEMessageHandler::Run()
             {
                 char buf[128];
                 snprintf(buf, 128, "Unknown computeWorkerThread: %s", msg->GetPort()->GetName().c_str());
-                throw TCEException(buf);
+                LOGF("!!Error: Unknown computeWorkerThread: %s", msg->GetPort()->GetName().c_str());
+                // TODO: catch this exception!
+                //throw TCEException(buf);
+                return;
             }
             Message* msg_reply = msg->Duplicate();
             string queue = "CORE";
