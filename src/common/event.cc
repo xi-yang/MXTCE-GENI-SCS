@@ -145,6 +145,7 @@ void
 EventMaster::Run()
 {
     Event *event;
+    stopped = false;
     while (!stopped)
     {
         event = this->Fetch();
