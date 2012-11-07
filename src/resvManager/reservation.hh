@@ -46,19 +46,19 @@ class TSchedule
 private:
     time_t startTime;
     time_t endTime;
-    int duration; // seconds
+    u_int32_t duration; // seconds
 
 public:
     TSchedule(time_t s, time_t e): startTime(s), endTime(e), duration(e-s) { assert (endTime > startTime); }
-    TSchedule(time_t s, int d): startTime(s), endTime(s+d), duration(d) { assert (duration > 0); }
-    TSchedule(time_t s, time_t e, int d): startTime(s), endTime(e), duration(d) { assert (duration > 0 && endTime - startTime >= duration); }
+    TSchedule(time_t s, u_int32_t d): startTime(s), endTime(s+d), duration(d) { assert (duration > 0); }
+    TSchedule(time_t s, time_t e, u_int32_t d): startTime(s), endTime(e), duration(d) { assert (duration > 0 && endTime - startTime >= duration); }
     virtual ~TSchedule() {}
     time_t GetStartTime() { return startTime; }
     void SetStartTime(time_t s) { startTime = s; }
     time_t GetEndTime() { return endTime; }
     void SetEndTime(time_t e) { endTime = e; }
-    int GetDuration() { return duration; }
-    void SetDuration(int d) { duration = d; }
+    u_int32_t GetDuration() { return duration; }
+    void SetDuration(u_int32_t d) { duration = d; }
     inline bool WithinSchedule(time_t t) { return (t <= endTime && t>= startTime); }
     inline bool HasScheduleIn(time_t start, time_t end) { return (startTime >= start && endTime <= end); }
     inline bool HasOverlapWith(TSchedule& sched) {

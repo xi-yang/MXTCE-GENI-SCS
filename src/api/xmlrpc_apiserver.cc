@@ -34,6 +34,7 @@
 
 #include "xmlrpc_apiserver.hh"
 #include "mxtce.hh"
+#include <map>
 
 // TODO: Exception handling!
 
@@ -89,6 +90,10 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     this->init();
     
     // TODO: parse and send message to msgPort
+    map<string, xmlrpc_c::value> reqStruct = paramList.getStruct(0);
+    string urn = xmlrpc_c::value_string(reqStruct["slice_urn"]);
+    string rspec = xmlrpc_c::value_string(reqStruct["request_rspec"]);
+    map<string, xmlrpc_c::value> options = xmlrpc_c::value_struct(reqStruct["request_options"]);
 
     // test code
     string queueName="CORE";
@@ -123,7 +128,7 @@ void* XMLRPC_APIServer::Run()
         myAbyssServer.run();
         // xmlrpc_c::serverAbyss.run() never returns
     } catch (exception const& e) {
-        LOG("Something failed: " << e.what() << endl);
+        LOG("XMLRPC_APIServer failed: " << e.what() << endl);
     }
     return 0;
 }

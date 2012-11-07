@@ -825,9 +825,9 @@ void Apireqmsg_decoder::decode_multiple_path(char* & decode_ptr, int total_len, 
 
     	for(int i=0;i<lifetime_num;i++)
     	{
-    		int lifetime_start=0;
-    		int lifetime_end=0;
-    		int lifetime_dur=0;
+    		u_int32_t lifetime_start=0;
+    		u_int32_t lifetime_end=0;
+    		u_int32_t lifetime_dur=0;
 
     		TSchedule* t_schedule = NULL;
 

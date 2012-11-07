@@ -858,7 +858,7 @@ void Action_ComputeSchedulesWithKSP::Process()
     if (dstNode == NULL)
         throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() unknown destination URN!");
     u_int64_t bw = (this->GetReqBandwidth() == 0 ? _userConstraint->getBandwidth():this->GetReqBandwidth());
-    int duration = (this->GetReqVolume() == 0 ? _userConstraint->getEndtime()-_userConstraint->getStarttime():this->GetReqVolume()/this->GetReqBandwidth());
+    u_int32_t duration = (this->GetReqVolume() == 0 ? _userConstraint->getEndtime()-_userConstraint->getStarttime():this->GetReqVolume()/this->GetReqBandwidth());
     if (_userConstraint->getCoschedreq()&& _userConstraint->getCoschedreq()->getMinbandwidth() > bw)
         bw = _userConstraint->getCoschedreq()->getMinbandwidth();
     u_int32_t srcVtag, dstVtag;
