@@ -69,6 +69,7 @@ void XMLRPC_BaseMethod::fire()
     assert(evtMaster);
     evtMaster->Schedule(timeoutTimer);
     evtMaster->Run();
+    evtMaster->Remove(timeoutTimer);
     delete timeoutTimer;
 }
 
