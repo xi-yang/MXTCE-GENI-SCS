@@ -203,43 +203,43 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                             {
                                                 if (strncasecmp((const char*)xmlParamNode->name, "remoteLinkId", 10) == 0)
                                                 {
-                                                    xmlNodeBufGetContent((xmlBuffer*)buf, xmlParamNode);
-                                                    string rlName = buf;
+                                                    xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
+                                                    string rlName = (const char*)pBuf;
                                                     aRLink->SetRemoteLinkName(rlName);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "TrafficEngineeringMetric", 18) == 0)
                                                 {
-                                                    xmlNodeBufGetContent((xmlBuffer*)buf, xmlParamNode);
+                                                    xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
                                                     int metric;
-                                                    sscanf(buf, "%d", &metric);
+                                                    sscanf((const char*)pBuf, "%d", &metric);
                                                     aRLink->SetMetric(metric);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "capacity", 8) == 0)
                                                 {
-                                                    xmlNodeBufGetContent((xmlBuffer*)buf, xmlParamNode);
+                                                    xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
                                                     u_int64_t bw;
-                                                    sscanf(buf, "%llu", &bw);
+                                                    sscanf((const char*)pBuf, "%llu", &bw);
                                                     aRLink->SetMaxBandwidth(bw);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "maximumReservableCapacity", 8) == 0)
                                                 {
-                                                    xmlNodeBufGetContent((xmlBuffer*)buf, xmlParamNode);
+                                                    xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
                                                     u_int64_t bw;
-                                                    sscanf(buf, "%llu", &bw);
+                                                    sscanf((const char*)pBuf, "%llu", &bw);
                                                     aRLink->SetMaxReservableBandwidth(bw);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "minimumReservableCapacity", 8) == 0)
                                                 {
-                                                    xmlNodeBufGetContent((xmlBuffer*)buf, xmlParamNode);
+                                                    xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
                                                     u_int64_t bw;
-                                                    sscanf(buf, "%llu", &bw);
+                                                    sscanf((const char*)pBuf, "%llu", &bw);
                                                     aRLink->SetMinReservableBandwidth(bw);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "granularity", 8) == 0)
                                                 {
-                                                    xmlNodeBufGetContent((xmlBuffer*)buf, xmlParamNode);
+                                                    xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
                                                     u_int64_t bw;
-                                                    sscanf(buf, "%llu", &bw);
+                                                    sscanf((const char*)pBuf, "%llu", &bw);
                                                     aRLink->SetBandwidthGranularity(bw);
                                                 }
                                                 // TODO: parse SwitchingCapabilitityDescriptors in sub-level
@@ -267,30 +267,30 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                     }
                                     else if (strncasecmp((const char*)xmlLinkNode->name, "capacity", 8) == 0)
                                     {
-                                        xmlNodeBufGetContent((xmlBuffer*)buf, xmlLinkNode);
+                                        xmlChar* pBuf = xmlNodeGetContent(xmlLinkNode);
                                         u_int64_t bw;
-                                        sscanf(buf, "%llu", &bw);
+                                        sscanf((const char*)pBuf, "%llu", &bw);
                                         aPort->SetMaxBandwidth(bw);
                                     }
                                     else if (strncasecmp((const char*)xmlLinkNode->name, "maximumReservableCapacity", 8) == 0)
                                     {
-                                        xmlNodeBufGetContent((xmlBuffer*)buf, xmlLinkNode);
+                                        xmlChar* pBuf = xmlNodeGetContent(xmlLinkNode);
                                         u_int64_t bw;
-                                        sscanf(buf, "%llu", &bw);
+                                        sscanf((const char*)pBuf, "%llu", &bw);
                                         aPort->SetMaxReservableBandwidth(bw);
                                     }
                                     else if (strncasecmp((const char*)xmlLinkNode->name, "minimumReservableCapacity", 8) == 0)
                                     {
-                                        xmlNodeBufGetContent((xmlBuffer*)buf, xmlLinkNode);
+                                        xmlChar* pBuf = xmlNodeGetContent(xmlLinkNode);
                                         u_int64_t bw;
-                                        sscanf(buf, "%llu", &bw);
+                                        sscanf((const char*)pBuf, "%llu", &bw);
                                         aPort->SetMinReservableBandwidth(bw);
                                     }
                                     else if (strncasecmp((const char*)xmlLinkNode->name, "granularity", 8) == 0)
                                     {
-                                        xmlNodeBufGetContent((xmlBuffer*)buf, xmlLinkNode);
+                                        xmlChar* pBuf = xmlNodeGetContent(xmlLinkNode);
                                         u_int64_t bw;
-                                        sscanf(buf, "%llu", &bw);
+                                        sscanf((const char*)pBuf, "%llu", &bw);
                                         aPort->SetBandwidthGranularity(bw);
                                     }
                                 }
