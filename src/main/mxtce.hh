@@ -71,6 +71,7 @@ public:
     static string computeThreadPrefix;
     static string defaultComputeWorkerType;
     static list<string> xmlDomainFileList;
+    static list<string> rspecAdFileList;
     static bool tempTest;
 
 public:

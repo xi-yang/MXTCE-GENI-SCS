@@ -34,10 +34,9 @@
 #ifndef __TOPOLOGY_IMPORTER_HH__
 #define __TOPOLOGY_IMPORTER_HH__
 
-#include "types.hh"
+#include "utils.hh"
 #include "event.hh"
 #include "tedb.hh"
-
 
 class TopologyXMLImporter: public Timer
 {
@@ -52,7 +51,19 @@ public:
     TopologyXMLImporter(TEDB* db, list<string>& fileList, int interval): Timer(interval, 0, FOREVER), tedb(db) { xmlFilePathList.assign(fileList.begin(), fileList.end()); Init(); }
     virtual ~TopologyXMLImporter() { }
     virtual void Run();
+    string CheckFileType(xmlDocPtr xmlDoc);
+    xmlDocPtr TranslateFromRspec(xmlDocPtr rspecDoc);
+};
 
+class RLink: public Link
+{
+protected:
+    string remoteLinkName;
+
+public:
+    RLink(string& name): Link(0, name) { }
+    void SetRemoteLinkName(string name) { remoteLinkName = name; }
+    string& GetRemoteLinkName() { return remoteLinkName; }
 };
 
 #endif

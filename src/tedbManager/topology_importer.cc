@@ -31,7 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#include "utils.hh"
 #include "topology_importer.hh"
 
 
@@ -65,10 +64,22 @@ void TopologyXMLImporter::Run()
         xmlDocPtr xmlDoc = xmlParseFile((*itF).c_str());
         if (xmlDoc == NULL)
         {
-            snprintf(buf, 128, "TopologyXMLImporter::Run failed to parse XML topology file: %s", (*itF).c_str());
+            snprintf(buf, 128, "TopologyXMLImporter::Run - Failed to parse XML topology file: %s", (*itF).c_str());
             throw TEDBException(buf);
         }
         tedb->LockDB();
+        string fileType = this->CheckFileType(xmlDoc);
+        if (fileType == "unknown") 
+        {
+            snprintf(buf, 128, "TopologyXMLImporter::Run - Unknown type of XML topology file: %s", (*itF).c_str());
+            throw TEDBException(buf);
+        }
+        else if (fileType == "rspec") 
+        {
+            xmlDocPtr xmlDocOrig = xmlDoc;
+            xmlDoc = this->TranslateFromRspec(xmlDocOrig);
+            xmlFreeDoc(xmlDocOrig);
+        }
         tedb->AddXmlDomainTree(xmlDoc);
         tedb->UnlockDB();
     }
@@ -80,4 +91,229 @@ void TopologyXMLImporter::Run()
         tedb->UnlockDB();
     }
 };
+
+string TopologyXMLImporter::CheckFileType(xmlDocPtr xmlDoc)
+{
+    xmlNodePtr xmlRoot = xmlDocGetRootElement(xmlDoc);
+    if (xmlRoot->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlRoot->name, "topology", 8) == 0)
+    {
+        return "nml";
+    }
+    else if (xmlRoot->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlRoot->name, "rspec", 8) == 0)
+    {
+        return "rspec";
+    }
+    return "unknown";
+}
+
+xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
+{
+    char buf[1024];
+    strcpy(buf, "<?xml version=\"1.0\"?><topology xmlns=\"http://ogf.org/schema/network/topology/ctrlPlane/20110826/\" id=\"\" />");
+    int sizeBuf=strlen(buf);
+    xmlDocPtr xmlDoc = xmlParseMemory(buf, sizeBuf);
+
+    //$$ get domain info: rspec/stitching/aggregate
+        //$$ create domain
+        //$$ fill in topology id and domain id
+    xmlNodePtr rspecRoot = xmlDocGetRootElement(rspecDoc);
+    xmlNodePtr xmlNode;
+    xmlNodePtr aggrNode = NULL;
+    for (xmlNode = rspecRoot->children; xmlNode != NULL; xmlNode = xmlNode->next)
+    {
+        if (xmlNode->type == XML_ELEMENT_NODE )
+        {
+            if (strncasecmp((const char*)xmlNode->name, "stitching", 9) == 0) 
+            {
+                for (aggrNode = aggrNode->children; aggrNode != NULL; aggrNode = aggrNode->next)
+                {
+                    if (aggrNode->type == XML_ELEMENT_NODE )
+                    {
+                        if (strncasecmp((const char*)aggrNode->name, "aggregate", 9) == 0) 
+                            break;
+                    }
+                }
+                break;
+            }
+        }
+    }
+    if (aggrNode == NULL) 
+    {
+        snprintf(buf, 128, "TopologyXMLImporter::TranslateFromRspec - Cannot locate <stitching> <aggregate> element!");
+        throw TEDBException(buf);
+    }
+
+    xmlChar* xmlAggrId = xmlGetProp(aggrNode,  (const xmlChar*)"id");
+    xmlNodePtr xmlRoot = xmlDocGetRootElement(xmlDoc);
+    string domainId = (const char*)xmlAggrId; // TODO: extract domain id from aggrId
+    xmlSetProp(xmlRoot, (const xmlChar*)"id", (const xmlChar*)domainId.c_str());
+    Domain* aDomain = new Domain(0, domainId);
+    
+    //$$ add AggregateReflector (AR: *:*:*) node
+    sprintf(buf, "urn:publicid:IDN+%s+node+*", domainId.c_str());
+    string arId = buf;
+    Node* arNode = new Node(0, arId);
+    aDomain->AddNode(arNode);
+
+    //$$ get node info: rspec/stitching/aggregate/node
+    for (xmlNode = aggrNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
+    {
+        if (xmlNode->type == XML_ELEMENT_NODE )
+        {
+            if (strncasecmp((const char*)xmlNode->name, "node", 4) == 0) 
+            {
+                //$$create node
+                xmlChar* xmlNodeId = xmlGetProp(xmlNode,  (const xmlChar*)"id");
+                string nodeId = (const char*)xmlNodeId;
+                Node* aNode = new Node(0, nodeId);
+                aDomain->AddNode(aNode);
+                //$$ get port info: rspec/stitching/aggregate/node/port
+                xmlNodePtr xmlPortNode;
+                for (xmlPortNode = xmlPortNode->children; xmlPortNode != NULL; xmlPortNode = xmlPortNode->next)
+                {
+                    if (xmlPortNode->type == XML_ELEMENT_NODE )
+                    {
+                        if (strncasecmp((const char*)xmlPortNode->name, "port", 4) == 0)
+                        {
+                            //$$ create port
+                            xmlChar* xmlPortId = xmlGetProp(xmlPortNode,  (const xmlChar*)"id");
+                            string portId = (const char*)xmlPortId;
+                            Port* aPort = new Port(0, portId);
+                            aNode->AddPort(aPort);
+                            xmlNodePtr xmlLinkNode;
+                            //$$ get link info: rspec/stitching/aggregate/node/port/link
+                            for (xmlLinkNode = xmlLinkNode->children; xmlPortNode != NULL; xmlLinkNode = xmlLinkNode->next)
+                            {
+                                if (xmlLinkNode->type == XML_ELEMENT_NODE )
+                                {
+                                    if (strncasecmp((const char*)xmlLinkNode->name, "link", 4) == 0)
+                                    {
+                                        //$$ create link
+                                        xmlChar* xmlLinkId = xmlGetProp(xmlLinkNode,  (const xmlChar*)"id");
+                                        string linkId = (const char*)xmlLinkId;
+                                        RLink* aRLink = new RLink(linkId);
+                                        aPort->AddLink(aRLink);
+                                        //$$ fill in link params
+                                        xmlNodePtr xmlParamNode;
+                                        for (xmlParamNode = xmlParamNode->children; xmlPortNode != NULL; xmlParamNode = xmlParamNode->next)
+                                        {
+                                            if (xmlParamNode->type == XML_ELEMENT_NODE )
+                                            {
+                                                if (strncasecmp((const char*)xmlParamNode->name, "remoteLinkId", 4) == 0)
+                                                {
+                                                    xmlNodeBufGetContent((xmlBuffer*)buf, xmlParamNode);
+                                                    string rlName = buf;
+                                                    aRLink->SetRemoteLinkName(rlName);
+                                                }
+                                                else if (strncasecmp((const char*)xmlParamNode->name, "TrafficEngineeringMetric", 8) == 0)
+                                                {
+                                                    xmlNodeBufGetContent((xmlBuffer*)buf, xmlParamNode);
+                                                    int metric;
+                                                    sscanf(buf, "%d", &metric);
+                                                    aRLink->SetMetric(metric);
+                                                }
+                                                else if (strncasecmp((const char*)xmlParamNode->name, "capacity", 8) == 0)
+                                                {
+                                                    xmlNodeBufGetContent((xmlBuffer*)buf, xmlParamNode);
+                                                    u_int64_t bw;
+                                                    sscanf(buf, "%llu", &bw);
+                                                    aRLink->SetMaxBandwidth(bw);
+                                                }
+                                                else if (strncasecmp((const char*)xmlParamNode->name, "maximumReservableCapacity", 8) == 0)
+                                                {
+                                                    xmlNodeBufGetContent((xmlBuffer*)buf, xmlParamNode);
+                                                    u_int64_t bw;
+                                                    sscanf(buf, "%llu", &bw);
+                                                    aRLink->SetMaxReservableBandwidth(bw);
+                                                }
+                                                else if (strncasecmp((const char*)xmlParamNode->name, "minimumReservableCapacity", 8) == 0)
+                                                {
+                                                    xmlNodeBufGetContent((xmlBuffer*)buf, xmlParamNode);
+                                                    u_int64_t bw;
+                                                    sscanf(buf, "%llu", &bw);
+                                                    aRLink->SetMinReservableBandwidth(bw);
+                                                }
+                                                else if (strncasecmp((const char*)xmlParamNode->name, "granularity", 8) == 0)
+                                                {
+                                                    xmlNodeBufGetContent((xmlBuffer*)buf, xmlParamNode);
+                                                    u_int64_t bw;
+                                                    sscanf(buf, "%llu", &bw);
+                                                    aRLink->SetBandwidthGranularity(bw);
+                                                }
+                                                // TODO: parse SwitchingCapabilitityDescriptors in sub-level
+                                            }
+                                        }
+                                        //$$create peering to AR (a. *:*--'to-nodename':* b. portname:*--"to-nodename-portname:*")
+                                        // change remote-link-id on this link and create new port/link on AR
+                                        string& remoteLinkName = aRLink->GetRemoteLinkName();
+                                        size_t i1 = remoteLinkName.find("*:*:*");
+                                        if (i1 != string::npos) 
+                                        {
+                                            string nodeShortName = aNode->GetName(); // TODO: extract in utils.cc
+                                            string portShortName = aPort->GetName(); // TODO: extract in utils.cc
+                                            sprintf(buf, "*:to-%s-%s:*", nodeShortName.c_str(), portShortName.c_str());
+                                            remoteLinkName.replace(i1, 5, buf);
+                                            aRLink->SetRemoteLinkName(remoteLinkName);
+                                            string remotePortName = remoteLinkName;
+                                            remotePortName.replace(remotePortName.size()-2, 2, "");
+                                            Port* remotePort = new Port(0, remotePortName);
+                                            arNode->AddPort(remotePort);
+                                            RLink* remoteLink = new RLink(remoteLinkName);
+                                            aPort->AddLink(remoteLink);
+                                            remoteLink->SetRemoteLinkName(aRLink->GetName());
+                                        }
+                                    }
+                                    else if (strncasecmp((const char*)xmlLinkNode->name, "capacity", 8) == 0)
+                                    {
+                                        xmlNodeBufGetContent((xmlBuffer*)buf, xmlLinkNode);
+                                        u_int64_t bw;
+                                        sscanf(buf, "%llu", &bw);
+                                        aPort->SetMaxBandwidth(bw);
+                                    }
+                                    else if (strncasecmp((const char*)xmlLinkNode->name, "maximumReservableCapacity", 8) == 0)
+                                    {
+                                        xmlNodeBufGetContent((xmlBuffer*)buf, xmlLinkNode);
+                                        u_int64_t bw;
+                                        sscanf(buf, "%llu", &bw);
+                                        aPort->SetMaxReservableBandwidth(bw);
+                                    }
+                                    else if (strncasecmp((const char*)xmlLinkNode->name, "minimumReservableCapacity", 8) == 0)
+                                    {
+                                        xmlNodeBufGetContent((xmlBuffer*)buf, xmlLinkNode);
+                                        u_int64_t bw;
+                                        sscanf(buf, "%llu", &bw);
+                                        aPort->SetMinReservableBandwidth(bw);
+                                    }
+                                    else if (strncasecmp((const char*)xmlLinkNode->name, "granularity", 8) == 0)
+                                    {
+                                        xmlNodeBufGetContent((xmlBuffer*)buf, xmlLinkNode);
+                                        u_int64_t bw;
+                                        sscanf(buf, "%llu", &bw);
+                                        aPort->SetBandwidthGranularity(bw);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+
+    //$$ get host info: rspec/node, rspec/node/interface, rspec/link, rspec/link/interface_ref
+        //$$ recognize host interfaces attached to stitching links
+                // not on a stitching host
+                // link to a stitching port or link (or AR)
+                // 
+        //$$ create host as node; 
+        //$$ create interface as port/link (link name = empty or *)
+                // add link level to stitching side if not available; 
+                // create peering by adding or modifying remote-link-id
+
+    return xmlDoc;
+}
+
+// TODO: move RSpec related code to separate file/classes
 

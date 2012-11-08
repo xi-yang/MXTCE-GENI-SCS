@@ -52,6 +52,7 @@ string MxTCE::loopbackPortName = "MX-TCE_CORE_LOOPBACK";
 string MxTCE::computeThreadPrefix = "COMPUTE_THREAD_";
 string MxTCE::defaultComputeWorkerType = "simpleComputeWorker";
 list<string> MxTCE::xmlDomainFileList;
+list<string> MxTCE::rspecAdFileList;
 bool MxTCE::tempTest = false;
 
 MxTCE::MxTCE( const string& configFile) 
