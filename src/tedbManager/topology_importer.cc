@@ -109,7 +109,8 @@ string TopologyXMLImporter::CheckFileType(xmlDocPtr xmlDoc)
 xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
 {
     char buf[1024];
-    strcpy(buf, "<?xml version=\"1.0\"?><topology xmlns=\"http://ogf.org/schema/network/topology/ctrlPlane/20110826/\" id=\"\" />");
+    //strcpy(buf, "<?xml version=\"1.0\"?><topology xmlns=\"http://ogf.org/schema/network/topology/ctrlPlane/20110826/\" id=\"\" />");
+    strcpy(buf, "<topology />");
     int sizeBuf=strlen(buf);
     xmlDocPtr xmlDoc = xmlParseMemory(buf, sizeBuf);
 
@@ -125,7 +126,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
         {
             if (strncasecmp((const char*)xmlNode->name, "stitching", 9) == 0) 
             {
-                for (aggrNode = aggrNode->children; aggrNode != NULL; aggrNode = aggrNode->next)
+                for (aggrNode = xmlNode->children; aggrNode != NULL; aggrNode = aggrNode->next)
                 {
                     if (aggrNode->type == XML_ELEMENT_NODE )
                     {
@@ -146,6 +147,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
     xmlChar* xmlAggrId = xmlGetProp(aggrNode,  (const xmlChar*)"id");
     xmlNodePtr xmlRoot = xmlDocGetRootElement(xmlDoc);
     string domainId = (const char*)xmlAggrId; // TODO: extract domain id from aggrId
+    xmlSetProp(xmlRoot, (const xmlChar*)"xmlns", (const xmlChar*)"http://ogf.org/schema/network/topology/ctrlPlane/20110826/");
     xmlSetProp(xmlRoot, (const xmlChar*)"id", (const xmlChar*)domainId.c_str());
     Domain* aDomain = new Domain(0, domainId);
     
@@ -169,7 +171,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                 aDomain->AddNode(aNode);
                 //$$ get port info: rspec/stitching/aggregate/node/port
                 xmlNodePtr xmlPortNode;
-                for (xmlPortNode = xmlPortNode->children; xmlPortNode != NULL; xmlPortNode = xmlPortNode->next)
+                for (xmlPortNode = xmlNode->children; xmlPortNode != NULL; xmlPortNode = xmlPortNode->next)
                 {
                     if (xmlPortNode->type == XML_ELEMENT_NODE )
                     {
@@ -182,7 +184,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                             aNode->AddPort(aPort);
                             xmlNodePtr xmlLinkNode;
                             //$$ get link info: rspec/stitching/aggregate/node/port/link
-                            for (xmlLinkNode = xmlLinkNode->children; xmlPortNode != NULL; xmlLinkNode = xmlLinkNode->next)
+                            for (xmlLinkNode = xmlPortNode->children; xmlPortNode != NULL; xmlLinkNode = xmlLinkNode->next)
                             {
                                 if (xmlLinkNode->type == XML_ELEMENT_NODE )
                                 {
@@ -195,7 +197,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                         aPort->AddLink(aRLink);
                                         //$$ fill in link params
                                         xmlNodePtr xmlParamNode;
-                                        for (xmlParamNode = xmlParamNode->children; xmlPortNode != NULL; xmlParamNode = xmlParamNode->next)
+                                        for (xmlParamNode = xmlLinkNode->children; xmlPortNode != NULL; xmlParamNode = xmlParamNode->next)
                                         {
                                             if (xmlParamNode->type == XML_ELEMENT_NODE )
                                             {
