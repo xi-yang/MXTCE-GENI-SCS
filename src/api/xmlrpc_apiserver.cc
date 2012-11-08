@@ -70,15 +70,12 @@ void XMLRPC_BaseMethod::fire()
     assert(evtMaster);
     evtMaster->Schedule(timeoutTimer);
     evtMaster->Run();
-    if (timeoutTimer->Obsolete()) 
+    while (!timeoutTimer->Obsolete()) 
     {
-        evtMaster->Remove(timeoutTimer);
-        delete timeoutTimer;
+        evtMaster->Run();
     }
-    else 
-    {
-        evtMaster->Run();        
-    }
+    evtMaster->Remove(timeoutTimer);
+    delete timeoutTimer;
 }
 
 // Actaul XMLRPC methods
