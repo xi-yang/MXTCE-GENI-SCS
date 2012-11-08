@@ -184,7 +184,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                             aNode->AddPort(aPort);
                             xmlNodePtr xmlLinkNode;
                             //$$ get link info: rspec/stitching/aggregate/node/port/link
-                            for (xmlLinkNode = xmlPortNode->children; xmlPortNode != NULL; xmlLinkNode = xmlLinkNode->next)
+                            for (xmlLinkNode = xmlPortNode->children; xmlLinkNode != NULL; xmlLinkNode = xmlLinkNode->next)
                             {
                                 if (xmlLinkNode->type == XML_ELEMENT_NODE )
                                 {
@@ -197,17 +197,17 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                         aPort->AddLink(aRLink);
                                         //$$ fill in link params
                                         xmlNodePtr xmlParamNode;
-                                        for (xmlParamNode = xmlLinkNode->children; xmlPortNode != NULL; xmlParamNode = xmlParamNode->next)
+                                        for (xmlParamNode = xmlLinkNode->children; xmlParamNode != NULL; xmlParamNode = xmlParamNode->next)
                                         {
                                             if (xmlParamNode->type == XML_ELEMENT_NODE )
                                             {
-                                                if (strncasecmp((const char*)xmlParamNode->name, "remoteLinkId", 4) == 0)
+                                                if (strncasecmp((const char*)xmlParamNode->name, "remoteLinkId", 10) == 0)
                                                 {
                                                     xmlNodeBufGetContent((xmlBuffer*)buf, xmlParamNode);
                                                     string rlName = buf;
                                                     aRLink->SetRemoteLinkName(rlName);
                                                 }
-                                                else if (strncasecmp((const char*)xmlParamNode->name, "TrafficEngineeringMetric", 8) == 0)
+                                                else if (strncasecmp((const char*)xmlParamNode->name, "TrafficEngineeringMetric", 18) == 0)
                                                 {
                                                     xmlNodeBufGetContent((xmlBuffer*)buf, xmlParamNode);
                                                     int metric;
