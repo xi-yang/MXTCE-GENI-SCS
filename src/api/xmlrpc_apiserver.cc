@@ -64,13 +64,21 @@ void XMLRPC_BaseMethod::init()
 
 void XMLRPC_BaseMethod::fire() 
 {
-    // TODO: use callback to stop eventmaster (need to modify MessagePort to hook up extra callback)
+    // TODO: 1. use multiple 1sec intervals. re-run evtMaster if 
+    // 2. use callback to stop eventmaster (need to modify MessagePort to hook up extra callback)
     XMLRPC_TimeoutTimer* timeoutTimer = new XMLRPC_TimeoutTimer(evtMaster);
     assert(evtMaster);
     evtMaster->Schedule(timeoutTimer);
     evtMaster->Run();
-    evtMaster->Remove(timeoutTimer);
-    delete timeoutTimer;
+    if (timeoutTimer->Obsolete()) 
+    {
+        evtMaster->Remove(timeoutTimer);
+        delete timeoutTimer;
+    }
+    else 
+    {
+        evtMaster->Run();        
+    }
 }
 
 // Actaul XMLRPC methods
