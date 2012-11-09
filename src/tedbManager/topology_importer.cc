@@ -323,17 +323,17 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                 u_int64_t capacity = 1000000000; //1g by default
                 for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
                 {
-                    if (aggrNode->type == XML_ELEMENT_NODE )
+                    if (xmlIfNode->type == XML_ELEMENT_NODE )
                     {
                         if (strncasecmp((const char*)xmlIfNode->name, "interface_ref", 12) == 0) 
                         {                            
-                            xmlChar* xmlIfId = xmlGetProp(xmlNode,  (const xmlChar*)"component_id");
-                            string ifId = (const char*)xmlIfId;
+                            xmlChar* xmlIfId = xmlGetProp(xmlIfNode,  (const xmlChar*)"component_id");
+                            string ifId = (const char*)xmlIfNode;
                             ifRefs.push_back(ifId);
                         }
-                        else if (strncasecmp((const char*)xmlIfNode->name, "property", 12) == 0) 
+                        else if (strncasecmp((const char*)xmlIfNode->name, "property", 8) == 0) 
                         {                            
-                            xmlChar* capStr = xmlGetProp(xmlNode,  (const xmlChar*)"capacity");
+                            xmlChar* capStr = xmlGetProp(xmlIfNode,  (const xmlChar*)"capacity");
                             sscanf((const char*)capStr, "%llu", &capacity);
                         }
                     }
@@ -382,7 +382,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                         {
                             if (strncasecmp((const char*)xmlIfNode->name, "interface", 9) == 0) 
                             {                            
-                                xmlChar* xmlIfId = xmlGetProp(xmlNode,  (const xmlChar*)"component_id");
+                                xmlChar* xmlIfId = xmlGetProp(xmlIfNode,  (const xmlChar*)"component_id");
                                 string ifId = (const char*)xmlIfId;
                                 // get portname and linkname
                                 string portName = ifId;
@@ -464,7 +464,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                         {
                             if (strncasecmp((const char*)xmlIfNode->name, "interface", 9) == 0) 
                             {                            
-                                xmlChar* xmlIfId = xmlGetProp(xmlNode,  (const xmlChar*)"component_id");
+                                xmlChar* xmlIfId = xmlGetProp(xmlIfNode,  (const xmlChar*)"component_id");
                                 string ifId = (const char*)xmlIfId;
                                 list<RLink*>::iterator itRL = rspecLinks.begin();
                                 for (; itRL != rspecLinks.end(); itRL++)
