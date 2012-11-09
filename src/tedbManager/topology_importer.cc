@@ -328,7 +328,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                         if (strncasecmp((const char*)xmlIfNode->name, "interface_ref", 12) == 0) 
                         {                            
                             xmlChar* xmlIfId = xmlGetProp(xmlIfNode,  (const xmlChar*)"component_id");
-                            string ifId = (const char*)xmlIfNode;
+                            string ifId = (const char*)xmlIfId;
                             ifRefs.push_back(ifId);
                         }
                         else if (strncasecmp((const char*)xmlIfNode->name, "property", 8) == 0) 
