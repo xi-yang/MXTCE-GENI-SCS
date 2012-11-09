@@ -394,7 +394,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                 }
                                 else 
                                 {
-                                    portName.replace(linkName.size()-linkShortName.size(), linkShortName.size(), "");
+                                    portName.replace(linkName.size()-linkShortName.size()-1, linkShortName.size(), "");
                                 }
 
                                 bool portExisted = false, linkExisted = false;
@@ -481,7 +481,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                         }
                                         else 
                                         {
-                                            portName.replace(linkName.size()-linkShortName.size(), linkShortName.size(), "");
+                                            portName.replace(linkName.size()-linkShortName.size()-1, linkShortName.size(), "");
                                         }
                                         string remoteLinkName = (ifId == (*itRL)->GetName() ? (*itRL)->GetRemoteLinkName() : (*itRL)->GetName());
                                         string remoteLinkShortName = GetUrnField(remoteLinkName, "link");
