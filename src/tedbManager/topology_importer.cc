@@ -108,12 +108,8 @@ string TopologyXMLImporter::CheckFileType(xmlDocPtr xmlDoc)
 
 xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
 {
-    char buf[1024];
-    //strcpy(buf, "<?xml version=\"1.0\"?><topology xmlns=\"http://ogf.org/schema/network/topology/ctrlPlane/20110826/\" id=\"\" />");
-    strcpy(buf, "<topology />");
-    int sizeBuf=strlen(buf);
-    xmlDocPtr xmlDoc = xmlParseMemory(buf, sizeBuf);
-
+    char buf[1024*1024];
+ 
     //$$ get domain info: rspec/stitching/aggregate
         //$$ create domain
         //$$ fill in topology id and domain id
@@ -144,14 +140,10 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
         throw TEDBException(buf);
     }
 
-    xmlChar* xmlAggrId = xmlGetProp(aggrNode,  (const xmlChar*)"id");
-    xmlNodePtr xmlRoot = xmlDocGetRootElement(xmlDoc);
-    string aggrUrn = (const char*)xmlAggrId;
+    string aggrUrn = (const char*)xmlGetProp(aggrNode,  (const xmlChar*)"id");
     string domainId = GetUrnField(aggrUrn, "domain");
-    xmlSetProp(xmlRoot, (const xmlChar*)"xmlns", (const xmlChar*)"http://ogf.org/schema/network/topology/ctrlPlane/20110826/");
-    xmlSetProp(xmlRoot, (const xmlChar*)"id", (const xmlChar*)domainId.c_str());
     Domain* aDomain = new Domain(0, domainId);
-    
+
     //$$ add AggregateReflector (AR: *:*:*) node
     sprintf(buf, "urn:publicid:IDN+%s+node+*", domainId.c_str());
     string arId = buf;
@@ -320,6 +312,61 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                 // add link level to stitching side if not available; 
                 // create peering by adding or modifying remote-link-id
 
+    char str[1024];
+    sprintf(buf, "<topology xmlns=\"http://ogf.org/schema/network/topology/ctrlPlane/20110826/\" id =\"%s-t%d\"><domain id=\"%s\">",
+        domainId.c_str(), (int)time(0), domainId.c_str());
+    map<string, Node*, strcmpless>::iterator itn = aDomain->GetNodes().begin();
+    for (; itn != aDomain->GetNodes().end(); itn++)
+    {
+        Node* tn = (Node*)(*itn).second;
+        snprintf(str, 1024, "<node id=\"%s\">", tn->GetName().c_str());
+        strcat(buf, str);
+        map<string, Port*, strcmpless>::iterator itp = tn->GetPorts().begin();
+        for (; itp != tn->GetPorts().end(); itp++)
+        {
+            Port* tp = (Port*)(*itp).second;
+            snprintf(str, 1024, "<port id=\"%s\">", tp->GetName().c_str());
+            strcat(buf, str);
+            snprintf(str, 1024, "<capacity>%llu</capacity>", tp->GetMaxBandwidth());
+            strcat(buf, str);
+            snprintf(str, 1024, "<maximumReservableCapacity>%llu</maximumReservableCapacity>", tp->GetMaxReservableBandwidth());
+            strcat(buf, str);
+            snprintf(str, 1024, "<minimumReservableCapacity>%llu</minimumReservableCapacity>", tp->GetMinReservableBandwidth());
+            strcat(buf, str);
+            snprintf(str, 1024, "<granularity>%llu</granularity>", tp->GetBandwidthGranularity());
+            strcat(buf, str);
+            map<string, Link*, strcmpless>::iterator itl = tp->GetLinks().begin();
+            for (; itl != tp->GetLinks().end(); itl++) 
+            {
+                RLink* tl = (RLink*)(*itl).second;
+                snprintf(str, 1024, "<link id=\"%s\">", tl->GetName().c_str());
+                strcat(buf, str);
+                snprintf(str, 1024, "<remoteLinkId>%s</remoteLinkId>", tl->GetRemoteLinkName().c_str());
+                strcat(buf, str);
+                snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", tl->GetMetric());
+                strcat(buf, str);
+                snprintf(str, 1024, "<capacity>%llu</capacity>", tl->GetMaxBandwidth());
+                strcat(buf, str);
+                snprintf(str, 1024, "<maximumReservableCapacity>%llu</maximumReservableCapacity>", tl->GetMaxReservableBandwidth());
+                strcat(buf, str);
+                snprintf(str, 1024, "<minimumReservableCapacity>%llu</minimumReservableCapacity>", tl->GetMinReservableBandwidth());
+                strcat(buf, str);
+                snprintf(str, 1024, "<granularity>%llu</granularity>", tl->GetBandwidthGranularity());
+                strcat(buf, str);
+                strcat(buf, tl->GetSwcapXmlString().c_str());
+                snprintf(str, 1024, "</link>");
+                strcat(buf, str);
+            }
+            snprintf(str, 1024, "</port>");
+            strcat(buf, str);
+        }
+        snprintf(str, 1024, "</node>");
+        strcat(buf, str);
+    }
+    strcat(buf, "</domain></topology>");
+    
+    int sizeBuf=strlen(buf);
+    xmlDocPtr xmlDoc = xmlParseMemory(buf, sizeBuf);
     return xmlDoc;
 }
 
