@@ -398,7 +398,10 @@ void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, st
             *ps = 0;
         }
         else 
+        {
+            node = pbuf;
             return;
+        }
         node = pbuf;
         pbuf = ps+1;
         ps = strstr(pbuf, ":");
@@ -407,14 +410,13 @@ void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, st
             *ps = 0;
         }
         else 
+        {
+            port = pbuf;
             return;
+        }
         port = pbuf;
         pbuf = ps+1;
         ps = strstr(pbuf, ":");
-        if (ps != NULL)
-        {
-            return;
-        }
         link = pbuf;        
     }
 }
