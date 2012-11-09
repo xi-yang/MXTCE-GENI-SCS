@@ -243,7 +243,13 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                                     sscanf((const char*)pBuf, "%llu", &bw);
                                                     aRLink->SetBandwidthGranularity(bw);
                                                 }
-                                                // TODO: parse SwitchingCapabilitityDescriptors in sub-level
+                                                else if (strncasecmp((const char*)xmlParamNode->name, "SwitchingCapabilityDescriptors", 30) == 0)
+                                                {
+                                                    xmlBufferPtr buffer = xmlBufferCreate();
+                                                    xmlNodeDump( buffer, rspecDoc,xmlParamNode, 0, 0);
+                                                    string swcapXml = (const char*)xmlBufferContent(buffer);
+                                                    aRLink->SetSwcapXmlString(swcapXml);                                                    
+                                                }
                                             }
                                         }
                                         //$$create peering to AR (a. *:*--'to-nodename':* b. portname:*--"to-nodename-portname:*")
@@ -302,7 +308,6 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
             }
         }
     }
-
 
 
     //$$ get host info: rspec/node, rspec/node/interface, rspec/link, rspec/link/interface_ref

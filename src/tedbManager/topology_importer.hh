@@ -59,11 +59,14 @@ class RLink: public Link
 {
 protected:
     string remoteLinkName;
+    string swcapXmlString;
 
 public:
     RLink(string& name): Link(0, name) { }
-    void SetRemoteLinkName(string name) { remoteLinkName = name; }
+    void SetRemoteLinkName(string& name) { remoteLinkName = name; }
     string& GetRemoteLinkName() { return remoteLinkName; }
+    void SetSwcapXmlString(string& xml) { swcapXmlString = xml; }
+    string& GetSwcapXmlString() { return swcapXmlString; }
 };
 
 #endif
