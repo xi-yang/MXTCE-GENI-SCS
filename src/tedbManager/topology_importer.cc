@@ -423,6 +423,8 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                         break;
                                     }
                                 }
+                                if (rspecLink == NULL)
+                                    continue;
                                 // 2. create new port if applicable and new link
                                 Port* aPort = NULL;
                                 if (portExisted)
