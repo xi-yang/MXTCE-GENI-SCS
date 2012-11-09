@@ -242,7 +242,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                                 }
                                             }
                                         }
-                                        // create peering to AR (a. *:*--'to-nodename':* b. portname:*--"to-nodename-portname:*")
+                                        // create peering to AR (a. *:*--'*-to-nodename':* b. portname:*--"*-to-nodename-portname:*")
                                         // change remote-link-id on this link and create new port/link on AR
                                         string& remoteLinkName = aRLink->GetRemoteLinkName();
                                         size_t i1 = remoteLinkName.find("*:*:*");
@@ -250,7 +250,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                         {
                                             string nodeShortName = GetUrnField(aNode->GetName(), "node");
                                             string portShortName = GetUrnField(aPort->GetName(), "port");
-                                            sprintf(buf, "*:to-%s-%s:*", nodeShortName.c_str(), portShortName.c_str());
+                                            sprintf(buf, "*:*-to-%s-%s:*", nodeShortName.c_str(), portShortName.c_str());
                                             remoteLinkName.replace(i1, 5, buf);
                                             aRLink->SetRemoteLinkName(remoteLinkName);
                                             string remotePortName = remoteLinkName;
