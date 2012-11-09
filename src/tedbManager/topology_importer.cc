@@ -110,9 +110,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
 {
     char buf[1024*1024];
  
-    //$$ get domain info: rspec/stitching/aggregate
-        //$$ create domain
-        //$$ fill in topology id and domain id
+    //get domain info: rspec/stitching/aggregate
     xmlNodePtr rspecRoot = xmlDocGetRootElement(rspecDoc);
     xmlNodePtr xmlNode;
     xmlNodePtr aggrNode = NULL;
@@ -144,25 +142,25 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
     string domainId = GetUrnField(aggrUrn, "domain");
     Domain* aDomain = new Domain(0, domainId);
 
-    //$$ add AggregateReflector (AR: *:*:*) node
+    // add AggregateReflector (AR: *:*:*) node
     sprintf(buf, "urn:publicid:IDN+%s+node+*", domainId.c_str());
     string arId = buf;
     Node* arNode = new Node(0, arId);
     aDomain->AddNode(arNode);
 
-    //$$ get node info: rspec/stitching/aggregate/node
+    // get node info: rspec/stitching/aggregate/node
     for (xmlNode = aggrNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
     {
         if (xmlNode->type == XML_ELEMENT_NODE )
         {
             if (strncasecmp((const char*)xmlNode->name, "node", 4) == 0) 
             {
-                //$$create node
+                // create node
                 xmlChar* xmlNodeId = xmlGetProp(xmlNode,  (const xmlChar*)"id");
                 string nodeId = (const char*)xmlNodeId;
                 Node* aNode = new Node(0, nodeId);
                 aDomain->AddNode(aNode);
-                //$$ get port info: rspec/stitching/aggregate/node/port
+                // get port info: rspec/stitching/aggregate/node/port
                 xmlNodePtr xmlPortNode;
                 for (xmlPortNode = xmlNode->children; xmlPortNode != NULL; xmlPortNode = xmlPortNode->next)
                 {
@@ -170,13 +168,13 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                     {
                         if (strncasecmp((const char*)xmlPortNode->name, "port", 4) == 0)
                         {
-                            //$$ create port
+                            // create port
                             xmlChar* xmlPortId = xmlGetProp(xmlPortNode,  (const xmlChar*)"id");
                             string portId = (const char*)xmlPortId;
                             Port* aPort = new Port(0, portId);
                             aNode->AddPort(aPort);
                             xmlNodePtr xmlLinkNode;
-                            //$$ get link info: rspec/stitching/aggregate/node/port/link
+                            // get link info: rspec/stitching/aggregate/node/port/link
                             for (xmlLinkNode = xmlPortNode->children; xmlLinkNode != NULL; xmlLinkNode = xmlLinkNode->next)
                             {
                                 if (xmlLinkNode->type == XML_ELEMENT_NODE )
@@ -244,7 +242,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                                 }
                                             }
                                         }
-                                        //$$create peering to AR (a. *:*--'to-nodename':* b. portname:*--"to-nodename-portname:*")
+                                        // create peering to AR (a. *:*--'to-nodename':* b. portname:*--"to-nodename-portname:*")
                                         // change remote-link-id on this link and create new port/link on AR
                                         string& remoteLinkName = aRLink->GetRemoteLinkName();
                                         size_t i1 = remoteLinkName.find("*:*:*");
@@ -302,15 +300,225 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
     }
 
 
-    //$$ get host info: rspec/node, rspec/node/interface, rspec/link, rspec/link/interface_ref
-        //$$ recognize host interfaces attached to stitching links
-                // not on a stitching host
-                // link to a stitching port or link (or AR)
-                // 
-        //$$ create host as node; 
-        //$$ create interface as port/link (link name = empty or *)
-                // add link level to stitching side if not available; 
-                // create peering by adding or modifying remote-link-id
+    // get host info: rspec/node, rspec/node/interface, rspec/link, rspec/link/interface_ref
+    // 1. get list of the non-stitching rspec links in main part
+    xmlNodePtr xmlIfNode, xmlParamNode;
+    list<RLink*> rspecLinks;
+    for (xmlNode = rspecRoot->children; xmlNode != NULL; xmlNode = xmlNode->next)
+    {
+        if (xmlNode->type == XML_ELEMENT_NODE )
+        {
+            if (strncasecmp((const char*)xmlNode->name, "link", 4) == 0) 
+            {
+                list<string> ifRefs;
+                u_int64_t capacity = 1000000000; //1g by default
+                for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
+                {
+                    if (aggrNode->type == XML_ELEMENT_NODE )
+                    {
+                        if (strncasecmp((const char*)xmlIfNode->name, "interface_ref", 12) == 0) 
+                        {                            
+                            xmlChar* xmlIfId = xmlGetProp(xmlNode,  (const xmlChar*)"component_id");
+                            string ifId = (const char*)xmlIfId;
+                            ifRefs.push_back(ifId);
+                        }
+                        else if (strncasecmp((const char*)xmlIfNode->name, "property", 12) == 0) 
+                        {                            
+                            xmlChar* capStr = xmlGetProp(xmlNode,  (const xmlChar*)"capacity");
+                            sscanf((const char*)capStr, "%llu", &capacity);
+                        }
+                    }
+                }
+                if (ifRefs.size() != 2)
+                    continue;
+                string nodeShortName = GetUrnField(ifRefs.front(), "node");
+                string nodeId1 = "urn:publicid:IDN+";
+                nodeId1 += domainId;
+                nodeId1 += "+node+";
+                nodeId1 += nodeShortName;
+                nodeShortName = GetUrnField(ifRefs.back(), "node");
+                string nodeId2 = "urn:publicid:IDN+";
+                nodeId2 += domainId;
+                nodeId2 += "+node+";
+                nodeId2 += nodeShortName;
+                bool isStitching1 = (aDomain->GetNodes().find(nodeId1) != aDomain->GetNodes().end());
+                bool isStitching2 = (aDomain->GetNodes().find(nodeId2) != aDomain->GetNodes().end());
+                if (isStitching1 && isStitching2) // skip a stitching only link
+                    continue;
+                RLink* aRLink = new RLink(ifRefs.front());
+                aRLink->SetRemoteLinkName(ifRefs.back());
+                aRLink->SetMaxBandwidth(capacity);
+                aRLink->SetMaxReservableBandwidth(capacity);
+                rspecLinks.push_back(aRLink);
+            }
+        }
+    }
+    // 2. find the host interfaces attached to stitching links that are linked to a stitching port but link (or AR) not on a stitching host 
+    for (xmlNode = rspecRoot->children; xmlNode != NULL; xmlNode = xmlNode->next)
+    {
+        if (xmlNode->type == XML_ELEMENT_NODE )
+        {
+            if (strncasecmp((const char*)xmlNode->name, "node", 4) == 0) 
+            {
+                xmlChar* xmlNodeId = xmlGetProp(xmlNode,  (const xmlChar*)"component_id");
+                string nodeId = (const char*)xmlNodeId;
+                Node* aNode = NULL;
+                if (aDomain->GetNodes().find(nodeId) != aDomain->GetNodes().end())
+                { // handle a node in main part that is already in stithcing extension
+                    aNode = (Node*)(*aDomain->GetNodes().find(nodeId)).second;
+                    //add links that are not in stitching extension to node that is in stitching extension
+                    for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
+                    {
+                        if (xmlIfNode->type == XML_ELEMENT_NODE )
+                        {
+                            if (strncasecmp((const char*)xmlIfNode->name, "interface", 9) == 0) 
+                            {                            
+                                xmlChar* xmlIfId = xmlGetProp(xmlNode,  (const xmlChar*)"component_id");
+                                string ifId = (const char*)xmlIfId;
+                                // get portname and linkname
+                                string portName = ifId;
+                                string linkName = ifId;
+                                string linkShortName = GetUrnField(linkName, "link");
+                                if (linkShortName.size() == 0)
+                                {
+                                    linkName += ":*";
+                                }
+                                else 
+                                {
+                                    portName.replace(linkName.size()-linkShortName.size(), linkShortName.size(), "");
+                                }
+
+                                bool portExisted = false, linkExisted = false;
+                                map<string, Port*, strcmpless>::iterator itp = aNode->GetPorts().begin();
+                                for (; itp != aNode->GetPorts().end(); itp++)
+                                {
+                                    Port* tp = (Port*)(*itp).second;
+                                    if (tp->GetName() == portName)
+                                        portExisted = true;
+                                    if (tp->GetLinks().find(ifId) != tp->GetLinks().end())
+                                        linkExisted = true;
+                                    if (portExisted || linkExisted)
+                                        break;
+                                }
+                                if (linkExisted)
+                                    continue;
+                                // otherwise, add link --
+                                // 1. find the associated link in rspecLinks list
+                                list<RLink*>::iterator itRL = rspecLinks.begin();
+                                RLink* rspecLink = NULL;
+                                for (; itRL != rspecLinks.end(); itRL++)
+                                {
+                                    if (linkName == (*itRL)->GetName() || linkName == (*itRL)->GetRemoteLinkName())
+                                    {
+                                        rspecLink = *itRL;
+                                        break;
+                                    }
+                                }
+                                // 2. create new port if applicable and new link
+                                Port* aPort = NULL;
+                                if (portExisted)
+                                {
+                                    aPort = (Port*)(*itp).second;
+                                }
+                                else
+                                {
+                                    aPort = new Port(0, portName);
+                                    aPort->SetMaxBandwidth((*itRL)->GetMaxBandwidth());
+                                    aPort->SetMaxReservableBandwidth((*itRL)->GetMaxReservableBandwidth());
+                                    aPort->SetMinReservableBandwidth((*itRL)->GetMinReservableBandwidth());
+                                    aPort->SetBandwidthGranularity((*itRL)->GetBandwidthGranularity());
+                                    aNode->AddPort(aPort);
+                                }
+                                RLink* aRLink = new RLink(linkName);
+                                string remoteLinkName = (ifId == rspecLink->GetName() ? rspecLink->GetRemoteLinkName() : rspecLink->GetName());
+                                string remoteLinkShortName = GetUrnField(remoteLinkName, "link");
+                                if (remoteLinkName.size() == 0)
+                                {
+                                    remoteLinkName += ":*";
+                                }
+                                aRLink->SetRemoteLinkName(remoteLinkName);
+                                aRLink->SetMetric(1);
+                                aRLink->SetMaxBandwidth((*itRL)->GetMaxBandwidth());
+                                aRLink->SetMaxReservableBandwidth((*itRL)->GetMaxReservableBandwidth());
+                                aRLink->SetMinReservableBandwidth((*itRL)->GetMinReservableBandwidth());
+                                aRLink->SetBandwidthGranularity((*itRL)->GetBandwidthGranularity());
+                                aPort->AddLink(aRLink);
+                            }
+                        }
+                    }
+                }
+                else 
+                { // hanlde a node in main part but not in stitching extension 
+                    for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
+                    {
+                        if (xmlIfNode->type == XML_ELEMENT_NODE )
+                        {
+                            if (strncasecmp((const char*)xmlIfNode->name, "interface", 9) == 0) 
+                            {                            
+                                xmlChar* xmlIfId = xmlGetProp(xmlNode,  (const xmlChar*)"component_id");
+                                string ifId = (const char*)xmlIfId;
+                                list<RLink*>::iterator itRL = rspecLinks.begin();
+                                for (; itRL != rspecLinks.end(); itRL++)
+                                {
+                                    if (ifId == (*itRL)->GetName() || ifId == (*itRL)->GetRemoteLinkName())
+                                    {
+                                        if (aNode == NULL)
+                                        {
+                                            aNode = new Node(0, nodeId);
+                                        }
+                                        string portName = ifId;
+                                        string linkName = ifId;
+                                        string linkShortName = GetUrnField(linkName, "link");
+                                        if (linkShortName.size() == 0)
+                                        {
+                                            linkName += ":*";
+                                        }
+                                        else 
+                                        {
+                                            portName.replace(linkName.size()-linkShortName.size(), linkShortName.size(), "");
+                                        }
+                                        string remoteLinkName = (ifId == (*itRL)->GetName() ? (*itRL)->GetRemoteLinkName() : (*itRL)->GetName());
+                                        string remoteLinkShortName = GetUrnField(remoteLinkName, "link");
+                                        if (remoteLinkName.size() == 0)
+                                        {
+                                            remoteLinkName += ":*";
+                                        }
+                                        map<string, Port*, strcmpless>::iterator itp = aNode->GetPorts().find(portName);
+                                        Port* aPort;
+                                        if (itp != aNode->GetPorts().end())
+                                        {
+                                            aPort = (Port*)(*itp).second;
+                                        } 
+                                        else
+                                        {
+                                            new Port(0, portName);
+                                            aPort->SetMaxBandwidth((*itRL)->GetMaxBandwidth());
+                                            aPort->SetMaxReservableBandwidth((*itRL)->GetMaxReservableBandwidth());
+                                            aPort->SetMinReservableBandwidth((*itRL)->GetMinReservableBandwidth());
+                                            aPort->SetBandwidthGranularity((*itRL)->GetBandwidthGranularity());
+                                            aNode->AddPort(aPort);
+                                        }
+                                        RLink* aRLink = new RLink(linkName);
+                                        aRLink->SetRemoteLinkName(remoteLinkName);
+                                        aRLink->SetMetric(1);
+                                        aRLink->SetMaxBandwidth((*itRL)->GetMaxBandwidth());
+                                        aRLink->SetMaxReservableBandwidth((*itRL)->GetMaxReservableBandwidth());
+                                        aRLink->SetMinReservableBandwidth((*itRL)->GetMinReservableBandwidth());
+                                        aRLink->SetBandwidthGranularity((*itRL)->GetBandwidthGranularity());
+                                        aPort->AddLink(aRLink);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (aNode != NULL)
+                    {
+                        aDomain->AddNode(aNode);
+                    }
+                }
+            }
+        }
+    }
 
     char str[1024];
     sprintf(buf, "<topology xmlns=\"http://ogf.org/schema/network/topology/ctrlPlane/20110826/\" id =\"%s-t%d\"><domain id=\"%s\">",
@@ -370,5 +578,5 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
     return xmlDoc;
 }
 
-// TODO: move RSpec related code to separate file/classes
+// TODO: move RSpec related code to separate file/classes. Consolidate both parser and composer
 
