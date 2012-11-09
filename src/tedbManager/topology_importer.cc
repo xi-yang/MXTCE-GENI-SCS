@@ -260,7 +260,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                             Port* remotePort = new Port(0, remotePortName);
                                             arNode->AddPort(remotePort);
                                             RLink* remoteLink = new RLink(remoteLinkName);
-                                            aPort->AddLink(remoteLink);
+                                            remotePort->AddLink(remoteLink);
                                             remoteLink->SetRemoteLinkName(aRLink->GetName());
                                         }
                                     }
