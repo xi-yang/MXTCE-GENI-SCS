@@ -471,10 +471,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                 {
                                     if (ifId == (*itRL)->GetName() || ifId == (*itRL)->GetRemoteLinkName())
                                     {
-                                        if (aNode == NULL)
-                                        {
-                                            aNode = new Node(0, nodeId);
-                                        }
+                                        aNode = new Node(0, nodeId);
                                         string portName = ifId;
                                         string linkName = ifId;
                                         string linkShortName = GetUrnField(linkName, "link");
@@ -500,7 +497,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                         } 
                                         else
                                         {
-                                            new Port(0, portName);
+                                            aPort = new Port(0, portName);
                                             aPort->SetMaxBandwidth((*itRL)->GetMaxBandwidth());
                                             aPort->SetMaxReservableBandwidth((*itRL)->GetMaxReservableBandwidth());
                                             aPort->SetMinReservableBandwidth((*itRL)->GetMinReservableBandwidth());
