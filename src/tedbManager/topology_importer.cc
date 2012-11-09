@@ -146,7 +146,8 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
 
     xmlChar* xmlAggrId = xmlGetProp(aggrNode,  (const xmlChar*)"id");
     xmlNodePtr xmlRoot = xmlDocGetRootElement(xmlDoc);
-    string domainId = (const char*)xmlAggrId; // TODO: extract domain id from aggrId
+    string aggrUrn = (const char*)xmlAggrId;
+    string domainId = GetUrnField(aggrUrn, "domain");
     xmlSetProp(xmlRoot, (const xmlChar*)"xmlns", (const xmlChar*)"http://ogf.org/schema/network/topology/ctrlPlane/20110826/");
     xmlSetProp(xmlRoot, (const xmlChar*)"id", (const xmlChar*)domainId.c_str());
     Domain* aDomain = new Domain(0, domainId);
@@ -251,8 +252,8 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                         size_t i1 = remoteLinkName.find("*:*:*");
                                         if (i1 != string::npos) 
                                         {
-                                            string nodeShortName = aNode->GetName(); // TODO: extract in utils.cc
-                                            string portShortName = aPort->GetName(); // TODO: extract in utils.cc
+                                            string nodeShortName = GetUrnField(aNode->GetName(), "node");
+                                            string portShortName = GetUrnField(aPort->GetName(), "port");
                                             sprintf(buf, "*:to-%s-%s:*", nodeShortName.c_str(), portShortName.c_str());
                                             remoteLinkName.replace(i1, 5, buf);
                                             aRLink->SetRemoteLinkName(remoteLinkName);

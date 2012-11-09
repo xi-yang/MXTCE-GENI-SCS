@@ -292,13 +292,13 @@ string GetUrnField(string& urn, const char* field)
     {
         string domain, node, port, link;
         ParseFQUrnShort(urn, domain, node, port, link);
-        if (strncmp(field, "domain", 2) == 0)
+        if (strncmp(field, "domain", 4) == 0 || strncmp(field, "aggregate", 4) == 0)
             return domain;
-        else if (strncmp(field, "node", 2) == 0)
+        else if (strncmp(field, "node", 4) == 0)
             return node;
-        else if (strncmp(field, "port", 2) == 0)
+        else if (strncmp(field, "port", 4) == 0)
             return port;
-        else if (strncmp(field, "link", 2) == 0)
+        else if (strncmp(field, "link", 4) == 0)
             return link;
         else
             return name;
@@ -327,7 +327,9 @@ void ParseFQUrn(string& urn, string& domain, string& node, string& port, string&
         ParseFQUrnShort(urn, domain, node, port, link);
 }
 
-// example urn: 'urn:ogf:network:es.net:fnal-mr2:xe-7/0/0:*'
+// example nml urn: 'urn:ogf:network:es.net:fnal-mr2:xe-7/0/0:*'
+// example geni urn: 'urn:publicid:IDN+ion.internet2.edu+interface+rtr.newy:xe-0/0/3:*'
+// example geni urn: 'urn:publicid:IDN+ion.internet2.edu+node+rtr.newy'
 void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, string& link) 
 {
     char buf[256];
@@ -343,6 +345,52 @@ void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, st
         else 
             return;
         domain = pbuf;
+        pbuf = ps+1;
+        ps = strstr(pbuf, ":");
+        if (ps != NULL)
+        {
+            *ps = 0;
+        }
+        else 
+            return;
+        node = pbuf;
+        pbuf = ps+1;
+        ps = strstr(pbuf, ":");
+        if (ps != NULL)
+        {
+            *ps = 0;
+        }
+        else 
+            return;
+        port = pbuf;
+        pbuf = ps+1;
+        ps = strstr(pbuf, ":");
+        if (ps != NULL)
+        {
+            return;
+        }
+        link = pbuf;        
+    } else if (strncmp(urn.c_str(), "urn:publicid:IDN+", 17) == 0) 
+    {
+        string type;
+        strncpy(buf, urn.c_str()+17, 256);
+        ps = strstr(pbuf, "+");
+        if (ps != NULL)
+        {
+            *ps = 0;
+        }
+        else 
+            return;
+        domain = pbuf;
+        pbuf = ps+1;
+        ps = strstr(pbuf, "+");
+        if (ps != NULL)
+        {
+            *ps = 0;
+        }
+        else 
+            return;
+        type = pbuf;
         pbuf = ps+1;
         ps = strstr(pbuf, ":");
         if (ps != NULL)
