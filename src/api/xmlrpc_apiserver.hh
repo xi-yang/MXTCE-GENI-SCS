@@ -102,6 +102,8 @@ protected:
     MxTCE* mxTCE;
 
 public:
+    static Lock xmlrpcApiLock;
+
     XMLRPC_APIServer(MxTCE* tce):mxTCE(tce) { }
     virtual ~XMLRPC_APIServer() { }
     virtual void* Run();

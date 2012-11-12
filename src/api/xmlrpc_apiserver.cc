@@ -36,6 +36,9 @@
 #include "mxtce.hh"
 #include <map>
 
+Lock XMLRPC_APIServer::xmlrpcApiLock;
+
+
 // TODO: Exception handling!
 
 
@@ -70,10 +73,12 @@ void XMLRPC_BaseMethod::fire()
     assert(evtMaster);
     evtMaster->Schedule(timeoutTimer);
     evtMaster->Run();
+    /*
     while (!timeoutTimer->Obsolete()) 
     {
         evtMaster->Run();
     }
+    */
     evtMaster->Remove(timeoutTimer);
     delete timeoutTimer;
 }
@@ -81,6 +86,9 @@ void XMLRPC_BaseMethod::fire()
 // Actaul XMLRPC methods
 void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value *   const  retvalP) 
 {   
+
+    XMLRPC_APIServer::xmlrpcApiLock.DoLock();
+
     if (msgPort == NULL)
         this->init();
 
@@ -120,6 +128,8 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
         // TODO: relate message using contextTag 
         // create reply msg
     }
+
+    XMLRPC_APIServer::xmlrpcApiLock.Unlock();
 }
 
 
