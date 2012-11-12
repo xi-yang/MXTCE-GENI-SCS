@@ -36,11 +36,9 @@
 #include "mxtce.hh"
 #include <map>
 
-Lock XMLRPC_APIServer::xmlrpcApiLock;
-
+Lock XMLRPC_APIServer::xmlrpcApiLock; // lock to assure only one API call is served at a time
 
 // TODO: Exception handling!
-
 
 // Base class 
 // TODO: move msgPort to thread level (or make class static) if more than one nethod
@@ -67,26 +65,18 @@ void XMLRPC_BaseMethod::init()
 
 void XMLRPC_BaseMethod::fire() 
 {
-    // TODO: 1. use multiple 1sec intervals. re-run evtMaster if 
-    // 2. use callback to stop eventmaster (need to modify MessagePort to hook up extra callback)
+    // TODO: use callback to stop eventmaster (need to modify MessagePort to hook up extra callback)
     XMLRPC_TimeoutTimer* timeoutTimer = new XMLRPC_TimeoutTimer(evtMaster);
     assert(evtMaster);
     evtMaster->Schedule(timeoutTimer);
     evtMaster->Run();
-    /*
-    while (!timeoutTimer->Obsolete()) 
-    {
-        evtMaster->Run();
-    }
-    */
     evtMaster->Remove(timeoutTimer);
     delete timeoutTimer;
 }
 
 // Actaul XMLRPC methods
 void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value *   const  retvalP) 
-{   
-
+{
     XMLRPC_APIServer::xmlrpcApiLock.DoLock();
 
     if (msgPort == NULL)
