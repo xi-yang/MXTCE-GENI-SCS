@@ -106,14 +106,14 @@ string TopologyXMLImporter::CheckFileType(xmlDocPtr xmlDoc)
     return "unknown";
 }
 
-static string defaultSwcapStr = "<SwitchingCapabilityDescriptors>
-        <switchingcapType>l2sc</switchingcapType>
-        <encodingType>ethernet</encodingType>
-        <switchingCapabilitySpecificInfo>
-           <interfaceMTU>9000</interfaceMTU>
-           <vlanRangeAvailability>2-4094</vlanRangeAvailability>
-           <vlanTranslation>false</vlanTranslation>
-        </switchingCapabilitySpecificInfo>
+static string defaultSwcapStr = "<SwitchingCapabilityDescriptors>\
+        <switchingcapType>l2sc</switchingcapType>\
+        <encodingType>ethernet</encodingType>\
+        <switchingCapabilitySpecificInfo>\
+           <interfaceMTU>9000</interfaceMTU>\
+           <vlanRangeAvailability>2-4094</vlanRangeAvailability>\
+           <vlanTranslation>false</vlanTranslation>\
+        </switchingCapabilitySpecificInfo>\
       </SwitchingCapabilityDescriptors>";
 
 xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
