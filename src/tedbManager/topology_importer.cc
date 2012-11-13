@@ -443,7 +443,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                 RLink* aRLink = new RLink(linkName);
                                 string remoteLinkName = (ifId == rspecLink->GetName() ? rspecLink->GetRemoteLinkName() : rspecLink->GetName());
                                 string remoteLinkShortName = GetUrnField(remoteLinkName, "link");
-                                if (remoteLinkName.size() == 0)
+                                if (remoteLinkShortName.size() == 0)
                                 {
                                     remoteLinkName += ":*";
                                 }
@@ -487,7 +487,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                         }
                                         string remoteLinkName = (ifId == (*itRL)->GetName() ? (*itRL)->GetRemoteLinkName() : (*itRL)->GetName());
                                         string remoteLinkShortName = GetUrnField(remoteLinkName, "link");
-                                        if (remoteLinkName.size() == 0)
+                                        if (remoteLinkShortName.size() == 0)
                                         {
                                             remoteLinkName += ":*";
                                         }
