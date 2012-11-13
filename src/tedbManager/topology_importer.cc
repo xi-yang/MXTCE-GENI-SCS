@@ -106,6 +106,16 @@ string TopologyXMLImporter::CheckFileType(xmlDocPtr xmlDoc)
     return "unknown";
 }
 
+static string defaultSwcapStr = "<SwitchingCapabilityDescriptors>
+        <switchingcapType>l2sc</switchingcapType>
+        <encodingType>ethernet</encodingType>
+        <switchingCapabilitySpecificInfo>
+           <interfaceMTU>9000</interfaceMTU>
+           <vlanRangeAvailability>2-4094</vlanRangeAvailability>
+           <vlanTranslation>false</vlanTranslation>
+        </switchingCapabilitySpecificInfo>
+      </SwitchingCapabilityDescriptors>";
+
 xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
 {
     char buf[1024*1024];
@@ -268,6 +278,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                             remoteLink->SetMaxReservableBandwidth(remotePort->GetMaxReservableBandwidth());
                                             remoteLink->SetMinReservableBandwidth(remotePort->GetMinReservableBandwidth());
                                             remoteLink->SetBandwidthGranularity(remotePort->GetBandwidthGranularity());
+                                            remoteLink->SetSwcapXmlString(aRLink->GetSwcapXmlString());
                                             remotePort->AddLink(remoteLink);
                                         }
                                     }
@@ -453,6 +464,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                 aRLink->SetMaxReservableBandwidth((*itRL)->GetMaxReservableBandwidth());
                                 aRLink->SetMinReservableBandwidth((*itRL)->GetMinReservableBandwidth());
                                 aRLink->SetBandwidthGranularity((*itRL)->GetBandwidthGranularity());
+                                aRLink->SetSwcapXmlString(defaultSwcapStr);
                                 aPort->AddLink(aRLink);
                             }
                         }
@@ -513,6 +525,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                         aRLink->SetMaxReservableBandwidth((*itRL)->GetMaxReservableBandwidth());
                                         aRLink->SetMinReservableBandwidth((*itRL)->GetMinReservableBandwidth());
                                         aRLink->SetBandwidthGranularity((*itRL)->GetBandwidthGranularity());
+                                        aRLink->SetSwcapXmlString(defaultSwcapStr);
                                         aPort->AddLink(aRLink);
                                     }
                                 }
