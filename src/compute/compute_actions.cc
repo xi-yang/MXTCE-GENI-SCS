@@ -448,7 +448,7 @@ void Action_ComputeKSP::Process()
         }
     }
     // store a list of ordered result paths 
-    if (this->_feasiblePaths->size() == 0)
+    if (this->_feasiblePaths == NULL || this->_feasiblePaths->size() == 0)
     {
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() No feasible path found after KSP being applied with TE constraints!");
     }
