@@ -401,7 +401,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                 string linkShortName = GetUrnField(linkName, "link");
                                 if (linkShortName.size() == 0)
                                 {
-                                    linkName += ":*";
+                                    linkName += ":**";
                                 }
                                 else 
                                 {
@@ -456,7 +456,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                 string remoteLinkShortName = GetUrnField(remoteLinkName, "link");
                                 if (remoteLinkShortName.size() == 0)
                                 {
-                                    remoteLinkName += ":*";
+                                    remoteLinkName += ":**";
                                 }
                                 aRLink->SetRemoteLinkName(remoteLinkName);
                                 aRLink->SetMetric(1);
@@ -491,7 +491,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                         string linkShortName = GetUrnField(linkName, "link");
                                         if (linkShortName.size() == 0)
                                         {
-                                            linkName += ":*";
+                                            linkName += ":**";
                                         }
                                         else 
                                         {
@@ -501,7 +501,7 @@ xmlDocPtr TopologyXMLImporter::TranslateFromRspec(xmlDocPtr rspecDoc)
                                         string remoteLinkShortName = GetUrnField(remoteLinkName, "link");
                                         if (remoteLinkShortName.size() == 0)
                                         {
-                                            remoteLinkName += ":*";
+                                            remoteLinkName += ":**";
                                         }
                                         map<string, Port*, strcmpless>::iterator itp = aNode->GetPorts().find(portName);
                                         Port* aPort;
