@@ -44,6 +44,21 @@ class GeniRSpec {
 protected:
     string rspecXml;
     xmlDocPtr rspecDoc;
+    //embedded class definition
+    class RLink: public Link
+    {
+    protected:
+        string remoteLinkName;
+        string swcapXmlString;
+
+    public:
+        RLink(string& name): Link(0, name) { }
+        virtual ~RLink() { }
+        void SetRemoteLinkName(string& name) { remoteLinkName = name; }
+        string& GetRemoteLinkName() { return remoteLinkName; }
+        void SetSwcapXmlString(string& xml) { swcapXmlString = xml; }
+        string& GetSwcapXmlString() { return swcapXmlString; }
+    };
 
 public:
     GeniRSpec(): rspecDoc(NULL) { }
@@ -53,7 +68,14 @@ public:
         if (rspecDoc != NULL)
             xmlFreeDoc(rspecDoc);
     }
+    string& GetRspecXmlString() { return rspecXml; }
+    void SetRspecXmlString(string& xml) { rspecXml = xml; }
+    xmlDocPtr GetRspecXmlDoc() { return rspecDoc; }
+    void SetRspecXmlDoc(xmlDocPtr doc) { rspecDoc = doc; }
+    void ParseRspecXml();
+    void DumpRspecXml();
 };
+
 
 class GeniAdRSpec: public GeniRSpec {
 public:
@@ -64,35 +86,29 @@ public:
     // TODO: extract policy data
 };
 
+class Message;
 class GeniRequestRSpec: public GeniRSpec {
 public:
+    static int unique_req_id;
     GeniRequestRSpec(string& xml): GeniRSpec(xml) { }
     GeniRequestRSpec(xmlDocPtr doc): GeniRSpec(doc) { }
     virtual ~GeniRequestRSpec() { }
+    Message* CreateApiRequestMessage();
 };
 
 class GeniManifestRSpec: public GeniRSpec {
-public:
-    GeniManifestRSpec(string& xml): GeniRSpec(xml) { }
-    GeniManifestRSpec(xmlDocPtr doc): GeniRSpec(doc) { }
-    virtual ~GeniManifestRSpec() { }  
-};
-
-
-class RLink: public Link
-{
 protected:
-    string remoteLinkName;
-    string swcapXmlString;
-
+    GeniRequestRSpec* pairedRequestRspec;
 public:
-    RLink(string& name): Link(0, name) { }
-    virtual ~RLink() { }
-    void SetRemoteLinkName(string& name) { remoteLinkName = name; }
-    string& GetRemoteLinkName() { return remoteLinkName; }
-    void SetSwcapXmlString(string& xml) { swcapXmlString = xml; }
-    string& GetSwcapXmlString() { return swcapXmlString; }
+    GeniManifestRSpec(): pairedRequestRspec(NULL) { }
+    GeniManifestRSpec(string& xml): GeniRSpec(xml), pairedRequestRspec(NULL) { }
+    GeniManifestRSpec(xmlDocPtr doc): GeniRSpec(doc), pairedRequestRspec(NULL) { }
+    GeniManifestRSpec(GeniRequestRSpec* reqRspec): pairedRequestRspec(reqRspec) { }
+    virtual ~GeniManifestRSpec() { }  
+    void ParseApiReplyMessage(Message* msg);
+    // TODO: extract policy data
 };
+
 
 #endif	/* __RSPEC_HH__ */
 

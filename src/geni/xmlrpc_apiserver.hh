@@ -83,7 +83,7 @@ public:
     
 };
 
-class XMLRPC_ComputePathMethod: public XMLRPC_BaseMethod {
+class XMLRPC_ComputePathMethod: public XMLRPC_BaseMethod {    
 public:
     XMLRPC_ComputePathMethod(MxTCE* tce):XMLRPC_BaseMethod(tce) {
         this->_signature = "?";

@@ -34,6 +34,7 @@
 
 #include "xmlrpc_apiserver.hh"
 #include "mxtce.hh"
+#include "rspec.hh"
 #include <map>
 
 Lock XMLRPC_APIServer::xmlrpcApiLock; // lock to assure only one API call is served at a time
@@ -99,14 +100,11 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
         end_time = xmlrpc_c::value_i8(options["geni-end-time"]);
     }
 
-    string queueName="CORE";
-    string topicName="XMLRPC_API_REQUEST";
-    string contextTag="xmlrpc_api_"; // TODO: append a unique ID
-    Message* testMsg = new Message(MSG_REQ, queueName, topicName);
-    testMsg->SetContextTag(contextTag);
-    // TODO: parse RSpec XML and compose API request TLVs
-    
-    msgPort->PostMessage(testMsg);
+    GeniRequestRSpec reqRspec(rspec);
+    Message* reqMsg = reqRspec.CreateApiRequestMessage();
+    string contextTag = reqMsg->GetContextTag();
+
+    msgPort->PostMessage(reqMsg);
     this->fire();
 
     // poll MessagePort queue:
@@ -115,8 +113,18 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
         // TODO: create xmlrpc error
     }
     else {
-        // TODO: relate message using contextTag 
-        // create reply msg
+        list<Message*>::iterator itm = msgPort->GetMsgInQueue().begin();
+        for (; itm != msgPort->GetMsgInQueue().end(); itm++) 
+        {
+            Message* replyMsg = *itm;
+            if (replyMsg->GetContextTag() == contextTag)
+            {
+                GeniManifestRSpec replyRspec(&reqRspec);
+                replyRspec.ParseApiReplyMessage(replyMsg);
+                string manifest_rspec = replyRspec.GetRspecXmlString();
+                // TOTO GetPolicyData; compose reply xmlrpc message; return;
+            }
+        }
     }
 
     XMLRPC_APIServer::xmlrpcApiLock.Unlock();

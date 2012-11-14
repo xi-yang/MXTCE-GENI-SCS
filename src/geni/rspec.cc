@@ -34,7 +34,30 @@
 
 #include "rspec.hh"
 #include "tedb.hh"
+#include "message.hh"
 
+void GeniRSpec::ParseRspecXml()
+{
+    rspecDoc = xmlParseMemory(rspecXml.c_str(), rspecXml.size());
+    if (rspecDoc == NULL)
+    {
+        char buf[1024*64];
+        snprintf(buf, 1024*16, "GeniRSpec::ParseXML - Failed to parse RSpec XML string: %s", rspecXml.c_str());
+        throw TEDBException(buf);
+    }
+}
+
+void GeniRSpec::DumpRspecXml()
+{
+    if (rspecDoc == NULL)
+    {
+        throw TEDBException((char*)"GeniRSpec::DumpXml - Failed to dump RSpec XML: null rspecDoc");
+    }
+    xmlChar *xmlBuf;
+    int sizeBuf;
+    xmlDocDumpMemory(rspecDoc, &xmlBuf, &sizeBuf);
+    rspecXml = (const char*)xmlBuf;
+}
 
 static string defaultSwcapStr = "<SwitchingCapabilityDescriptors>\
         <switchingcapType>l2sc</switchingcapType>\
@@ -45,7 +68,6 @@ static string defaultSwcapStr = "<SwitchingCapabilityDescriptors>\
            <vlanTranslation>false</vlanTranslation>\
         </switchingCapabilitySpecificInfo>\
       </SwitchingCapabilityDescriptors>";
-
 
 xmlDocPtr GeniAdRSpec::TranslateToNML()
 {
@@ -527,3 +549,32 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     xmlDocPtr xmlDoc = xmlParseMemory(buf, sizeBuf);
     return xmlDoc;
 }
+
+int GeniRequestRSpec::unique_req_id = 1;
+Message* GeniRequestRSpec::CreateApiRequestMessage()
+{
+    if (rspecDoc == NULL)
+    {
+        try {
+            this->ParseRspecXml();    
+        } catch (exception e) {
+            // TODO: Logging
+            return NULL;
+        }
+    }
+    string queueName="CORE";
+    string topicName="XMLRPC_API_REQUEST";
+    char tagBuf[32];
+    snprintf(tagBuf, 31, "xmlrpc_api_request:%d", GeniRequestRSpec::unique_req_id);
+    string contextTag= tagBuf;
+    Message* msg = new Message(MSG_REQ, queueName, topicName);
+    msg->SetContextTag(contextTag);
+    // TODO: add request TLV
+    return msg;
+}
+
+void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
+{
+    ; // TODO
+}
+
