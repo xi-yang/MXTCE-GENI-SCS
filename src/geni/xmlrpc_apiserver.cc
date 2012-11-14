@@ -76,7 +76,7 @@ void XMLRPC_BaseMethod::fire()
 }
 
 // Actaul XMLRPC methods
-void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value *   const  retvalP) 
+void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value* const retvalP) 
 {
     XMLRPC_APIServer::xmlrpcApiLock.DoLock();
 
@@ -99,10 +99,17 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     if (options.find("geni-end-time") != options.end()) {
         end_time = xmlrpc_c::value_i8(options["geni-end-time"]);
     }
-
+    
     GeniRequestRSpec reqRspec(rspec);
-    Message* reqMsg = reqRspec.CreateApiRequestMessage();
-    string contextTag = reqMsg->GetContextTag();
+    string contextTag = "";
+    Message* reqMsg = NULL;
+    try {
+        reqRspec.CreateApiRequestMessage();
+    } catch (TEDBException ex) {
+            ReturnGeniError(retvalP, 2, ex.GetMessage().c_str());
+            goto _final;        
+    }
+    contextTag = reqMsg->GetContextTag();
 
     msgPort->PostMessage(reqMsg);
     this->fire();
@@ -111,6 +118,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     if (msgPort->GetMsgInQueue().size() == 0) 
     {
         // TODO: create xmlrpc error
+        goto _final;
     }
     else {
         list<Message*>::iterator itm = msgPort->GetMsgInQueue().begin();
@@ -127,9 +135,18 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
         }
     }
 
+_final:
+
     XMLRPC_APIServer::xmlrpcApiLock.Unlock();
 }
 
+void XMLRPC_ComputePathMethod::ReturnGeniError(xmlrpc_c::value* const retvalP, int errCode, const char* errMsg)
+{
+    map<string, xmlrpc_c::value> retMap;
+    retMap["geni_code"] = xmlrpc_c::value_int(errCode);
+    retMap["geni_error"] = xmlrpc_c::value_string(errMsg);
+    *retvalP = xmlrpc_c::value_struct(retMap);
+}
 
 // Server Thread 
 void* XMLRPC_APIServer::Run()

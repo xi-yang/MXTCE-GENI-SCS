@@ -555,12 +555,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
 {
     if (rspecDoc == NULL)
     {
-        try {
-            this->ParseRspecXml();    
-        } catch (exception e) {
-            // TODO: Logging
-            return NULL;
-        }
+        this->ParseRspecXml();    
     }
     string queueName="CORE";
     string topicName="XMLRPC_API_REQUEST";

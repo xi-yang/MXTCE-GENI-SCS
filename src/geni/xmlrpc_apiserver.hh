@@ -89,8 +89,8 @@ public:
         this->_signature = "?";
         this->_help = "compute path method";
     }
-    void execute(xmlrpc_c::paramList const& paramList,
-            xmlrpc_c::value *   const  retvalP);
+    void execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const  retvalP);
+    void ReturnGeniError(xmlrpc_c::value* const retvalP, int errCode, const char* errMsg);
 };
 
 
