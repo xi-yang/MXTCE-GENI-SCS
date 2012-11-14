@@ -106,7 +106,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     try {
         reqRspec.CreateApiRequestMessage();
     } catch (TEDBException ex) {
-            ReturnGeniError(retvalP, 2, ex.GetMessage().c_str());
+            ReturnGeniError(retvalP, GENI_PCS_ERRCODE_MAILFORMED_REQUEST, ex.GetMessage().c_str());
             goto _final;        
     }
     contextTag = reqMsg->GetContextTag();
@@ -117,7 +117,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     // poll MessagePort queue:
     if (msgPort->GetMsgInQueue().size() == 0) 
     {
-        ReturnGeniError(retvalP, 3, "Timeout: no response received from computing core!");
+        ReturnGeniError(retvalP, GENI_PCS_ERRCODE_TIMEOUT, "Timeout: no response received from computing core!");
         // TODO: define error codes
         goto _final;
     }

@@ -109,6 +109,8 @@ public:
     // TODO: extract policy data
 };
 
+#define GENI_PCS_ERRCODE_MAILFORMED_REQUEST 0x0001
+#define GENI_PCS_ERRCODE_TIMEOUT 0x0002
 
 #endif	/* __RSPEC_HH__ */
 
