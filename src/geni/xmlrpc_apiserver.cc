@@ -117,7 +117,8 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     // poll MessagePort queue:
     if (msgPort->GetMsgInQueue().size() == 0) 
     {
-        // TODO: create xmlrpc error
+        ReturnGeniError(retvalP, 3, "Timeout: no response received from computing core!");
+        // TODO: define error codes
         goto _final;
     }
     else {
