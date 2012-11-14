@@ -40,26 +40,59 @@
 
 using namespace std;
 
-class RSpec {
+class GeniRSpec {
 protected:
-    
+    string rspecXml;
+    xmlDocPtr rspecDoc;
+
 public:
-    RSpec() { }
-    ~RSpec() { }
+    GeniRSpec(): rspecDoc(NULL) { }
+    GeniRSpec(string& xml): rspecXml(xml) { }
+    GeniRSpec(xmlDocPtr doc): rspecDoc(doc) { }
+    virtual ~GeniRSpec() { 
+        if (rspecDoc != NULL)
+            xmlFreeDoc(rspecDoc);
+    }
 };
 
-class GeniAdRSpec: public RSpec {
-    
+class GeniAdRSpec: public GeniRSpec {
+public:
+    GeniAdRSpec(string& xml): GeniRSpec(xml) { }
+    GeniAdRSpec(xmlDocPtr doc): GeniRSpec(doc) { }
+    virtual ~GeniAdRSpec();
+    xmlDocPtr TranslateToNML();
+    // TODO: extract policy data
 };
 
-class GeniRequestRSpec: public RSpec {
-    
+class GeniRequestRSpec: public GeniRSpec {
+public:
+    GeniRequestRSpec(string& xml): GeniRSpec(xml) { }
+    GeniRequestRSpec(xmlDocPtr doc): GeniRSpec(doc) { }
+    virtual ~GeniRequestRSpec();
 };
 
-class GeniManifestRSpec: public RSpec {
-    
+class GeniManifestRSpec: public GeniRSpec {
+public:
+    GeniManifestRSpec(string& xml): GeniRSpec(xml) { }
+    GeniManifestRSpec(xmlDocPtr doc): GeniRSpec(doc) { }
+    virtual ~GeniManifestRSpec();    
 };
 
+
+class RLink: public Link
+{
+protected:
+    string remoteLinkName;
+    string swcapXmlString;
+
+public:
+    RLink(string& name): Link(0, name) { }
+    virtual ~RLink() { }
+    void SetRemoteLinkName(string& name) { remoteLinkName = name; }
+    string& GetRemoteLinkName() { return remoteLinkName; }
+    void SetSwcapXmlString(string& xml) { swcapXmlString = xml; }
+    string& GetSwcapXmlString() { return swcapXmlString; }
+};
 
 #endif	/* __RSPEC_HH__ */
 
