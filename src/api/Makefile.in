@@ -53,8 +53,7 @@ libapi_a_LIBADD =
 am_libapi_a_OBJECTS = api.$(OBJEXT) apiserver.$(OBJEXT) \
 	decode_pri.$(OBJEXT) request_decoder.$(OBJEXT) \
 	encode_pri.$(OBJEXT) reply_encoder.$(OBJEXT) \
-	request_encoder.$(OBJEXT) reply_decoder.$(OBJEXT) \
-	xmlrpc_apiserver.$(OBJEXT)
+	request_encoder.$(OBJEXT) reply_decoder.$(OBJEXT)
 libapi_a_OBJECTS = $(am_libapi_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -187,8 +186,8 @@ LDADD = $(noinst_LIBRARIES)
 INCLUDES = -I. -I/usr/include -I/usr/local/include \
 	-I/usr/include/libxml2 -I/usr/local/include/libxml2 \
 	-I$(top_srcdir)/src/api -I$(top_srcdir)/src/common \
-	-I$(top_srcdir)/src/compute -I$(top_srcdir)/src/main \
-	-I$(top_srcdir)/src/tedbManager \
+	-I$(top_srcdir)/src/geni -I$(top_srcdir)/src/compute \
+	-I$(top_srcdir)/src/main -I$(top_srcdir)/src/tedbManager \
 	-I$(top_srcdir)/src/resvManager \
 	-I$(top_srcdir)/src/policyManager
 INSTALL_SDATA = @INSTALL@ -m 600
@@ -200,8 +199,7 @@ libapi_a_SOURCES = api.hh apiserver.hh api_constraint.hh decode_pri.hh \
 	request_encoder.hh compute_result.hh reply_decoder.hh \
 	optional_constraint.hh stornet_constraint.hh api.cc \
 	apiserver.cc decode_pri.cc request_decoder.cc encode_pri.cc \
-	reply_encoder.cc request_encoder.cc reply_decoder.cc \
-	xmlrpc_apiserver.hh xmlrpc_apiserver.cc
+	reply_encoder.cc request_encoder.cc reply_decoder.cc
 all: all-am
 
 .SUFFIXES:
@@ -295,7 +293,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reply_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/request_decoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/request_encoder.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmlrpc_apiserver.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

@@ -3283,13 +3283,13 @@ if test "$ac_test_CFLAGS" = set; then
   CFLAGS=$ac_save_CFLAGS
 elif test $ac_cv_prog_cc_g = yes; then
   if test "$GCC" = yes; then
-    CFLAGS="-g"
+    CFLAGS="-g -O2"
   else
     CFLAGS="-g"
   fi
 else
   if test "$GCC" = yes; then
-    CFLAGS=""
+    CFLAGS="-O2"
   else
     CFLAGS=
   fi
@@ -4202,13 +4202,13 @@ if test "$ac_test_CXXFLAGS" = set; then
   CXXFLAGS=$ac_save_CXXFLAGS
 elif test $ac_cv_prog_cxx_g = yes; then
   if test "$GXX" = yes; then
-    CXXFLAGS="-g"
+    CXXFLAGS="-g -O2"
   else
     CXXFLAGS="-g"
   fi
 else
   if test "$GXX" = yes; then
-    CXXFLAGS=""
+    CXXFLAGS="-O2"
   else
     CXXFLAGS=
   fi
@@ -8540,7 +8540,7 @@ fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_htonl_works" >&5
 $as_echo "$ac_cv_htonl_works" >&6; }
 
-ac_config_files="$ac_config_files Makefile src/Makefile src/common/Makefile src/api/Makefile src/compute/Makefile src/main/Makefile src/tedbManager/Makefile src/resvManager/Makefile src/policyManager/Makefile"
+ac_config_files="$ac_config_files Makefile src/Makefile src/common/Makefile src/api/Makefile src/geni/Makefile src/compute/Makefile src/main/Makefile src/tedbManager/Makefile src/resvManager/Makefile src/policyManager/Makefile"
 
 ac_config_commands="$ac_config_commands default"
 
@@ -9192,6 +9192,7 @@ do
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "src/common/Makefile") CONFIG_FILES="$CONFIG_FILES src/common/Makefile" ;;
     "src/api/Makefile") CONFIG_FILES="$CONFIG_FILES src/api/Makefile" ;;
+    "src/geni/Makefile") CONFIG_FILES="$CONFIG_FILES src/geni/Makefile" ;;
     "src/compute/Makefile") CONFIG_FILES="$CONFIG_FILES src/compute/Makefile" ;;
     "src/main/Makefile") CONFIG_FILES="$CONFIG_FILES src/main/Makefile" ;;
     "src/tedbManager/Makefile") CONFIG_FILES="$CONFIG_FILES src/tedbManager/Makefile" ;;

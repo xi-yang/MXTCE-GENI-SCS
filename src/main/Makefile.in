@@ -56,7 +56,8 @@ mxtce_DEPENDENCIES = $(top_srcdir)/src/common/libcommon.a \
 	$(top_srcdir)/src/compute/libcompute.a \
 	$(top_srcdir)/src/tedbManager/libtedb.a \
 	$(top_srcdir)/src/resvManager/librm.a \
-	$(top_srcdir)/src/policyManager/libpm.a
+	$(top_srcdir)/src/policyManager/libpm.a \
+	$(top_srcdir)/src/geni/libgeni.a
 am_mxtce_test_OBJECTS = mxtce.$(OBJEXT) mxtce_config.$(OBJEXT) \
 	mxtce_test.$(OBJEXT)
 mxtce_test_OBJECTS = $(am_mxtce_test_OBJECTS)
@@ -66,7 +67,8 @@ mxtce_test_DEPENDENCIES = $(top_srcdir)/src/common/libcommon.a \
 	$(top_srcdir)/src/compute/libcompute.a \
 	$(top_srcdir)/src/tedbManager/libtedb.a \
 	$(top_srcdir)/src/resvManager/librm.a \
-	$(top_srcdir)/src/policyManager/libpm.a
+	$(top_srcdir)/src/policyManager/libpm.a \
+	$(top_srcdir)/src/geni/libgeni.a
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -192,14 +194,15 @@ LDADD = $(top_srcdir)/src/common/libcommon.a \
 	$(top_srcdir)/src/compute/libcompute.a \
 	$(top_srcdir)/src/tedbManager/libtedb.a \
 	$(top_srcdir)/src/resvManager/librm.a \
-	$(top_srcdir)/src/policyManager/libpm.a
+	$(top_srcdir)/src/policyManager/libpm.a \
+	$(top_srcdir)/src/geni/libgeni.a
 
 # -- Including headers
 INCLUDES = -I. -I/usr/include -I/usr/local/include \
 	-I/usr/include/libxml2 -I/usr/local/include/libxml2 \
 	-I$(top_srcdir)/src/api -I$(top_srcdir)/src/common \
-	-I$(top_srcdir)/src/compute -I$(top_srcdir)/src/main \
-	-I$(top_srcdir)/src/tedbManager \
+	-I$(top_srcdir)/src/geni -I$(top_srcdir)/src/compute \
+	-I$(top_srcdir)/src/main -I$(top_srcdir)/src/tedbManager \
 	-I$(top_srcdir)/src/resvManager \
 	-I$(top_srcdir)/src/policyManager
 INSTALL_SDATA = @INSTALL@ -m 600

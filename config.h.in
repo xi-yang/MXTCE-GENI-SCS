@@ -96,9 +96,6 @@
 /* Define to 1 if you have the `xml2' library (-lxml2). */
 #undef HAVE_LIBXML2
 
-/* Define to 1 if you have the `xmlrpc' library (-lxmlrpc). */
-#undef HAVE_LIBXMLRPC
-
 /* Define to 1 if you have the `xnet' library (-lxnet). */
 #undef HAVE_LIBXNET
 
