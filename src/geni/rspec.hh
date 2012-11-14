@@ -61,9 +61,9 @@ protected:
     };
 
 public:
-    GeniRSpec(): rspecDoc(NULL) { }
-    GeniRSpec(string& xml): rspecXml(xml) { }
-    GeniRSpec(xmlDocPtr doc): rspecDoc(doc) { }
+    GeniRSpec(): rspecDoc(NULL), rspecXml("") { }
+    GeniRSpec(string& xml): rspecXml(xml), rspecDoc(NULL) { }
+    GeniRSpec(xmlDocPtr doc): rspecDoc(doc), rspecXml("") { }
     virtual ~GeniRSpec() { 
         if (rspecDoc != NULL)
             xmlFreeDoc(rspecDoc);
