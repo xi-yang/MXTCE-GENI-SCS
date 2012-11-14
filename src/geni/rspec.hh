@@ -59,7 +59,7 @@ class GeniAdRSpec: public GeniRSpec {
 public:
     GeniAdRSpec(string& xml): GeniRSpec(xml) { }
     GeniAdRSpec(xmlDocPtr doc): GeniRSpec(doc) { }
-    virtual ~GeniAdRSpec();
+    virtual ~GeniAdRSpec() { }
     xmlDocPtr TranslateToNML();
     // TODO: extract policy data
 };
@@ -68,14 +68,14 @@ class GeniRequestRSpec: public GeniRSpec {
 public:
     GeniRequestRSpec(string& xml): GeniRSpec(xml) { }
     GeniRequestRSpec(xmlDocPtr doc): GeniRSpec(doc) { }
-    virtual ~GeniRequestRSpec();
+    virtual ~GeniRequestRSpec() { }
 };
 
 class GeniManifestRSpec: public GeniRSpec {
 public:
     GeniManifestRSpec(string& xml): GeniRSpec(xml) { }
     GeniManifestRSpec(xmlDocPtr doc): GeniRSpec(doc) { }
-    virtual ~GeniManifestRSpec();    
+    virtual ~GeniManifestRSpec() { }  
 };
 
 
