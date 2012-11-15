@@ -504,7 +504,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                             remotePort->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
                                             remotePort->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
                                             remotePort->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
-                                            arNode->AddPort(remotePort);
+                                            aNode->AddPort(remotePort);
                                             RLink* remoteLink = new RLink(remoteLinkName);
                                             remoteLink->SetRemoteLinkName(aRLink->GetName());
                                             remoteLink->SetMetric(aRLink->GetMetric());
