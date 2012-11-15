@@ -504,16 +504,29 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                             remotePort->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
                                             remotePort->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
                                             remotePort->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
-                                            aNode->AddPort(remotePort);
-                                            RLink* remoteLink = new RLink(remoteLinkName);
-                                            remoteLink->SetRemoteLinkName(aRLink->GetName());
-                                            remoteLink->SetMetric(aRLink->GetMetric());
-                                            remoteLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
-                                            remoteLink->SetMaxReservableBandwidth(remotePort->GetMaxReservableBandwidth());
-                                            remoteLink->SetMinReservableBandwidth(remotePort->GetMinReservableBandwidth());
-                                            remoteLink->SetBandwidthGranularity(remotePort->GetBandwidthGranularity());
-                                            remoteLink->SetSwcapXmlString(aRLink->GetSwcapXmlString());
-                                            remotePort->AddLink(remoteLink);
+                                            string remoteNodeShortName = GetUrnField(remoteLinkName, "node");
+                                            string remoteNodeName = "urn:publicid:IDN+";
+                                            remoteNodeName += domainId;
+                                            remoteNodeName += "+node+";
+                                            remoteNodeName += remoteNodeShortName;
+                                            aNode = aDomain->GetNodes()[remoteNodeName];
+                                            if (aNode != NULL)
+                                            {
+                                                aNode->AddPort(remotePort);
+                                                RLink* remoteLink = new RLink(remoteLinkName);
+                                                remoteLink->SetRemoteLinkName(aRLink->GetName());
+                                                remoteLink->SetMetric(aRLink->GetMetric());
+                                                remoteLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
+                                                remoteLink->SetMaxReservableBandwidth(remotePort->GetMaxReservableBandwidth());
+                                                remoteLink->SetMinReservableBandwidth(remotePort->GetMinReservableBandwidth());
+                                                remoteLink->SetBandwidthGranularity(remotePort->GetBandwidthGranularity());
+                                                remoteLink->SetSwcapXmlString(aRLink->GetSwcapXmlString());
+                                                remotePort->AddLink(remoteLink);
+                                            }
+                                            else
+                                            {
+                                                delete remotePort;
+                                            }
                                         }
                                         aPort->AddLink(aRLink);
                                     }
