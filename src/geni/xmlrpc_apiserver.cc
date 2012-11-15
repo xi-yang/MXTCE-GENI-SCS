@@ -104,7 +104,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     string contextTag = "";
     Message* reqMsg = NULL;
     try {
-        reqRspec.CreateApiRequestMessage();
+        reqMsg = reqRspec.CreateApiRequestMessage();
     } catch (TEDBException ex) {
             ReturnGeniError(retvalP, GENI_PCS_ERRCODE_MAILFORMED_REQUEST, ex.GetMessage().c_str());
             goto _final;        
