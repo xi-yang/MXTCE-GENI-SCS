@@ -509,10 +509,10 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                             remoteNodeName += domainId;
                                             remoteNodeName += "+node+";
                                             remoteNodeName += remoteNodeShortName;
-                                            aNode = aDomain->GetNodes()[remoteNodeName];
-                                            if (aNode != NULL)
+                                            Node* remoteNode = aDomain->GetNodes()[remoteNodeName];
+                                            if (remoteNode != NULL)
                                             {
-                                                aNode->AddPort(remotePort);
+                                                remoteNode->AddPort(remotePort);
                                                 RLink* remoteLink = new RLink(remoteLinkName);
                                                 remoteLink->SetRemoteLinkName(aRLink->GetName());
                                                 remoteLink->SetMetric(aRLink->GetMetric());
