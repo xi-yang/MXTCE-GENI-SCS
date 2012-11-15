@@ -337,7 +337,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                 string nodeId = (const char*)xmlNodeId;
                 Node* aNode = NULL;
                 if (aDomain->GetNodes().find(nodeId) != aDomain->GetNodes().end())
-                { // handle a node in main part that is already in stithcing extension
+                { // handle a node in main part that is already in stitching extension
                     aNode = (Node*)(*aDomain->GetNodes().find(nodeId)).second;
                     //add links that are not in stitching extension to node that is in stitching extension
                     for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
@@ -472,13 +472,49 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                             aNode->AddPort(aPort);
                                         }
                                         RLink* aRLink = new RLink(linkName);
-                                        aRLink->SetRemoteLinkName(remoteLinkName);
+                                        size_t i1 = remoteLinkName.rfind(":*:*");
+                                        size_t i2 = remoteLinkName.rfind(":*:**");
                                         aRLink->SetMetric(1);
                                         aRLink->SetMaxBandwidth((*itRL)->GetMaxBandwidth());
                                         aRLink->SetMaxReservableBandwidth((*itRL)->GetMaxReservableBandwidth());
                                         aRLink->SetMinReservableBandwidth((*itRL)->GetMinReservableBandwidth());
                                         aRLink->SetBandwidthGranularity((*itRL)->GetBandwidthGranularity());
                                         aRLink->SetSwcapXmlString(defaultSwcapStr);
+                                        if (i1 == string::npos) 
+                                        {
+                                            aRLink->SetRemoteLinkName(remoteLinkName);
+                                        }
+                                        else
+                                        {
+                                            string nodeShortName = GetUrnField(aNode->GetName(), "node");
+                                            string portShortName = GetUrnField(aPort->GetName(), "port");
+                                            sprintf(buf, ":*-to-%s-%s:*", nodeShortName.c_str(), portShortName.c_str());
+                                            if (i2 == string::npos)
+                                                remoteLinkName.replace(i1, 4, buf);
+                                            else
+                                                remoteLinkName.replace(i1, 5, buf);
+                                            aRLink->SetRemoteLinkName(remoteLinkName);
+                                            string remotePortName = remoteLinkName;
+                                            if (i2 == string::npos)
+                                                remotePortName.replace(remotePortName.size()-2, 2, "");
+                                            else
+                                                remotePortName.replace(remotePortName.size()-3, 3, "");
+                                            Port* remotePort = new Port(0, remotePortName);
+                                            remotePort->SetMaxBandwidth(aPort->GetMaxBandwidth());
+                                            remotePort->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
+                                            remotePort->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
+                                            remotePort->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
+                                            arNode->AddPort(remotePort);
+                                            RLink* remoteLink = new RLink(remoteLinkName);
+                                            remoteLink->SetRemoteLinkName(aRLink->GetName());
+                                            remoteLink->SetMetric(aRLink->GetMetric());
+                                            remoteLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
+                                            remoteLink->SetMaxReservableBandwidth(remotePort->GetMaxReservableBandwidth());
+                                            remoteLink->SetMinReservableBandwidth(remotePort->GetMinReservableBandwidth());
+                                            remoteLink->SetBandwidthGranularity(remotePort->GetBandwidthGranularity());
+                                            remoteLink->SetSwcapXmlString(aRLink->GetSwcapXmlString());
+                                            remotePort->AddLink(remoteLink);
+                                        }
                                         aPort->AddLink(aRLink);
                                     }
                                 }
