@@ -35,6 +35,7 @@
 #include "rspec.hh"
 #include "tedb.hh"
 #include "message.hh"
+#include "user_constraint.hh"
 
 void GeniRSpec::ParseRspecXml()
 {
@@ -613,7 +614,197 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
     string contextTag= tagBuf;
     Message* msg = new Message(MSG_REQ, queueName, topicName);
     msg->SetContextTag(contextTag);
-    // TODO: add request TLV
+    //parse request RSpec and add userConstraint TLVs
+    xmlNodePtr rspecRoot = xmlDocGetRootElement(rspecDoc);
+    xmlNodePtr xmlNode, pathNode, hopNode, linkNode;
+    for (xmlNode = rspecRoot->children; xmlNode != NULL; xmlNode = xmlNode->next)
+    {
+        if (xmlNode->type == XML_ELEMENT_NODE )
+        {
+            if (strncasecmp((const char*)xmlNode->name, "stitching", 9) == 0) 
+            {
+                for (pathNode = xmlNode->children; pathNode != NULL; pathNode = pathNode->next)
+                {
+                    if (pathNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)pathNode->name, "path", 4) == 0)
+                    {
+                        string pathId = (const char*)xmlGetProp(pathNode,  (const xmlChar*)"id");
+                        xmlNodePtr linkNodeA = NULL, linkNodeZ = NULL;
+                        for (hopNode = pathNode->children; hopNode != NULL; hopNode = hopNode->next)
+                        {
+                            if (hopNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)pathNode->name, "hop", 3) == 0)
+                            {
+                                for (linkNode = hopNode->children; linkNode != NULL; linkNode = linkNode->next)
+                                {
+                                    if (linkNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)linkNode->name, "link", 4) == 0)
+                                    {
+                                        if (linkNodeA == NULL)
+                                            linkNodeA = linkNode;
+                                        else
+                                            linkNodeZ = linkNode;
+                                    }
+                                }                                
+                            }
+                        }
+                        if (linkNodeA == NULL || linkNodeZ == NULL) 
+                        {
+                            char buf[256];
+                            snprintf(buf, 256, "GeniRSpec::CreateApiRequestMessage - Failed to parse request RSpec (path id=%s)", pathId.c_str());
+                            throw TEDBException(buf);
+                        }
+                        Apimsg_user_constraint* userCons = new Apimsg_user_constraint();
+                        userCons->setGri(pathId);
+                        userCons->setStarttime(time(NULL));
+                        userCons->setEndtime(time(NULL)+3600*24); // scheduling attributes TBD
+                        string srcLinkId = (const char*) xmlGetProp(linkNodeA, (const xmlChar*) "id");
+                        userCons->setSrcendpoint(srcLinkId);
+                        string dstLinkId = (const char*) xmlGetProp(linkNodeZ, (const xmlChar*) "id");
+                        userCons->setDestendpoint(dstLinkId);
+                        xmlNodePtr xmlNode1, xmlNode2, xmlNode3, xmlNode4;
+                        string pathType = "layer2";
+                        u_int64_t bw = 1;
+                        string srcVlan = "any";
+                        string dstVlan = "any";
+                        for (xmlNode1 = linkNodeA->children; xmlNode1 != NULL; xmlNode1 = xmlNode1->next) 
+                        {
+                            if (xmlNode1->type == XML_ELEMENT_NODE) 
+                            {
+                                if (strncasecmp((const char*) xmlNode1->name, "TrafficEngineeringMetric", 18) == 0) 
+                                {
+                                    xmlChar* pBuf = xmlNodeGetContent(xmlNode1);
+                                    int metric;
+                                    sscanf((const char*) pBuf, "%d", &metric);
+                                    // metric not used in request
+                                }
+                                else if (strncasecmp((const char*) xmlNode1->name, "capacity", 8) == 0) 
+                                {
+                                    xmlChar* pBuf = xmlNodeGetContent(xmlNode1);
+                                    sscanf((const char*) pBuf, "%llu", &bw);
+                                }
+                                else if (strncasecmp((const char*) xmlNode1->name, "switchingCapabilityDescriptor", 30) == 0) 
+                                {
+                                    for (xmlNode2 = xmlNode1->children; xmlNode2 != NULL; xmlNode2 = xmlNode2->next) 
+                                    {
+                                        if (xmlNode2->type == XML_ELEMENT_NODE) 
+                                        {
+                                            if (strncasecmp((const char*) xmlNode2->name, "switchingcapType", 14) == 0) 
+                                            {
+                                                xmlChar* pBuf = xmlNodeGetContent(xmlNode2);
+                                                if (strncasecmp((const char*)pBuf, "psc", 3) == 0)
+                                                    pathType = "layer3";
+                                            } 
+                                            else if (strncasecmp((const char*) xmlNode2->name, "switchingCapabilitySpecificInfo", 30) == 0) 
+                                            {
+                                                for (xmlNode3 = xmlNode2->children; xmlNode3 != NULL; xmlNode3 = xmlNode3->next) 
+                                                {
+                                                    if (xmlNode3->type == XML_ELEMENT_NODE) 
+                                                    {
+                                                        if (strncasecmp((const char*) xmlNode3->name, "switchingCapabilitySpecificInfo_L2sc", 34) == 0) 
+                                                        {
+                                                            for (xmlNode4 = xmlNode3->children; xmlNode4 != NULL; xmlNode4 = xmlNode4->next) 
+                                                            {
+                                                                if (xmlNode4->type == XML_ELEMENT_NODE) 
+                                                                {
+                                                                    if (strncasecmp((const char*) xmlNode4->name, "vlanRangeAvailability", 18) == 0) 
+                                                                    {
+                                                                        xmlChar* pBuf = xmlNodeGetContent(xmlNode2);
+                                                                        srcVlan = (const char*)pBuf;
+                                                                    }
+                                                                    else if (strncasecmp((const char*) xmlNode4->name, "suggestedVLANRange", 18) == 0) 
+                                                                    {
+                                                                        //;
+                                                                    }
+                                                                }
+                                                            }
+
+                                                        } 
+                                                        else if (strncasecmp((const char*) xmlNode3->name, "switchingCapabilitySpecificInfo_Psc", 34) == 0) 
+                                                        {
+                                                             // TBD
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for (xmlNode1 = linkNodeZ->children; xmlNode1 != NULL; xmlNode1 = xmlNode1->next) 
+                        {
+                            if (xmlNode1->type == XML_ELEMENT_NODE) 
+                            {
+                                if (strncasecmp((const char*) xmlNode1->name, "TrafficEngineeringMetric", 18) == 0) 
+                                {
+                                    xmlChar* pBuf = xmlNodeGetContent(xmlNode1);
+                                    int metric;
+                                    sscanf((const char*) pBuf, "%d", &metric);
+                                    // metric not used in request
+                                }
+                                else if (strncasecmp((const char*) xmlNode1->name, "capacity", 8) == 0) 
+                                {
+                                    xmlChar* pBuf = xmlNodeGetContent(xmlNode1);
+                                    sscanf((const char*) pBuf, "%llu", &bw);
+                                }
+                                else if (strncasecmp((const char*) xmlNode1->name, "switchingCapabilityDescriptor", 30) == 0) 
+                                {
+                                    for (xmlNode2 = xmlNode1->children; xmlNode2 != NULL; xmlNode2 = xmlNode2->next) 
+                                    {
+                                        if (xmlNode2->type == XML_ELEMENT_NODE) 
+                                        {
+                                            if (strncasecmp((const char*) xmlNode2->name, "switchingCapabilitySpecificInfo", 30) == 0) 
+                                            {
+                                                for (xmlNode3 = xmlNode2->children; xmlNode3 != NULL; xmlNode3 = xmlNode3->next) 
+                                                {
+                                                    if (xmlNode3->type == XML_ELEMENT_NODE) 
+                                                    {
+                                                        if (strncasecmp((const char*) xmlNode3->name, "switchingCapabilitySpecificInfo_L2sc", 34) == 0) 
+                                                        {
+                                                            for (xmlNode4 = xmlNode3->children; xmlNode4 != NULL; xmlNode4 = xmlNode4->next) 
+                                                            {
+                                                                if (xmlNode4->type == XML_ELEMENT_NODE) 
+                                                                {
+                                                                    if (strncasecmp((const char*) xmlNode4->name, "vlanRangeAvailability", 18) == 0) 
+                                                                    {
+                                                                        xmlChar* pBuf = xmlNodeGetContent(xmlNode2);
+                                                                        dstVlan = (const char*)pBuf;
+                                                                    }
+                                                                    else if (strncasecmp((const char*) xmlNode4->name, "suggestedVLANRange", 18) == 0) 
+                                                                    {
+                                                                        //;
+                                                                    }
+                                                                }
+                                                            }
+
+                                                        } 
+                                                        else if (strncasecmp((const char*) xmlNode3->name, "switchingCapabilitySpecificInfo_Psc", 34) == 0) 
+                                                        {
+                                                             // TBD
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        userCons->setPathtype(pathType);
+                        userCons->setBandwidth(bw);
+                        userCons->setSrcvlantag(srcVlan);
+                        userCons->setDestvlantag(dstVlan);
+                        TLV* tlv = NULL;
+                        tlv = (TLV*)(new u_int8_t[TLV_HEAD_SIZE + sizeof(userCons)]);
+                        tlv->type = MSG_TLV_VOID_PTR;
+                        tlv->length = sizeof(userCons);
+                        memcpy(tlv->value, &userCons, sizeof(userCons));
+                        msg->AddTLV(tlv);
+                    }
+                }
+                break;
+            }
+        }
+    }
+
     return msg;
 }
 
