@@ -597,6 +597,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     strcat(buf, "</domain></topology>");
     int sizeBuf=strlen(buf);
     xmlDocPtr xmlDoc = xmlParseMemory(buf, sizeBuf);
+    LOG("$$$ Topology Dump:\n"<<buf<<endl);
     return xmlDoc;
 }
 
@@ -631,7 +632,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
                         xmlNodePtr linkNodeA = NULL, linkNodeZ = NULL;
                         for (hopNode = pathNode->children; hopNode != NULL; hopNode = hopNode->next)
                         {
-                            if (hopNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)pathNode->name, "hop", 3) == 0)
+                            if (hopNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)hopNode->name, "hop", 3) == 0)
                             {
                                 for (linkNode = hopNode->children; linkNode != NULL; linkNode = linkNode->next)
                                 {
