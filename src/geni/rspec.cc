@@ -661,8 +661,9 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
                         string dstLinkId = (const char*) xmlGetProp(linkNodeZ, (const xmlChar*) "id");
                         userCons->setDestendpoint(dstLinkId);
                         xmlNodePtr xmlNode1, xmlNode2, xmlNode3, xmlNode4;
-                        string pathType = "layer2";
                         u_int64_t bw = 1;
+                        string pathType = "strict";
+                        string layer = "2";
                         string srcVlan = "any";
                         string dstVlan = "any";
                         for (xmlNode1 = linkNodeA->children; xmlNode1 != NULL; xmlNode1 = xmlNode1->next) 
@@ -691,7 +692,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
                                             {
                                                 xmlChar* pBuf = xmlNodeGetContent(xmlNode2);
                                                 if (strncasecmp((const char*)pBuf, "psc", 3) == 0)
-                                                    pathType = "layer3";
+                                                    layer = "3";
                                             } 
                                             else if (strncasecmp((const char*) xmlNode2->name, "switchingCapabilitySpecificInfo", 30) == 0) 
                                             {
@@ -789,6 +790,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
                                 }
                             }
                         }
+                        userCons->setLayer(layer);
                         userCons->setPathtype(pathType);
                         userCons->setBandwidth(bw);
                         userCons->setSrcvlantag(srcVlan);
