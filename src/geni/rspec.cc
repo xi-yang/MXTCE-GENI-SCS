@@ -920,7 +920,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             snprintf(str, 1024, "</hop>", tl->GetName().c_str());
             strcat(buf, str);
         }
-        snprintf(str, 1024, "</path");
+        snprintf(str, 1024, "</path>");
         strcat(buf, str);
     }
     sprintf(str, "</stitching>");
