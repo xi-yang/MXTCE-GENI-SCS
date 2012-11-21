@@ -833,7 +833,15 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
     this->rspecDoc = xmlCopyDoc(this->pairedRequestRspec->GetRspecXmlDoc(), 1);
     xmlNodePtr rspecRoot = xmlDocGetRootElement(this->rspecDoc);
     xmlSetProp(rspecRoot,  (const xmlChar*)"type", (const xmlChar*)"manifest");
-    xmlNodePtr stitchingNode = GetXpathNode(this->rspecDoc, "//rspec/stitching");    
+    xmlNodePtr stitchingNode = NULL;
+    for (xmlNode = rspecRoot->children; xmlNode != NULL; xmlNode = xmlNode->next)
+    {
+        if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "stitching", 9) == 0)
+        {
+            stitchingNode = xmlNode;
+            break;
+        }
+    }
     char str[1024];
     GeniTimeString(str);
     sprintf(buf, "<stitching lastUpdateTime=\"%s\">", str);
