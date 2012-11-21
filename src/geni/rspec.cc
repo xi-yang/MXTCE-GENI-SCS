@@ -825,7 +825,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         snprintf(buf, 1024, "GeniManifestRSpec::ParseApiReplyMessage - Expecting core msg type XMLRPC_API_REPLY, not %s.", msg->GetTopic().c_str());
         throw TEDBException(buf);        
     }
-    if (this->pairedRequestRspec == NULL || this->pairedRequestRspec->GetRspecXmlDoc() != NULL)
+    if (this->pairedRequestRspec == NULL || this->pairedRequestRspec->GetRspecXmlDoc() == NULL)
     {
         snprintf(buf, 1024, "GeniManifestRSpec::ParseApiReplyMessage - No stored Request RSpec.");
         throw TEDBException(buf);        
@@ -859,6 +859,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             TLink *tl = *itL;
             snprintf(str, 1024, "<stitch:hop id=\"%d\">", i);
             strcat(buf, str);
+            // skip link with id port starting with * or link==**
             snprintf(str, 1024, "<stitch:link id=\"%s\">", tl->GetName().c_str());
             strcat(buf, str);
             snprintf(str, 1024, "<stitch:trafficEngineeringMetric>%d</stitch:trafficEngineeringMetric>", tl->GetMetric());
