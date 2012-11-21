@@ -927,7 +927,9 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             }
             snprintf(str, 1024, "</link>");
             strcat(buf, str);
-            if (i == path->GetPath().size())
+            list<TLink*>::iterator itNext = itL;
+            itNext++;
+            if (itNext == path->GetPath().end())
                 snprintf(str, 1024, "<nextHop>null</nextHop>");
             else
                 snprintf(str, 1024, "<nextHop>%d</nextHop>", i + 1);
