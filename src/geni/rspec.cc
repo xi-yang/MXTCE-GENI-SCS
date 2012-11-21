@@ -862,13 +862,20 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         strcat(buf, str);
         list<TLink*>::iterator itL = path->GetPath().begin();
         int i = 1;
-        for (; itL != path->GetPath().end(); itL++, i++) 
+        for (; itL != path->GetPath().end(); itL++) 
         {
             TLink *tl = *itL;
+            if (tl->GetName().find("node=*") != string::npos || tl->GetName().find("port=*") != string::npos)
+                continue;
             snprintf(str, 1024, "<hop id=\"%d\">", i);
             strcat(buf, str);
-            // skip link with id port starting with * or link==**
-            snprintf(str, 1024, "<link id=\"%s\">", tl->GetName().c_str());
+            string& linkName = tl->GetName();
+            size_t iErase = linkName.find(":link=**");
+            if (iErase != string::npos)
+            {
+                linkName.erase(linkName.begin()+iErase, linkName.end());
+            }
+            snprintf(str, 1024, "<link id=\"%s\">", linkName.c_str());
             strcat(buf, str);
             snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", tl->GetMetric());
             strcat(buf, str);
@@ -927,6 +934,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             strcat(buf, str);
             snprintf(str, 1024, "</hop>", tl->GetName().c_str());
             strcat(buf, str);
+            i++;
         }
         snprintf(str, 1024, "</path>");
         strcat(buf, str);
