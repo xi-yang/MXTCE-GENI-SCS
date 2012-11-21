@@ -34,6 +34,7 @@
 #include "log.hh"
 #include "utils.hh"
 #include <signal.h>
+#include <libxml2/libxml/xpath.h>
 
 int readn (int fd, char *ptr, int nbytes)
 {
@@ -421,3 +422,39 @@ void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, st
     }
 }
 
+xmlNodeSetPtr GetXpathNodeSet (xmlDocPtr doc, const char *xpath)
+{
+    xmlXPathContextPtr context;
+    xmlXPathObjectPtr result;
+
+    context = xmlXPathNewContext(doc);
+    if (context == NULL) 
+    {
+        return NULL;
+    }
+    result = xmlXPathEvalExpression((xmlChar*)xpath, context);
+    xmlXPathFreeContext(context);
+    if (result == NULL) 
+    {
+        return NULL;
+    }
+    if (xmlXPathNodeSetIsEmpty(result->nodesetval)) 
+    {
+        xmlXPathFreeObject(result);
+        return NULL;
+    }
+    return result->nodesetval;
+}
+
+
+xmlNodePtr GetXpathNode (xmlDocPtr doc, const char *xpath)
+{
+    xmlXPathContextPtr context;
+    xmlNodeSetPtr nodeset = GetXpathNodeSet(doc, xpath);
+
+    if (nodeset == NULL) 
+    {
+        return NULL;
+    }
+    return nodeset->nodeTab[0];
+}

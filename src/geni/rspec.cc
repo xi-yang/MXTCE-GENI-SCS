@@ -36,6 +36,7 @@
 #include "tedb.hh"
 #include "message.hh"
 #include "user_constraint.hh"
+#include "compute_worker.hh"
 
 void GeniRSpec::ParseRspecXml()
 {
@@ -114,6 +115,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     Node* arNode = new Node(0, arId);
     aDomain->AddNode(arNode);
 
+    // 1. import domain topology from stitching aggregate section
     // get node info: rspec/stitching/aggregate/node
     for (xmlNode = aggrNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
     {
@@ -208,7 +210,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                                 }
                                             }
                                         }
-                                        // create peering to AR (a. *:*--'*-to-nodename':* b. portname:*--"*-to-nodename-portname:*")
+                                        // create peering to AR (adding remotePort/Link: *:*-to-nodename-portname:*)
                                         // change remote-link-id on this link and create new port/link on AR
                                         string& remoteLinkName = aRLink->GetRemoteLinkName();
                                         size_t i1 = remoteLinkName.find("*:*:*");
@@ -274,8 +276,9 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             }
         }
     }
-    // get host info: rspec/node, rspec/node/interface, rspec/link, rspec/link/interface_ref
-    // 1. get list of the non-stitching rspec links in main part
+
+    // 2. import topology info from main rspec/node, rspec/node/interface, rspec/link, rspec/link/interface_ref
+    // 2.1. get list of non-stitching rspec links in main part
     xmlNodePtr xmlIfNode, xmlParamNode;
     list<RLink*> rspecLinks;
     for (xmlNode = rspecRoot->children; xmlNode != NULL; xmlNode = xmlNode->next)
@@ -327,7 +330,9 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             }
         }
     }
-    // 2. find the host interfaces attached to stitching links that are linked to a stitching port but link (or AR) not on a stitching host 
+    // 2.2. find node/host interfaces attached to a link that points to a port already in stitching extension.
+    //      Then add the related port/link if the rspec link from step 2.1 has not been added in step 1.
+    //      Handle abstract port/link id (*) and urns missing link portion (append :**).
     for (xmlNode = rspecRoot->children; xmlNode != NULL; xmlNode = xmlNode->next)
     {
         if (xmlNode->type == XML_ELEMENT_NODE )
@@ -340,7 +345,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                 if (aDomain->GetNodes().find(nodeId) != aDomain->GetNodes().end())
                 { // handle a node in main part that is already in stitching extension
                     aNode = (Node*)(*aDomain->GetNodes().find(nodeId)).second;
-                    //add links that are not in stitching extension to node that is in stitching extension
+                    // add links that connect to the node but are not in stitching extension
                     for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
                     {
                         if (xmlIfNode->type == XML_ELEMENT_NODE )
@@ -425,7 +430,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                     }
                 }
                 else 
-                { // hanlde a node in main part but not in stitching extension 
+                { // handle a node in main part but not in stitching extension 
                     for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
                     {
                         if (xmlIfNode->type == XML_ELEMENT_NODE )
@@ -487,6 +492,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                         }
                                         else
                                         {
+                                            // add remotePort/Link (portname:*-to-nodename-portname:*) if host is attached to abstract port (*:*)
                                             string nodeShortName = GetUrnField(aNode->GetName(), "node");
                                             string portShortName = GetUrnField(aPort->GetName(), "port");
                                             sprintf(buf, ":*-to-%s-%s:*", nodeShortName.c_str(), portShortName.c_str());
@@ -813,6 +819,119 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
 
 void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
 {
-    ; // TODO
+    char buf[1024*64];
+    if (msg->GetTopic() != "XMLRPC_API_REPLY")
+    {
+        snprintf(buf, 1024, "GeniManifestRSpec::ParseApiReplyMessage - Expecting core msg type XMLRPC_API_REPLY, not %s.", msg->GetTopic().c_str());
+        throw TEDBException(buf);        
+    }
+    if (this->pairedRequestRspec == NULL || this->pairedRequestRspec->GetRspecXmlDoc() != NULL)
+    {
+        snprintf(buf, 1024, "GeniManifestRSpec::ParseApiReplyMessage - No stored Request RSpec.");
+        throw TEDBException(buf);        
+    }
+    this->rspecDoc = xmlCopyDoc(this->pairedRequestRspec->GetRspecXmlDoc(), 1);
+    xmlNodePtr rspecRoot = xmlDocGetRootElement(this->rspecDoc);
+    xmlSetProp(rspecRoot,  (const xmlChar*)"type", (const xmlChar*)"manifest");
+    xmlNodePtr stitchingNode = GetXpathNode(this->rspecDoc, "//rspec/stitching");    
+    char str[1024];
+    GeniTimeString(str);
+    sprintf(buf, "<stitch:stitching lastUpdateTime=\"%s\">", str);
+    list<TLV*>::iterator it = msg->GetTLVList().begin();
+    for (; it != msg->GetTLVList().end(); it++) 
+    {
+        TLV* tlv = (*it);
+        ComputeResult* result;
+        memcpy(&result, tlv->value, sizeof (void*));
+        TPath* path = result->GetPathInfo();
+        string errMsg = result->GetErrMessage();
+        if (errMsg.size() != 0) 
+        {
+            snprintf(buf, 1024, "MxTCE ComputeWorker return error message ' %s '.", errMsg.c_str());
+            throw TEDBException(buf);            
+        }
+        snprintf(str, 1024, "<stitch:path id=\"%s\">", result->GetGri().c_str());
+        strcat(buf, str);
+        list<TLink*>::iterator itL = path->GetPath().begin();
+        int i = 1;
+        for (; itL != path->GetPath().end(); itL++, i++) 
+        {
+            TLink *tl = *itL;
+            snprintf(str, 1024, "<stitch:hop id=\"%d\">", i);
+            strcat(buf, str);
+            snprintf(str, 1024, "<stitch:link id=\"%s\">", tl->GetName().c_str());
+            strcat(buf, str);
+            snprintf(str, 1024, "<stitch:trafficEngineeringMetric>%d</stitch:trafficEngineeringMetric>", tl->GetMetric());
+            strcat(buf, str);
+            list<ISCD*>::iterator its = tl->GetSwCapDescriptors().begin();
+            for (; its != tl->GetSwCapDescriptors().end(); its++) 
+            {
+                ISCD *iscd = *its;
+                snprintf(str, 1024, "<stitch:capacity>%llu</capacity>", iscd->capacity);
+                strcat(buf, str);
+                snprintf(str, 1024, "<stitch:switchingCapabilityDescriptor>");
+                strcat(buf, str);
+                if (iscd->switchingType == LINK_IFSWCAP_L2SC)
+                    snprintf(str, 1024, "<stitch:switchingcapType>l2sc</stitch:switchingcapType>");
+                else if (iscd->switchingType == LINK_IFSWCAP_TDM)
+                    snprintf(str, 1024, "<stitch:switchingcapType>tdm</stitch:switchingcapType>");
+                else if (iscd->switchingType == LINK_IFSWCAP_LSC)
+                    snprintf(str, 1024, "<stitch:switchingcapType>lsc</stitch:switchingcapType>");
+                else if (iscd->switchingType >= LINK_IFSWCAP_PSC1 && iscd->switchingType <= LINK_IFSWCAP_PSC4)
+                    snprintf(str, 1024, "<stitch:switchingcapType>psc</stitch:switchingcapType>");
+                strcat(buf, str);
+                if (iscd->switchingType == LINK_IFSWCAP_ENC_ETH)
+                    snprintf(str, 1024, "<stitch:encodingType>ethernet</stitch:encodingType>");
+                else if (iscd->switchingType == LINK_IFSWCAP_ENC_PKT)
+                    snprintf(str, 1024, "<stitch:encodingType>packet</stitch:encodingType>");
+                else if (iscd->switchingType == LINK_IFSWCAP_ENC_LAMBDA)
+                    snprintf(str, 1024, "<stitch:encodingType>lambda</stitch:encodingType>");
+                strcat(buf, str);
+                snprintf(str, 1024, "<stitch:switchingCapabilitySpecificInfo>");
+                strcat(buf, str);
+                if (iscd->switchingType == LINK_IFSWCAP_L2SC)
+                {
+                    snprintf(str, 1024, "stitch:switchingCapabilitySpecificInfo_L2sc");
+                    strcat(buf, str);
+                    snprintf(str, 1024, "<stitch:interfaceMTU>%d</stitch:interfaceMTU>", ((ISCD_L2SC*)iscd)->mtu);
+                    strcat(buf, str);
+                    snprintf(str, 1024, "<stitch:vlanRangeAvailability>%s</stitch:vlanRangeAvailability>", ((ISCD_L2SC*)iscd)->availableVlanTags.GetRangeString().c_str());
+                    strcat(buf, str);
+                    snprintf(str, 1024, "<stitch:suggestedVLANRange>%s</stitch:suggestedVLANRange>", ((ISCD_L2SC*)iscd)->suggestedVlanTags.GetRangeString().c_str());
+                    strcat(buf, str);
+                    snprintf(str, 1024, "/stitch:switchingCapabilitySpecificInfo_L2sc");
+                    strcat(buf, str);
+                }
+                snprintf(str, 1024, "</stitch:switchingCapabilitySpecificInfo>");
+                strcat(buf, str);
+                if (iscd->VendorSpecificInfo() != NULL && !iscd->VendorSpecificInfo()->GetXmlByString().empty())
+                    strcat(buf, iscd->VendorSpecificInfo()->GetXmlByString().c_str());
+                snprintf(str, 1024, "</stitch:switchingCapabilityDescriptor>");
+                strcat(buf, str);
+            }
+            snprintf(str, 1024, "</stitch:link>");
+            strcat(buf, str);
+            if (i == path->GetPath().size())
+                snprintf(str, 1024, "<stitch:nextHop>null</stitch:nextHop>");
+            else
+                snprintf(str, 1024, "<stitch:nextHop>%d</stitch:nextHop>", i + 1);
+            strcat(buf, str);
+            snprintf(str, 1024, "</stitch:hop>", tl->GetName().c_str());
+            strcat(buf, str);
+        }
+        snprintf(str, 1024, "</stitch:path");
+        strcat(buf, str);
+    }
+    sprintf(str, "</stitch:stitching>");
+    strcat(buf, str);
+    int sizeBuf=strlen(buf);
+    xmlDocPtr newStitchingDoc = xmlParseMemory(buf, sizeBuf);
+    if (newStitchingDoc == NULL)
+    {
+        snprintf(buf, 1024, "GeniManifestRSpec::ParseApiReplyMessage failed to compose XML for manifest paths.");
+        throw TEDBException(buf);                    
+    }
+    xmlNodePtr newStitchingNode = xmlDocGetRootElement(newStitchingDoc);
+    xmlReplaceNode(stitchingNode, newStitchingNode);
+    this->DumpRspecXml();
 }
-

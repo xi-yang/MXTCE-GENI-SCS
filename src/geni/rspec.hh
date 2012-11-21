@@ -74,6 +74,18 @@ public:
     void SetRspecXmlDoc(xmlDocPtr doc) { rspecDoc = doc; }
     void ParseRspecXml();
     void DumpRspecXml();
+    
+    // format: 20120815:09:30:00
+    void GeniTimeString(char* buf)
+    {
+      time_t rawtime;
+      struct tm * timeinfo;
+
+      time (&rawtime);
+      timeinfo = localtime ( &rawtime );
+
+      strftime (buf, 20,"%Y%m%d:%H:%M:%S",timeinfo);
+    }
 };
 
 
@@ -109,8 +121,10 @@ public:
     // TODO: extract policy data
 };
 
+#define GENI_PCS_ERRCODE_NO_ERROR 0x0
 #define GENI_PCS_ERRCODE_MAILFORMED_REQUEST 0x0001
 #define GENI_PCS_ERRCODE_TIMEOUT 0x0002
+#define GENI_PCS_ERRCODE_INCOMPLETE_REPLY 0x0003
 
 #endif	/* __RSPEC_HH__ */
 

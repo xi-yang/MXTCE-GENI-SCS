@@ -89,6 +89,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     string rspec = xmlrpc_c::value_string(reqStruct["request_rspec"]);
     map<string, xmlrpc_c::value> options = xmlrpc_c::value_struct(reqStruct["request_options"]);
     bool hold_path = false;
+    vector<xmlrpc_c::value> exclusion_list;
     u_int32_t start_time = 0, end_time = 0;
     if (options.find("geni-hold-path") != options.end()) {
         hold_path = xmlrpc_c::value_boolean(options["geni-hold-path"]);
@@ -98,6 +99,9 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     }
     if (options.find("geni-end-time") != options.end()) {
         end_time = xmlrpc_c::value_i8(options["geni-end-time"]);
+    }
+    if (options.find("geni-routing-exclusion-list") != options.end()) {
+        exclusion_list = xmlrpc_c::value_array(options["geni-routing-exclusion-list"]).vectorValueValue();
     }
     
     GeniRequestRSpec reqRspec(rspec);
@@ -110,7 +114,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
             goto _final;        
     }
     contextTag = reqMsg->GetContextTag();
-
+    // TODO: append option TLVs (hold_path, exclusion_list ...)
     msgPort->PostMessage(reqMsg);
     this->fire();
 
@@ -129,9 +133,18 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
             if (replyMsg->GetContextTag() == contextTag)
             {
                 GeniManifestRSpec replyRspec(&reqRspec);
-                replyRspec.ParseApiReplyMessage(replyMsg);
-                string manifest_rspec = replyRspec.GetRspecXmlString();
-                // TOTO GetPolicyData; compose reply xmlrpc message; return;
+                try {
+                    replyRspec.ParseApiReplyMessage(replyMsg);
+                    string manifest_rspec = replyRspec.GetRspecXmlString();
+                    map<string, xmlrpc_c::value> retMap;
+                    retMap["geni_code"] = xmlrpc_c::value_int(GENI_PCS_ERRCODE_NO_ERROR);
+                    retMap["manifest_rspec"] = xmlrpc_c::value_string(manifest_rspec);
+                    *retvalP = xmlrpc_c::value_struct(retMap);
+                    goto _final;        
+                } catch (TEDBException ex) {
+                    ReturnGeniError(retvalP, GENI_PCS_ERRCODE_INCOMPLETE_REPLY, ex.GetMessage().c_str());
+                    goto _final;        
+                }
             }
         }
     }

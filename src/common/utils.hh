@@ -37,6 +37,8 @@
  
 #include "types.hh"
 #include <libxml/tree.h>
+#include <libxml/tree.h>
+#include <libxml/xpath.h>
 
 #ifndef RETSIGTYPE
 #define RETSIGTYPE void
@@ -529,5 +531,9 @@ string GetUrnField(string& urn, const char* field);
 void ParseFQUrn(string& urn, string& domain, string& node, string& port, string& link);
 
 void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, string& link);
+
+xmlNodeSetPtr GetXpathNodeSet (xmlDocPtr doc, const char *xpath);
+
+xmlNodePtr GetXpathNode (xmlDocPtr doc, const char *xpath);
 
 #endif
