@@ -836,7 +836,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
     xmlNodePtr stitchingNode = GetXpathNode(this->rspecDoc, "//rspec/stitching");    
     char str[1024];
     GeniTimeString(str);
-    sprintf(buf, "<stitch:stitching lastUpdateTime=\"%s\">", str);
+    sprintf(buf, "<stitching lastUpdateTime=\"%s\">", str);
     list<TLV*>::iterator it = msg->GetTLVList().begin();
     for (; it != msg->GetTLVList().end(); it++) 
     {
@@ -850,80 +850,80 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             snprintf(buf, 1024, "MxTCE ComputeWorker return error message ' %s '.", errMsg.c_str());
             throw TEDBException(buf);            
         }
-        snprintf(str, 1024, "<stitch:path id=\"%s\">", result->GetGri().c_str());
+        snprintf(str, 1024, "<path id=\"%s\">", result->GetGri().c_str());
         strcat(buf, str);
         list<TLink*>::iterator itL = path->GetPath().begin();
         int i = 1;
         for (; itL != path->GetPath().end(); itL++, i++) 
         {
             TLink *tl = *itL;
-            snprintf(str, 1024, "<stitch:hop id=\"%d\">", i);
+            snprintf(str, 1024, "<hop id=\"%d\">", i);
             strcat(buf, str);
             // skip link with id port starting with * or link==**
-            snprintf(str, 1024, "<stitch:link id=\"%s\">", tl->GetName().c_str());
+            snprintf(str, 1024, "<link id=\"%s\">", tl->GetName().c_str());
             strcat(buf, str);
-            snprintf(str, 1024, "<stitch:trafficEngineeringMetric>%d</stitch:trafficEngineeringMetric>", tl->GetMetric());
+            snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", tl->GetMetric());
             strcat(buf, str);
             list<ISCD*>::iterator its = tl->GetSwCapDescriptors().begin();
             for (; its != tl->GetSwCapDescriptors().end(); its++) 
             {
                 ISCD *iscd = *its;
-                snprintf(str, 1024, "<stitch:capacity>%llu</capacity>", iscd->capacity);
+                snprintf(str, 1024, "<capacity>%llu</capacity>", iscd->capacity);
                 strcat(buf, str);
-                snprintf(str, 1024, "<stitch:switchingCapabilityDescriptor>");
+                snprintf(str, 1024, "<switchingCapabilityDescriptor>");
                 strcat(buf, str);
                 if (iscd->switchingType == LINK_IFSWCAP_L2SC)
-                    snprintf(str, 1024, "<stitch:switchingcapType>l2sc</stitch:switchingcapType>");
+                    snprintf(str, 1024, "<switchingcapType>l2sc</switchingcapType>");
                 else if (iscd->switchingType == LINK_IFSWCAP_TDM)
-                    snprintf(str, 1024, "<stitch:switchingcapType>tdm</stitch:switchingcapType>");
+                    snprintf(str, 1024, "<switchingcapType>tdm</switchingcapType>");
                 else if (iscd->switchingType == LINK_IFSWCAP_LSC)
-                    snprintf(str, 1024, "<stitch:switchingcapType>lsc</stitch:switchingcapType>");
+                    snprintf(str, 1024, "<switchingcapType>lsc</switchingcapType>");
                 else if (iscd->switchingType >= LINK_IFSWCAP_PSC1 && iscd->switchingType <= LINK_IFSWCAP_PSC4)
-                    snprintf(str, 1024, "<stitch:switchingcapType>psc</stitch:switchingcapType>");
+                    snprintf(str, 1024, "<switchingcapType>psc</switchingcapType>");
                 strcat(buf, str);
                 if (iscd->switchingType == LINK_IFSWCAP_ENC_ETH)
-                    snprintf(str, 1024, "<stitch:encodingType>ethernet</stitch:encodingType>");
+                    snprintf(str, 1024, "<encodingType>ethernet</encodingType>");
                 else if (iscd->switchingType == LINK_IFSWCAP_ENC_PKT)
-                    snprintf(str, 1024, "<stitch:encodingType>packet</stitch:encodingType>");
+                    snprintf(str, 1024, "<encodingType>packet</encodingType>");
                 else if (iscd->switchingType == LINK_IFSWCAP_ENC_LAMBDA)
-                    snprintf(str, 1024, "<stitch:encodingType>lambda</stitch:encodingType>");
+                    snprintf(str, 1024, "<encodingType>lambda</encodingType>");
                 strcat(buf, str);
-                snprintf(str, 1024, "<stitch:switchingCapabilitySpecificInfo>");
+                snprintf(str, 1024, "<switchingCapabilitySpecificInfo>");
                 strcat(buf, str);
                 if (iscd->switchingType == LINK_IFSWCAP_L2SC)
                 {
-                    snprintf(str, 1024, "stitch:switchingCapabilitySpecificInfo_L2sc");
+                    snprintf(str, 1024, "switchingCapabilitySpecificInfo_L2sc");
                     strcat(buf, str);
-                    snprintf(str, 1024, "<stitch:interfaceMTU>%d</stitch:interfaceMTU>", ((ISCD_L2SC*)iscd)->mtu);
+                    snprintf(str, 1024, "<interfaceMTU>%d</interfaceMTU>", ((ISCD_L2SC*)iscd)->mtu);
                     strcat(buf, str);
-                    snprintf(str, 1024, "<stitch:vlanRangeAvailability>%s</stitch:vlanRangeAvailability>", ((ISCD_L2SC*)iscd)->availableVlanTags.GetRangeString().c_str());
+                    snprintf(str, 1024, "<vlanRangeAvailability>%s</vlanRangeAvailability>", ((ISCD_L2SC*)iscd)->availableVlanTags.GetRangeString().c_str());
                     strcat(buf, str);
-                    snprintf(str, 1024, "<stitch:suggestedVLANRange>%s</stitch:suggestedVLANRange>", ((ISCD_L2SC*)iscd)->suggestedVlanTags.GetRangeString().c_str());
+                    snprintf(str, 1024, "<suggestedVLANRange>%s</suggestedVLANRange>", ((ISCD_L2SC*)iscd)->suggestedVlanTags.GetRangeString().c_str());
                     strcat(buf, str);
-                    snprintf(str, 1024, "/stitch:switchingCapabilitySpecificInfo_L2sc");
+                    snprintf(str, 1024, "/switchingCapabilitySpecificInfo_L2sc");
                     strcat(buf, str);
                 }
-                snprintf(str, 1024, "</stitch:switchingCapabilitySpecificInfo>");
+                snprintf(str, 1024, "</switchingCapabilitySpecificInfo>");
                 strcat(buf, str);
                 if (iscd->VendorSpecificInfo() != NULL && !iscd->VendorSpecificInfo()->GetXmlByString().empty())
                     strcat(buf, iscd->VendorSpecificInfo()->GetXmlByString().c_str());
-                snprintf(str, 1024, "</stitch:switchingCapabilityDescriptor>");
+                snprintf(str, 1024, "</switchingCapabilityDescriptor>");
                 strcat(buf, str);
             }
-            snprintf(str, 1024, "</stitch:link>");
+            snprintf(str, 1024, "</link>");
             strcat(buf, str);
             if (i == path->GetPath().size())
-                snprintf(str, 1024, "<stitch:nextHop>null</stitch:nextHop>");
+                snprintf(str, 1024, "<nextHop>null</nextHop>");
             else
-                snprintf(str, 1024, "<stitch:nextHop>%d</stitch:nextHop>", i + 1);
+                snprintf(str, 1024, "<nextHop>%d</nextHop>", i + 1);
             strcat(buf, str);
-            snprintf(str, 1024, "</stitch:hop>", tl->GetName().c_str());
+            snprintf(str, 1024, "</hop>", tl->GetName().c_str());
             strcat(buf, str);
         }
-        snprintf(str, 1024, "</stitch:path");
+        snprintf(str, 1024, "</path");
         strcat(buf, str);
     }
-    sprintf(str, "</stitch:stitching>");
+    sprintf(str, "</stitching>");
     strcat(buf, str);
     int sizeBuf=strlen(buf);
     xmlDocPtr newStitchingDoc = xmlParseMemory(buf, sizeBuf);
