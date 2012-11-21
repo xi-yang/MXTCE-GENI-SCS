@@ -714,7 +714,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
                                                                 {
                                                                     if (strncasecmp((const char*) xmlNode4->name, "vlanRangeAvailability", 18) == 0) 
                                                                     {
-                                                                        xmlChar* pBuf = xmlNodeGetContent(xmlNode2);
+                                                                        xmlChar* pBuf = xmlNodeGetContent(xmlNode4);
                                                                         srcVlan = (const char*)pBuf;
                                                                     }
                                                                     else if (strncasecmp((const char*) xmlNode4->name, "suggestedVLANRange", 18) == 0) 
@@ -773,7 +773,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
                                                                 {
                                                                     if (strncasecmp((const char*) xmlNode4->name, "vlanRangeAvailability", 18) == 0) 
                                                                     {
-                                                                        xmlChar* pBuf = xmlNodeGetContent(xmlNode2);
+                                                                        xmlChar* pBuf = xmlNodeGetContent(xmlNode4);
                                                                         dstVlan = (const char*)pBuf;
                                                                     }
                                                                     else if (strncasecmp((const char*) xmlNode4->name, "suggestedVLANRange", 18) == 0) 
