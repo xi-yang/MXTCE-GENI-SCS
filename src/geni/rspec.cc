@@ -109,11 +109,29 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     string domainId = GetUrnField(aggrUrn, "domain");
     Domain* aDomain = new Domain(0, domainId);
 
-    // add AggregateReflector (AR: *:*:*) node
+    // add AggregateReflector (AR: *:*:*) node/port/link
     sprintf(buf, "urn:publicid:IDN+%s+node+*", domainId.c_str());
-    string arId = buf;
-    Node* arNode = new Node(0, arId);
+    string arNodeId = buf;
+    Node* arNode = new Node(0, arNodeId);
     aDomain->AddNode(arNode);
+    sprintf(buf, "urn:publicid:IDN+%s+interface+*:*", domainId.c_str());
+    string arPortId = buf;
+    Port* arPort = new Port(0, arPortId);
+    arNode->AddPort(arPort);
+    arPort->SetMaxBandwidth(100000000000ULL);
+    arPort->SetMaxReservableBandwidth(100000000000ULL);
+    arPort->SetMinReservableBandwidth(0);
+    arPort->SetBandwidthGranularity(0);
+    sprintf(buf, "urn:publicid:IDN+%s+interface+*:*:*", domainId.c_str());
+    string arLinkId = buf;
+    RLink* arLink = new RLink(arLinkId);
+    arLink->SetMetric(1);
+    arLink->SetMaxBandwidth(arPort->GetMaxBandwidth());
+    arLink->SetMaxReservableBandwidth(arPort->GetMaxReservableBandwidth());
+    arLink->SetMinReservableBandwidth(arPort->GetMinReservableBandwidth());
+    arLink->SetBandwidthGranularity(arPort->GetBandwidthGranularity());
+    arLink->SetSwcapXmlString(defaultSwcapStr);
+    arPort->AddLink(arLink);
 
     // 1. import domain topology from stitching aggregate section
     // get node info: rspec/stitching/aggregate/node
