@@ -135,18 +135,20 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
                 GeniManifestRSpec replyRspec(&reqRspec);
                 try {
                     replyRspec.ParseApiReplyMessage(replyMsg);
+                } catch (TEDBException ex) {
                     msgPort->GetMsgInQueue().remove(replyMsg);
                     delete replyMsg;
-                    string manifest_rspec = replyRspec.GetRspecXmlString();
-                    map<string, xmlrpc_c::value> retMap;
-                    retMap["geni_code"] = xmlrpc_c::value_int(GENI_PCS_ERRCODE_NO_ERROR);
-                    retMap["manifest_rspec"] = xmlrpc_c::value_string(manifest_rspec);
-                    *retvalP = xmlrpc_c::value_struct(retMap);
-                    goto _final;        
-                } catch (TEDBException ex) {
                     ReturnGeniError(retvalP, GENI_PCS_ERRCODE_INCOMPLETE_REPLY, ex.GetMessage().c_str());
                     goto _final;        
                 }
+                msgPort->GetMsgInQueue().remove(replyMsg);
+                delete replyMsg;
+                string manifest_rspec = replyRspec.GetRspecXmlString();
+                map<string, xmlrpc_c::value> retMap;
+                retMap["geni_code"] = xmlrpc_c::value_int(GENI_PCS_ERRCODE_NO_ERROR);
+                retMap["manifest_rspec"] = xmlrpc_c::value_string(manifest_rspec);
+                *retvalP = xmlrpc_c::value_struct(retMap);
+                goto _final;        
             }
         }
     }
