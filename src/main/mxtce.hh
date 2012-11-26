@@ -61,6 +61,7 @@ private:
 public:
     static int apiServerPort;
     static int xmlrpcApiServerPort;
+    static string xmlrpcApiServerPath;
     static int resvApiServerPort;
     static string loopbackPortName;
     static string apiServerPortName;

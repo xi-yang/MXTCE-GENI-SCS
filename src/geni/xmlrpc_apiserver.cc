@@ -176,7 +176,8 @@ void* XMLRPC_APIServer::Run()
         xmlrpc_c::serverAbyss myAbyssServer(
             xmlrpc_c::serverAbyss::constrOpt()
             .registryP(&myRegistry)
-            .portNumber(MxTCE::xmlrpcApiServerPort));
+            .portNumber(MxTCE::xmlrpcApiServerPort)
+            .uriPath(MxTCE::xmlrpcApiServerPath));
         myAbyssServer.run();
         // xmlrpc_c::serverAbyss.run() never returns
     } catch (exception const& e) {
