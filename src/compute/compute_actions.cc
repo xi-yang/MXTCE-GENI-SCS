@@ -272,13 +272,23 @@ void Action_ComputeKSP::Process()
         dstVtag = ANY_TAG;
     else
         sscanf(this->_userConstraint->getDestvlantag().c_str(), "%d", &dstVtag);
-
     TSpec tspec;
     if (this->_userConstraint->getLayer() == "3")
         tspec.Update(LINK_IFSWCAP_PSC1, LINK_IFSWCAP_ENC_PKT, bw);
     else
         tspec.Update(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, bw);
-
+    
+    // routing profile - exclusion list pruning
+    if (this->_userConstraint->getHopExclusionList() != NULL)
+    {
+        list<string>::iterator itH = this->_userConstraint->getHopExclusionList()->begin();
+        for (; itH != this->_userConstraint->getHopExclusionList()->end(); itH++)
+        {
+            string& hopUrn = *itH;
+            tewg->PruneByUrn(hopUrn);
+        }
+    }
+    
     // reservations pruning (good for simpleComputeWorker workflow)
     // for current OSCARS implementation, tcePCE should pass startTime==endTime==0
     time_t startTime = this->_userConstraint->getStarttime();
@@ -308,9 +318,11 @@ void Action_ComputeKSP::Process()
             delete conjDelta;
         }
     }
+  
+    // debug:
+    // tewg->LogDump();
 
     // prune bandwidth
-    //tewg->LogDump();
     tewg->PruneByBandwidth(bw);
 
     TLink* ingressLink = tewg->LookupLinkByURN(this->_userConstraint->getSrcendpoint());
@@ -384,8 +396,22 @@ void Action_ComputeKSP::Process()
             (*itP)->GetPath().push_back(egressLink);
         }
 
-        // TODO: need special handling for old OSCARS L2SC --> PSC edge adaptation: add artificial IACD for  (ingress <-> 1st-hop and egress <-> last-hop)
+        // TODO: ? special handling for old OSCARS L2SC --> PSC edge adaptation: add artificial IACD for  (ingress <-> 1st-hop and egress <-> last-hop)
 
+        // verify hop inclusion list
+        if (this->_userConstraint->getHopInclusionList() != NULL)
+        {            
+            if (!(*itP)->VerifyHopInclusionList(*this->_userConstraint->getHopInclusionList()))
+            {
+                TPath* path2erase = *itP;
+                itP = KSP.erase(itP);
+                delete path2erase;
+                continue;
+            }
+            // otherwise, go next to verify TE constraints
+        }
+        
+        // verify TE constraints
         TServiceSpec ingTSS, egrTSS;
         ingTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
         ingTSS.GetVlanSet().AddTag(srcVtag);

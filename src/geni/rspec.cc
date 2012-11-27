@@ -650,6 +650,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
             {
                 for (pathNode = xmlNode->children; pathNode != NULL; pathNode = pathNode->next)
                 {
+                    list<string>* hopInclusionList = new list<string>;
                     if (pathNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)pathNode->name, "path", 4) == 0)
                     {
                         string pathId = (const char*)xmlGetProp(pathNode,  (const xmlChar*)"id");
@@ -658,6 +659,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
                         {
                             if (hopNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)hopNode->name, "hop", 3) == 0)
                             {
+                                string hopType = (const char*)xmlGetProp(hopNode,  (const xmlChar*)"type");
                                 for (linkNode = hopNode->children; linkNode != NULL; linkNode = linkNode->next)
                                 {
                                     if (linkNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)linkNode->name, "link", 4) == 0)
@@ -667,7 +669,16 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
                                         else
                                             linkNodeZ = linkNode;
                                     }
-                                }                                
+                                    if (hopType == "strict" && linkNode->type == XML_ELEMENT_NODE
+                                        && (strncasecmp((const char*)linkNode->name, "aggregate", 4) == 0
+                                         || strncasecmp((const char*)linkNode->name, "node", 4) == 0
+                                         || strncasecmp((const char*)linkNode->name, "port", 4) == 0
+                                         || strncasecmp((const char*)linkNode->name, "link", 4) == 0) )
+                                    {
+                                        string urn = (const char*)xmlGetProp(linkNode,  (const xmlChar*)"id");
+                                        hopInclusionList->push_back(urn);
+                                    }
+                                }
                             }
                         }
                         if (linkNodeA == NULL || linkNodeZ == NULL) 
@@ -684,6 +695,14 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
                         userCons->setSrcendpoint(srcLinkId);
                         string dstLinkId = (const char*) xmlGetProp(linkNodeZ, (const xmlChar*) "id");
                         userCons->setDestendpoint(dstLinkId);
+                        if (!hopInclusionList->empty() && hopInclusionList->front() == srcLinkId)
+                            hopInclusionList->pop_front();
+                        if (!hopInclusionList->empty() && hopInclusionList->back() == dstLinkId)
+                            hopInclusionList->pop_back();
+                        if (!hopInclusionList->empty())
+                            userCons->setHopInclusionList(hopInclusionList);
+                        else
+                            delete hopInclusionList;
                         xmlNodePtr xmlNode1, xmlNode2, xmlNode3, xmlNode4;
                         u_int64_t bw = 1;
                         string pathType = "strict";
