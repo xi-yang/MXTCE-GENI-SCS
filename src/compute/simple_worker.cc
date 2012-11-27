@@ -57,7 +57,7 @@ void* SimpleComputeWorker::hookRun()
     Action* actionNext3 = new Action_FinalizeServiceTopology(actionName, this);
     actions.push_back(actionNext3);
     actionNext2->AddChild(actionNext3);
-        
+
     // schedule the top level action(s)
     eventMaster->Schedule(actionRoot);
     //## eventMaster->Run() will be called by parent Run() 

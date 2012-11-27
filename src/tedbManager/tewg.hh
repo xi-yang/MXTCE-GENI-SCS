@@ -351,6 +351,7 @@ public:
         }
     void ExpandWithRemoteLinks();
     bool VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS);
+    bool VerifyHopInclusionList(list<string>& inclusionList);
     void UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS);
     BandwidthAvailabilityGraph* CreatePathBAG(time_t start, time_t end);
     void CreateLinkBAG(time_t start, time_t end);
@@ -394,6 +395,7 @@ public:
     void ApplyResvDeltas(string& resvName);
     void RevokeResvDeltas(string& resvName);
     void PruneByBandwidth(u_int64_t bw);
+    void PruneByUrn(string& urn);
     list<TLink*> ComputeDijkstraPath(TNode* srcNode, TNode* dstLink, bool cleanStart=false);
     void ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<TPath*>& KSP);
     void LogDumpWithFlags();

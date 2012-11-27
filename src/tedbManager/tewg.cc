@@ -1197,6 +1197,31 @@ bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_in
     return true;
 }
 
+// Note: does not guarantee right order of inclusion list
+bool TPath::VerifyHopInclusionList(list<string>& inclusionList)
+{
+     if (path.size() == 0)
+        return false;
+     if (inclusionList.size() == 0)
+        return true;
+    TLink* L;
+    list<TLink*>::iterator iterL;
+    list<string>::iterator iterI;
+    for (iterI = inclusionList.begin(); iterI != inclusionList.end(); iterI++) 
+    {
+        string& inclusionUrn = *iterI;
+        for (iterL = path.begin(); iterL != path.end(); iterL++) 
+        {
+            L = *iterL;
+            if (L->GetName().find(inclusionUrn) != string::npos)
+                break; // this inclusionUrn found in the path
+        }
+        if (iterL == path.end())
+            return false; // this inclusionUrn not found in the path
+    }
+    return true;
+}
+
 void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS)
 {
     TLink* L;
@@ -1742,6 +1767,18 @@ void TEWG::PruneByBandwidth(u_int64_t bw)
     }
 }
 
+void TEWG::PruneByUrn(string& urn)
+{
+    list<TLink*>::iterator itl = tLinks.begin();
+    itl = tLinks.begin();
+    while (itl != tLinks.end())
+    {
+        TLink* link = *itl;
+        ++itl;
+        if (link->GetName().find(urn) != string::npos)
+            RemoveLink(link);
+    }
+}
 
 list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode, bool cleanStart)
 {
