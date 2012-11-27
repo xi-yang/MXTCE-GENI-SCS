@@ -112,6 +112,9 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     } catch (TEDBException ex) {
             ReturnGeniError(retvalP, GENI_PCS_ERRCODE_MAILFORMED_REQUEST, ex.GetMessage().c_str());
             goto _final;        
+    } catch (exception exx) {
+            ReturnGeniError(retvalP, GENI_PCS_ERRCODE_UNKNOWN, exx.what());
+            goto _final;        
     }
     contextTag = reqMsg->GetContextTag();
     // TODO: append option TLVs (hold_path, exclusion_list ...)

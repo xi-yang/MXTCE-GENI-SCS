@@ -659,7 +659,10 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
                         {
                             if (hopNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)hopNode->name, "hop", 3) == 0)
                             {
-                                string hopType = (const char*)xmlGetProp(hopNode,  (const xmlChar*)"type");
+                                const char* cstrHopType = (const char*)xmlGetProp(hopNode,  (const xmlChar*)"type");
+                                string hopType = "strict";
+                                if (cstrHopType != NULL)
+                                    hopType = cstrHopType;
                                 for (linkNode = hopNode->children; linkNode != NULL; linkNode = linkNode->next)
                                 {
                                     if (linkNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)linkNode->name, "link", 4) == 0)
@@ -675,8 +678,12 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
                                          || strncasecmp((const char*)linkNode->name, "port", 4) == 0
                                          || strncasecmp((const char*)linkNode->name, "link", 4) == 0) )
                                     {
-                                        string urn = (const char*)xmlGetProp(linkNode,  (const xmlChar*)"id");
-                                        hopInclusionList->push_back(urn);
+                                        const char* cstrUrn = (const char*)xmlGetProp(linkNode,  (const xmlChar*)"id");
+                                        if (cstrUrn != NULL)
+                                        {
+                                            string urn = cstrUrn;
+                                            hopInclusionList->push_back(urn);
+                                        }
                                     }
                                 }
                             }
