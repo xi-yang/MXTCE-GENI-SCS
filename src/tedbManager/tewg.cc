@@ -162,6 +162,26 @@ bool TLink::VerifyFullLink()
     return (VerifyRemoteLink() && lclEnd->HasLocalLink(this) && lclEnd->HasRemoteLink((TLink*)remoteLink) && rmtEnd->HasLocalLink((TLink*)remoteLink) && rmtEnd->HasRemoteLink(this));
 }
 
+bool TLink::VerifyContainUrn(string& urn) 
+{
+    string domainName = "", nodeName = "", portName = "", linkName = "";
+    ParseFQUrnShort(urn, domainName, nodeName, portName, linkName);
+    if (domainName != this->GetPort()->GetNode()->GetDomain()->GetName())
+        return false;
+    if (nodeName.empty())
+        return true;
+    if (nodeName != this->GetPort()->GetNode()->GetName())
+        return false;
+    if (portName.empty())
+        return true;
+    if (portName != this->GetPort()->GetName())
+        return false;
+    if (linkName.empty())
+        return true;
+    if (linkName != this->GetName())
+        return false;
+    return true;
+}
 
 // assume all TE links have at least one ISCD. In most cases there is only one ISCD (the).
 ISCD* TLink::GetTheISCD()
@@ -1213,8 +1233,8 @@ bool TPath::VerifyHopInclusionList(list<string>& inclusionList)
         for (iterL = path.begin(); iterL != path.end(); iterL++) 
         {
             L = *iterL;
-            if (L->GetName().find(inclusionUrn) != string::npos)
-                break; // this inclusionUrn found in the path
+            if (L->VerifyContainUrn(inclusionUrn))
+                break; // inclusionUrn found on the link
         }
         if (iterL == path.end())
             return false; // this inclusionUrn not found in the path
@@ -1760,23 +1780,23 @@ void TEWG::PruneByBandwidth(u_int64_t bw)
     itl = tLinks.begin();
     while (itl != tLinks.end())
     {
-        TLink* link = *itl;
+        TLink* L = *itl;
         ++itl;
-        if (link->GetAvailableBandwidth() < bw)
-            RemoveLink(link);
+        if (L->GetAvailableBandwidth() < bw)
+            RemoveLink(L);
     }
 }
 
-void TEWG::PruneByUrn(string& urn)
+void TEWG::PruneByExclusionUrn(string& exclusionUrn)
 {
     list<TLink*>::iterator itl = tLinks.begin();
     itl = tLinks.begin();
     while (itl != tLinks.end())
     {
-        TLink* link = *itl;
+        TLink* L = *itl;
         ++itl;
-        if (link->GetName().find(urn) != string::npos)
-            RemoveLink(link);
+        if (L->VerifyContainUrn(exclusionUrn))
+            RemoveLink(L);
     }
 }
 

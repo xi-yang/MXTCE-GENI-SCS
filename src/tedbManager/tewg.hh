@@ -239,6 +239,7 @@ public:
     bool VerifyEdgeLink();
     bool VerifyRemoteLink();
     bool VerifyFullLink();
+    bool VerifyContainUrn(string& urn);
     ISCD* GetTheISCD();
     BandwidthAvailabilityGraph* GetBAG() { return bag; }
     void SetBAG(BandwidthAvailabilityGraph* b) { bag = b; }
@@ -395,7 +396,7 @@ public:
     void ApplyResvDeltas(string& resvName);
     void RevokeResvDeltas(string& resvName);
     void PruneByBandwidth(u_int64_t bw);
-    void PruneByUrn(string& urn);
+    void PruneByExclusionUrn(string& exclusionUrn);
     list<TLink*> ComputeDijkstraPath(TNode* srcNode, TNode* dstLink, bool cleanStart=false);
     void ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<TPath*>& KSP);
     void LogDumpWithFlags();

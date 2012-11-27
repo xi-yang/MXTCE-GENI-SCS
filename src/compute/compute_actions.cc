@@ -285,7 +285,7 @@ void Action_ComputeKSP::Process()
         for (; itH != this->_userConstraint->getHopExclusionList()->end(); itH++)
         {
             string& hopUrn = *itH;
-            tewg->PruneByUrn(hopUrn);
+            tewg->PruneByExclusionUrn(hopUrn);
         }
     }
     

@@ -902,6 +902,11 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             snprintf(buf, 1024, "MxTCE ComputeWorker return error message ' %s '.", errMsg.c_str());
             throw TEDBException(buf);            
         }
+        else if (path == NULL)
+        {
+            snprintf(buf, 1024, "MxTCE ComputeWorker return NULL path for unknown error");
+            throw TEDBException(buf);            
+        }
         snprintf(str, 1024, "<path id=\"%s\">", result->GetGri().c_str());
         strcat(buf, str);
         list<TLink*>::iterator itL = path->GetPath().begin();
