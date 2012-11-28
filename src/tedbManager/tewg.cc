@@ -774,6 +774,8 @@ void TGraph::RemoveLink(TLink* link)
                 itLink = link->GetRemoteEnd()->GetRemoteLinks().erase(itLink);
         }
     }
+    if (link->GetRemoteLink() != NULL)
+        link->GetRemoteLink()->SetRemoteLink(NULL);
     tLinks.remove(link);
 }
 
