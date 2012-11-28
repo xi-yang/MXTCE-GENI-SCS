@@ -1797,8 +1797,12 @@ void TEWG::PruneByExclusionUrn(string& exclusionUrn)
     {
         TLink* L = *itl;
         ++itl;
-        if (L->VerifyContainUrn(exclusionUrn))
+        if (L->VerifyContainUrn(exclusionUrn)) 
+        {
             RemoveLink(L);
+            if (L->GetRemoteLink() != NULL)
+                RemoveLink(L->GetRemoteLink());
+        }
     }
 }
 
