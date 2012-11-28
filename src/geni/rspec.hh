@@ -37,6 +37,7 @@
 
 #include "types.hh"
 #include "resource.hh"
+#include "xmlrpc_apiserver.hh"
 
 using namespace std;
 
@@ -105,7 +106,7 @@ public:
     GeniRequestRSpec(string& xml): GeniRSpec(xml) { }
     GeniRequestRSpec(xmlDocPtr doc): GeniRSpec(doc) { }
     virtual ~GeniRequestRSpec() { }
-    Message* CreateApiRequestMessage();
+    Message* CreateApiRequestMessage(map<string, xmlrpc_c::value>& rp);
 };
 
 class GeniManifestRSpec: public GeniRSpec {

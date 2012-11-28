@@ -626,7 +626,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
 }
 
 int GeniRequestRSpec::unique_req_id = 1;
-Message* GeniRequestRSpec::CreateApiRequestMessage()
+Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>& routingProfile)
 {
     if (rspecDoc == NULL)
     {
@@ -702,14 +702,47 @@ Message* GeniRequestRSpec::CreateApiRequestMessage()
                         userCons->setSrcendpoint(srcLinkId);
                         string dstLinkId = (const char*) xmlGetProp(linkNodeZ, (const xmlChar*) "id");
                         userCons->setDestendpoint(dstLinkId);
+                        // add routing profile
+                        // 1. implicit hop inclusion list from RSpec
                         if (!hopInclusionList->empty() && hopInclusionList->front() == srcLinkId)
                             hopInclusionList->pop_front();
                         if (!hopInclusionList->empty() && hopInclusionList->back() == dstLinkId)
                             hopInclusionList->pop_back();
+                        // 2. explicit hop inclusion and exclusion list
+                        list<string>* hopExclusionList = NULL;
+                        if (routingProfile.find(pathId) != routingProfile.end())
+                        {
+                            map<string, xmlrpc_c::value> anRP = xmlrpc_c::value_struct(routingProfile[pathId]);
+                            if (anRP.find("hop_inclusion_list") != anRP.end())
+                            {
+                                vector<xmlrpc_c::value> inlusionList = xmlrpc_c::value_array(anRP["hop_inclusion_list"]).vectorValueValue();
+                                vector<xmlrpc_c::value>::iterator itH = inlusionList.begin();
+                                for (; itH != inlusionList.end(); itH++)
+                                {
+                                    string hopUrn = xmlrpc_c::value_string(*itH);
+                                    hopInclusionList->push_back(hopUrn);
+                                }
+                            }
+                            if (anRP.find("hop_exclusion_list") != anRP.end())
+                            {
+                                vector<xmlrpc_c::value> exlusionList = xmlrpc_c::value_array(anRP["hop_exclusion_list"]).vectorValueValue();
+                                vector<xmlrpc_c::value>::iterator itH = exlusionList.begin();
+                                for (; itH != exlusionList.end(); itH++)
+                                {
+                                    string hopUrn = xmlrpc_c::value_string(*itH);
+                                    if (hopExclusionList == NULL)
+                                        hopExclusionList = new list<string>;
+                                    hopExclusionList->push_back(hopUrn);
+                                }
+                            }
+                        }
                         if (!hopInclusionList->empty())
                             userCons->setHopInclusionList(hopInclusionList);
                         else
                             delete hopInclusionList;
+                        if (hopExclusionList != NULL)
+                            userCons->setHopExclusionList(hopExclusionList);
+                        
                         xmlNodePtr xmlNode1, xmlNode2, xmlNode3, xmlNode4;
                         u_int64_t bw = 1;
                         string pathType = "strict";

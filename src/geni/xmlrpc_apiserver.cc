@@ -89,26 +89,26 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     string rspec = xmlrpc_c::value_string(reqStruct["request_rspec"]);
     map<string, xmlrpc_c::value> options = xmlrpc_c::value_struct(reqStruct["request_options"]);
     bool hold_path = false;
-    vector<xmlrpc_c::value> exclusion_list;
+    map<string, xmlrpc_c::value> routing_profile;
     u_int32_t start_time = 0, end_time = 0;
-    if (options.find("geni-hold-path") != options.end()) {
-        hold_path = xmlrpc_c::value_boolean(options["geni-hold-path"]);
+    if (options.find("geni_hold_path") != options.end()) {
+        hold_path = xmlrpc_c::value_boolean(options["geni_hold_path"]);
     }
-    if (options.find("geni-start-time") != options.end()) {
-        start_time = xmlrpc_c::value_i8(options["geni-start-time"]);
+    if (options.find("geni_start_time") != options.end()) {
+        start_time = xmlrpc_c::value_i8(options["geni_start_time"]);
     }
-    if (options.find("geni-end-time") != options.end()) {
-        end_time = xmlrpc_c::value_i8(options["geni-end-time"]);
+    if (options.find("geni_end_time") != options.end()) {
+        end_time = xmlrpc_c::value_i8(options["geni_end_time"]);
     }
-    if (options.find("geni-routing-exclusion-list") != options.end()) {
-        exclusion_list = xmlrpc_c::value_array(options["geni-routing-exclusion-list"]).vectorValueValue();
+    if (options.find("geni_routing_profile") != options.end()) {
+        routing_profile = xmlrpc_c::value_struct(options["geni_routing_profile"]);
     }
     
     GeniRequestRSpec reqRspec(rspec);
     string contextTag = "";
     Message* reqMsg = NULL;
     try {
-        reqMsg = reqRspec.CreateApiRequestMessage();
+        reqMsg = reqRspec.CreateApiRequestMessage(routing_profile);
     } catch (TEDBException ex) {
             ReturnGeniError(retvalP, GENI_PCS_ERRCODE_MAILFORMED_REQUEST, ex.GetMessage().c_str());
             goto _final;        
