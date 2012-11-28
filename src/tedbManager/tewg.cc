@@ -1801,7 +1801,7 @@ void TEWG::PruneByExclusionUrn(string& exclusionUrn)
         {
             RemoveLink(L);
             if (L->GetRemoteLink() != NULL)
-                RemoveLink(L->GetRemoteLink());
+                RemoveLink((TLink*)L->GetRemoteLink());
         }
     }
 }
