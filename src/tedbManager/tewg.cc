@@ -1236,7 +1236,9 @@ bool TPath::VerifyHopInclusionList(list<string>& inclusionList)
         {
             L = *iterL;
             if (L->VerifyContainUrn(inclusionUrn))
-                break; // inclusionUrn found on the link
+                break; // inclusionUrn found on forward link
+            if (L->GetRemoteLink() != NULL && ((TLink*)L->GetRemoteLink())->VerifyContainUrn(inclusionUrn))
+                break; // inclusionUrn found on backward link
         }
         if (iterL == path.end())
             return false; // this inclusionUrn not found in the path
