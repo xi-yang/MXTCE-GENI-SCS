@@ -398,6 +398,13 @@ void Action_ComputeKSP::Process()
 
         // TODO: ? special handling for old OSCARS L2SC --> PSC edge adaptation: add artificial IACD for  (ingress <-> 1st-hop and egress <-> last-hop)
 
+        // verify TE constraints
+        TServiceSpec ingTSS, egrTSS;
+        ingTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+        ingTSS.GetVlanSet().AddTag(srcVtag);
+        egrTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+        egrTSS.GetVlanSet().AddTag(dstVtag);
+        (*itP)->ExpandWithRemoteLinks();
         // verify hop inclusion list
         if (this->_userConstraint->getHopInclusionList() != NULL)
         {            
@@ -410,14 +417,7 @@ void Action_ComputeKSP::Process()
             }
             // otherwise, go next to verify TE constraints
         }
-        
-        // verify TE constraints
-        TServiceSpec ingTSS, egrTSS;
-        ingTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
-        ingTSS.GetVlanSet().AddTag(srcVtag);
-        egrTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
-        egrTSS.GetVlanSet().AddTag(dstVtag);
-        (*itP)->ExpandWithRemoteLinks();
+        // verifying TE constraints
         if (!(*itP)->VerifyTEConstraints(ingTSS, egrTSS))
         {
             TPath* path2erase = *itP;
@@ -911,6 +911,17 @@ void Action_ComputeSchedulesWithKSP::Process()
     list<time_t>::iterator itT = orderedATS->begin();
     for (; itT != orderedATS->end(); itT++)
     {
+        // routing profile - exclusion list pruning
+        if (this->_userConstraint->getHopExclusionList() != NULL)
+        {
+            list<string>::iterator itH = this->_userConstraint->getHopExclusionList()->begin();
+            for (; itH != this->_userConstraint->getHopExclusionList()->end(); itH++)
+            {
+                string& hopUrn = *itH;
+                tewg->PruneByExclusionUrn(hopUrn);
+            }
+        }
+        // applying reservation data
         time_t startTime = (*itT);
         time_t endTime = startTime + duration;
         list<TLink*>::iterator itL;
@@ -928,7 +939,7 @@ void Action_ComputeSchedulesWithKSP::Process()
             conjDelta->SetTargetResource(*itL);
             conjDelta->Apply();
         }
-        // $$ pruning bandwidth
+        // pruning bandwidth
         tewg->PruneByBandwidth(this->GetReqBandwidth());
         
         TLink* ingressLink = tewg->LookupLinkByURN(_userConstraint->getSrcendpoint());
@@ -1001,6 +1012,18 @@ void Action_ComputeSchedulesWithKSP::Process()
             egrTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
             egrTSS.GetVlanSet().AddTag(dstVtag);
             (*itP)->ExpandWithRemoteLinks();
+            // verify hop inclusion list
+            if (this->_userConstraint->getHopInclusionList() != NULL)
+            {            
+                if (!(*itP)->VerifyHopInclusionList(*this->_userConstraint->getHopInclusionList()))
+                {
+                    TPath* path2erase = *itP;
+                    itP = KSP.erase(itP);
+                    delete path2erase;
+                    continue;
+                }
+                // otherwise, go next to verify TE constraints
+            }
             if (!(*itP)->VerifyTEConstraints(ingTSS, egrTSS))
             {
                 TPath* path2erase = *itP;
