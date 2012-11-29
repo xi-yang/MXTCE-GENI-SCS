@@ -905,6 +905,7 @@ void Action_ComputeSchedulesWithKSP::Process()
     if (_feasiblePaths == NULL)
     {
         _feasiblePaths = new vector<TPath*>;
+        this->GetComputeWorker()->SetWorkflowData("FEASIBLE_PATHS", this->_feasiblePaths);
     }
 
     vector<TPath*> KSP;
