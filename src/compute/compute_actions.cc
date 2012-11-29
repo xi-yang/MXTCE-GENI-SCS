@@ -398,13 +398,6 @@ void Action_ComputeKSP::Process()
 
         // TODO: ? special handling for old OSCARS L2SC --> PSC edge adaptation: add artificial IACD for  (ingress <-> 1st-hop and egress <-> last-hop)
 
-        // verify TE constraints
-        TServiceSpec ingTSS, egrTSS;
-        ingTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
-        ingTSS.GetVlanSet().AddTag(srcVtag);
-        egrTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
-        egrTSS.GetVlanSet().AddTag(dstVtag);
-        (*itP)->ExpandWithRemoteLinks();
         // verify hop inclusion list
         if (this->_userConstraint->getHopInclusionList() != NULL)
         {            
@@ -417,6 +410,13 @@ void Action_ComputeKSP::Process()
             }
             // otherwise, go next to verify TE constraints
         }
+        // verify TE constraints
+        TServiceSpec ingTSS, egrTSS;
+        ingTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+        ingTSS.GetVlanSet().AddTag(srcVtag);
+        egrTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+        egrTSS.GetVlanSet().AddTag(dstVtag);
+        (*itP)->ExpandWithRemoteLinks();
         // verifying TE constraints
         if (!(*itP)->VerifyTEConstraints(ingTSS, egrTSS))
         {
@@ -1006,12 +1006,6 @@ void Action_ComputeSchedulesWithKSP::Process()
                 (*itP)->GetPath().push_back(egressLink);
             }
                 
-            TServiceSpec ingTSS, egrTSS;
-            ingTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
-            ingTSS.GetVlanSet().AddTag(srcVtag);
-            egrTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
-            egrTSS.GetVlanSet().AddTag(dstVtag);
-            (*itP)->ExpandWithRemoteLinks();
             // verify hop inclusion list
             if (this->_userConstraint->getHopInclusionList() != NULL)
             {            
@@ -1024,6 +1018,12 @@ void Action_ComputeSchedulesWithKSP::Process()
                 }
                 // otherwise, go next to verify TE constraints
             }
+            TServiceSpec ingTSS, egrTSS;
+            ingTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+            ingTSS.GetVlanSet().AddTag(srcVtag);
+            egrTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+            egrTSS.GetVlanSet().AddTag(dstVtag);
+            (*itP)->ExpandWithRemoteLinks();
             if (!(*itP)->VerifyTEConstraints(ingTSS, egrTSS))
             {
                 TPath* path2erase = *itP;
