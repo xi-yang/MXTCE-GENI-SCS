@@ -876,6 +876,10 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                         userCons->setLayer(layer);
                         userCons->setPathtype(pathType);
                         userCons->setBandwidth(bw);
+                        list<TSchedule*>* flexSchedules = new list<TSchedule*>;
+                        TSchedule* aSchedule = new TSchedule(userCons->getStarttime(), userCons->getEndtime());
+                        flexSchedules->push_back(aSchedule);
+                        userCons->setFlexSchedules(flexSchedules);
                         userCons->setSrcvlantag(srcVlan);
                         userCons->setDestvlantag(dstVlan);
                         TLV* tlv = NULL;
