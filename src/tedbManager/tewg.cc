@@ -1403,6 +1403,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS)
     {
         // assign dstVtag to suggestedVlanTags along the path in reverse direction
         list<TLink*>::reverse_iterator iterR;
+        ISCD_L2SC* last = NULL;
         for (iterR = path.rbegin(); iterR != path.rend(); iterR++)
         {
             L = *iterR;
@@ -1417,13 +1418,24 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS)
             }
             if (!iscd)
                 continue;
-            if (iterR == path.rbegin() 
-                    || (iscd->availableVlanTags.HasTag(srcVtag) && !iscd->vlanTranslation))
+            if (iterR == path.rbegin())
             {
                 iscd->availableVlanTags.Clear();
                 iscd->suggestedVlanTags.Clear();
             }
-            else if (!iscd->availableVlanTags.IsEmpty() 
+            else if (iscd->availableVlanTags.HasTag(srcVtag) && !iscd->vlanTranslation)
+            {
+                iscd->availableVlanTags.Clear();
+                iscd->suggestedVlanTags.Clear();
+                last = iscd;
+            }
+            else if (last != NULL && !last->vlanTranslation && iscd->vlanTranslation)
+            {
+                iscd->availableVlanTags.Clear();
+                iscd->suggestedVlanTags.Clear();
+                last = NULL;
+            }
+            else if (!iscd->availableVlanTags.IsEmpty()
                     || iscd->availableVlanTags.HasTag(dstVtag))
                 break;
             iscd->availableVlanTags.AddTag(dstVtag);
