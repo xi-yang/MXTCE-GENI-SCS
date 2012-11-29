@@ -1417,12 +1417,14 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS)
             }
             if (!iscd)
                 continue;
-            if (iterR == path.rbegin())
+            if (iterR == path.rbegin() 
+                    || (iscd->availableVlanTags.HasTag(srcVtag) && !iscd->vlanTranslation))
             {
                 iscd->availableVlanTags.Clear();
                 iscd->suggestedVlanTags.Clear();
             }
-            else if (!iscd->suggestedVlanTags.IsEmpty()|| iscd->availableVlanTags.HasTag(dstVtag))
+            else if (!iscd->availableVlanTags.IsEmpty() 
+                    || iscd->availableVlanTags.HasTag(dstVtag))
                 break;
             iscd->availableVlanTags.AddTag(dstVtag);
             iscd->suggestedVlanTags.AddTag(dstVtag);
