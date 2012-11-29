@@ -1519,6 +1519,8 @@ void Action_ReorderPaths_MP2P::Process()
                 string dataName = "FEASIBLE_PATHS";
                 TPath* path1_i = ((list<TPath*>*)ksp_i->GetData(dataName))->front();
                 TPath* path1_j = ((list<TPath*>*)ksp_j->GetData(dataName))->front();
+                if (path1_i == NULL || path1_j == NULL)
+                    continue;
                 if (BandwidthWeightedHopLength(path1_i) < BandwidthWeightedHopLength(path1_j))
                     Swap(ksp_i, ksp_j);
                 else if (SumOfBandwidthTimeWeightedCommonLinks(path1_i, path1All) < SumOfBandwidthTimeWeightedCommonLinks(path1_j, path1All))
