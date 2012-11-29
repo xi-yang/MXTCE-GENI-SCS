@@ -696,6 +696,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                         }
                         Apimsg_user_constraint* userCons = new Apimsg_user_constraint();
                         userCons->setGri(pathId);
+                        userCons->setPathId(pathId);
                         userCons->setStarttime(time(NULL));
                         userCons->setEndtime(time(NULL)+3600*24); // scheduling attributes TBD
                         string srcLinkId = (const char*) xmlGetProp(linkNodeA, (const xmlChar*) "id");
