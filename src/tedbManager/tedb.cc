@@ -525,7 +525,7 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
                 {
                     string translationStr;
                     StripXmlString(translationStr, xmlNodeGetContent(specLevel));
-                    if (strncasecmp(translationStr.c_str(), "true", 4))
+                    if (strncasecmp(translationStr.c_str(), "true", 4) == 0)
                         vlanTranslation = true;
                     else
                         vlanTranslation = false;
@@ -555,7 +555,7 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
                         {
                             string enabledStr;
                             StripXmlString(enabledStr, xmlNodeGetContent(specSubLevel));
-                            if (strncasecmp(enabledStr.c_str(), "true", 4))
+                            if (strncasecmp(enabledStr.c_str(), "true", 4) == 0)
                                 tsiEnabled = true;
                             else
                                 tsiEnabled = false;
@@ -564,7 +564,7 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
                         {
                             string enabledStr;
                             StripXmlString(enabledStr, xmlNodeGetContent(specSubLevel));
-                            if (strncasecmp(enabledStr.c_str(), "true", 4))
+                            if (strncasecmp(enabledStr.c_str(), "true", 4) == 0)
                                 vcatEnabled = true;
                             else
                                 vcatEnabled = false;
@@ -597,7 +597,7 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
                         {
                             string translationStr;
                             StripXmlString(translationStr, xmlNodeGetContent(specSubLevel));
-                            if (strncasecmp(translationStr.c_str(), "true", 4))
+                            if (strncasecmp(translationStr.c_str(), "true", 4) == 0)
                                 wavelengthConversion = true;
                             else
                                 wavelengthConversion = false;

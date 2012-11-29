@@ -1370,7 +1370,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS)
     //// update Layer2 VLANs    
     // TODO: vlanRange instead of single tags ?  -- (treat  availableVtagRange different ?)
     bool forwardContinued = true;
-    // assign srcVtag to suggestedVlanTags along the path in foward direction
+    // assign srcVtag to suggestedVlanTags along the path in forward direction
     for (iterL = path.begin(); iterL != path.end(); iterL++)
     {
         L = *iterL;
