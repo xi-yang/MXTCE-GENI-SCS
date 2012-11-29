@@ -1002,6 +1002,8 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                     strcat(buf, str);
                     snprintf(str, 1024, "<suggestedVLANRange>%s</suggestedVLANRange>", ((ISCD_L2SC*)iscd)->suggestedVlanTags.GetRangeString().c_str());
                     strcat(buf, str);
+                    snprintf(str, 1024, "<vlanTranslation>%s</vlanTranslation>", ((ISCD_L2SC*)iscd)->vlanTranslation ? "true":"false");
+                    strcat(buf, str);
                     snprintf(str, 1024, "/switchingCapabilitySpecificInfo_L2sc");
                     strcat(buf, str);
                 }
