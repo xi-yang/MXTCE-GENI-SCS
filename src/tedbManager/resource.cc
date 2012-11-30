@@ -109,7 +109,7 @@ void Node::AddPort(Port* port)
     else if (ports.find(port->GetName()) != ports.end())
     {
         char buf[128];
-        snprintf(buf, 128, "Node::AddPort raises Excaption: port name %s has already existed.", port->GetName().c_str());
+        snprintf(buf, 128, "Node::AddPort raises Exception: port name %s has already existed.", port->GetName().c_str());
         throw TEDBException(buf);
     }
     this->ports[port->GetName()] = port;
@@ -123,7 +123,7 @@ void Port::AddLink(Link* link)
     if (links.find(link->GetName()) != links.end())
     {
         char buf[128];
-        snprintf(buf, 128, "Port::AddLink raises Excaption: link name %s has already existed.", link->GetName().c_str());
+        snprintf(buf, 128, "Port::AddLink raises Exception: link name %s has already existed.", link->GetName().c_str());
         throw TEDBException(buf);
     }
     this->links[link->GetName()] = link;

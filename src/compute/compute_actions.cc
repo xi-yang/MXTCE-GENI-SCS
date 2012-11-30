@@ -420,6 +420,21 @@ void Action_ComputeKSP::Process()
 
         // TODO: ? special handling for old OSCARS L2SC --> PSC edge adaptation: add artificial IACD for  (ingress <-> 1st-hop and egress <-> last-hop)
 
+        // verify TE constraints
+        TServiceSpec ingTSS, egrTSS;
+        ingTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+        ingTSS.GetVlanSet().AddTag(srcVtag);
+        egrTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+        egrTSS.GetVlanSet().AddTag(dstVtag);
+        (*itP)->ExpandWithRemoteLinks();
+        // verify loop free
+        if (!(*itP)->VerifyLoopFree())
+        {
+            TPath* path2erase = *itP;
+            itP = KSP.erase(itP);
+            delete path2erase;
+            continue;                
+        }
         // verify hop inclusion list
         if (this->_userConstraint->getHopInclusionList() != NULL)
         {            
@@ -430,15 +445,7 @@ void Action_ComputeKSP::Process()
                 delete path2erase;
                 continue;
             }
-            // otherwise, go next to verify TE constraints
         }
-        // verify TE constraints
-        TServiceSpec ingTSS, egrTSS;
-        ingTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
-        ingTSS.GetVlanSet().AddTag(srcVtag);
-        egrTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
-        egrTSS.GetVlanSet().AddTag(dstVtag);
-        (*itP)->ExpandWithRemoteLinks();
         // verifying TE constraints
         if (!(*itP)->VerifyTEConstraints(ingTSS, egrTSS))
         {
@@ -1050,6 +1057,20 @@ void Action_ComputeSchedulesWithKSP::Process()
                 (*itP)->GetPath().push_back(egressLink);
             }
                 
+            TServiceSpec ingTSS, egrTSS;
+            ingTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+            ingTSS.GetVlanSet().AddTag(srcVtag);
+            egrTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
+            egrTSS.GetVlanSet().AddTag(dstVtag);
+            (*itP)->ExpandWithRemoteLinks();
+            // verify loop free
+            if (!(*itP)->VerifyLoopFree())
+            {
+                TPath* path2erase = *itP;
+                itP = KSP.erase(itP);
+                delete path2erase;
+                continue;                
+            }
             // verify hop inclusion list
             if (this->_userConstraint->getHopInclusionList() != NULL)
             {            
@@ -1060,14 +1081,8 @@ void Action_ComputeSchedulesWithKSP::Process()
                     delete path2erase;
                     continue;
                 }
-                // otherwise, go next to verify TE constraints
             }
-            TServiceSpec ingTSS, egrTSS;
-            ingTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
-            ingTSS.GetVlanSet().AddTag(srcVtag);
-            egrTSS.Update(tspec.SWtype, tspec.ENCtype, tspec.Bandwidth);
-            egrTSS.GetVlanSet().AddTag(dstVtag);
-            (*itP)->ExpandWithRemoteLinks();
+            // verify TE constraints
             if (!(*itP)->VerifyTEConstraints(ingTSS, egrTSS))
             {
                 TPath* path2erase = *itP;
@@ -1076,6 +1091,7 @@ void Action_ComputeSchedulesWithKSP::Process()
             }
             else
             {
+                
                 // TODO:  the time window may be increased if available 
                 TSchedule* schedule = new TSchedule(startTime, endTime);
                 vector<TPath*>::iterator itFP = _feasiblePaths->begin();
@@ -1132,7 +1148,7 @@ void Action_ComputeSchedulesWithKSP::Process()
             }
         }
 
-        // resore TEWG by adding back conjoined delta
+        // restore TEWG by adding back conjoined delta
         for (itL = tewg->GetLinks().begin(); itL != tewg->GetLinks().end(); itL++)
         {
             TDelta* conjDelta = (TDelta*)(*itL)->GetWorkData()->GetData("CONJOINED_DELTA");

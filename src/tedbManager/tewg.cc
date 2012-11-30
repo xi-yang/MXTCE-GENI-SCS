@@ -873,12 +873,12 @@ void TGraph::LoadPath(list<TLink*> path)
             ParseFQUrn(urn, domainName, nodeName, portName, linkName);
             if (domainName.length() == 0 || nodeName.length() == 0 || portName.length() == 0 || linkName.length() == 0)
             {
-                snprintf(buf, 256, "TGraph::LoadPath raises Excaption: invalid link urn '%s'", urn.c_str());
+                snprintf(buf, 256, "TGraph::LoadPath raises Exception: invalid link urn '%s'", urn.c_str());
                 throw TEDBException(buf);
             }
             if (LookupLinkByURN(urn) != NULL || LookupPortByURN(urn) != NULL)
             {
-                snprintf(buf, 256, "TGraph::LoadPath raises Excaption: duplicate link '%s' in path", urn.c_str());
+                snprintf(buf, 256, "TGraph::LoadPath raises Exception: duplicate link '%s' in path", urn.c_str());
                 throw TEDBException(buf);
             }
             link->SetName(linkName);
@@ -1242,6 +1242,33 @@ bool TPath::VerifyHopInclusionList(list<string>& inclusionList)
         }
         if (iterL == path.end())
             return false; // this inclusionUrn not found in the path
+    }
+    return true;
+}
+
+bool TPath::VerifyLoopFree()
+{
+    if (path.size() == 0)
+        return true;
+    list<TLink*>::iterator iterL;
+    for (iterL = path.begin(); iterL != path.end(); iterL++) 
+    {
+        TLink* L = *iterL;
+        list<TLink*>::iterator iterN = iterL;
+        iterN++;
+        if (iterN == path.end())
+            break;
+        iterN++;
+        if (iterN == path.end())
+            break;
+        while (iterN != path.end())
+        {
+            TLink* LN = *iterN;
+            if (L->GetPort()->GetNode() == LN->GetPort()->GetNode())
+                return false;
+            iterN++;
+        }
+        
     }
     return true;
 }
