@@ -905,7 +905,6 @@ void Action_ComputeSchedulesWithKSP::Process()
     if (_feasiblePaths == NULL)
     {
         _feasiblePaths = new vector<TPath*>;
-        this->GetComputeWorker()->SetWorkflowData("FEASIBLE_PATHS", this->_feasiblePaths);
     }
 
     vector<TPath*> KSP;
@@ -1506,7 +1505,7 @@ void Action_ReorderPaths_MP2P::Process()
         assert(actionSchedKspR1);
         round1KspActions.push_back(actionSchedKspR1);
         string dataName = "FEASIBLE_PATHS";
-        path1All.push_back(((list<TPath*>*)actionSchedKspR1->GetData(dataName))->front());
+        path1All.push_back(((vector<TPath*>*)actionSchedKspR1->GetData(dataName))->front());
     }
     
     // re-order the first-round KSP actions
@@ -1518,8 +1517,8 @@ void Action_ReorderPaths_MP2P::Process()
             {
                 Action_ComputeSchedulesWithKSP *ksp_i = round1KspActions[i], *ksp_j = round1KspActions[j];
                 string dataName = "FEASIBLE_PATHS";
-                TPath* path1_i = ((list<TPath*>*)ksp_i->GetData(dataName))->front();
-                TPath* path1_j = ((list<TPath*>*)ksp_j->GetData(dataName))->front();
+                TPath* path1_i = ((vector<TPath*>*)ksp_i->GetData(dataName))->front();
+                TPath* path1_j = ((vector<TPath*>*)ksp_j->GetData(dataName))->front();
                 if (path1_i == NULL || path1_j == NULL)
                     continue;
                 if (BandwidthWeightedHopLength(path1_i) < BandwidthWeightedHopLength(path1_j))
