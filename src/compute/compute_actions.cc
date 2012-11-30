@@ -342,7 +342,7 @@ void Action_ComputeKSP::Process()
     TLink* egressLink = tewg->LookupLinkByURN(this->_userConstraint->getDestendpoint());
     if (egressLink == NULL)
     {
-        TPort* egressPort = tewg->LookupPortByURN(this->_userConstraint->getSrcendpoint());
+        TPort* egressPort = tewg->LookupPortByURN(this->_userConstraint->getDestendpoint());
         if (egressPort != NULL)
         {
             if (egressPort->GetLinks().find("**") != egressPort->GetLinks().end())
@@ -988,7 +988,7 @@ void Action_ComputeSchedulesWithKSP::Process()
         TLink* egressLink = tewg->LookupLinkByURN(_userConstraint->getDestendpoint());
         if (egressLink == NULL)
         {
-            TPort* egressPort = tewg->LookupPortByURN(this->_userConstraint->getSrcendpoint());
+            TPort* egressPort = tewg->LookupPortByURN(this->_userConstraint->getDestendpoint());
             if (egressPort != NULL)
             {
                 if (egressPort->GetLinks().find("**") != egressPort->GetLinks().end())
