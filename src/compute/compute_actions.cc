@@ -326,9 +326,31 @@ void Action_ComputeKSP::Process()
     tewg->PruneByBandwidth(bw);
 
     TLink* ingressLink = tewg->LookupLinkByURN(this->_userConstraint->getSrcendpoint());
+    if (ingressLink == NULL)
+    {
+        TPort* ingressPort = tewg->LookupPortByURN(this->_userConstraint->getSrcendpoint());
+        if (ingressPort != NULL)
+        {
+            if (ingressPort->GetLinks().find("**") != ingressPort->GetLinks().end())
+                ingressLink = (TLink*)ingressPort->GetLinks()["**"];
+            else if (ingressPort->GetLinks().find("*") != ingressPort->GetLinks().end())
+                ingressLink = (TLink*)ingressPort->GetLinks()["*"];
+        }
+    }
     if (!ingressLink || !ingressLink->IsAvailableForTspec(tspec))
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Ingress Edge Link is not available for requested TSpec!");
     TLink* egressLink = tewg->LookupLinkByURN(this->_userConstraint->getDestendpoint());
+    if (egressLink == NULL)
+    {
+        TPort* egressPort = tewg->LookupPortByURN(this->_userConstraint->getSrcendpoint());
+        if (egressPort != NULL)
+        {
+            if (egressPort->GetLinks().find("**") != egressPort->GetLinks().end())
+                egressLink = (TLink*)egressPort->GetLinks()["**"];
+            else if (egressPort->GetLinks().find("*") != egressPort->GetLinks().end())
+                egressLink = (TLink*)egressPort->GetLinks()["*"];
+        }
+    }
     if (!egressLink || !egressLink->IsAvailableForTspec(tspec))
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Egress Edge Link is not available for requested TSpec!");
 
@@ -943,9 +965,31 @@ void Action_ComputeSchedulesWithKSP::Process()
         tewg->PruneByBandwidth(this->GetReqBandwidth());
         
         TLink* ingressLink = tewg->LookupLinkByURN(_userConstraint->getSrcendpoint());
+        if (ingressLink == NULL)
+        {
+            TPort* ingressPort = tewg->LookupPortByURN(this->_userConstraint->getSrcendpoint());
+            if (ingressPort != NULL)
+            {
+                if (ingressPort->GetLinks().find("**") != ingressPort->GetLinks().end())
+                    ingressLink = (TLink*)ingressPort->GetLinks()["**"];
+                else if (ingressPort->GetLinks().find("*") != ingressPort->GetLinks().end())
+                    ingressLink = (TLink*)ingressPort->GetLinks()["*"];
+            }
+        }
         if (!ingressLink || !ingressLink->IsAvailableForTspec(tspec))
             throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Ingress Edge Link is not available for requested TSpec!");
         TLink* egressLink = tewg->LookupLinkByURN(_userConstraint->getDestendpoint());
+        if (egressLink == NULL)
+        {
+            TPort* egressPort = tewg->LookupPortByURN(this->_userConstraint->getSrcendpoint());
+            if (egressPort != NULL)
+            {
+                if (egressPort->GetLinks().find("**") != egressPort->GetLinks().end())
+                    egressLink = (TLink*)egressPort->GetLinks()["**"];
+                else if (egressPort->GetLinks().find("*") != egressPort->GetLinks().end())
+                    egressLink = (TLink*)egressPort->GetLinks()["*"];
+            }
+        }
         if (!egressLink || !egressLink->IsAvailableForTspec(tspec))
             throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Egress Edge Link is not available for requested TSpec!");
         
