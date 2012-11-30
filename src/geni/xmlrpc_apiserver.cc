@@ -146,10 +146,10 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
                 }
                 msgPort->GetMsgInQueue().remove(replyMsg);
                 delete replyMsg;
-                string manifest_rspec = replyRspec.GetRspecXmlString();
+                string service_rspec = replyRspec.GetRspecXmlString();
                 map<string, xmlrpc_c::value> retMap;
                 retMap["geni_code"] = xmlrpc_c::value_int(GENI_PCS_ERRCODE_NO_ERROR);
-                retMap["manifest_rspec"] = xmlrpc_c::value_string(manifest_rspec);
+                retMap["service_rspec"] = xmlrpc_c::value_string(service_rspec);
                 *retvalP = xmlrpc_c::value_struct(retMap);
                 goto _final;        
             }
