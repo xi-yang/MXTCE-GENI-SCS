@@ -89,6 +89,7 @@ void DBDomain::UpdateFromXML(bool populateSubLevels)
                 if (capLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)capLevel->name, "capability", 10) == 0)
                 {   
                     string capStr;
+                    StripXmlString(capStr, xmlNodeGetContent(capLevel));
                     this->capabilities[capStr] = "true";
                 }
             }
@@ -195,6 +196,7 @@ void DBNode::UpdateFromXML(bool populateSubLevels)
                 if (capLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)capLevel->name, "capability", 10) == 0)
                 {   
                     string capStr;
+                    StripXmlString(capStr, xmlNodeGetContent(capLevel));
                     this->capabilities[capStr] = "true";
                 }
             }
@@ -336,6 +338,7 @@ void DBPort::UpdateFromXML(bool populateSubLevels)
                 if (capLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)capLevel->name, "capability", 10) == 0)
                 {   
                     string capStr;
+                    StripXmlString(capStr, xmlNodeGetContent(capLevel));
                     this->capabilities[capStr] = "true";
                 }
             }
@@ -491,6 +494,7 @@ void DBLink::UpdateFromXML(bool populateSubLevels)
                 if (capLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)capLevel->name, "capability", 10) == 0)
                 {   
                     string capStr;
+                    StripXmlString(capStr, xmlNodeGetContent(capLevel));
                     this->capabilities[capStr] = "true";
                 }
             }
