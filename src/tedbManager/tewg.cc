@@ -45,6 +45,11 @@ TDomain* TDomain::Clone(bool newSubLevels)
     map<string, Node*, strcmpless>::iterator itn = this->nodes.begin();
     for (; itn != this->nodes.end(); itn++)
         td->nodes[(*itn).first] = (newSubLevels ? ((TNode*)(*itn).second)->Clone(newSubLevels) : (*itn).second);
+    map<string, string, strcmpless>::iterator itc = this->capabilities.begin();
+    for (; itc != this->capabilities.end(); itc++) 
+    {
+        td->GetCapabilities()[(*itc).first] = (*itc).second;
+    }
     return td;            
 }
 
@@ -118,6 +123,11 @@ TNode* TNode::Clone(bool newSubLevels)
     {
         tn->rmtLinks.push_back(*itl);
     }
+    map<string, string, strcmpless>::iterator itc = this->capabilities.begin();
+    for (; itc != this->capabilities.end(); itc++) 
+    {
+        tn->GetCapabilities()[(*itc).first] = (*itc).second;
+    }
     return tn;
 }
 
@@ -137,7 +147,11 @@ TPort* TPort::Clone(bool newSubLevels)
     map<string, Link*, strcmpless>::iterator itl = this->links.begin();
     for (; itl != this->links.end(); itl++)
         tp->links[(*itl).first] = (newSubLevels ? ((TLink*)(*itl).second)->Clone() : (*itl).second);
-    // TODO: Clone TPoint when implemented
+    map<string, string, strcmpless>::iterator itc = this->capabilities.begin();
+    for (; itc != this->capabilities.end(); itc++) 
+    {
+        tp->GetCapabilities()[(*itc).first] = (*itc).second;
+    }
     return tp;
 }
 
@@ -219,6 +233,11 @@ TLink* TLink::Clone()
     itl = this->componentLinks.begin();
     for (; itl != this->componentLinks.end(); itl++)
         tl->componentLinks.push_back(*itl);
+    map<string, string, strcmpless>::iterator itc = this->capabilities.begin();
+    for (; itc != this->capabilities.end(); itc++) 
+    {
+        tl->GetCapabilities()[(*itc).first] = (*itc).second;
+    }
     return tl;
 }
 

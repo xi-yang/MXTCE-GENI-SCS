@@ -87,6 +87,7 @@ protected:
     u_int32_t _id;  // unique resource ID 
     string name;    // topology identification name
     string address; // IPv address (with /slash netmask if applicable)
+    map<string, string, strcmpless> capabilities;
     list<TDelta*> deltaList;
     WorkData* workData;
 
@@ -103,6 +104,7 @@ public:
     void SetName(string& n) { name = n; }
     string& GetAddress() { return address; }
     void SetAddress(string& a) { address = a; }
+    map<string, string, strcmpless>& GetCapabilities() { return capabilities; }
     list<TDelta*>& GetDeltaList() { return deltaList; }
     void AddDelta(TDelta* delta);
     void RemoveDelta(TDelta* delta);

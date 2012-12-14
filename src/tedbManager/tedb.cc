@@ -79,10 +79,22 @@ void DBDomain::UpdateFromXML(bool populateSubLevels)
         }
         else if (nodeLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)nodeLevel->name, "address", 7) == 0)
         {
-           StripXmlString(this->address, xmlNodeGetContent(nodeLevel));
+            StripXmlString(this->address, xmlNodeGetContent(nodeLevel));
+        }
+        else if (nodeLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)nodeLevel->name, "capabilities", 10) == 0)
+        {
+            xmlNodePtr capLevel;
+            for (capLevel = nodeLevel->children; capLevel != NULL; capLevel = capLevel->next)
+            {
+                if (capLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)capLevel->name, "capability", 10) == 0)
+                {   
+                    string capStr;
+                    this->capabilities[capStr] = "true";
+                }
+            }
         }
 
-        // TODO: parse NodeIfAdaptMatrix?        
+        // TODO: parse NodeIfAdaptMatrix?
     }
     // cleanup nodes that no longer exist in XML
     map<string, Node*, strcmpless>::iterator itn = nodes.begin();
@@ -109,6 +121,11 @@ TDomain* DBDomain::Checkout(TGraph* tg)
     {
         TNode* tn = ((DBNode*)(*itn).second)->Checkout(tg);
         tg->AddNode(td, tn);
+    }
+    map<string, string, strcmpless>::iterator itc = this->capabilities.begin();
+    for (; itc != this->capabilities.end(); itc++) 
+    {
+        td->GetCapabilities()[(*itc).first] = (*itc).second;
     }
     tg->AddDomain(td);
     return td;
@@ -170,6 +187,18 @@ void DBNode::UpdateFromXML(bool populateSubLevels)
         {
            StripXmlString(this->address, xmlNodeGetContent(portLevel));
         }
+        else if (portLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)portLevel->name, "capabilities", 10) == 0)
+        {
+            xmlNodePtr capLevel;
+            for (capLevel = portLevel->children; capLevel != NULL; capLevel = capLevel->next)
+            {
+                if (capLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)capLevel->name, "capability", 10) == 0)
+                {   
+                    string capStr;
+                    this->capabilities[capStr] = "true";
+                }
+            }
+        }
     }
     // cleanup ports that no longer exist in XML
     
@@ -208,6 +237,11 @@ TNode* DBNode::Checkout(TGraph* tg)
                 tl->SetRemoteEnd(((TLink*)tl->GetRemoteLink())->GetLocalEnd());
                 ((TLink*)tl->GetRemoteLink())->SetRemoteEnd(tn);
             }
+        }
+        map<string, string, strcmpless>::iterator itc = this->capabilities.begin();
+        for (; itc != this->capabilities.end(); itc++) 
+        {
+            tn->GetCapabilities()[(*itc).first] = (*itc).second;
         }
     }
     return tn;
@@ -294,6 +328,18 @@ void DBPort::UpdateFromXML(bool populateSubLevels)
             StripXmlString(bwStr, xmlNodeGetContent(linkLevel));
             this->bandwidthGranularity = StringToBandwidth(bwStr);
         }
+        else if (linkLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)linkLevel->name, "capabilities", 10) == 0)
+        {
+            xmlNodePtr capLevel;
+            for (capLevel = linkLevel->children; capLevel != NULL; capLevel = capLevel->next)
+            {
+                if (capLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)capLevel->name, "capability", 10) == 0)
+                {   
+                    string capStr;
+                    this->capabilities[capStr] = "true";
+                }
+            }
+        }
     }
 
     if (this->maxReservableBandwidth == 0) 
@@ -336,6 +382,11 @@ TPort* DBPort::Checkout(TGraph* tg)
     {
         TLink* tl = ((DBLink*)(*itl).second)->Checkout(tg);
         tg->AddLink(tp, tl);
+    }
+    map<string, string, strcmpless>::iterator itc = this->capabilities.begin();
+    for (; itc != this->capabilities.end(); itc++) 
+    {
+        tp->GetCapabilities()[(*itc).first] = (*itc).second;
     }
     return tp;
 }
@@ -431,6 +482,18 @@ void DBLink::UpdateFromXML(bool populateSubLevels)
             IACD* iacd = GetIACDFromXML(sublinkLevel);
             if (iacd != NULL)
                 this->adjCapDescriptors.push_back(iacd);
+        }
+        else if (sublinkLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)sublinkLevel->name, "capabilities", 10) == 0)
+        {
+            xmlNodePtr capLevel;
+            for (capLevel = sublinkLevel->children; capLevel != NULL; capLevel = capLevel->next)
+            {
+                if (capLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)capLevel->name, "capability", 10) == 0)
+                {   
+                    string capStr;
+                    this->capabilities[capStr] = "true";
+                }
+            }
         }
 
         // use info from port level if not found at link level
@@ -794,6 +857,11 @@ TLink* DBLink::Checkout(TGraph* tg)
                 ((TNode*)tl2->GetPort()->GetNode())->AddRemoteLink(tl);
             break;
         }
+    }
+    map<string, string, strcmpless>::iterator itc = this->capabilities.begin();
+    for (; itc != this->capabilities.end(); itc++) 
+    {
+        tl->GetCapabilities()[(*itc).first] = (*itc).second;
     }
     return tl;
 }

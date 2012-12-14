@@ -135,11 +135,26 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
 
     // 1. import domain topology from stitching aggregate section
     // get node info: rspec/stitching/aggregate/node
+    vector<string> aggrCapabilities;
     for (xmlNode = aggrNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
     {
         if (xmlNode->type == XML_ELEMENT_NODE )
         {
             if (strncasecmp((const char*)xmlNode->name, "node", 4) == 0) 
+            {
+                xmlNodePtr xmlCapNode;
+                for (xmlCapNode = xmlNode->children; xmlCapNode != NULL; xmlCapNode = xmlCapNode->next)
+                {
+                    if (xmlCapNode->type == XML_ELEMENT_NODE && (strncasecmp((const char*)xmlCapNode->name, "capability", 10) == 0))
+                    {
+                        xmlChar* pBuf = xmlNodeGetContent(xmlCapNode);
+                        string capStr = (const char*) pBuf;
+                        aggrCapabilities.push_back(capStr);
+                    }
+                }
+                
+            }
+            else if (strncasecmp((const char*)xmlNode->name, "node", 4) == 0) 
             {
                 // create node
                 xmlChar* xmlNodeId = xmlGetProp(xmlNode,  (const xmlChar*)"id");
@@ -609,6 +624,17 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                 snprintf(str, 1024, "<granularity>%llu</granularity>", tl->GetBandwidthGranularity());
                 strcat(buf, str);
                 strcat(buf, tl->GetSwcapXmlString().c_str());
+                if (!aggrCapabilities.empty())
+                {
+                    strcat(buf, "<capabilities>");
+                    vector<string>::iterator itCap = aggrCapabilities.begin();
+                    for (; itCap != aggrCapabilities.end(); itCap++)
+                    {
+                        snprintf(str, 1024, "<capability>%s</capability>", (*itCap).c_str());
+                        strcat(buf, str);
+                    }
+                    strcat(buf, "</capabilities>");
+                }
                 snprintf(str, 1024, "</link>");
                 strcat(buf, str);
             }
@@ -1012,6 +1038,19 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 if (iscd->VendorSpecificInfo() != NULL && !iscd->VendorSpecificInfo()->GetXmlByString().empty())
                     strcat(buf, iscd->VendorSpecificInfo()->GetXmlByString().c_str());
                 snprintf(str, 1024, "</switchingCapabilityDescriptor>");
+                strcat(buf, str);
+            }
+            if (!tl->GetCapabilities().empty())
+            {
+                snprintf(str, 1024, "<capabilities>");
+                strcat(buf, str);
+                map<string, string, strcmpless>::iterator itc = tl->GetCapabilities().begin();
+                for (; itc != tl->GetCapabilities().end(); itc++)
+                {
+                    snprintf(str, 1024, "<capability>%s</capability>", ((*itc).first).c_str());
+                    strcat(buf, str);
+                }
+                snprintf(str, 1024, "</capabilities>");
                 strcat(buf, str);
             }
             snprintf(str, 1024, "</link>");

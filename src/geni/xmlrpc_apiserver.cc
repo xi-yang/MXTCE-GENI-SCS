@@ -39,8 +39,6 @@
 
 Lock XMLRPC_APIServer::xmlrpcApiLock; // lock to assure only one API call is served at a time
 
-// TODO: Exception handling!
-
 // Base class 
 // TODO: move msgPort to thread level (or make class static) if more than one nethod
 void XMLRPC_BaseMethod::init() 
@@ -59,7 +57,7 @@ void XMLRPC_BaseMethod::init()
         try {
             msgPort->AttachPipes();
         } catch (MsgIOException& e) {
-            LOG("XMLRPC_APIServer::Run caugh Exception: " << e.what() << endl);
+            LOG("XMLRPC_APIServer::Run caught Exception: " << e.what() << endl);
         }
     }
 }
@@ -75,7 +73,7 @@ void XMLRPC_BaseMethod::fire()
     delete timeoutTimer;
 }
 
-// Actaul XMLRPC methods
+// Actual XMLRPC methods
 void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value* const retvalP) 
 {
     XMLRPC_APIServer::xmlrpcApiLock.DoLock();
