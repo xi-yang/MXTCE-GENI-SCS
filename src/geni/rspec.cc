@@ -140,7 +140,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     {
         if (xmlNode->type == XML_ELEMENT_NODE )
         {
-            if (strncasecmp((const char*)xmlNode->name, "node", 4) == 0) 
+            if (strncasecmp((const char*)xmlNode->name, "capabilities", 10) == 0) 
             {
                 xmlNodePtr xmlCapNode;
                 for (xmlCapNode = xmlNode->children; xmlCapNode != NULL; xmlCapNode = xmlCapNode->next)
