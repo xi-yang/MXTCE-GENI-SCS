@@ -72,13 +72,11 @@ void WorkflowData::ComputeDependency()
 
 }
 
-string& WorkflowData::GetXmlRpcData()
+// generating a 'struct' member whose value is an array of 'dependencies'
+void WorkflowData::GenerateXmlRpcData()
 {
-    if (!xmlRpcData.empty())
-        return xmlRpcData;
     if (dependencies.empty())
-        return xmlRpcData;
-    
+        return;
     char buf[1024];
     snprintf(buf, 1024, "<member><name>dependencies</name><value><array><data>");
     xmlRpcData += buf;
@@ -93,6 +91,14 @@ string& WorkflowData::GetXmlRpcData()
     }
     snprintf(buf, 1024, "</data></array></value></member>");
     xmlRpcData += buf;    
+    
+}
+
+string& WorkflowData::GetXmlRpcData()
+{
+    if (!xmlRpcData.empty())
+        return xmlRpcData;
+    GenerateXmlRpcData();   
     return xmlRpcData;
 }
 

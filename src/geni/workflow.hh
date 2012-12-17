@@ -92,6 +92,7 @@ public:
     virtual ~WorkflowData() {}
     virtual void LoadPath(TPath* tp);
     virtual void ComputeDependency();
+    virtual void GenerateXmlRpcData();
     virtual string& GetXmlRpcData();
 };
 
