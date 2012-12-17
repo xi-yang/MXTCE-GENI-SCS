@@ -50,7 +50,7 @@ LIBRARIES = $(noinst_LIBRARIES)
 ARFLAGS = cru
 libgeni_a_AR = $(AR) $(ARFLAGS)
 libgeni_a_LIBADD =
-am_libgeni_a_OBJECTS = xmlrpc_apiserver.$(OBJEXT) rspec.$(OBJEXT)
+am_libgeni_a_OBJECTS = xmlrpc_apiserver.$(OBJEXT) rspec.$(OBJEXT) workflow.$(OBJEXT)
 libgeni_a_OBJECTS = $(am_libgeni_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -196,8 +196,8 @@ INSTALL_SDATA = @INSTALL@ -m 600
 #geni_test_SOURCES = geni_test.cc 
 
 # -- Library Sources
-libgeni_a_SOURCES = xmlrpc_apiserver.hh rspec.hh xmlrpc_apiserver.cc \
-	rspec.cc
+libgeni_a_SOURCES = xmlrpc_apiserver.hh rspec.hh workflow.hh \
+	 xmlrpc_apiserver.cc rspec.cc workflow.cc
 all: all-am
 
 .SUFFIXES:
@@ -285,6 +285,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rspec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xmlrpc_apiserver.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/workflow.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

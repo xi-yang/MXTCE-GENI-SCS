@@ -26,5 +26,5 @@ INSTALL_SDATA=@INSTALL@ -m 600
 #geni_test_SOURCES = geni_test.cc 
 
 # -- Library Sources
-libgeni_a_SOURCES  = xmlrpc_apiserver.hh rspec.hh
-libgeni_a_SOURCES  += xmlrpc_apiserver.cc rspec.cc
+libgeni_a_SOURCES  = xmlrpc_apiserver.hh rspec.hh workflow.hh
+libgeni_a_SOURCES  += xmlrpc_apiserver.cc rspec.cc workflow.cc
