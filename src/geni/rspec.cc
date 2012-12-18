@@ -976,7 +976,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         strcat(buf, str);
         list<TLink*>::iterator itL = path->GetPath().begin();
         int i = 1;
-        for (; itL != path->GetPath().end(); itL++) 
+        while (itL != path->GetPath().end()) 
         {
             TLink *tl = *itL;
             if (tl->GetName().find("node=*") != string::npos || tl->GetName().find("port=*") != string::npos)
@@ -1069,6 +1069,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             snprintf(str, 1024, "</hop>", tl->GetName().c_str());
             strcat(buf, str);
             i++;
+            itL++;
         }
         snprintf(str, 1024, "</path>");
         strcat(buf, str);
