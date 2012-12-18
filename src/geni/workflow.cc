@@ -75,7 +75,8 @@ void WorkflowData::ComputeDependency()
         Dependency* D1 = *itD1;
         TLink* L1 = (TLink*)D1->GetResourceRef();
         vector<Dependency*>::iterator itD2 = itD1;
-        for (++itD2; itD2 != dependencies.end(); itD2++)
+        itD2++;
+        if (itD2 != dependencies.end())
         {
             Dependency* D2 = *itD2;
             TLink* L2 = (TLink*)D2->GetResourceRef();
@@ -117,7 +118,8 @@ void WorkflowData::ComputeDependency()
             continue;
         ISCD_L2SC* iscd1 = (ISCD_L2SC*)(*itS1);
         vector<Dependency*>::iterator itD2 = itD1;
-        for (++itD2; itD2 != dependencies.end(); itD2++)
+        itD2++;
+        if (itD2 != dependencies.end())
         {
             Dependency* D2 = *itD2;
             TLink* L2 = (TLink*)D2->GetResourceRef();
