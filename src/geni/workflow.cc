@@ -62,6 +62,7 @@ void WorkflowData::LoadPath(TPath* tp)
         //D->SetAggregateUrn(?); //  stored in <capabilities>?
         //D->SetAggregateUrl(?); //  stored in <capabilities>?
         D->SetResourceRef(L);
+        this->dependencies.push_back(D);
     }
 }
 
