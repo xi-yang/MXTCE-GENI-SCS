@@ -249,8 +249,11 @@ void WorkflowData::ComputeDependency()
     {
         Dependency* D1 = *itD1;
         if (D1->isRoot() && D1->isLeaf())
+        {
             itD1 = dependencies.erase(itD1);
-         itD1++;
+            continue;
+        }
+        itD1++;
     }    
 }
 
