@@ -980,7 +980,10 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         {
             TLink *tl = *itL;
             if (tl->GetName().find("node=*") != string::npos || tl->GetName().find("port=*") != string::npos)
+            {
+                itL = path->GetPath().erase(itL);
                 continue;
+            }
             snprintf(str, 1024, "<hop id=\"%d\">", i);
             strcat(buf, str);
             string& linkName = tl->GetName();
