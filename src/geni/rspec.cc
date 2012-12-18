@@ -72,6 +72,9 @@ static string defaultSwcapStr = "<SwitchingCapabilityDescriptors>\
         </switchingCapabilitySpecificInfo>\
       </SwitchingCapabilityDescriptors>";
 
+map<string, string> GeniAdRSpec::aggregateUrnMap;
+map<string, string> GeniAdRSpec::aggregateUrlMap;
+
 xmlDocPtr GeniAdRSpec::TranslateToNML()
 {
     if (rspecDoc == NULL)
@@ -107,9 +110,14 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     }
 
     string aggrUrn = (const char*)xmlGetProp(aggrNode,  (const xmlChar*)"id");
+    string aggrUrl = (const char*)xmlGetProp(aggrNode,  (const xmlChar*)"url");
     string domainId = GetUrnField(aggrUrn, "domain");
     Domain* aDomain = new Domain(0, domainId);
 
+    // create aggregate URN and URL mappings
+    GeniAdRSpec::aggregateUrnMap[domainId] = aggrUrn;
+    GeniAdRSpec::aggregateUrlMap[domainId] = aggrUrl;
+    
     // add AggregateReflector (AR: *:*:*) node/port/link
     sprintf(buf, "urn:publicid:IDN+%s+node+*", domainId.c_str());
     string arNodeId = buf;

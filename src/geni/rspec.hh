@@ -39,6 +39,7 @@
 #include "resource.hh"
 #include "workflow.hh"
 #include "xmlrpc_apiserver.hh"
+#include <map>
 
 using namespace std;
 
@@ -98,6 +99,9 @@ public:
     virtual ~GeniAdRSpec() { }
     xmlDocPtr TranslateToNML();
     // TODO: extract policy data
+public:
+    static map<string, string> aggregateUrnMap;
+    static map<string, string> aggregateUrlMap;
 };
 
 class Message;

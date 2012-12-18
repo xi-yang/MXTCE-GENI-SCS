@@ -33,6 +33,7 @@
 
 #include "workflow.hh"
 #include "tewg.hh"
+#include "rspec.hh"
 #include <map>
 
 // TODO: Exception throwing and handling
@@ -86,8 +87,15 @@ void WorkflowData::LoadPath(TPath* tp)
         TLink* L = *itp;
         Dependency* D = new Dependency();
         D->SetHopUrn(L->GetName());
-        //D->SetAggregateUrn(?); //  stored in <capabilities>?
-        //D->SetAggregateUrl(?); //  stored in <capabilities>?
+        string domainId = GetUrnField(L->GetName(), "domain");
+        if (GeniAdRSpec::aggregateUrnMap.find(domainId) != GeniAdRSpec::aggregateUrnMap.end())
+        {
+            D->SetAggregateUrn(GeniAdRSpec::aggregateUrnMap[domainId]);
+        }
+        if (GeniAdRSpec::aggregateUrlMap.find(domainId) != GeniAdRSpec::aggregateUrlMap.end())
+        {
+            D->SetAggregateUrl(GeniAdRSpec::aggregateUrlMap[domainId]);
+        }
         D->SetResourceRef(L);
         D->setGetVlanFrom(false);
         this->dependencies.push_back(D);
