@@ -79,6 +79,11 @@ void WorkflowData::ComputeDependency()
         if (itD2 != dependencies.end())
         {
             Dependency* D2 = *itD2;
+            string domain1 = GetUrnField(D1->GetHopUrn(), "domain");
+            string domain2 = GetUrnField(D1->GetHopUrn(), "domain");
+            // skip same domain/aggregate dependency
+            if (domain1.compare(domain2) == 0)
+                continue;
             TLink* L2 = (TLink*)D2->GetResourceRef();
             // D1 depends on D2
             if (L2->GetCapabilities().find("producer") != L2->GetCapabilities().end()
@@ -122,6 +127,11 @@ void WorkflowData::ComputeDependency()
         if (itD2 != dependencies.end())
         {
             Dependency* D2 = *itD2;
+            string domain1 = GetUrnField(D1->GetHopUrn(), "domain");
+            string domain2 = GetUrnField(D1->GetHopUrn(), "domain");
+            // skip same domain/aggregate dependency
+            if (domain1.compare(domain2) == 0)
+                continue;
             TLink* L2 = (TLink*)D2->GetResourceRef();
             list<ISCD*>::iterator itS2 = L2->GetSwCapDescriptors().begin();
             for (; itS2 != L2->GetSwCapDescriptors().end(); itS2++)
