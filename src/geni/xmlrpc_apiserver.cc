@@ -35,6 +35,7 @@
 #include "xmlrpc_apiserver.hh"
 #include "mxtce.hh"
 #include "rspec.hh"
+#include "workflow.hh"
 #include <map>
 
 Lock XMLRPC_APIServer::xmlrpcApiLock; // lock to assure only one API call is served at a time
@@ -148,6 +149,17 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
                 map<string, xmlrpc_c::value> retMap;
                 retMap["geni_code"] = xmlrpc_c::value_int(GENI_PCS_ERRCODE_NO_ERROR);
                 retMap["service_rspec"] = xmlrpc_c::value_string(service_rspec);
+                // workflow data
+                if (!replyRspec.GetWorkflowDataMap().empty())
+                {
+                    map<string, xmlrpc_c::value> retWfdMap;
+                    map<string, WorkflowData*>::iterator itW = replyRspec.GetWorkflowDataMap().begin();
+                    for (; itW != replyRspec.GetWorkflowDataMap().end(); itW++)
+                    {
+                        retWfdMap[(*itW).first] = ((WorkflowData*)(*itW).second)->GetXmlRpcData();
+                    }
+                    retMap["workflow_data"] = xmlrpc_c::value_struct(retWfdMap);
+                }
                 *retvalP = xmlrpc_c::value_struct(retMap);
                 goto _final;        
             }

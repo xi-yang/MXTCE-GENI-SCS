@@ -33,6 +33,9 @@
 
 #include "workflow.hh"
 #include "tewg.hh"
+#include <map>
+
+// TODO: Exception throwing and handling
 
 bool WorkflowData::CheckDependencyLoop(Dependency* current, Dependency* newD)
 {
@@ -65,11 +68,111 @@ void WorkflowData::LoadPath(TPath* tp)
 void WorkflowData::ComputeDependency()
 {
     // 1. Create producing-consuming dependency relationships
+    vector<Dependency*>::iterator itD1 = dependencies.begin();
+    for (; itD1 != dependencies.end(); itD1++)
+    {
+        Dependency* D1 = *itD1;
+        TLink* L1 = (TLink*)D1->GetResourceRef();
+        vector<Dependency*>::iterator itD2 = itD1;
+        for (++itD2; itD2 != dependencies.end(); itD2++)
+        {
+            Dependency* D2 = *itD2;
+            TLink* L2 = (TLink*)D2->GetResourceRef();
+            // D1 depends on D2
+            if (L2->GetCapabilities().find("producer") != L2->GetCapabilities().end()
+                && L1->GetCapabilities().find("producer") == L1->GetCapabilities().end()
+                && L1->GetCapabilities().find("consumer") != L1->GetCapabilities().end())
+            {
+                D1->GetLowers().push_back(D2);
+                D2->GetUppers().push_back(D1);
+            }
+            // D2 depends on D1
+            if (L1->GetCapabilities().find("producer") != L1->GetCapabilities().end()
+                && L2->GetCapabilities().find("producer") == L2->GetCapabilities().end()
+                && L2->GetCapabilities().find("consumer") != L2->GetCapabilities().end())
+            {
+                D2->GetLowers().push_back(D1);
+                D1->GetUppers().push_back(D2);
+            }
+        }
+    }
+    
     // 2. Create continuous VLAN dependency relationships
-        // skip if causing loop
     // 3. Create VLAN translation dependency relationships
-        // skip if causing loop
-
+    itD1 = dependencies.begin();
+    for (; itD1 != dependencies.end(); itD1++)
+    {
+        Dependency* D1 = *itD1;
+        TLink* L1 = (TLink*)D1->GetResourceRef();
+        list<ISCD*>::iterator itS1 = L1->GetSwCapDescriptors().begin();
+        for (; itS1 != L1->GetSwCapDescriptors().end(); itS1++)
+        {
+            if ((*itS1)->switchingType == LINK_IFSWCAP_L2SC)
+            {
+                break;
+            }
+        }
+        if (itS1 == L1->GetSwCapDescriptors().end())
+            continue;
+        ISCD_L2SC* iscd1 = (ISCD_L2SC*)(*itS1);
+        vector<Dependency*>::iterator itD2 = itD1;
+        for (++itD2; itD2 != dependencies.end(); itD2++)
+        {
+            Dependency* D2 = *itD2;
+            TLink* L2 = (TLink*)D2->GetResourceRef();
+            list<ISCD*>::iterator itS2 = L2->GetSwCapDescriptors().begin();
+            for (; itS2 != L2->GetSwCapDescriptors().end(); itS2++)
+            {
+                if ((*itS2)->switchingType == LINK_IFSWCAP_L2SC)
+                {
+                    break;
+                }
+            }
+            if (itS2 == L2->GetSwCapDescriptors().end())
+                continue;
+            ISCD_L2SC* iscd2 = (ISCD_L2SC*)(*itS2);
+            // check loop
+            bool loop_d1_d2 = this->CheckDependencyLoop(D1, D2);
+            bool loop_d2_d1 = this->CheckDependencyLoop(D2, D1);
+            // Create continuous VLAN dependency relationships
+            if (!iscd1->vlanTranslation && !iscd2->vlanTranslation)
+            {
+                // D1 depends on D2 (narrower vlan range takes higher priority) 
+                // also make sure no loop if adding the dependency
+                if (!loop_d1_d2 && iscd1->availableVlanTags.Size() > iscd2->availableVlanTags.Size())
+                {
+                    D1->GetLowers().push_back(D2);
+                    D2->GetUppers().push_back(D1);
+                }
+                // D2 depends on D1 and no loop if adding the dependency
+                if (!loop_d2_d1 && iscd1->availableVlanTags.Size() < iscd2->availableVlanTags.Size())
+                {
+                    D2->GetLowers().push_back(D1);
+                    D1->GetUppers().push_back(D2);
+                }                
+            }
+            // Create VLAN translation dependency relationships
+            else if (iscd1->vlanTranslation && !iscd2->vlanTranslation)
+            {
+                // D1 depends on D2 (non-translation takes higher priority)
+                // also make sure no loop if adding the dependency
+                if (!loop_d1_d2)
+                {
+                    D1->GetLowers().push_back(D2);
+                    D2->GetUppers().push_back(D1);
+                }
+            }
+            else if (iscd1->vlanTranslation && !iscd2->vlanTranslation)
+            {
+                // D2 depends on D1 and no loop if adding the dependency
+                if (!loop_d2_d1)
+                {
+                    D2->GetLowers().push_back(D1);
+                    D1->GetUppers().push_back(D2);
+                }                
+            }            
+        }
+    }    
 }
 
 // generating a 'struct' member whose value is an array of 'dependencies'
@@ -77,55 +180,48 @@ void WorkflowData::GenerateXmlRpcData()
 {
     if (dependencies.empty())
         return;
-    char buf[1024];
-    snprintf(buf, 1024, "<member><name>dependencies</name><value><array><data>");
-    xmlRpcData += buf;
+    vector<xmlrpc_c::value> arrayData;
     vector<Dependency*>::iterator itD = dependencies.begin();
     for (; itD != dependencies.end(); itD++)
     {
-        // dump itD
         if ((*itD)->isRoot()) 
         {
-            xmlRpcData += DumpXmlRpcDataRecursive(*itD);
+            arrayData.push_back(DumpXmlRpcDataRecursive(*itD));
         }
     }
-    snprintf(buf, 1024, "</data></array></value></member>");
-    xmlRpcData += buf;    
-    
+    xmlrpc_c::value_array anArray(arrayData);
+    map<string, xmlrpc_c::value> aMap;
+    aMap["dependencies"] = anArray;
+    xmlRpcData = xmlrpc_c::value_struct(aMap);
 }
 
-string& WorkflowData::GetXmlRpcData()
+xmlrpc_c::value WorkflowData::GetXmlRpcData()
 {
-    if (!xmlRpcData.empty())
+    if (xmlRpcData.isInstantiated())
         return xmlRpcData;
     GenerateXmlRpcData();   
     return xmlRpcData;
 }
 
-string WorkflowData::DumpXmlRpcDataRecursive(Dependency* D)
+xmlrpc_c::value WorkflowData::DumpXmlRpcDataRecursive(Dependency* D)
 {
-    string xml = "";
-    char buf[1024];
-    snprintf(buf, 1024, "<value><struct>"
-            "<member><name>hop_urn</name><value><string>%s</string></value></member>"
-            "<member><name>aggregate_urn</name><value><string>%s</string></value></member>"
-            "<member><name>aggregate_url</name><value><string>%s</string></value></member>"
-            "<member><name>get_vlan_from</name><value><boolean>%d</boolean></value></member>", 
-            D->GetHopUrn().c_str(), D->GetAggregateUrn().c_str(), 
-            D->GetAggregateUrl().c_str(), (int)D->isGetVlanFrom());
-    xml += buf;
+    map<string, xmlrpc_c::value> aMap;
+    aMap["hop_urn"] = xmlrpc_c::value_string(D->GetHopUrn());
+    aMap["aggregate_urn"] = xmlrpc_c::value_string(D->GetAggregateUrn());
+    aMap["aggregate_url"] = xmlrpc_c::value_string(D->GetAggregateUrl());
+    aMap["get_vlan_from"] = xmlrpc_c::value_boolean(D->isGetVlanFrom());
+
     if (!D->isLeaf()) 
     {
-        snprintf(buf, 1024, "<member><name>dependencies</name><value><array><data>");
-        xml += buf;
+        vector<xmlrpc_c::value> arrayData;
         vector<Dependency*>::iterator itLower = D->GetLowers().begin();
         for (; itLower != D->GetLowers().end(); itLower++)
         {
-            xml += DumpXmlRpcDataRecursive(*itLower);
+            arrayData.push_back(DumpXmlRpcDataRecursive(*itLower));
         }
-        snprintf(buf, 1024, "</data></array></value></member>");
-        xml += buf;
+        xmlrpc_c::value_array anArray(arrayData);
+        aMap["dependencies"] = anArray;
     }
-    snprintf(buf, 1024, "</struct></value>");
-    xml += buf;
+    
+    return xmlrpc_c::value_struct(aMap);
 }

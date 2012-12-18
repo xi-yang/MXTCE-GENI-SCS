@@ -37,6 +37,7 @@
 #include "message.hh"
 #include "user_constraint.hh"
 #include "compute_worker.hh"
+#include "workflow.hh"
 
 void GeniRSpec::ParseRspecXml()
 {
@@ -1068,6 +1069,12 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         }
         snprintf(str, 1024, "</path>");
         strcat(buf, str);
+        
+        // extract workflow data
+        WorkflowData *workflowData = new WorkflowData();
+        workflowData->LoadPath(path);
+        workflowData->GenerateXmlRpcData();
+        this->workflowDataMap[result->GetPathId()] = workflowData;
     }
     sprintf(str, "</stitching>");
     strcat(buf, str);
@@ -1081,4 +1088,5 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
     xmlNodePtr newStitchingNode = xmlDocGetRootElement(newStitchingDoc);
     xmlReplaceNode(stitchingNode, newStitchingNode);
     this->DumpRspecXml();
+    
 }

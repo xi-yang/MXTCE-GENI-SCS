@@ -37,6 +37,7 @@
 
 #include "types.hh"
 #include <vector>
+#include "xmlrpc_apiserver.hh"
 
 using namespace std;
 
@@ -81,19 +82,19 @@ class WorkflowData
 {
 protected:
     vector<Dependency*> dependencies;
-    string xmlRpcData;
+    xmlrpc_c::value xmlRpcData;
 
 protected:
     bool CheckDependencyLoop(Dependency* current, Dependency* newD);
-    string DumpXmlRpcDataRecursive(Dependency* D);
+    xmlrpc_c::value DumpXmlRpcDataRecursive(Dependency* D);
 
 public:
-    WorkflowData() {}
+    WorkflowData(): xmlRpcData(NULL) {}
     virtual ~WorkflowData() {}
     virtual void LoadPath(TPath* tp);
     virtual void ComputeDependency();
     virtual void GenerateXmlRpcData();
-    virtual string& GetXmlRpcData();
+    virtual xmlrpc_c::value GetXmlRpcData();
 };
 
 

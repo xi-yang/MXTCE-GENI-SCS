@@ -37,6 +37,7 @@
 
 #include "types.hh"
 #include "resource.hh"
+#include "workflow.hh"
 #include "xmlrpc_apiserver.hh"
 
 using namespace std;
@@ -112,14 +113,15 @@ public:
 class GeniManifestRSpec: public GeniRSpec {
 protected:
     GeniRequestRSpec* pairedRequestRspec;
+    map<string, WorkflowData*> workflowDataMap;
 public:
     GeniManifestRSpec(): pairedRequestRspec(NULL) { }
     GeniManifestRSpec(string& xml): GeniRSpec(xml), pairedRequestRspec(NULL) { }
     GeniManifestRSpec(xmlDocPtr doc): GeniRSpec(doc), pairedRequestRspec(NULL) { }
     GeniManifestRSpec(GeniRequestRSpec* reqRspec): pairedRequestRspec(reqRspec) { }
-    virtual ~GeniManifestRSpec() { }  
+    virtual ~GeniManifestRSpec() { }
     void ParseApiReplyMessage(Message* msg);
-    // TODO: extract policy data
+    map<string, WorkflowData*>& GetWorkflowDataMap() { return workflowDataMap; }
 };
 
 #define GENI_PCS_ERRCODE_NO_ERROR 0x0
