@@ -89,7 +89,7 @@ protected:
     xmlrpc_c::value DumpXmlRpcDataRecursive(Dependency* D);
 
 public:
-    WorkflowData(): xmlRpcData(NULL) {}
+    WorkflowData() {}
     virtual ~WorkflowData() {}
     virtual void LoadPath(TPath* tp);
     virtual void ComputeDependency();
