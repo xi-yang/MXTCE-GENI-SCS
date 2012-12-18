@@ -86,6 +86,7 @@ protected:
 
 protected:
     bool CheckDependencyLoop(Dependency* current, Dependency* newD);
+    void LoopFreeMerge(Dependency* D1, Dependency* D2);
     xmlrpc_c::value DumpXmlRpcDataRecursive(Dependency* D);
 
 public:

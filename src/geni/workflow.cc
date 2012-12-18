@@ -51,6 +51,33 @@ bool WorkflowData::CheckDependencyLoop(Dependency* current, Dependency* newD)
     return false;
 }
 
+// add D2 as lower to D1's depending uppers
+void WorkflowData::LoopFreeMerge(Dependency* D1, Dependency* D2)
+{
+    vector<Dependency*>::iterator itD1 = D1->GetUppers().begin();
+    while (itD1 != D1->GetUppers().end())
+    {
+        Dependency* aD1 = *itD1;
+        vector<Dependency*>::iterator itD2 = D2->GetUppers().begin();
+        while (itD2 != D2->GetUppers().end())
+        {
+            Dependency* aD2 = *itD2;
+            if (aD2 == aD1)
+                break;
+            itD2++;
+        }
+        // found a new depending upper aD1 for D2
+        if (itD2 == D2->GetUppers().end()
+            && !this->CheckDependencyLoop(aD1, D2))
+        {
+            // loop-free adding D2 as dependency to the new depending upper aD1
+            aD1->GetLowers().push_back(D2);
+            D2->GetUppers().push_back(aD1);
+        }
+        itD1++;
+    }
+}
+
 void WorkflowData::LoadPath(TPath* tp)
 {
     list<TLink*>::iterator itp = tp->GetPath().begin();
@@ -62,6 +89,7 @@ void WorkflowData::LoadPath(TPath* tp)
         //D->SetAggregateUrn(?); //  stored in <capabilities>?
         //D->SetAggregateUrl(?); //  stored in <capabilities>?
         D->SetResourceRef(L);
+        D->setGetVlanFrom(false);
         this->dependencies.push_back(D);
     }
 }
@@ -80,7 +108,7 @@ void WorkflowData::ComputeDependency()
         {
             Dependency* D2 = *itD2;
             string domain1 = GetUrnField(D1->GetHopUrn(), "domain");
-            string domain2 = GetUrnField(D1->GetHopUrn(), "domain");
+            string domain2 = GetUrnField(D2->GetHopUrn(), "domain");
             // skip same domain/aggregate dependency
             if (domain1.compare(domain2) == 0)
                 continue;
@@ -92,6 +120,7 @@ void WorkflowData::ComputeDependency()
             {
                 D1->GetLowers().push_back(D2);
                 D2->GetUppers().push_back(D1);
+                D1->setGetVlanFrom(true);
             }
             // D2 depends on D1
             if (L1->GetCapabilities().find("producer") != L1->GetCapabilities().end()
@@ -100,6 +129,7 @@ void WorkflowData::ComputeDependency()
             {
                 D2->GetLowers().push_back(D1);
                 D1->GetUppers().push_back(D2);
+                D2->setGetVlanFrom(true);
             }
         }
     }
@@ -128,7 +158,7 @@ void WorkflowData::ComputeDependency()
         {
             Dependency* D2 = *itD2;
             string domain1 = GetUrnField(D1->GetHopUrn(), "domain");
-            string domain2 = GetUrnField(D1->GetHopUrn(), "domain");
+            string domain2 = GetUrnField(D2->GetHopUrn(), "domain");
             // skip same domain/aggregate dependency
             if (domain1.compare(domain2) == 0)
                 continue;
@@ -156,12 +186,14 @@ void WorkflowData::ComputeDependency()
                 {
                     D1->GetLowers().push_back(D2);
                     D2->GetUppers().push_back(D1);
+                    D1->setGetVlanFrom(true);
                 }
                 // D2 depends on D1 and no loop if adding the dependency
                 if (!loop_d2_d1 && iscd1->availableVlanTags.Size() < iscd2->availableVlanTags.Size())
                 {
                     D2->GetLowers().push_back(D1);
                     D1->GetUppers().push_back(D2);
+                    D2->setGetVlanFrom(true);
                 }                
             }
             // Create VLAN translation dependency relationships
@@ -173,6 +205,7 @@ void WorkflowData::ComputeDependency()
                 {
                     D1->GetLowers().push_back(D2);
                     D2->GetUppers().push_back(D1);
+                    D1->setGetVlanFrom(true);
                 }
             }
             else if (iscd1->vlanTranslation && !iscd2->vlanTranslation)
@@ -182,12 +215,43 @@ void WorkflowData::ComputeDependency()
                 {
                     D2->GetLowers().push_back(D1);
                     D1->GetUppers().push_back(D2);
+                    D2->setGetVlanFrom(true);
                 }                
             }            
         }
     }
     
-    // TODO: get_vlan_from
+    // 4a. give a hop the same dependency relationships as other hops in its domain
+    /*
+    itD1 = dependencies.begin();
+    for (; itD1 != dependencies.end(); itD1++)
+    {
+        Dependency* D1 = *itD1;
+        vector<Dependency*>::iterator itD2 = itD1;
+        for (; itD2 != dependencies.end(); itD2++)
+        {
+            if (itD2 == itD1)
+                continue;
+            Dependency* D2 = *itD2;
+            string domain1 = GetUrnField(D1->GetHopUrn(), "domain");
+            string domain2 = GetUrnField(D2->GetHopUrn(), "domain");
+            if (domain1.compare(domain2) != 0)
+                continue;
+            LoopFreeMerge(D1, D2);
+            LoopFreeMerge(D2, D1);
+        }
+    }
+    */
+    
+    // 4b. alternatively we can skip all the standalone blocks
+    itD1 = dependencies.begin();
+    while (itD1 != dependencies.end())
+    {
+        Dependency* D1 = *itD1;
+        if (D1->isRoot() && D1->isLeaf())
+            itD1 = dependencies.erase(itD1);
+         itD1++;
+    }    
 }
 
 // generating a 'struct' member whose value is an array of 'dependencies'
