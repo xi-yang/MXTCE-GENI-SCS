@@ -173,7 +173,9 @@ void WorkflowData::ComputeDependency()
                 }                
             }            
         }
-    }    
+    }
+    
+    // TODO: get_vlan_from
 }
 
 // generating a 'struct' member whose value is an array of 'dependencies'

@@ -1073,6 +1073,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         // extract workflow data
         WorkflowData *workflowData = new WorkflowData();
         workflowData->LoadPath(path);
+        workflowData->ComputeDependency();
         workflowData->GenerateXmlRpcData();
         this->workflowDataMap[result->GetPathId()] = workflowData;
     }
