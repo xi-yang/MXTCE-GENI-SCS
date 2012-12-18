@@ -220,8 +220,22 @@ void WorkflowData::ComputeDependency()
             }            
         }
     }
+        
+    // 4a.  we can skip all the standalone blocks
+    itD1 = dependencies.begin();
+    while (itD1 != dependencies.end())
+    {
+        Dependency* D1 = *itD1;
+        if (D1->isRoot() && D1->isLeaf())
+        {
+            itD1 = dependencies.erase(itD1);
+            continue;
+        }
+        itD1++;
+    }
     
-    // 4a. give a hop the same dependency relationships as other hops in its domain
+    // 4b. alternatively give a hop the same dependency relationships as other hops in its domain
+    /*
     itD1 = dependencies.begin();
     for (; itD1 != dependencies.end(); itD1++)
     {
@@ -240,20 +254,6 @@ void WorkflowData::ComputeDependency()
             LoopFreeMerge(D2, D1);
         }
     }
-    
-    // 4b. alternatively we can skip all the standalone blocks
-    /*
-    itD1 = dependencies.begin();
-    while (itD1 != dependencies.end())
-    {
-        Dependency* D1 = *itD1;
-        if (D1->isRoot() && D1->isLeaf())
-        {
-            itD1 = dependencies.erase(itD1);
-            continue;
-        }
-        itD1++;
-    }    
     */
 }
 
