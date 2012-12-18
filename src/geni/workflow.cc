@@ -222,7 +222,6 @@ void WorkflowData::ComputeDependency()
     }
     
     // 4a. give a hop the same dependency relationships as other hops in its domain
-    /*
     itD1 = dependencies.begin();
     for (; itD1 != dependencies.end(); itD1++)
     {
@@ -241,9 +240,9 @@ void WorkflowData::ComputeDependency()
             LoopFreeMerge(D2, D1);
         }
     }
-    */
     
     // 4b. alternatively we can skip all the standalone blocks
+    /*
     itD1 = dependencies.begin();
     while (itD1 != dependencies.end())
     {
@@ -255,6 +254,7 @@ void WorkflowData::ComputeDependency()
         }
         itD1++;
     }    
+    */
 }
 
 // generating a 'struct' member whose value is an array of 'dependencies'
@@ -291,7 +291,7 @@ xmlrpc_c::value WorkflowData::DumpXmlRpcDataRecursive(Dependency* D)
     aMap["hop_urn"] = xmlrpc_c::value_string(D->GetHopUrn());
     aMap["aggregate_urn"] = xmlrpc_c::value_string(D->GetAggregateUrn());
     aMap["aggregate_url"] = xmlrpc_c::value_string(D->GetAggregateUrl());
-    aMap["get_vlan_from"] = xmlrpc_c::value_boolean(D->isGetVlanFrom());
+    aMap["import_vlans"] = xmlrpc_c::value_boolean(D->isGetVlanFrom());
 
     if (!D->isLeaf()) 
     {
