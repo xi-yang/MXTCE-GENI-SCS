@@ -671,7 +671,14 @@ GeniRequestRSpec::~GeniRequestRSpec()
         it++;
     }
 }
-    
+
+Apimsg_user_constraint* GeniRequestRSpec::GetUserConstraintByPathId(string& id)
+{
+    if (cachedUserConstraints.find(id) != cachedUserConstraints.end())
+        return cachedUserConstraints[id];
+    return NULL;
+}
+
 Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>& routingProfile)
 {
     if (rspecDoc == NULL)
@@ -948,6 +955,39 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
     return msg;
 }
 
+void GeniManifestRSpec::RearrangePathVlans(TPath* path, Apimsg_user_constraint* userReq)
+{
+    list<TLink*>::iterator itL = path->GetPath().begin();
+    int i = 1;
+    for (; itL != path->GetPath().end(); itL++, i++) 
+    {
+        TLink* L = *itL;
+        list<ISCD*>::iterator itS = L->GetSwCapDescriptors().begin();
+        for (; itS != L->GetSwCapDescriptors().end(); itS++)
+        {
+            if ((*itS)->switchingType == LINK_IFSWCAP_L2SC)
+            {
+                break;
+            }
+        }
+        if (itS == L->GetSwCapDescriptors().end())
+            continue;
+        if (i == 1) // set first hop to use srcVlanRange
+        {
+            ((ISCD_L2SC*)(*itS))->availableVlanTags.LoadRangeString(userReq->getSrcvlantag());
+        }
+        else if (i == path->GetPath().size()) // set last hop to use dstVlanRange
+        {
+            ((ISCD_L2SC*)(*itS))->availableVlanTags.LoadRangeString(userReq->getDestvlantag());
+        }
+        else // set middle hops to use any
+        {
+            string strAny = "any";
+            ((ISCD_L2SC*)(*itS))->availableVlanTags.LoadRangeString(strAny);
+        }
+    }
+}
+
 void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
 {
     char buf[1024*64];
@@ -994,6 +1034,13 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             snprintf(buf, 1024, "MxTCE ComputeWorker return NULL path for unknown error");
             throw TEDBException(buf);            
         }
+        Apimsg_user_constraint* pairedUserCons = this->pairedRequestRspec->GetUserConstraintByPathId(result->GetPathId());
+        if (pairedUserCons == NULL)
+        {
+            snprintf(buf, 1024, "GeniManifestRSpec::ParseApiReplyMessage cannot correlate path ID=%s to stored request data", result->GetPathId().c_str());
+            throw TEDBException(buf);
+        }
+        RearrangePathVlans(path, pairedUserCons);
         snprintf(str, 1024, "<path id=\"%s\">", result->GetGri().c_str());
         strcat(buf, str);
         list<TLink*>::iterator itL = path->GetPath().begin();

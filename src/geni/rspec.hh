@@ -107,6 +107,7 @@ public:
 class Message;
 class Apimsg_user_constraint;
 class GeniRequestRSpec: public GeniRSpec {
+protected:
     map<string, Apimsg_user_constraint*> cachedUserConstraints;
 
 public:
@@ -114,13 +115,19 @@ public:
     GeniRequestRSpec(string& xml): GeniRSpec(xml) { }
     GeniRequestRSpec(xmlDocPtr doc): GeniRSpec(doc) { }
     virtual ~GeniRequestRSpec();
+    Apimsg_user_constraint* GetUserConstraintByPathId(string& id);
     Message* CreateApiRequestMessage(map<string, xmlrpc_c::value>& rp);
 };
 
+class TPath;
 class GeniManifestRSpec: public GeniRSpec {
 protected:
     GeniRequestRSpec* pairedRequestRspec;
     map<string, WorkflowData*> workflowDataMap;
+
+protected:
+    void RearrangePathVlans(TPath* path, Apimsg_user_constraint* userReq);
+
 public:
     GeniManifestRSpec(): pairedRequestRspec(NULL) { }
     GeniManifestRSpec(string& xml): GeniRSpec(xml), pairedRequestRspec(NULL) { }
