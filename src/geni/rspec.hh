@@ -119,14 +119,10 @@ public:
     Message* CreateApiRequestMessage(map<string, xmlrpc_c::value>& rp);
 };
 
-class TPath;
 class GeniManifestRSpec: public GeniRSpec {
 protected:
     GeniRequestRSpec* pairedRequestRspec;
     map<string, WorkflowData*> workflowDataMap;
-
-protected:
-    void RearrangePathVlans(TPath* path, Apimsg_user_constraint* userReq);
 
 public:
     GeniManifestRSpec(): pairedRequestRspec(NULL) { }
