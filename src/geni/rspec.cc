@@ -661,6 +661,17 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
 }
 
 int GeniRequestRSpec::unique_req_id = 1;
+
+GeniRequestRSpec::~GeniRequestRSpec()
+{
+    map<string, Apimsg_user_constraint*>::iterator it = cachedUserConstraints.begin();
+    while (it != cachedUserConstraints.end())
+    {
+        delete (*it).second;
+        it++;
+    }
+}
+    
 Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>& routingProfile)
 {
     if (rspecDoc == NULL)
@@ -923,6 +934,9 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                         tlv->type = MSG_TLV_VOID_PTR;
                         tlv->length = sizeof(userCons);
                         memcpy(tlv->value, &userCons, sizeof(userCons));
+                        Apimsg_user_constraint* copyUserCons = new Apimsg_user_constraint(*userCons);
+                        // Above uses shallow copy constructor. Pointer members invalid after message sent
+                        cachedUserConstraints[userCons->getPathId()] = copyUserCons;
                         msg->AddTLV(tlv);
                     }
                 }

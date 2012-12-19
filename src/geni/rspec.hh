@@ -105,12 +105,15 @@ public:
 };
 
 class Message;
+class Apimsg_user_constraint;
 class GeniRequestRSpec: public GeniRSpec {
+    map<string, Apimsg_user_constraint*> cachedUserConstraints;
+
 public:
     static int unique_req_id;
     GeniRequestRSpec(string& xml): GeniRSpec(xml) { }
     GeniRequestRSpec(xmlDocPtr doc): GeniRSpec(doc) { }
-    virtual ~GeniRequestRSpec() { }
+    virtual ~GeniRequestRSpec();
     Message* CreateApiRequestMessage(map<string, xmlrpc_c::value>& rp);
 };
 
