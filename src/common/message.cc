@@ -277,6 +277,8 @@ void MessagePort::Run()
     }
     if (threadScheduler)
         threadScheduler->hookHandleMessage();
+    if (callback)
+        callback->hookRunCallback();
     if (msgRouter)
         msgRouter->Check();    
 }

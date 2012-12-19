@@ -161,6 +161,7 @@ public:
 
 class MessageRouter;
 class ThreadPortScheduler;
+class MessagePortCallback;
 class MessagePort: public MessageReader
 {
 protected:
@@ -171,10 +172,13 @@ protected:
     MessageRouter* msgRouter;
     EventMaster* eventMaster;
     ThreadPortScheduler* threadScheduler;
+    MessagePortCallback* callback;
 
 public:
-    MessagePort(string& name): MessageReader(0), portName(name), msgWriter(0), msgRouter(NULL), threadScheduler(NULL), up(false) {  }
-    MessagePort(string& name, MessageRouter* router): MessageReader(0), portName(name), msgWriter(0), msgRouter(router), threadScheduler(NULL), up(false) { }
+    MessagePort(string& name): MessageReader(0), portName(name), msgWriter(0), 
+            msgRouter(NULL), threadScheduler(NULL), callback(NULL), up(false) {  }
+    MessagePort(string& name, MessageRouter* router): MessageReader(0), portName(name), msgWriter(0),
+            msgRouter(router), threadScheduler(NULL), callback(NULL), up(false) { }
     virtual ~MessagePort() { }
     string& GetName() { return portName; }
     void SetName(string& name) { portName = name; }
@@ -185,6 +189,8 @@ public:
     list<Message*>& GetMsgOutQueue() { return msgWriter.outQueue; }
     ThreadPortScheduler* GetThreadScheduler() { return threadScheduler; }
     void SetThreadScheduler(ThreadPortScheduler* scheduler) { threadScheduler = scheduler; }
+    MessagePortCallback* GetMessageCallback() { return callback; }
+    void SetMessageCallback(MessagePortCallback* cb) { callback = cb; }
     virtual void Run ();
     virtual void Close();
     virtual void AttachPipes();
@@ -325,5 +331,12 @@ public:
     static void RemoveMessagePipe(string name);
 };
 
+class MessagePortCallback
+{
+public:
+    MessagePortCallback() {}
+    virtual ~MessagePortCallback() {}
+    virtual void hookRunCallback() {}
+};
 
 #endif

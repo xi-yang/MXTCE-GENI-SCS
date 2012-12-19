@@ -69,18 +69,21 @@ public:
 
 #define MAX_MSG_PORT_POLL_TIME 5 // seconds
 
-class XMLRPC_TimeoutTimer: public Timer {
+class XMLRPC_TimeoutOrCallback: public Timer, public MessagePortCallback {
 private:
     EventMaster* evtMaster;
-    XMLRPC_TimeoutTimer() { }
+    XMLRPC_TimeoutOrCallback() { }
 
 public:
-    XMLRPC_TimeoutTimer(EventMaster* em): Timer((int)MAX_MSG_PORT_POLL_TIME, (int)0), evtMaster(em) { }
+    XMLRPC_TimeoutOrCallback(EventMaster* em): Timer((int)MAX_MSG_PORT_POLL_TIME, (int)0), evtMaster(em) { }
     virtual void Run() {
         if (evtMaster != NULL);
             evtMaster->Stop();
     }
-    
+    virtual void hookRunCallback() {
+        if (evtMaster != NULL);
+            evtMaster->Stop();
+    }    
 };
 
 class XMLRPC_ComputePathMethod: public XMLRPC_BaseMethod {    

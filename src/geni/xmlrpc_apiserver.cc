@@ -41,7 +41,7 @@
 Lock XMLRPC_APIServer::xmlrpcApiLock; // lock to assure only one API call is served at a time
 
 // Base class 
-// TODO: move msgPort to thread level (or make class static) if more than one nethod
+// TODO: move XMLRPC_BaseMethod::msgPort to thread level (or make class static) if more than one method
 void XMLRPC_BaseMethod::init() 
 {
     mxTCE->GetMessageRouter()->AddPort(MxTCE::xmlrpcApiServerPortName);
@@ -63,15 +63,16 @@ void XMLRPC_BaseMethod::init()
     }
 }
 
-void XMLRPC_BaseMethod::fire() 
+void XMLRPC_BaseMethod::fire()
 {
     // TODO: use callback to stop eventmaster (need to modify MessagePort to hook up extra callback)
-    XMLRPC_TimeoutTimer* timeoutTimer = new XMLRPC_TimeoutTimer(evtMaster);
+    XMLRPC_TimeoutOrCallback* timeoutOrCallback = new XMLRPC_TimeoutOrCallback(evtMaster);
     assert(evtMaster);
-    evtMaster->Schedule(timeoutTimer);
+    this->msgPort->SetMessageCallback(timeoutOrCallback);
+    evtMaster->Schedule(timeoutOrCallback);
     evtMaster->Run();
-    evtMaster->Remove(timeoutTimer);
-    delete timeoutTimer;
+    evtMaster->Remove(timeoutOrCallback);
+    delete timeoutOrCallback;
 }
 
 // Actual XMLRPC methods
