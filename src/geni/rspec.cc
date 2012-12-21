@@ -1019,15 +1019,24 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 itL = path->GetPath().erase(itL);
                 continue;
             }
+            // trim invalid hops so i == path->GetPath().size() means last hop 
+            list<TLink*>::iterator itL2 = itL;
+            itL2++;
+            while (itL2 != path->GetPath().end() && 
+                ((*itL2)->GetName().find("node=*") != string::npos || (*itL2)->GetName().find("port=*") != string::npos))
+            {
+                itL2 = path->GetPath().erase(itL2);
+            }
             // rearrange available VLAN tags for GENI workflow
             string newVlanRange = "any";
             if (i == 1) // re-set first hop to use srcVlanRange
             {
                 newVlanRange = pairedUserCons->getSrcvlantag();
             }
-            else if (i == path->GetPath().size()) // set last hop to use dstVlanRange
+            else if (i == path->GetPath().size())
             {
                 newVlanRange = pairedUserCons->getDestvlantag();
+
             }
             // else set middle hops to use any
             
@@ -1039,6 +1048,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             {
                 linkName.erase(linkName.begin()+iErase, linkName.end());
             }
+            // TODO: convert DCN URN into GENI URN
             snprintf(str, 1024, "<link id=\"%s\">", linkName.c_str());
             strcat(buf, str);
             snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", tl->GetMetric());
