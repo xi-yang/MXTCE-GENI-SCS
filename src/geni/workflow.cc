@@ -230,6 +230,7 @@ void WorkflowData::ComputeDependency()
     }
         
     // 4a.  we can skip all the standalone blocks
+    /*
     itD1 = dependencies.begin();
     while (itD1 != dependencies.end())
     {
@@ -241,9 +242,9 @@ void WorkflowData::ComputeDependency()
         }
         itD1++;
     }
+    */
     
     // 4b. alternatively give a hop the same dependency relationships as other hops in its domain
-    /*
     itD1 = dependencies.begin();
     for (; itD1 != dependencies.end(); itD1++)
     {
@@ -262,7 +263,6 @@ void WorkflowData::ComputeDependency()
             LoopFreeMerge(D2, D1);
         }
     }
-    */
 }
 
 // generating a 'struct' member whose value is an array of 'dependencies'
