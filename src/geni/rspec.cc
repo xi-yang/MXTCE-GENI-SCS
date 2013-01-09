@@ -203,11 +203,11 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                     {
                                         //$$ create link
                                         xmlChar* xmlLinkId = xmlGetProp(xmlLinkNode,  (const xmlChar*)"id");
-                                        string linkId = (const char*)xmlLinkId;
-                                        string linkShortName = GetUrnField(linkId, "link");
+                                        string linkName = (const char*)xmlLinkId;
+                                        string linkShortName = GetUrnField(linkName, "link");
                                         if (linkShortName.empty())
-                                            linkShortName += ":**";
-                                        RLink* aRLink = new RLink(linkId);
+                                            linkName += ":**";
+                                        RLink* aRLink = new RLink(linkName);
                                         aPort->AddLink(aRLink);
                                         //$$ fill in link params
                                         xmlNodePtr xmlParamNode;
