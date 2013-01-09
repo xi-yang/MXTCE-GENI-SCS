@@ -143,7 +143,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     arPort->AddLink(arLink);
     sprintf(buf, "urn:publicid:IDN+%s+interface+*:*:**", domainId.c_str());
     string arLinkId2 = buf;
-    RLink* arLink2 = new RLink(arLinkId);
+    RLink* arLink2 = new RLink(arLinkId2);
     arLink2->SetMetric(1);
     arLink2->SetMaxBandwidth(arPort->GetMaxBandwidth());
     arLink2->SetMaxReservableBandwidth(arPort->GetMaxReservableBandwidth());
