@@ -80,7 +80,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     if (rspecDoc == NULL)
         return NULL;
 
-    char buf[1024*1024];
+    char buf[1024*1024*16];
     //get domain info: rspec/stitching/aggregate
     xmlNodePtr rspecRoot = xmlDocGetRootElement(rspecDoc);
     xmlNodePtr xmlNode;
@@ -155,6 +155,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     // 1. import domain topology from stitching aggregate section
     // get node info: rspec/stitching/aggregate/node
     vector<string> aggrCapabilities;
+    bool aggrHasAllWildcardRemoteId = false;
     for (xmlNode = aggrNode->children; xmlNode != NULL; xmlNode = xmlNode->next)
     {
         if (xmlNode->type == XML_ELEMENT_NODE )
@@ -274,6 +275,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                         size_t i1 = remoteLinkName.find("*:*:*");
                                         if (i1 != string::npos) 
                                         {
+                                            aggrHasAllWildcardRemoteId = true;
                                             string nodeShortName = GetUrnField(aNode->GetName(), "node");
                                             string portShortName = GetUrnField(aPort->GetName(), "port");
                                             sprintf(buf, "*:*-to-%s-%s:*", nodeShortName.c_str(), portShortName.c_str());
@@ -607,6 +609,58 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             }
         }
     }
+    
+    // add wildcard inbound links to all nodes if nothing like that has been explicitly defined
+    if (!aggrHasAllWildcardRemoteId)
+    { 
+        map<string, Node*, strcmpless>::iterator itn = aDomain->GetNodes().begin();
+        for (; itn != aDomain->GetNodes().end(); itn++)
+        {
+            Node* aNode = (Node*) (*itn).second;
+            
+            sprintf(buf, "urn:publicid:IDN+%s+stitchport+%s:*-%s", domainId.c_str(), aNode->GetName().c_str(), aNode->GetName().c_str());
+            string aPortId = buf;
+            Port* aPort = new Port(0, aPortId);
+            aNode->AddPort(aPort);
+            aPort->SetMaxBandwidth(100000000000ULL);
+            aPort->SetMaxReservableBandwidth(100000000000ULL);
+            aPort->SetMinReservableBandwidth(0);
+            aPort->SetBandwidthGranularity(0);
+            sprintf(buf, "urn:publicid:IDN+%s+interface+%s:*-%s:**", domainId.c_str(), aNode->GetName().c_str(), aNode->GetName().c_str());
+            string aLinkId = buf;
+            RLink* aLink = new RLink(aLinkId);
+            aLink->SetMetric(1);
+            aLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
+            aLink->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
+            aLink->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
+            aLink->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
+            aLink->SetSwcapXmlString(defaultSwcapStr);
+            aPort->AddLink(aLink);            
+
+            sprintf(buf, "urn:publicid:IDN+%s+stitchport+*:*-to-%s", domainId.c_str(), aNode->GetName().c_str());
+            string arPortId = buf;
+            Port* arPort = new Port(0, arPortId);
+            arNode->AddPort(arPort);
+            arPort->SetMaxBandwidth(100000000000ULL);
+            arPort->SetMaxReservableBandwidth(100000000000ULL);
+            arPort->SetMinReservableBandwidth(0);
+            arPort->SetBandwidthGranularity(0);
+            sprintf(buf, "urn:publicid:IDN+%s+interface+*:*-to-%s:**", domainId.c_str(), aNode->GetName().c_str());
+            string arLinkId = buf;
+            RLink* arLink = new RLink(arLinkId);
+            arLink->SetMetric(1);
+            arLink->SetMaxBandwidth(arPort->GetMaxBandwidth());
+            arLink->SetMaxReservableBandwidth(arPort->GetMaxReservableBandwidth());
+            arLink->SetMinReservableBandwidth(arPort->GetMinReservableBandwidth());
+            arLink->SetBandwidthGranularity(arPort->GetBandwidthGranularity());
+            arLink->SetSwcapXmlString(defaultSwcapStr);
+            arPort->AddLink(arLink);
+            
+            aLink->SetRemoteLinkName(arLink->GetRemoteLinkName());
+            arLink->SetRemoteLinkName(aLink->GetRemoteLinkName());
+        }
+    }
+
     char str[1024];
     sprintf(buf, "<topology xmlns=\"http://ogf.org/schema/network/topology/ctrlPlane/20110826/\" id =\"%s-t%d\"><domain id=\"%s\">",
         domainId.c_str(), (int)time(0), domainId.c_str());
