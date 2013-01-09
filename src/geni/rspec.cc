@@ -617,8 +617,8 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
         for (; itn != aDomain->GetNodes().end(); itn++)
         {
             Node* aNode = (Node*) (*itn).second;
-            
-            sprintf(buf, "urn:publicid:IDN+%s+stitchport+%s:*-%s", domainId.c_str(), aNode->GetName().c_str(), aNode->GetName().c_str());
+            string nodeShortName = GetUrnField(aNode->GetName(), "node");
+            sprintf(buf, "urn:publicid:IDN+%s+stitchport+%s:*-%s", domainId.c_str(), nodeShortName.c_str(), nodeShortName.c_str());
             string aPortId = buf;
             Port* aPort = new Port(0, aPortId);
             aNode->AddPort(aPort);
@@ -626,7 +626,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             aPort->SetMaxReservableBandwidth(100000000000ULL);
             aPort->SetMinReservableBandwidth(0);
             aPort->SetBandwidthGranularity(0);
-            sprintf(buf, "urn:publicid:IDN+%s+interface+%s:*-%s:**", domainId.c_str(), aNode->GetName().c_str(), aNode->GetName().c_str());
+            sprintf(buf, "urn:publicid:IDN+%s+interface+%s:*-%s:**", domainId.c_str(), nodeShortName.c_str(), nodeShortName.c_str());
             string aLinkId = buf;
             RLink* aLink = new RLink(aLinkId);
             aLink->SetMetric(1);
@@ -637,7 +637,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             aLink->SetSwcapXmlString(defaultSwcapStr);
             aPort->AddLink(aLink);            
 
-            sprintf(buf, "urn:publicid:IDN+%s+stitchport+*:*-to-%s", domainId.c_str(), aNode->GetName().c_str());
+            sprintf(buf, "urn:publicid:IDN+%s+stitchport+*:*-to-%s", domainId.c_str(), nodeShortName.c_str());
             string arPortId = buf;
             Port* arPort = new Port(0, arPortId);
             arNode->AddPort(arPort);
@@ -645,7 +645,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             arPort->SetMaxReservableBandwidth(100000000000ULL);
             arPort->SetMinReservableBandwidth(0);
             arPort->SetBandwidthGranularity(0);
-            sprintf(buf, "urn:publicid:IDN+%s+interface+*:*-to-%s:**", domainId.c_str(), aNode->GetName().c_str());
+            sprintf(buf, "urn:publicid:IDN+%s+interface+*:*-to-%s:**", domainId.c_str(), nodeShortName.c_str());
             string arLinkId = buf;
             RLink* arLink = new RLink(arLinkId);
             arLink->SetMetric(1);
