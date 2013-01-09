@@ -329,6 +329,7 @@ void ParseFQUrn(string& urn, string& domain, string& node, string& port, string&
 }
 
 // example nml urn: 'urn:ogf:network:es.net:fnal-mr2:xe-7/0/0:*'
+// example geni urn: 'urn:publicid:IDN+ion.internet2.edu+stitchport+rtr.newy:xe-0/0/3'
 // example geni urn: 'urn:publicid:IDN+ion.internet2.edu+interface+rtr.newy:xe-0/0/3:*'
 // example geni urn: 'urn:publicid:IDN+ion.internet2.edu+node+rtr.newy'
 void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, string& link) 

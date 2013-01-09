@@ -123,7 +123,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     string arNodeId = buf;
     Node* arNode = new Node(0, arNodeId);
     aDomain->AddNode(arNode);
-    sprintf(buf, "urn:publicid:IDN+%s+interface+*:*", domainId.c_str());
+    sprintf(buf, "urn:publicid:IDN+%s+stitchport+*:*", domainId.c_str());
     string arPortId = buf;
     Port* arPort = new Port(0, arPortId);
     arNode->AddPort(arPort);
@@ -194,6 +194,9 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                         //$$ create link
                                         xmlChar* xmlLinkId = xmlGetProp(xmlLinkNode,  (const xmlChar*)"id");
                                         string linkId = (const char*)xmlLinkId;
+                                        string linkShortName = GetUrnField(linkId, "link");
+                                        if (linkShortName.empty())
+                                            linkShortName += ":**";
                                         RLink* aRLink = new RLink(linkId);
                                         aPort->AddLink(aRLink);
                                         //$$ fill in link params
@@ -206,6 +209,9 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                                 {
                                                     xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
                                                     string rlName = (const char*)pBuf;
+                                                    string rlShortName = GetUrnField(rlName, "link");
+                                                    if (rlShortName.empty())
+                                                        rlName += ":**";
                                                     aRLink->SetRemoteLinkName(rlName);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "TrafficEngineeringMetric", 18) == 0)
