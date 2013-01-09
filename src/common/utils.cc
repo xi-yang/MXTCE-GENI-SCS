@@ -321,8 +321,8 @@ string ConvertLinkUrn_Dnc2Geni(string& urn)
 {
     string domain, node, port, link;
     string geniUrn = "urn:publicid:IDN+";
-    ParseFQUrnShort(urn, domain, node, port, link);
-    geniUrn += "domain";
+    ParseFQUrn(urn, domain, node, port, link);
+    geniUrn += domain;
     geniUrn += "+interface+";
     geniUrn += node;
     geniUrn += ":";
