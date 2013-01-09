@@ -618,6 +618,8 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
         {
             Node* aNode = (Node*) (*itn).second;
             string nodeShortName = GetUrnField(aNode->GetName(), "node");
+            if (nodeShortName.find("*") == 0)
+                continue;
             sprintf(buf, "urn:publicid:IDN+%s+stitchport+%s:*-%s", domainId.c_str(), nodeShortName.c_str(), nodeShortName.c_str());
             string aPortId = buf;
             Port* aPort = new Port(0, aPortId);
