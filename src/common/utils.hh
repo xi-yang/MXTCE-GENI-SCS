@@ -528,6 +528,8 @@ u_int64_t StringToBandwidth(string& strBandwidth);
 
 string GetUrnField(string& urn, const char* field);
 
+string ConvertLinkUrn_Dnc2Geni(string& urn);
+
 void ParseFQUrn(string& urn, string& domain, string& node, string& port, string& link);
 
 void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, string& link);

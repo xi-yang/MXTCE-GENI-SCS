@@ -1065,7 +1065,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 linkName.erase(linkName.begin()+iErase, linkName.end());
             }
             // TODO: convert DCN URN into GENI URN
-            snprintf(str, 1024, "<link id=\"%s\">", linkName.c_str());
+            snprintf(str, 1024, "<link id=\"%s\">", ConvertLinkUrn_Dnc2Geni(linkName).c_str());
             strcat(buf, str);
             snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", tl->GetMetric());
             strcat(buf, str);

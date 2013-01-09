@@ -317,6 +317,23 @@ string GetUrnField(string& urn, const char* field)
     return name;
 }
 
+string ConvertLinkUrn_Dnc2Geni(string& urn) 
+{
+    string domain, node, port, link;
+    string geniUrn = "urn:publicid:IDN+";
+    ParseFQUrnShort(urn, domain, node, port, link);
+    geniUrn += "domain";
+    geniUrn += "+interface+";
+    geniUrn += node;
+    geniUrn += ":";
+    geniUrn += port;
+    if (!link.empty())
+    {
+        geniUrn += ":";
+        geniUrn += link;
+    }
+    return geniUrn;
+}
 
 void ParseFQUrn(string& urn, string& domain, string& node, string& port, string& link) 
 {
