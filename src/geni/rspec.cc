@@ -141,6 +141,16 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     arLink->SetBandwidthGranularity(arPort->GetBandwidthGranularity());
     arLink->SetSwcapXmlString(defaultSwcapStr);
     arPort->AddLink(arLink);
+    sprintf(buf, "urn:publicid:IDN+%s+interface+*:*:**", domainId.c_str());
+    string arLinkId2 = buf;
+    RLink* arLink2 = new RLink(arLinkId);
+    arLink2->SetMetric(1);
+    arLink2->SetMaxBandwidth(arPort->GetMaxBandwidth());
+    arLink2->SetMaxReservableBandwidth(arPort->GetMaxReservableBandwidth());
+    arLink2->SetMinReservableBandwidth(arPort->GetMinReservableBandwidth());
+    arLink2->SetBandwidthGranularity(arPort->GetBandwidthGranularity());
+    arLink2->SetSwcapXmlString(defaultSwcapStr);
+    arPort->AddLink(arLink2);
 
     // 1. import domain topology from stitching aggregate section
     // get node info: rspec/stitching/aggregate/node
