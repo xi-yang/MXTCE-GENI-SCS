@@ -656,8 +656,8 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             arLink->SetSwcapXmlString(defaultSwcapStr);
             arPort->AddLink(arLink);
             
-            aLink->SetRemoteLinkName(arLink->GetRemoteLinkName());
-            arLink->SetRemoteLinkName(aLink->GetRemoteLinkName());
+            aLink->SetRemoteLinkName(arLink->GetName());
+            arLink->SetRemoteLinkName(aLink->GetName());
         }
     }
 
