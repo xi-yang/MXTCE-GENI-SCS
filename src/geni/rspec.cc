@@ -1085,6 +1085,15 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
         }
     }
 
+    if (msg->GetTLVList().empty())
+    {
+        char buf[256];
+        snprintf(buf, 256, "GeniRSpec::CreateApiRequestMessage - no stitching path or multi-aggregate link in request RSpec.");
+        throw TEDBException(buf);
+        delete msg;
+        return NULL;
+    }
+    
     return msg;
 }
 
