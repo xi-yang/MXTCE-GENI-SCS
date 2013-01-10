@@ -769,7 +769,9 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
     string contextTag= tagBuf;
     Message* msg = new Message(MSG_REQ, queueName, topicName);
     msg->SetContextTag(contextTag);
-    //parse request RSpec and add userConstraint TLVs
+    // keepers for main-body node-link information
+    map<string, string> clientIdUrnMap;
+    // parse request RSpec and add userConstraint TLVs
     xmlNodePtr rspecRoot = xmlDocGetRootElement(rspecDoc);
     xmlNodePtr xmlNode, pathNode, hopNode, linkNode;
     for (xmlNode = rspecRoot->children; xmlNode != NULL; xmlNode = xmlNode->next)
@@ -1026,6 +1028,49 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 }
                 break;
             }
+            // parse node info and store client_id references
+            else if (!hasStitchingExt && strncasecmp((const char*)xmlNode->name, "node", 4) == 0)
+{
+                xmlChar* xmlAggrId = xmlGetProp(xmlNode, (const xmlChar*) "component_manager_id");
+                string aggrName = (const char*) xmlAggrId;
+                string shortAggrName = GetUrnField(aggrName, "domain");
+                string shortNodeName = "*";
+                xmlChar* xmlNodeId = xmlGetProp(xmlNode,  (const xmlChar*)"component_id");
+                if (xmlNodeId != NULL)
+                {
+                    string nodeName = (const char*)xmlNodeId;
+                    shortNodeName = GetUrnField(nodeName, "node");
+                }
+                xmlNodePtr xmlIfNode;
+                for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next) 
+                {
+                    if (xmlIfNode->type == XML_ELEMENT_NODE) 
+                    {
+                        if (strncasecmp((const char*) xmlIfNode->name, "interface", 9) == 0) 
+                        {
+                            string ifId = "";
+                            xmlChar* xmlIfId = xmlGetProp(xmlIfNode, (const xmlChar*) "component_id");
+                            if (xmlIfId != NULL) 
+                            {
+                                ifId = (const char*) xmlIfId;
+                            }
+                            else 
+                            {
+                                ifId = "urn:publicid:IDN+";
+                                ifId += shortAggrName;
+                                ifId += "+interface+";
+                                ifId += shortNodeName;
+                                ifId += "*";
+                            }
+                            xmlChar* xmlClientId = xmlGetProp(xmlIfNode, (const xmlChar*) "client_id");
+                            if (xmlClientId == NULL)
+                                continue;
+                            string clientId = (const char*)xmlClientId;
+                            clientIdUrnMap[clientId] = ifId;
+                        }
+                    }
+                }
+            }
             // without stitching extension, use links that spans multiple aggregates
             else if (!hasStitchingExt && strncasecmp((const char*)xmlNode->name, "link", 4) == 0)
             {
@@ -1037,12 +1082,22 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                     if (xmlIfNode->type == XML_ELEMENT_NODE )
                     {
                         if (strncasecmp((const char*)xmlIfNode->name, "interface_ref", 12) == 0) 
-                        {                            
+                        {
                             xmlChar* xmlIfId = xmlGetProp(xmlIfNode,  (const xmlChar*)"component_id");
                             if (xmlIfId != NULL)
                             {
                                 string ifId = (const char*)xmlIfId;
                                 ifRefs.push_back(ifId);
+                            }
+                            else 
+                            {
+                                // search by client_id
+                                xmlChar* xmlClientId = xmlGetProp(xmlIfNode,  (const xmlChar*)"client_id");
+                                if (xmlClientId == NULL)
+                                    continue;
+                                string clientId = (const char*)xmlClientId;
+                                if (clientIdUrnMap.find(clientId) != clientIdUrnMap.end())
+                                    ifRefs.push_back(clientIdUrnMap[clientId]);
                             }
                         }
                         else if (strncasecmp((const char*)xmlIfNode->name, "property", 8) == 0) 
