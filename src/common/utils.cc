@@ -449,8 +449,8 @@ xmlNodeSetPtr GetXpathNodeSet (xmlDocPtr doc, const char *xpath, map<string, str
     context = xmlXPathNewContext(doc);
     if (nsMap != NULL && !nsMap->empty())
     {
-        map<string, string>::iterator it = nsMap.begin();
-        for (; it != nsMap.end(); it++) 
+        map<string, string>::iterator it = nsMap->begin();
+        for (; it != nsMap->end(); it++) 
         {
             xmlXPathRegisterNs(context, (xmlChar*)((*it).first).c_str(), (xmlChar*)((*it).second).c_str());
         }
