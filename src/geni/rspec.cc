@@ -756,7 +756,12 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
     {
         this->ParseRspecXml();    
     }
-    bool hasStitchingExt = (NULL != GetXpathNode(rspecDoc, "//ns:rspec//ns:stitching//ns:path", "http://www.geni.net/resources/rspec/3"));
+
+    map<string, string> rspecNs;
+    rspecNs["ns"] = "http://www.geni.net/resources/rspec/3";
+    rspecNs["stitch"] = "http://hpn.east.isi.edu/rspec/ext/stitch/0.1/";
+    bool hasStitchingExt = (NULL != GetXpathNode(rspecDoc, "//ns:rspec//stitch:stitching//stitch:path", &rspecNs));
+
     string queueName="CORE";
     string topicName="XMLRPC_API_REQUEST";
     char tagBuf[32];
@@ -1057,7 +1062,9 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 if (domainA == domainZ)
                     continue;
                 Apimsg_user_constraint* userCons = new Apimsg_user_constraint();
-                xmlChar* xmlLinkId = xmlGetProp(xmlNode,  (const xmlChar*)"component_id");
+                xmlChar* xmlLinkId = xmlGetProp(xmlNode,  (const xmlChar*)"client_id");
+                if (xmlLinkId == NULL)
+                    continue;
                 string pathId = (const char*)xmlLinkId;
                 string pathType = "strict";
                 string layer = "2";

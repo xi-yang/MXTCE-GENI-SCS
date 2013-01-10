@@ -534,8 +534,8 @@ void ParseFQUrn(string& urn, string& domain, string& node, string& port, string&
 
 void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, string& link);
 
-xmlNodeSetPtr GetXpathNodeSet (xmlDocPtr doc, const char *xpath, const char *defaultNs);
+xmlNodeSetPtr GetXpathNodeSet (xmlDocPtr doc, const char *xpath, map<string, string>* nsMap=NULL);
 
-xmlNodePtr GetXpathNode (xmlDocPtr doc, const char *xpath, const char *defaultNs);
+xmlNodePtr GetXpathNode (xmlDocPtr doc, const char *xpath, map<string, string>* nsMap=NULL);
 
 #endif

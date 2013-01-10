@@ -441,15 +441,19 @@ void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, st
     }
 }
 
-xmlNodeSetPtr GetXpathNodeSet (xmlDocPtr doc, const char *xpath, const char *defaultNs)
+xmlNodeSetPtr GetXpathNodeSet (xmlDocPtr doc, const char *xpath, map<string, string>* nsMap)
 {
     xmlXPathContextPtr context;
     xmlXPathObjectPtr result;
 
     context = xmlXPathNewContext(doc);
-    if (defaultNs != NULL)
+    if (nsMap != NULL && !nsMap->empty())
     {
-        xmlXPathRegisterNs(context, (xmlChar*)"ns", (xmlChar*)defaultNs);
+        map<string, string>::iterator it = nsMap.begin();
+        for (; it != nsMap.end(); it++) 
+        {
+            xmlXPathRegisterNs(context, (xmlChar*)((*it).first).c_str(), (xmlChar*)((*it).second).c_str());
+        }
     }
     
     if (context == NULL) 
@@ -471,10 +475,10 @@ xmlNodeSetPtr GetXpathNodeSet (xmlDocPtr doc, const char *xpath, const char *def
 }
 
 
-xmlNodePtr GetXpathNode (xmlDocPtr doc, const char *xpath, const char *defaultNs)
+xmlNodePtr GetXpathNode (xmlDocPtr doc, const char *xpath, map<string, string>* nsMap)
 {
     xmlXPathContextPtr context;
-    xmlNodeSetPtr nodeset = GetXpathNodeSet(doc, xpath, defaultNs);
+    xmlNodeSetPtr nodeset = GetXpathNodeSet(doc, xpath, nsMap);
 
     if (nodeset == NULL) 
     {
