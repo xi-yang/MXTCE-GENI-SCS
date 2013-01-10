@@ -35,6 +35,7 @@
 #include "utils.hh"
 #include <signal.h>
 #include <libxml2/libxml/xpath.h>
+#include <libxml2/libxml/xpathInternals.h>
 
 int readn (int fd, char *ptr, int nbytes)
 {
@@ -446,6 +447,11 @@ xmlNodeSetPtr GetXpathNodeSet (xmlDocPtr doc, const char *xpath)
     xmlXPathObjectPtr result;
 
     context = xmlXPathNewContext(doc);
+    if (doc->oldNs)
+    {
+        xmlXPathRegisterNs(context, (xmlChar*)"ns", doc->oldNs->href);
+    }
+    
     if (context == NULL) 
     {
         return NULL;
