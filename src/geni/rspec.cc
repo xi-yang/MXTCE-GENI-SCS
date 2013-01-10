@@ -756,6 +756,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
     {
         this->ParseRspecXml();    
     }
+    bool hasStitchingExt = (NULL != GetXpathNode(rspecDoc, "//ns:rspec//ns:stitching//ns:path", "http://www.geni.net/resources/rspec/3"));
     string queueName="CORE";
     string topicName="XMLRPC_API_REQUEST";
     char tagBuf[32];
@@ -1019,6 +1020,67 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                     }
                 }
                 break;
+            }
+            // without stitching extension, use links that spans multiple aggregates
+            else if (!hasStitchingExt && strncasecmp((const char*)xmlNode->name, "link", 4) == 0)
+            {
+                list<string> ifRefs;
+                u_int64_t bw = 1000000000; //1g by default
+                xmlNodePtr xmlIfNode;
+                for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
+                {
+                    if (xmlIfNode->type == XML_ELEMENT_NODE )
+                    {
+                        if (strncasecmp((const char*)xmlIfNode->name, "interface_ref", 12) == 0) 
+                        {                            
+                            xmlChar* xmlIfId = xmlGetProp(xmlIfNode,  (const xmlChar*)"component_id");
+                            string ifId = (const char*)xmlIfId;
+                            ifRefs.push_back(ifId);
+                        }
+                        else if (strncasecmp((const char*)xmlIfNode->name, "property", 8) == 0) 
+                        {                            
+                            xmlChar* capStr = xmlGetProp(xmlIfNode,  (const xmlChar*)"capacity");
+                            sscanf((const char*)capStr, "%llu", &bw);
+                        }
+                    }
+                }
+                if (ifRefs.size() != 2)
+                    continue;
+                string domainA = GetUrnField(ifRefs.front(), "domain");
+                string domainZ = GetUrnField(ifRefs.back(), "domain");
+                if (domainA == domainZ)
+                    continue;
+                Apimsg_user_constraint* userCons = new Apimsg_user_constraint();
+                xmlChar* xmlLinkId = xmlGetProp(xmlNode,  (const xmlChar*)"component_id");
+                string pathId = (const char*)xmlLinkId;
+                string pathType = "strict";
+                string layer = "2";
+                string srcVlan = "any";//?
+                string dstVlan = "any";//?
+                userCons->setGri(pathId);
+                userCons->setPathId(pathId);
+                userCons->setStarttime(time(NULL));
+                userCons->setEndtime(time(NULL) + 3600 * 24); // scheduling attributes TBD
+                userCons->setSrcendpoint(ifRefs.front());
+                userCons->setDestendpoint(ifRefs.back());
+                userCons->setLayer(layer);
+                userCons->setPathtype(pathType);
+                userCons->setBandwidth(bw);
+                list<TSchedule*>* flexSchedules = new list<TSchedule*>;
+                TSchedule* aSchedule = new TSchedule(userCons->getStarttime(), userCons->getEndtime());
+                flexSchedules->push_back(aSchedule);
+                userCons->setFlexSchedules(flexSchedules);
+                userCons->setSrcvlantag(srcVlan);
+                userCons->setDestvlantag(dstVlan);
+                TLV* tlv = NULL;
+                tlv = (TLV*) (new u_int8_t[TLV_HEAD_SIZE + sizeof (userCons)]);
+                tlv->type = MSG_TLV_VOID_PTR;
+                tlv->length = sizeof (userCons);
+                memcpy(tlv->value, &userCons, sizeof (userCons));
+                Apimsg_user_constraint* copyUserCons = new Apimsg_user_constraint(*userCons);
+                // Above uses shallow copy constructor. Pointer members invalid after message sent
+                cachedUserConstraints[userCons->getPathId()] = copyUserCons;
+                msg->AddTLV(tlv);
             }
         }
     }
