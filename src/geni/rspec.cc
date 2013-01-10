@@ -1060,7 +1060,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                                 ifId += shortAggrName;
                                 ifId += "+interface+";
                                 ifId += shortNodeName;
-                                ifId += "*";
+                                ifId += ":*:*";
                             }
                             xmlChar* xmlClientId = xmlGetProp(xmlIfNode, (const xmlChar*) "client_id");
                             if (xmlClientId == NULL)
