@@ -1358,7 +1358,10 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         throw TEDBException(buf);                    
     }
     xmlNodePtr newStitchingNode = xmlDocGetRootElement(newStitchingDoc);
-    xmlReplaceNode(stitchingNode, newStitchingNode);
+    if (stitchingNode)
+        xmlReplaceNode(stitchingNode, newStitchingNode);
+    else
+        xmlAddChild(rspecRoot, newStitchingNode);
     this->DumpRspecXml();
     
 }
