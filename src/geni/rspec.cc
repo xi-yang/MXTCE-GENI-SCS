@@ -219,7 +219,8 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                                 if (strncasecmp((const char*)xmlParamNode->name, "remoteLinkId", 10) == 0)
                                                 {
                                                     xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
-                                                    string rlName = (const char*)pBuf;
+                                                    string rlName;
+                                                    StripXmlString(rlName, pBuf);
                                                     string rlShortName = GetUrnField(rlName, "link");
                                                     if (rlShortName.empty())
                                                         rlName += ":**";
