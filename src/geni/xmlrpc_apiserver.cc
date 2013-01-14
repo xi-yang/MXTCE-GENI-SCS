@@ -148,8 +148,11 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
                 delete replyMsg;
                 string service_rspec = replyRspec.GetRspecXmlString();
                 map<string, xmlrpc_c::value> retMap;
-                retMap["geni_code"] = xmlrpc_c::value_int(GENI_PCS_ERRCODE_NO_ERROR);
-                retMap["service_rspec"] = xmlrpc_c::value_string(service_rspec);
+                map<string, xmlrpc_c::value> codeMap;
+                map<string, xmlrpc_c::value> valueMap;
+                codeMap["geni_code"] = xmlrpc_c::value_int(GENI_PCS_ERRCODE_NO_ERROR);
+                retMap["code"] = xmlrpc_c::value_struct(codeMap);
+                valueMap["service_rspec"] = xmlrpc_c::value_string(service_rspec);
                 // workflow data
                 if (!replyRspec.GetWorkflowDataMap().empty())
                 {
@@ -159,8 +162,9 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
                     {
                         retWfdMap[(*itW).first] = ((WorkflowData*)(*itW).second)->GetXmlRpcData();
                     }
-                    retMap["workflow_data"] = xmlrpc_c::value_struct(retWfdMap);
+                    valueMap["workflow_data"] = xmlrpc_c::value_struct(retWfdMap);
                 }
+                retMap["value"] = xmlrpc_c::value_struct(valueMap);
                 *retvalP = xmlrpc_c::value_struct(retMap);
                 goto _final;        
             }
@@ -175,8 +179,10 @@ _final:
 void XMLRPC_ComputePathMethod::ReturnGeniError(xmlrpc_c::value* const retvalP, int errCode, const char* errMsg)
 {
     map<string, xmlrpc_c::value> retMap;
-    retMap["geni_code"] = xmlrpc_c::value_int(errCode);
-    retMap["geni_error"] = xmlrpc_c::value_string(errMsg);
+    map<string, xmlrpc_c::value> codeMap;
+    codeMap["geni_code"] = xmlrpc_c::value_int(errCode);
+    retMap["code"] = xmlrpc_c::value_struct(codeMap);
+    retMap["output"] = xmlrpc_c::value_string(errMsg);
     *retvalP = xmlrpc_c::value_struct(retMap);
 }
 
