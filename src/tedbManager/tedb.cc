@@ -466,7 +466,7 @@ void DBLink::UpdateFromXML(bool populateSubLevels)
             string rmtLinkStr;
             StripXmlString(rmtLinkStr, xmlNodeGetContent(sublinkLevel));
             DBLink* rmtLink = tedb->LookupLinkByURN(rmtLinkStr);
-            if (rmtLink != NULL)
+            if (rmtLink != NULL && rmtLink->GetRemoteLink() == NULL)
             {
                 this->remoteLink = rmtLink;
                 rmtLink->SetRemoteLink(this);
