@@ -62,7 +62,7 @@ void GeniRSpec::DumpRspecXml()
     rspecXml = (const char*)xmlBuf;
 }
 
-static string defaultSwcapStr = "<SwitchingCapabilityDescriptors>\
+static string defaultSwcapStr = "<switchingCapabilityDescriptor>\
         <switchingcapType>l2sc</switchingcapType>\
         <encodingType>ethernet</encodingType>\
         <switchingCapabilitySpecificInfo>\
@@ -70,7 +70,7 @@ static string defaultSwcapStr = "<SwitchingCapabilityDescriptors>\
            <vlanRangeAvailability>2-4094</vlanRangeAvailability>\
            <vlanTranslation>false</vlanTranslation>\
         </switchingCapabilitySpecificInfo>\
-      </SwitchingCapabilityDescriptors>";
+      </switchingCapabilityDescriptor>";
 
 map<string, string> GeniAdRSpec::aggregateUrnMap;
 map<string, string> GeniAdRSpec::aggregateUrlMap;
@@ -261,7 +261,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                                     sscanf((const char*)pBuf, "%llu", &bw);
                                                     aRLink->SetBandwidthGranularity(bw);
                                                 }
-                                                else if (strncasecmp((const char*)xmlParamNode->name, "SwitchingCapabilityDescriptors", 30) == 0)
+                                                else if (strncasecmp((const char*)xmlParamNode->name, "switchingCapabilityDescriptor", 29) == 0)
                                                 {
                                                     xmlBufferPtr buffer = xmlBufferCreate();
                                                     xmlNodeDump( buffer, rspecDoc,xmlParamNode, 0, 0);
@@ -335,6 +335,58 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                     }
                 }
             }
+        }
+    }
+    // 1.2. add wildcard inbound links to all stitching nodes if nothing like that has been explicitly defined
+    if (!aggrHasAllWildcardRemoteId)
+    { 
+        map<string, Node*, strcmpless>::iterator itn = aDomain->GetNodes().begin();
+        for (; itn != aDomain->GetNodes().end(); itn++)
+        {
+            Node* aNode = (Node*) (*itn).second;
+            string nodeShortName = GetUrnField(aNode->GetName(), "node");
+            if (nodeShortName.find("*") == 0)
+                continue;
+            sprintf(buf, "urn:publicid:IDN+%s+stitchport+%s:*-%s-*", domainId.c_str(), nodeShortName.c_str(), nodeShortName.c_str());
+            string aPortId = buf;
+            Port* aPort = new Port(0, aPortId);
+            aNode->AddPort(aPort);
+            aPort->SetMaxBandwidth(100000000000ULL);
+            aPort->SetMaxReservableBandwidth(100000000000ULL);
+            aPort->SetMinReservableBandwidth(0);
+            aPort->SetBandwidthGranularity(0);
+            sprintf(buf, "urn:publicid:IDN+%s+interface+%s:*-%s-*:**", domainId.c_str(), nodeShortName.c_str(), nodeShortName.c_str());
+            string aLinkId = buf;
+            RLink* aLink = new RLink(aLinkId);
+            aLink->SetMetric(1);
+            aLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
+            aLink->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
+            aLink->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
+            aLink->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
+            aLink->SetSwcapXmlString(defaultSwcapStr);
+            aPort->AddLink(aLink);            
+
+            sprintf(buf, "urn:publicid:IDN+%s+stitchport+*:*-to-%s-*", domainId.c_str(), nodeShortName.c_str());
+            string arPortId = buf;
+            Port* arPort = new Port(0, arPortId);
+            arNode->AddPort(arPort);
+            arPort->SetMaxBandwidth(100000000000ULL);
+            arPort->SetMaxReservableBandwidth(100000000000ULL);
+            arPort->SetMinReservableBandwidth(0);
+            arPort->SetBandwidthGranularity(0);
+            sprintf(buf, "urn:publicid:IDN+%s+interface+*:*-to-%s-*:**", domainId.c_str(), nodeShortName.c_str());
+            string arLinkId = buf;
+            RLink* arLink = new RLink(arLinkId);
+            arLink->SetMetric(1);
+            arLink->SetMaxBandwidth(arPort->GetMaxBandwidth());
+            arLink->SetMaxReservableBandwidth(arPort->GetMaxReservableBandwidth());
+            arLink->SetMinReservableBandwidth(arPort->GetMinReservableBandwidth());
+            arLink->SetBandwidthGranularity(arPort->GetBandwidthGranularity());
+            arLink->SetSwcapXmlString(defaultSwcapStr);
+            arPort->AddLink(arLink);
+            
+            aLink->SetRemoteLinkName(arLink->GetName());
+            arLink->SetRemoteLinkName(aLink->GetName());
         }
     }
 
@@ -608,58 +660,6 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                     }
                 }
             }
-        }
-    }
-    // 2.3. add wildcard inbound links to all nodes if nothing like that has been explicitly defined
-    if (!aggrHasAllWildcardRemoteId)
-    { 
-        map<string, Node*, strcmpless>::iterator itn = aDomain->GetNodes().begin();
-        for (; itn != aDomain->GetNodes().end(); itn++)
-        {
-            Node* aNode = (Node*) (*itn).second;
-            string nodeShortName = GetUrnField(aNode->GetName(), "node");
-            if (nodeShortName.find("*") == 0)
-                continue;
-            sprintf(buf, "urn:publicid:IDN+%s+stitchport+%s:*-%s-*", domainId.c_str(), nodeShortName.c_str(), nodeShortName.c_str());
-            string aPortId = buf;
-            Port* aPort = new Port(0, aPortId);
-            aNode->AddPort(aPort);
-            aPort->SetMaxBandwidth(100000000000ULL);
-            aPort->SetMaxReservableBandwidth(100000000000ULL);
-            aPort->SetMinReservableBandwidth(0);
-            aPort->SetBandwidthGranularity(0);
-            sprintf(buf, "urn:publicid:IDN+%s+interface+%s:*-%s-*:**", domainId.c_str(), nodeShortName.c_str(), nodeShortName.c_str());
-            string aLinkId = buf;
-            RLink* aLink = new RLink(aLinkId);
-            aLink->SetMetric(1);
-            aLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
-            aLink->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
-            aLink->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
-            aLink->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
-            aLink->SetSwcapXmlString(defaultSwcapStr);
-            aPort->AddLink(aLink);            
-
-            sprintf(buf, "urn:publicid:IDN+%s+stitchport+*:*-to-%s-*", domainId.c_str(), nodeShortName.c_str());
-            string arPortId = buf;
-            Port* arPort = new Port(0, arPortId);
-            arNode->AddPort(arPort);
-            arPort->SetMaxBandwidth(100000000000ULL);
-            arPort->SetMaxReservableBandwidth(100000000000ULL);
-            arPort->SetMinReservableBandwidth(0);
-            arPort->SetBandwidthGranularity(0);
-            sprintf(buf, "urn:publicid:IDN+%s+interface+*:*-to-%s-*:**", domainId.c_str(), nodeShortName.c_str());
-            string arLinkId = buf;
-            RLink* arLink = new RLink(arLinkId);
-            arLink->SetMetric(1);
-            arLink->SetMaxBandwidth(arPort->GetMaxBandwidth());
-            arLink->SetMaxReservableBandwidth(arPort->GetMaxReservableBandwidth());
-            arLink->SetMinReservableBandwidth(arPort->GetMinReservableBandwidth());
-            arLink->SetBandwidthGranularity(arPort->GetBandwidthGranularity());
-            arLink->SetSwcapXmlString(defaultSwcapStr);
-            arPort->AddLink(arLink);
-            
-            aLink->SetRemoteLinkName(arLink->GetName());
-            arLink->SetRemoteLinkName(aLink->GetName());
         }
     }
     
