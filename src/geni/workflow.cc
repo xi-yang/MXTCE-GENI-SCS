@@ -160,6 +160,35 @@ void WorkflowData::ComputeDependency()
         if (itS1 == L1->GetSwCapDescriptors().end())
             continue;
         ISCD_L2SC* iscd1 = (ISCD_L2SC*)(*itS1);
+        int numSameDomainHops1 = 1;
+        ConstraintTagSet availableVlanRange1 = iscd1->availableVlanTags;
+        vector<Dependency*>::iterator itDx = dependencies.begin();
+        for (; itDx != dependencies.end(); itDx++)
+        {
+            if (itDx == itD1)
+                continue;
+            Dependency* Dx = *itDx;
+            string domain1 = GetUrnField(D1->GetHopUrn(), "domain");
+            string domain2 = GetUrnField(Dx->GetHopUrn(), "domain");
+            if (domain1.compare(domain2) != 0)
+                continue;
+            // find same domain hops and get the number
+            numSameDomainHops1++;
+            // VLAN range intersection
+            TLink* Lx = (TLink*)Dx->GetResourceRef();
+            list<ISCD*>::iterator itSx = Lx->GetSwCapDescriptors().begin();
+            for (; itSx != L1->GetSwCapDescriptors().end(); itSx++)
+            {
+                if ((*itSx)->switchingType == LINK_IFSWCAP_L2SC)
+                {
+                    break;
+                }
+            }
+            if (itSx == Lx->GetSwCapDescriptors().end())
+                continue;
+            ISCD_L2SC* iscdx = (ISCD_L2SC*)(*itSx);
+            availableVlanRange1.Intersect(iscdx->availableVlanTags);
+        }
         vector<Dependency*>::iterator itD2 = itD1;
         itD2++;
         if (itD2 != dependencies.end())
@@ -182,6 +211,35 @@ void WorkflowData::ComputeDependency()
             if (itS2 == L2->GetSwCapDescriptors().end())
                 continue;
             ISCD_L2SC* iscd2 = (ISCD_L2SC*)(*itS2);
+            int numSameDomainHops2 = 1;
+            ConstraintTagSet availableVlanRange2 = iscd2->availableVlanTags;
+            vector<Dependency*>::iterator itDy = dependencies.begin();
+            for (; itDy != dependencies.end(); itDy++)
+            {
+                if (itDy == itD2)
+                    continue;
+                Dependency* Dy = *itDy;
+                string domain1 = GetUrnField(D2->GetHopUrn(), "domain");
+                string domain2 = GetUrnField(Dy->GetHopUrn(), "domain");
+                if (domain1.compare(domain2) != 0)
+                    continue;
+                // find same domain hops and get the number
+                numSameDomainHops2++;
+                // VLAN range intersection
+                TLink* Ly= (TLink*)Dy->GetResourceRef();
+                list<ISCD*>::iterator itSy = Ly->GetSwCapDescriptors().begin();
+                for (; itSy != L1->GetSwCapDescriptors().end(); itSy++)
+                {
+                    if ((*itSy)->switchingType == LINK_IFSWCAP_L2SC)
+                    {
+                        break;
+                    }
+                }
+                if (itSy == Ly->GetSwCapDescriptors().end())
+                    continue;
+                ISCD_L2SC* iscdy = (ISCD_L2SC*)(*itSy);
+                availableVlanRange2.Intersect(iscdy->availableVlanTags);
+            }
             // check loop
             bool loop_d1_d2 = this->CheckDependencyLoop(D1, D2);
             bool loop_d2_d1 = this->CheckDependencyLoop(D2, D1);
@@ -190,14 +248,16 @@ void WorkflowData::ComputeDependency()
             {
                 // D1 depends on D2 (narrower vlan range takes higher priority) 
                 // also make sure no loop if adding the dependency
-                if (!loop_d1_d2 && iscd1->availableVlanTags.Size() > iscd2->availableVlanTags.Size())
+                if (!loop_d1_d2 && 
+                    availableVlanRange1.Size()+numSameDomainHops1 > availableVlanRange2.Size()+numSameDomainHops2)
                 {
                     D1->GetLowers().push_back(D2);
                     D2->GetUppers().push_back(D1);
                     D1->setGetVlanFrom(true);
                 }
                 // D2 depends on D1 and no loop if adding the dependency
-                if (!loop_d2_d1 && iscd1->availableVlanTags.Size() < iscd2->availableVlanTags.Size())
+                if (!loop_d2_d1 && 
+                    availableVlanRange1.Size()+numSameDomainHops1 < availableVlanRange2.Size()+numSameDomainHops2)
                 {
                     D2->GetLowers().push_back(D1);
                     D1->GetUppers().push_back(D2);
@@ -243,8 +303,7 @@ void WorkflowData::ComputeDependency()
         itD1++;
     }
     */
-    
-    // 4b. alternatively give a hop the same dependency relationships as other hops in its domain
+    // 4b. or, give a hop the same dependency relationships as other hops in its domain
     itD1 = dependencies.begin();
     for (; itD1 != dependencies.end(); itD1++)
     {
