@@ -248,16 +248,18 @@ void WorkflowData::ComputeDependency()
             {
                 // D1 depends on D2 (narrower vlan range takes higher priority) 
                 // also make sure no loop if adding the dependency
-                if (!loop_d1_d2 && 
-                    availableVlanRange1.Size()+numSameDomainHops1 > availableVlanRange2.Size()+numSameDomainHops2)
+                if (!loop_d1_d2 
+                    && availableVlanRange1.Size()+numSameDomainHops1*4000 
+                       > availableVlanRange2.Size()+numSameDomainHops2*4000)
                 {
                     D1->GetLowers().push_back(D2);
                     D2->GetUppers().push_back(D1);
                     D1->setGetVlanFrom(true);
                 }
                 // D2 depends on D1 and no loop if adding the dependency
-                if (!loop_d2_d1 && 
-                    availableVlanRange1.Size()+numSameDomainHops1 < availableVlanRange2.Size()+numSameDomainHops2)
+                if (!loop_d2_d1 
+                    && availableVlanRange1.Size()+numSameDomainHops1*4000 
+                       < availableVlanRange2.Size()+numSameDomainHops2*4000)
                 {
                     D2->GetLowers().push_back(D1);
                     D1->GetUppers().push_back(D2);

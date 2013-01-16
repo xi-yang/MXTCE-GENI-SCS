@@ -168,7 +168,8 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                     if (xmlCapNode->type == XML_ELEMENT_NODE && (strncasecmp((const char*)xmlCapNode->name, "capability", 10) == 0))
                     {
                         xmlChar* pBuf = xmlNodeGetContent(xmlCapNode);
-                        string capStr = (const char*) pBuf;
+                        string capStr;
+                        StripXmlString(capStr, pBuf);
                         aggrCapabilities.push_back(capStr);
                     }
                 }
@@ -908,7 +909,9 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                                             if (strncasecmp((const char*) xmlNode2->name, "switchingcapType", 14) == 0) 
                                             {
                                                 xmlChar* pBuf = xmlNodeGetContent(xmlNode2);
-                                                if (strncasecmp((const char*)pBuf, "psc", 3) == 0)
+                                                string strCap;
+                                                StripXmlString(strCap, pBuf);
+                                                if (strncasecmp(strCap.c_str(), "psc", 3) == 0)
                                                     layer = "3";
                                             } 
                                             else if (strncasecmp((const char*) xmlNode2->name, "switchingCapabilitySpecificInfo", 30) == 0) 
@@ -926,7 +929,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                                                                     if (strncasecmp((const char*) xmlNode4->name, "vlanRangeAvailability", 18) == 0) 
                                                                     {
                                                                         xmlChar* pBuf = xmlNodeGetContent(xmlNode4);
-                                                                        srcVlan = (const char*)pBuf;
+                                                                        StripXmlString(srcVlan, pBuf);
                                                                     }
                                                                     else if (strncasecmp((const char*) xmlNode4->name, "suggestedVLANRange", 18) == 0) 
                                                                     {
@@ -985,7 +988,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                                                                     if (strncasecmp((const char*) xmlNode4->name, "vlanRangeAvailability", 18) == 0) 
                                                                     {
                                                                         xmlChar* pBuf = xmlNodeGetContent(xmlNode4);
-                                                                        dstVlan = (const char*)pBuf;
+                                                                        StripXmlString(dstVlan, pBuf);
                                                                     }
                                                                     else if (strncasecmp((const char*) xmlNode4->name, "suggestedVLANRange", 18) == 0) 
                                                                     {
