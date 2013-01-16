@@ -278,7 +278,7 @@ void WorkflowData::ComputeDependency()
                     D1->setGetVlanFrom(true);
                 }
             }
-            else if (iscd1->vlanTranslation && !iscd2->vlanTranslation)
+            else if (!iscd1->vlanTranslation && iscd2->vlanTranslation)
             {
                 // D2 depends on D1 and no loop if adding the dependency
                 if (!loop_d2_d1)
