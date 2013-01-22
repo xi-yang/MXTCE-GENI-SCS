@@ -1184,7 +1184,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
     }
     this->rspecDoc = xmlCopyDoc(this->pairedRequestRspec->GetRspecXmlDoc(), 1);
     xmlNodePtr rspecRoot = xmlDocGetRootElement(this->rspecDoc);
-    xmlSetProp(rspecRoot,  (const xmlChar*)"type", (const xmlChar*)"manifest");
+    xmlSetProp(rspecRoot,  (const xmlChar*)"type", (const xmlChar*)"request");
     xmlNodePtr xmlNode, stitchingNode = NULL;
     for (xmlNode = rspecRoot->children; xmlNode != NULL; xmlNode = xmlNode->next)
     {

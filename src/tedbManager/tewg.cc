@@ -1133,7 +1133,7 @@ bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_in
 
         if (!L->IsAvailableForTspec(TWDATA(L->GetLocalEnd())->tspec))
             return false;
-        // check continous (common) vlan tags, skip if no_vtag has already been set true
+        // check continuous (common) vlan tags, skip if no_vtag has already been set true
         if (!no_vtag && !head_vtagset.IsEmpty())
         {
             L->ProceedByUpdatingVtags(head_vtagset, next_vtagset, false);
@@ -1143,8 +1143,10 @@ bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_in
                 head_vtagset = next_vtagset;
             if (init_vtagset.IsEmpty())
                 init_vtagset = next_vtagset;
+            else if (!next_vtagset.IsEmpty())
+                init_vtagset.Intersect(next_vtagset);
         }
-        // some vlan tag must be avaible for the first link. Even vlan translation cannot help here
+        // some vlan tag must be available for the first link. Even vlan translation cannot help here
         if (no_vtag && iterL == path.begin())
             return false;
         // check vlan tags with translation, , skip if no_vtag_trans has already been set true
