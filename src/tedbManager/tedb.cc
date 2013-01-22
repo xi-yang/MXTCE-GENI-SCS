@@ -600,8 +600,33 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
 
                 //// switchingCapabilitySpecificInfo for NML 20110826 revision 
                 // simplified handling for TDM and LSC layers
-                // 1. switchingCapabilitySpecificInfo / tdmSpecificInfo / concatenationType & timeslotRangeSet
-                if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "tdmSpecificInfo", 15) == 0)
+                // 1. switchingCapabilitySpecificInfo / switchingCapabilitySpecificInfo_L2sc / interfaceMTU & vlanRangeAvailability & vlanTranslation
+                if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "switchingCapabilitySpecificInfo_L2sc", 15) == 0)
+                {
+                    for (specSubLevel = specLevel->children; specSubLevel != NULL; specSubLevel = specSubLevel->next)
+                    {
+                        if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "interfaceMTU", 17) == 0)
+                        {
+                            string mtuStr;
+                            StripXmlString(mtuStr, xmlNodeGetContent(specLevel));
+                            sscanf(mtuStr.c_str(), "%d", &mtu);
+                        }
+                        else if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "vlanRangeAvailability", 16) == 0)
+                        {
+                            StripXmlString(vlanRange, xmlNodeGetContent(specLevel));
+                        }
+                        else if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "vlanTranslation", 10) == 0)
+                        {
+                            string translationStr;
+                            StripXmlString(translationStr, xmlNodeGetContent(specLevel));
+                            if (strncasecmp(translationStr.c_str(), "true", 4) == 0)
+                                vlanTranslation = true;
+                            else
+                                vlanTranslation = false;
+                        }
+                    }
+                }
+                else if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "switchingCapabilitySpecificInfo_Tdm", 15) == 0)
                 {
                     for (specSubLevel = specLevel->children; specSubLevel != NULL; specSubLevel = specSubLevel->next)
                     {
@@ -638,8 +663,8 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
                         }
                     }
                 }
-                // 2. switchingCapabilitySpecificInfo / lscSpecificInfo /channelRepresentation & wavelengthRangeSet & wavelengthConversionEnabled
-                else if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "lscSpecificInfo", 15) == 0)
+                // 2. switchingCapabilitySpecificInfo / switchingCapabilitySpecificInfo_Lsc /channelRepresentation & wavelengthRangeSet & wavelengthConversionEnabled
+                else if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "switchingCapabilitySpecificInfo_Lsc", 15) == 0)
                 {
                     for (specSubLevel = specLevel->children; specSubLevel != NULL; specSubLevel = specSubLevel->next)
                     {
@@ -672,8 +697,8 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
 
                     }
                 }
-                // 3. TODO switchingCapabilitySpecificInfo / openflowSpecificInfo 
-                else if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "openflowSpecificInfo", 15) == 0)
+                // 3. TODO switchingCapabilitySpecificInfo / switchingCapabilitySpecificInfo_Openflow 
+                else if (specLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specLevel->name, "switchingCapabilitySpecificInfo_Openflow", 15) == 0)
                 {
                     //
                 }
