@@ -511,7 +511,7 @@ void Action_ComputeKSP::Process()
             for (itL = feasiblePath->GetPath().begin(); itL != feasiblePath->GetPath().end(); itL++)
                 (*itL)->SetMaxBandwidth(bw);
             // modify layer spec info
-            feasiblePath->UpdateLayerSpecInfo(ingTSS, egrTSS);
+            feasiblePath->UpdateLayerSpecInfo(ingTSS, egrTSS, this->_userConstraint->getPreserveVlanAvailabilityRange());
             this->_feasiblePaths->push_back(feasiblePath);
             itP++;
         }
@@ -1170,7 +1170,7 @@ void Action_ComputeSchedulesWithKSP::Process()
                     (*itL)->SetMaxReservableBandwidth(bw);
                 }
                 // modify layer spec info
-                feasiblePath->UpdateLayerSpecInfo(ingTSS, egrTSS);
+                feasiblePath->UpdateLayerSpecInfo(ingTSS, egrTSS, this->_userConstraint->getPreserveVlanAvailabilityRange());
                 _feasiblePaths->push_back(feasiblePath);
                 itP++;
             }

@@ -1294,7 +1294,7 @@ bool TPath::VerifyLoopFree()
     return true;
 }
 
-void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS)
+void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool preserveVlanAvailabilityRange)
 {
     TLink* L;
     list<TLink*>::iterator iterL;
@@ -1435,14 +1435,20 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS)
             continue;
         if (forwardContinued && iscd->availableVlanTags.HasTag(srcVtag))
         {
-            //$$iscd->availableVlanTags.Clear();
+            if (preserveVlanAvailabilityRange) 
+            {
+                iscd->availableVlanTags.Clear();
+                iscd->availableVlanTags.AddTag(srcVtag);
+            }
             iscd->suggestedVlanTags.Clear();
-            //$$iscd->availableVlanTags.AddTag(srcVtag);
             iscd->suggestedVlanTags.AddTag(srcVtag);
         }
         else 
         {
-            //$$iscd->availableVlanTags.Clear();
+            if (preserveVlanAvailabilityRange) 
+            {
+                iscd->availableVlanTags.Clear();
+            }
             iscd->suggestedVlanTags.Clear();
             forwardContinued = false;
         }
@@ -1468,18 +1474,27 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS)
                 continue;
             if (iterR == path.rbegin())
             {
-                //$$iscd->availableVlanTags.Clear();
+                if (preserveVlanAvailabilityRange) 
+                {
+                    iscd->availableVlanTags.Clear();
+                }
                 iscd->suggestedVlanTags.Clear();
             }
             else if (iscd->availableVlanTags.HasTag(srcVtag) && !iscd->vlanTranslation)
             {
-                //$$iscd->availableVlanTags.Clear();
+                if (preserveVlanAvailabilityRange) 
+                {
+                    iscd->availableVlanTags.Clear();
+                }
                 iscd->suggestedVlanTags.Clear();
                 last = iscd;
             }
             else if (last != NULL && !last->vlanTranslation && iscd->vlanTranslation)
             {
-                //$$iscd->availableVlanTags.Clear();
+                if (preserveVlanAvailabilityRange) 
+                {
+                    iscd->availableVlanTags.Clear();
+                }
                 iscd->suggestedVlanTags.Clear();
                 last = NULL;
             }

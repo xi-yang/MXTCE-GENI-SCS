@@ -1019,6 +1019,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                         userCons->setFlexSchedules(flexSchedules);
                         userCons->setSrcvlantag(srcVlan);
                         userCons->setDestvlantag(dstVlan);
+                        userCons->setPreserveVlanAvailabilityRange(true);
                         TLV* tlv = NULL;
                         tlv = (TLV*)(new u_int8_t[TLV_HEAD_SIZE + sizeof(userCons)]);
                         tlv->type = MSG_TLV_VOID_PTR;
@@ -1144,6 +1145,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 userCons->setFlexSchedules(flexSchedules);
                 userCons->setSrcvlantag(srcVlan);
                 userCons->setDestvlantag(dstVlan);
+                userCons->setPreserveVlanAvailabilityRange(true);
                 TLV* tlv = NULL;
                 tlv = (TLV*) (new u_int8_t[TLV_HEAD_SIZE + sizeof (userCons)]);
                 tlv->type = MSG_TLV_VOID_PTR;
@@ -1242,7 +1244,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 itL2 = path->GetPath().erase(itL2);
             }
             // rearrange available VLAN tags for GENI workflow
-            string newVlanRange = "";
+            string newVlanRange = "any";
             if (i == 1) // re-set first hop to use srcVlanRange
             {
                 newVlanRange = pairedUserCons->getSrcvlantag();
@@ -1295,7 +1297,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 strcat(buf, str);
                 snprintf(str, 1024, "<switchingCapabilitySpecificInfo>");
                 strcat(buf, str);
-                if (newVlanRange.empty())
+                if (newVlanRange.compare("any") == 0)
                 {
                     newVlanRange = ((ISCD_L2SC*)iscd)->availableVlanTags.GetRangeString();
                 }

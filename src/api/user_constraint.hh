@@ -176,6 +176,7 @@ protected:
     // routing profile
     list<string>* hopInclusionList;
     list<string>* hopExclusionList;
+    bool preserveVlanAvailabilityRange;
     // mp2p_constraints
     string path_id;
 
@@ -214,6 +215,7 @@ public:
         this->flexGranularity = 0;
         this->hopInclusionList = NULL;
         this->hopExclusionList = NULL;
+        this->preserveVlanAvailabilityRange = false;
         this->path_id = "";
     }
 
@@ -391,6 +393,14 @@ public:
 
     void setHopExclusionList(list<string>* el) {
         this->hopExclusionList = el;
+    }
+    
+    bool getPreserveVlanAvailabilityRange() {
+        return this->preserveVlanAvailabilityRange;
+    }
+
+    void setPreserveVlanAvailabilityRange(bool bl) {
+        this->preserveVlanAvailabilityRange = bl;;
     }
     
     u_int64_t getFlexMaxBandwidth() {

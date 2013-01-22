@@ -354,7 +354,7 @@ public:
     bool VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS);
     bool VerifyHopInclusionList(list<string>& inclusionList);
     bool VerifyLoopFree();
-    void UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS);
+    void UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool preserveVlanAvailabilityRange=false);
     BandwidthAvailabilityGraph* CreatePathBAG(time_t start, time_t end);
     void CreateLinkBAG(time_t start, time_t end);
     void Cleanup() {
