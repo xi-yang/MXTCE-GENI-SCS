@@ -1290,6 +1290,8 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                     snprintf(str, 1024, "<encodingType>packet</encodingType>");
                 else if (iscd->switchingType == LINK_IFSWCAP_ENC_LAMBDA)
                     snprintf(str, 1024, "<encodingType>lambda</encodingType>");
+                else //default = ethernet
+                    snprintf(str, 1024, "<encodingType>ethernet</encodingType>");
                 strcat(buf, str);
                 snprintf(str, 1024, "<switchingCapabilitySpecificInfo>");
                 strcat(buf, str);
@@ -1297,8 +1299,11 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 {
                     snprintf(str, 1024, "<switchingCapabilitySpecificInfo_L2sc>");
                     strcat(buf, str);
-                    snprintf(str, 1024, "<interfaceMTU>%d</interfaceMTU>", ((ISCD_L2SC*)iscd)->mtu);
-                    strcat(buf, str);
+                    if (((ISCD_L2SC*)iscd)->mtu > 0) 
+                    {
+                        snprintf(str, 1024, "<interfaceMTU>%d</interfaceMTU>", ((ISCD_L2SC*)iscd)->mtu);
+                        strcat(buf, str);
+                    }
                     snprintf(str, 1024, "<vlanRangeAvailability>%s</vlanRangeAvailability>", newVlanRange.c_str());
                     strcat(buf, str);
                     snprintf(str, 1024, "<suggestedVLANRange>%s</suggestedVLANRange>", ((ISCD_L2SC*)iscd)->suggestedVlanTags.GetRangeString().c_str());

@@ -86,7 +86,8 @@ void WorkflowData::LoadPath(TPath* tp)
     {
         TLink* L = *itp;
         Dependency* D = new Dependency();
-        D->SetHopUrn(L->GetName());
+        string hopUrn = ConvertLinkUrn_Dnc2Geni(L->GetName());
+        D->SetHopUrn(hopUrn);
         string domainId = GetUrnField(L->GetName(), "domain");
         if (GeniAdRSpec::aggregateUrnMap.find(domainId) != GeniAdRSpec::aggregateUrnMap.end())
         {
@@ -246,11 +247,12 @@ void WorkflowData::ComputeDependency()
             // Create continuous VLAN dependency relationships
             if (!iscd1->vlanTranslation && !iscd2->vlanTranslation)
             {
-                // D1 depends on D2 (narrower vlan range takes higher priority) 
+                // D1 depends on D2 (D2 are dependencies and thus higher priority)
+                // center domains (more hops) or narrower vlan range first
                 // also make sure no loop if adding the dependency
                 if (!loop_d1_d2 
-                    && availableVlanRange1.Size()+numSameDomainHops1*4000 
-                       > availableVlanRange2.Size()+numSameDomainHops2*4000)
+                    && (numSameDomainHops1 < numSameDomainHops2
+                        || availableVlanRange1.Size() > availableVlanRange2.Size()))
                 {
                     D1->GetLowers().push_back(D2);
                     D2->GetUppers().push_back(D1);
@@ -258,8 +260,8 @@ void WorkflowData::ComputeDependency()
                 }
                 // D2 depends on D1 and no loop if adding the dependency
                 if (!loop_d2_d1 
-                    && availableVlanRange1.Size()+numSameDomainHops1*4000 
-                       < availableVlanRange2.Size()+numSameDomainHops2*4000)
+                    && (numSameDomainHops1 > numSameDomainHops2
+                        || availableVlanRange1.Size() <= availableVlanRange2.Size()))
                 {
                     D2->GetLowers().push_back(D1);
                     D1->GetUppers().push_back(D2);
