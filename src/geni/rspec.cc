@@ -1242,7 +1242,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 itL2 = path->GetPath().erase(itL2);
             }
             // rearrange available VLAN tags for GENI workflow
-            string newVlanRange = "any";
+            string newVlanRange = "";
             if (i == 1) // re-set first hop to use srcVlanRange
             {
                 newVlanRange = pairedUserCons->getSrcvlantag();
@@ -1295,6 +1295,10 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 strcat(buf, str);
                 snprintf(str, 1024, "<switchingCapabilitySpecificInfo>");
                 strcat(buf, str);
+                if (newVlanRange.empty())
+                {
+                    newVlanRange = ((ISCD_L2SC*)iscd)->availableVlanTags.GetRangeString();
+                }
                 if (iscd->switchingType == LINK_IFSWCAP_L2SC)
                 {
                     snprintf(str, 1024, "<switchingCapabilitySpecificInfo_L2sc>");
