@@ -1435,7 +1435,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
             continue;
         if (forwardContinued && iscd->availableVlanTags.HasTag(srcVtag))
         {
-            if (preserveVlanAvailabilityRange) 
+            if (!preserveVlanAvailabilityRange) 
             {
                 iscd->availableVlanTags.Clear();
                 iscd->availableVlanTags.AddTag(srcVtag);
@@ -1445,7 +1445,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
         }
         else 
         {
-            if (preserveVlanAvailabilityRange) 
+            if (!preserveVlanAvailabilityRange) 
             {
                 iscd->availableVlanTags.Clear();
             }
@@ -1474,7 +1474,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
                 continue;
             if (iterR == path.rbegin())
             {
-                if (preserveVlanAvailabilityRange) 
+                if (!preserveVlanAvailabilityRange) 
                 {
                     iscd->availableVlanTags.Clear();
                 }
@@ -1482,7 +1482,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
             }
             else if (iscd->availableVlanTags.HasTag(srcVtag) && !iscd->vlanTranslation)
             {
-                if (preserveVlanAvailabilityRange) 
+                if (!preserveVlanAvailabilityRange) 
                 {
                     iscd->availableVlanTags.Clear();
                 }
@@ -1491,7 +1491,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
             }
             else if (last != NULL && !last->vlanTranslation && iscd->vlanTranslation)
             {
-                if (preserveVlanAvailabilityRange) 
+                if (!preserveVlanAvailabilityRange) 
                 {
                     iscd->availableVlanTags.Clear();
                 }
