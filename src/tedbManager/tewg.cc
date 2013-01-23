@@ -1433,7 +1433,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
         }
         if (!iscd)
             continue;
-        if (forwardContinued && iscd->suggestedVlanTags.HasTag(srcVtag))
+        if (forwardContinued && iscd->availableVlanTags.HasTag(srcVtag))
         {
             if (!preserveVlanAvailabilityRange) 
             {
@@ -1501,7 +1501,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
             else if (!iscd->suggestedVlanTags.IsEmpty()
                     || iscd->suggestedVlanTags.HasTag(dstVtag))
                 break;
-            iscd->availableVlanTags.AddTag(dstVtag);
+            //iscd->availableVlanTags.AddTag(dstVtag);
             iscd->suggestedVlanTags.AddTag(dstVtag);
         }
     }
@@ -1579,8 +1579,8 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
                 }
                 else if (!iscd->suggestedWavelengths.IsEmpty()|| iscd->availableWavelengths.HasTag(dstVtag))
                     break;
-                iscd->availableWavelengths.AddTag(dstVtag);
-                iscd->suggestedWavelengths.AddTag(dstVtag);
+                iscd->availableWavelengths.AddTag(dstWave);
+                iscd->suggestedWavelengths.AddTag(dstWave);
             }
         }
     }
