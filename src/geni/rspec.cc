@@ -1225,17 +1225,28 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         }
         snprintf(str, 1024, "<path id=\"%s\">", result->GetGri().c_str());
         strcat(buf, str);
+        list<string> allAggregateUrns;
         list<TLink*>::iterator itL = path->GetPath().begin();
         int i = 1;
         while (itL != path->GetPath().end()) 
         {
             TLink *tl = *itL;
+            // trim artificial hops so i == path->GetPath().size() means last hop 
             if (tl->GetName().find("node=*") != string::npos || tl->GetName().find("port=*") != string::npos)
             {
                 itL = path->GetPath().erase(itL);
                 continue;
             }
-            // trim invalid hops so i == path->GetPath().size() means last hop 
+            string domainId = GetUrnField(tl->GetName(), "domain");
+            string aggregateUrn = "";
+            if (!domainId.empty() && GeniAdRSpec::aggregateUrnMap.find(domainId) != GeniAdRSpec::aggregateUrnMap.end())
+            {
+                aggregateUrn = GeniAdRSpec::aggregateUrnMap[domainId];
+            }
+            if (!aggregateUrn.empty() && domainId.compare(allAggregateUrns.back()) != 0) 
+            {
+                allAggregateUrns.push_back(aggregateUrn);
+            }
             list<TLink*>::iterator itL2 = itL;
             itL2++;
             while (itL2 != path->GetPath().end() && 
@@ -1356,6 +1367,47 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         snprintf(str, 1024, "</path>");
         strcat(buf, str);
         
+        // collected allAggregateUrns from above loop
+        if (allAggregateUrns.size() > 2)
+        {
+            string srcAggrUrn = allAggregateUrns.front();
+            string dstAggrUrn = allAggregateUrns.back();
+            
+            // look for links with client_id == pathId 
+            // insert extra <component_manager> elements                 
+            map<string, string> rspecNs;
+            rspecNs["ns"] = "http://www.geni.net/resources/rspec/3";
+            rspecNs["stitch"] = "http://hpn.east.isi.edu/rspec/ext/stitch/0.1/";
+            sprintf(str, "//ns:rspec/ns:link[contains(@client_id ,'%s')]", result->GetGri().c_str());
+            xmlNodePtr linkXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
+            if (linkXmlNode != NULL) 
+            {
+                sprintf(str, "//ns:rspec/ns:link[contains(@client_id ,'%s')]/component_manager[contains(@name ,'%s')]/]", 
+                        result->GetGri().c_str(), srcAggrUrn.c_str());
+                xmlNodePtr srcAggrXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
+                if (srcAggrXmlNode != NULL)
+                {
+                    allAggregateUrns.pop_front();                
+                }
+                sprintf(str, "//ns:rspec/ns:link[contains(@client_id ,'%s')]/component_manager[contains(@name ,'%s')]/]", 
+                        result->GetGri().c_str(), dstAggrUrn.c_str());
+                xmlNodePtr dstAggrXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
+                if (dstAggrXmlNode == NULL)
+                {
+                    dstAggrXmlNode = xmlNewNode(NULL, BAD_CAST "component_manager");
+                    xmlNewProp(dstAggrXmlNode, BAD_CAST "name", BAD_CAST dstAggrUrn.c_str());
+                    xmlAddChild(linkXmlNode, dstAggrXmlNode);
+                }
+                allAggregateUrns.pop_back();
+                list<string>::iterator itUrn = allAggregateUrns.begin();
+                for (; itUrn != allAggregateUrns.end(); itUrn++)
+                {
+                    xmlNodePtr aggrXmlNode = xmlNewNode(NULL, BAD_CAST "component_manager");
+                    xmlNewProp(aggrXmlNode, BAD_CAST "name", BAD_CAST (*itUrn).c_str());
+                    xmlAddPrevSibling(dstAggrXmlNode, aggrXmlNode);
+                }
+            }
+        }
         // extract workflow data
         WorkflowData *workflowData = new WorkflowData();
         workflowData->LoadPath(path);
@@ -1377,6 +1429,8 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         xmlReplaceNode(stitchingNode, newStitchingNode);
     else
         xmlAddChild(rspecRoot, newStitchingNode);
+    
+    
     this->DumpRspecXml();
     
 }
