@@ -1382,14 +1382,14 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             xmlNodePtr linkXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
             if (linkXmlNode != NULL) 
             {
-                sprintf(str, "//ns:rspec/ns:link[contains(@client_id ,'%s')]/component_manager[contains(@name ,'%s')]/]", 
+                sprintf(str, "//ns:rspec/ns:link[contains(@client_id ,'%s')]/ns:component_manager[contains(@name ,'%s')]", 
                         result->GetGri().c_str(), srcAggrUrn.c_str());
                 xmlNodePtr srcAggrXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
                 if (srcAggrXmlNode != NULL)
                 {
                     allAggregateUrns.pop_front();                
                 }
-                sprintf(str, "//ns:rspec/ns:link[contains(@client_id ,'%s')]/component_manager[contains(@name ,'%s')]/]", 
+                sprintf(str, "//ns:rspec/ns:link[contains(@client_id ,'%s')]/ns:component_manager[contains(@name ,'%s')]", 
                         result->GetGri().c_str(), dstAggrUrn.c_str());
                 xmlNodePtr dstAggrXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
                 if (dstAggrXmlNode == NULL)
