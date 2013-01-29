@@ -1187,6 +1187,12 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
     this->rspecDoc = xmlCopyDoc(this->pairedRequestRspec->GetRspecXmlDoc(), 1);
     xmlNodePtr rspecRoot = xmlDocGetRootElement(this->rspecDoc);
     xmlSetProp(rspecRoot,  (const xmlChar*)"type", (const xmlChar*)"request");
+    string schemaLoc = (const char*)xmlGetProp(rspecRoot,  (const xmlChar*)"xsi:schemaLocation");
+    if (schemaLoc.find("http://hpn.east.isi.edu/rspec/ext/stitch/0.1/") == string::npos) {
+        schemaLoc += " http://hpn.east.isi.edu/rspec/ext/stitch/0.1/ http://hpn.east.isi.edu/rspec/ext/stitch/0.1/stitch-schema.xsd";
+        xmlSetProp(rspecRoot,  (const xmlChar*)"xsi:schemaLocation", (const xmlChar*)schemaLoc.c_str());
+    }
+    
     xmlNodePtr xmlNode, stitchingNode = NULL;
     for (xmlNode = rspecRoot->children; xmlNode != NULL; xmlNode = xmlNode->next)
     {
@@ -1198,7 +1204,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
     }
     char str[1024];
     GeniTimeString(str);
-    sprintf(buf, "<stitching lastUpdateTime=\"%s\">", str);
+    sprintf(buf, "<stitching xmlns=\"http://hpn.east.isi.edu/rspec/ext/stitch/0.1/\"  lastUpdateTime=\"%s\">", str);
     list<TLV*>::iterator it = msg->GetTLVList().begin();
     for (; it != msg->GetTLVList().end(); it++) 
     {
