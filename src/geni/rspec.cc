@@ -1233,6 +1233,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         strcat(buf, str);
         list<string> allAggregateUrns;
         list<TLink*>::iterator itL = path->GetPath().begin();
+        char capacityCstr [16]; capacityCstr[0] = 0;
         int i = 1;
         while (itL != path->GetPath().end()) 
         {
@@ -1291,6 +1292,9 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             {
                 ISCD *iscd = *its;
                 snprintf(str, 1024, "<capacity>%llu</capacity>", iscd->capacity);
+                if (capacityCstr[0] == 0) {
+                    snprintf(capacityCstr, 16, "%llu", iscd->capacity);
+                }
                 strcat(buf, str);
                 snprintf(str, 1024, "<switchingCapabilityDescriptor>");
                 strcat(buf, str);
@@ -1384,18 +1388,18 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             map<string, string> rspecNs;
             rspecNs["ns"] = "http://www.geni.net/resources/rspec/3";
             rspecNs["stitch"] = "http://hpn.east.isi.edu/rspec/ext/stitch/0.1/";
-            sprintf(str, "//ns:rspec/ns:link[contains(@client_id ,'%s')]", result->GetGri().c_str());
+            sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]", result->GetGri().c_str());
             xmlNodePtr linkXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
             if (linkXmlNode != NULL) 
             {
-                sprintf(str, "//ns:rspec/ns:link[contains(@client_id ,'%s')]/ns:component_manager[contains(@name ,'%s')]", 
+                sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]/ns:component_manager[contains(@name,'%s')]", 
                         result->GetGri().c_str(), srcAggrUrn.c_str());
                 xmlNodePtr srcAggrXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
                 if (srcAggrXmlNode != NULL)
                 {
                     allAggregateUrns.pop_front();                
                 }
-                sprintf(str, "//ns:rspec/ns:link[contains(@client_id ,'%s')]/ns:component_manager[contains(@name ,'%s')]", 
+                sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]/ns:component_manager[contains(@name,'%s')]", 
                         result->GetGri().c_str(), dstAggrUrn.c_str());
                 xmlNodePtr dstAggrXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
                 if (dstAggrXmlNode == NULL)
@@ -1411,6 +1415,39 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                     xmlNodePtr aggrXmlNode = xmlNewNode(NULL, BAD_CAST "component_manager");
                     xmlNewProp(aggrXmlNode, BAD_CAST "name", BAD_CAST (*itUrn).c_str());
                     xmlAddPrevSibling(dstAggrXmlNode, aggrXmlNode);
+                }
+                sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]/ns:interface_ref", 
+                        result->GetGri().c_str(), srcAggrUrn.c_str());
+                xmlNodeSetPtr interfaceXmlNodeSet = GetXpathNodeSet(this->rspecDoc, str, &rspecNs);
+                if (interfaceXmlNodeSet->nodeNr == 2) {
+                    xmlNodePtr srcIfNode = interfaceXmlNodeSet->nodeTab[0];
+                    xmlChar* srcIfId = xmlGetProp(srcIfNode,  BAD_CAST "client_id");
+                    xmlNodePtr dstIfNode = interfaceXmlNodeSet->nodeTab[1];
+                    xmlChar* dstIfId = xmlGetProp(dstIfNode,  BAD_CAST "client_id");
+                    sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]/ns:property[contains(@source_id,'%s')]", 
+                            result->GetGri().c_str(), srcIfId);
+                    xmlNodePtr propertyXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs); 
+                    if (propertyXmlNode == NULL) {
+                        propertyXmlNode = xmlNewNode(NULL, BAD_CAST "property");
+                        xmlNewProp(propertyXmlNode, BAD_CAST "capacity", BAD_CAST capacityCstr);
+                        xmlNewProp(propertyXmlNode, BAD_CAST "source_id", srcIfId);
+                        xmlNewProp(propertyXmlNode, BAD_CAST "dest_id", dstIfId);
+                        xmlNewProp(propertyXmlNode, BAD_CAST "latency", BAD_CAST "0");
+                        xmlNewProp(propertyXmlNode, BAD_CAST "packet_loss", BAD_CAST "0");
+                        xmlAddChild(linkXmlNode, propertyXmlNode);                        
+                    }
+                    sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]/ns:property[contains(@dest_id,'%s')]", 
+                            result->GetGri().c_str(), srcIfId);
+                    propertyXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs); 
+                    if (propertyXmlNode == NULL) {
+                        propertyXmlNode = xmlNewNode(NULL, BAD_CAST "property");
+                        xmlNewProp(propertyXmlNode, BAD_CAST "capacity", BAD_CAST capacityCstr);
+                        xmlNewProp(propertyXmlNode, BAD_CAST "source_id", srcIfId);
+                        xmlNewProp(propertyXmlNode, BAD_CAST "dest_id", dstIfId);
+                        xmlNewProp(propertyXmlNode, BAD_CAST "latency", BAD_CAST "0");
+                        xmlNewProp(propertyXmlNode, BAD_CAST "packet_loss", BAD_CAST "0");
+                        xmlAddChild(linkXmlNode, propertyXmlNode);                        
+                    }
                 }
             }
         }
