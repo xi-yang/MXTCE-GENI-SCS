@@ -1111,6 +1111,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                             if (capStr != NULL)
                             {
                                 sscanf((const char*)capStr, "%llu", &bw);
+                                bw *= 1000; // temp hack to be compatible with PG
                             }
                         }
                     }
@@ -1293,7 +1294,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 ISCD *iscd = *its;
                 snprintf(str, 1024, "<capacity>%llu</capacity>", iscd->capacity);
                 if (capacityCstr[0] == 0) {
-                    snprintf(capacityCstr, 16, "%llu", iscd->capacity);
+                    snprintf(capacityCstr, 16, "%llu", iscd->capacity/1000);
                 }
                 strcat(buf, str);
                 snprintf(str, 1024, "<switchingCapabilityDescriptor>");
