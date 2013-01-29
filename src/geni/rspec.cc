@@ -1442,8 +1442,8 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                     if (propertyXmlNode == NULL) {
                         propertyXmlNode = xmlNewNode(NULL, BAD_CAST "property");
                         xmlNewProp(propertyXmlNode, BAD_CAST "capacity", BAD_CAST capacityCstr);
-                        xmlNewProp(propertyXmlNode, BAD_CAST "source_id", srcIfId);
-                        xmlNewProp(propertyXmlNode, BAD_CAST "dest_id", dstIfId);
+                        xmlNewProp(propertyXmlNode, BAD_CAST "source_id", dstIfId);
+                        xmlNewProp(propertyXmlNode, BAD_CAST "dest_id", srcIfId);
                         xmlNewProp(propertyXmlNode, BAD_CAST "latency", BAD_CAST "0");
                         xmlNewProp(propertyXmlNode, BAD_CAST "packet_loss", BAD_CAST "0");
                         xmlAddChild(linkXmlNode, propertyXmlNode);                        
