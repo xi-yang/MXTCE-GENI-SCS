@@ -1187,7 +1187,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
     this->rspecDoc = xmlCopyDoc(this->pairedRequestRspec->GetRspecXmlDoc(), 1);
     xmlNodePtr rspecRoot = xmlDocGetRootElement(this->rspecDoc);
     xmlSetProp(rspecRoot,  (const xmlChar*)"type", (const xmlChar*)"request");
-    string schemaLoc = (const char*)xmlGetProp(rspecRoot,  (const xmlChar*)"xsi:schemaLocation");
+    string schemaLoc = (const char*)xmlGetProp(rspecRoot,  (const xmlChar*)"schemaLocation");
     if (schemaLoc.find("http://hpn.east.isi.edu/rspec/ext/stitch/0.1/") == string::npos) {
         schemaLoc += " http://hpn.east.isi.edu/rspec/ext/stitch/0.1/ http://hpn.east.isi.edu/rspec/ext/stitch/0.1/stitch-schema.xsd";
         xmlSetProp(rspecRoot,  (const xmlChar*)"xsi:schemaLocation", (const xmlChar*)schemaLoc.c_str());
