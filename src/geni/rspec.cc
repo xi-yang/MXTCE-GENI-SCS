@@ -1379,7 +1379,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         strcat(buf, str);
         
         // collected allAggregateUrns from above loop
-        if (allAggregateUrns.size() > 2)
+        if (allAggregateUrns.size() >= 2)
         {
             string srcAggrUrn = allAggregateUrns.front();
             string dstAggrUrn = allAggregateUrns.back();
@@ -1393,29 +1393,32 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             xmlNodePtr linkXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
             if (linkXmlNode != NULL) 
             {
-                sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]/ns:component_manager[contains(@name,'%s')]", 
-                        result->GetGri().c_str(), srcAggrUrn.c_str());
-                xmlNodePtr srcAggrXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
-                if (srcAggrXmlNode != NULL)
+                if (allAggregateUrns.size() > 2)
                 {
-                    allAggregateUrns.pop_front();                
-                }
-                sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]/ns:component_manager[contains(@name,'%s')]", 
-                        result->GetGri().c_str(), dstAggrUrn.c_str());
-                xmlNodePtr dstAggrXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
-                if (dstAggrXmlNode == NULL)
-                {
-                    dstAggrXmlNode = xmlNewNode(NULL, BAD_CAST "component_manager");
-                    xmlNewProp(dstAggrXmlNode, BAD_CAST "name", BAD_CAST dstAggrUrn.c_str());
-                    xmlAddChild(linkXmlNode, dstAggrXmlNode);
-                }
-                allAggregateUrns.pop_back();
-                list<string>::iterator itUrn = allAggregateUrns.begin();
-                for (; itUrn != allAggregateUrns.end(); itUrn++)
-                {
-                    xmlNodePtr aggrXmlNode = xmlNewNode(NULL, BAD_CAST "component_manager");
-                    xmlNewProp(aggrXmlNode, BAD_CAST "name", BAD_CAST (*itUrn).c_str());
-                    xmlAddPrevSibling(dstAggrXmlNode, aggrXmlNode);
+                    sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]/ns:component_manager[contains(@name,'%s')]", 
+                            result->GetGri().c_str(), srcAggrUrn.c_str());
+                    xmlNodePtr srcAggrXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
+                    if (srcAggrXmlNode != NULL)
+                    {
+                        allAggregateUrns.pop_front();                
+                    }
+                    sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]/ns:component_manager[contains(@name,'%s')]", 
+                            result->GetGri().c_str(), dstAggrUrn.c_str());
+                    xmlNodePtr dstAggrXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
+                    if (dstAggrXmlNode == NULL)
+                    {
+                        dstAggrXmlNode = xmlNewNode(NULL, BAD_CAST "component_manager");
+                        xmlNewProp(dstAggrXmlNode, BAD_CAST "name", BAD_CAST dstAggrUrn.c_str());
+                        xmlAddChild(linkXmlNode, dstAggrXmlNode);
+                    }
+                    allAggregateUrns.pop_back();
+                    list<string>::iterator itUrn = allAggregateUrns.begin();
+                    for (; itUrn != allAggregateUrns.end(); itUrn++)
+                    {
+                        xmlNodePtr aggrXmlNode = xmlNewNode(NULL, BAD_CAST "component_manager");
+                        xmlNewProp(aggrXmlNode, BAD_CAST "name", BAD_CAST (*itUrn).c_str());
+                        xmlAddPrevSibling(dstAggrXmlNode, aggrXmlNode);
+                    }
                 }
                 sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]/ns:interface_ref", 
                         result->GetGri().c_str(), srcAggrUrn.c_str());
