@@ -1329,7 +1329,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             for (; its != tl->GetSwCapDescriptors().end(); its++) 
             {
                 ISCD *iscd = *its;
-                snprintf(str, 1024, "<capacity>%s</capacity>", capacityCstr);
+                snprintf(str, 1024, "<capacity>%llu</capacity>", tl->GetMaxBandwidth());
                 strcat(buf, str);
                 snprintf(str, 1024, "<switchingCapabilityDescriptor>");
                 strcat(buf, str);
@@ -1423,20 +1423,20 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             map<string, string> rspecNs;
             rspecNs["ns"] = "http://www.geni.net/resources/rspec/3";
             rspecNs["stitch"] = "http://hpn.east.isi.edu/rspec/ext/stitch/0.1/";
-            sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]", result->GetGri().c_str());
+            sprintf(str, "//ns:rspec/ns:link[@client_id='%s']", result->GetGri().c_str());
             xmlNodePtr linkXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
             if (linkXmlNode != NULL) 
             {
                 if (allAggregateUrns.size() > 2)
                 {
-                    sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]/ns:component_manager[contains(@name,'%s')]", 
+                    sprintf(str, "//ns:rspec/ns:link[@client_id='%s']/ns:component_manager[contains(@name,'%s')]", 
                             result->GetGri().c_str(), srcAggrUrn.c_str());
                     xmlNodePtr srcAggrXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
                     if (srcAggrXmlNode != NULL)
                     {
                         allAggregateUrns.pop_front();                
                     }
-                    sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]/ns:component_manager[contains(@name,'%s')]", 
+                    sprintf(str, "//ns:rspec/ns:link[@client_id='%s']/ns:component_manager[contains(@name,'%s')]", 
                             result->GetGri().c_str(), dstAggrUrn.c_str());
                     xmlNodePtr dstAggrXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs);
                     if (dstAggrXmlNode == NULL)
@@ -1454,7 +1454,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                         xmlAddPrevSibling(dstAggrXmlNode, aggrXmlNode);
                     }
                 }
-                sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]/ns:interface_ref", 
+                sprintf(str, "//ns:rspec/ns:link[@client_id='%s']/ns:interface_ref", 
                         result->GetGri().c_str(), srcAggrUrn.c_str());
                 xmlNodeSetPtr interfaceXmlNodeSet = GetXpathNodeSet(this->rspecDoc, str, &rspecNs);
                 if (interfaceXmlNodeSet->nodeNr == 2) {
@@ -1462,7 +1462,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                     xmlChar* srcIfId = xmlGetProp(srcIfNode,  BAD_CAST "client_id");
                     xmlNodePtr dstIfNode = interfaceXmlNodeSet->nodeTab[1];
                     xmlChar* dstIfId = xmlGetProp(dstIfNode,  BAD_CAST "client_id");
-                    sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]/ns:property[contains(@source_id,'%s')]", 
+                    sprintf(str, "//ns:rspec/ns:link[@client_id='%s']/ns:property[contains(@source_id,'%s')]", 
                             result->GetGri().c_str(), srcIfId);
                     xmlNodePtr propertyXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs); 
                     if (propertyXmlNode == NULL) {
@@ -1474,7 +1474,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                         xmlNewProp(propertyXmlNode, BAD_CAST "packet_loss", BAD_CAST "0");
                         xmlAddChild(linkXmlNode, propertyXmlNode);                        
                     }
-                    sprintf(str, "//ns:rspec/ns:link[contains(@client_id,'%s')]/ns:property[contains(@dest_id,'%s')]", 
+                    sprintf(str, "//ns:rspec/ns:link[@client_id='%s']/ns:property[contains(@dest_id,'%s')]", 
                             result->GetGri().c_str(), srcIfId);
                     propertyXmlNode = GetXpathNode(this->rspecDoc, str, &rspecNs); 
                     if (propertyXmlNode == NULL) {
