@@ -1147,6 +1147,39 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 userCons->setSrcvlantag(srcVlan);
                 userCons->setDestvlantag(dstVlan);
                 userCons->setPreserveVlanAvailabilityRange(true);
+                // adding explicit routing_profile for multi-aggregate link
+                list<string>* hopInclusionList = NULL;
+                list<string>* hopExclusionList = NULL;
+                if (routingProfile.find(pathId) != routingProfile.end()) 
+                {
+                    map<string, xmlrpc_c::value> anRP = xmlrpc_c::value_struct(routingProfile[pathId]);
+                    if (anRP.find("hop_inclusion_list") != anRP.end()) 
+                    {
+                        vector<xmlrpc_c::value> inlusionList = xmlrpc_c::value_array(anRP["hop_inclusion_list"]).vectorValueValue();
+                        vector<xmlrpc_c::value>::iterator itH = inlusionList.begin();
+                        for (; itH != inlusionList.end(); itH++) {
+                            string hopUrn = xmlrpc_c::value_string(*itH);
+                            if (hopInclusionList == NULL)
+                                hopInclusionList = new list<string>;
+                            hopInclusionList->push_back(hopUrn);
+                        }
+                    }
+                    if (anRP.find("hop_exclusion_list") != anRP.end()) 
+                    {
+                        vector<xmlrpc_c::value> exlusionList = xmlrpc_c::value_array(anRP["hop_exclusion_list"]).vectorValueValue();
+                        vector<xmlrpc_c::value>::iterator itH = exlusionList.begin();
+                        for (; itH != exlusionList.end(); itH++) {
+                            string hopUrn = xmlrpc_c::value_string(*itH);
+                            if (hopExclusionList == NULL)
+                                hopExclusionList = new list<string>;
+                            hopExclusionList->push_back(hopUrn);
+                        }
+                    }
+                }
+                if (hopInclusionList != NULL)
+                    userCons->setHopInclusionList(hopInclusionList);
+                if (hopExclusionList != NULL)
+                    userCons->setHopExclusionList(hopExclusionList);
                 TLV* tlv = NULL;
                 tlv = (TLV*) (new u_int8_t[TLV_HEAD_SIZE + sizeof (userCons)]);
                 tlv->type = MSG_TLV_VOID_PTR;
