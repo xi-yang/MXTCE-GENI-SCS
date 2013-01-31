@@ -334,8 +334,15 @@ public:
         }
     u_int32_t RandomTag()
         {
+            // TODO: store last five tags as global, try making a new number
+            int low = this->LowestTag();
+            int high = this->HighestTag();
+            if (low == 0)
+                return 0;
+            if (low == high)
+                return low;
             srandom(time(NULL));
-            int start = (int)(random()% numBits);
+            int start = low + (int)(random()% (high-low));
             int tag;
             for (tag = start; tag < numBits; tag++)
             {

@@ -1080,7 +1080,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
             else if (!hasStitchingExt && strncasecmp((const char*)xmlNode->name, "link", 4) == 0)
             {
                 list<string> ifRefs;
-                u_int64_t bw = 1000000000; //1g by default
+                u_int64_t bw = 100000000; //100m by default
                 xmlNodePtr xmlIfNode;
                 for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
                 {
@@ -1321,14 +1321,15 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             strcat(buf, str);
             snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", tl->GetMetric());
             strcat(buf, str);
+            if (capacityCstr[0] == 0) 
+            {
+                snprintf(capacityCstr, 16, "%llu", tl->GetMaxBandwidth() / 1000);
+            }
             list<ISCD*>::iterator its = tl->GetSwCapDescriptors().begin();
             for (; its != tl->GetSwCapDescriptors().end(); its++) 
             {
                 ISCD *iscd = *its;
-                snprintf(str, 1024, "<capacity>%llu</capacity>", iscd->capacity);
-                if (capacityCstr[0] == 0) {
-                    snprintf(capacityCstr, 16, "%llu", iscd->capacity/1000);
-                }
+                snprintf(str, 1024, "<capacity>%s</capacity>", capacityCstr);
                 strcat(buf, str);
                 snprintf(str, 1024, "<switchingCapabilityDescriptor>");
                 strcat(buf, str);
