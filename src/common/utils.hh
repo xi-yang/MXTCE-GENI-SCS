@@ -72,7 +72,6 @@ private:
     bool hasAnyTag;
     int base;
     int interval;
-
     ConstraintTagSet() {}
 
 public:
@@ -341,7 +340,6 @@ public:
                 return 0;
             if (low == high)
                 return low;
-            srandom(time(NULL));
             int start = low + (int)(random()% (high-low));
             int tag;
             for (tag = start; tag < numBits; tag++)
