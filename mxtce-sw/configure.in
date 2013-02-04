@@ -1,0 +1,281 @@
+##
+## Configure template file for ARCHSTONE MX-TCE
+## autoconf will generate configure script.
+##
+##  Copyright (c) 2010, 2011 ARCHSTONE Project Team <xyang@isi.edu>
+##
+
+AC_PREREQ(2.53)
+AC_INIT(mxtce, [0.1], [xyang@isi.edu])
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE(mxtce, 0.2)
+
+AC_CANONICAL_HOST
+
+AM_MAINTAINER_MODE
+
+dnl --------
+dnl Check CC
+dnl --------
+AC_PROG_CC
+
+dnl -----------------------------------------
+dnl If CLFAGS doesn\'t exist set default value
+dnl -----------------------------------------
+if test "x$cflags_specified" = "x" ; then
+  CFLAGS="$CFLAGS -Wall"
+fi
+
+
+dnl --------------
+dnl Check programs
+dnl --------------
+AC_PROG_CPP
+AC_PROG_CXX
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
+AC_CHECK_TOOL(AR, ar)
+AC_CHECK_TOOL(RANLIB, ranlib, :)
+
+dnl --------------
+dnl Check CXX Version 
+dnl --------------
+AC_MSG_CHECKING([gcc version])  
+gccver=`$CXX -dumpversion` 
+num1=`echo $gccver | cut -d . -f1`
+num2=`echo $gccver | cut -d . -f2`   
+gccnum=`(expr $num1 "*" 100 + $num2) 2>/dev/null`   
+AC_MSG_RESULT($gccver)   
+if test "$gccnum" -lt "302"; then
+    AC_MSG_ERROR("Compiling MX-TCE requires GCC version 3.2 or above!")
+fi
+
+dnl ---------
+dnl AIX check
+dnl ---------
+AC_AIX
+
+dnl -------------------
+dnl Check header files.
+dnl -------------------
+AC_STDC_HEADERS
+AC_CHECK_HEADERS(string.h stropts.h sys/conf.h sys/ksym.h sys/time.h sys/times.h sys/select.h sys/sysctl.h sys/sockio.h sys/types.h net/if_dl.h linux/version.h kvm.h netdb.h netinet/in.h net/netopt.h inet/nd.h asm/types.h libutil.h arpa/inet.h arpa/telnet.h getopt.h errno.h unistd.h)
+
+dnl -------------------
+dnl Check extensible attributes function
+dnl -------------------
+if test "${enable_ext_attr}" = "yes"; then
+  AC_DEFINE(HAVE_EXT_ATTR,,EXTENSIBLE ATTRIBUTES)
+fi
+
+dnl check some types
+AC_C_CONST
+dnl AC_TYPE_PID_T
+AC_TYPE_SIGNAL
+
+dnl Some systems (Solaris 2.x) require libnsl (Network Services Library)
+case "$host" in
+  *-sunos5.6* | *-solaris2.6*)
+      opsys=sol2-6
+      AC_DEFINE(SUNOS_5,,SunOS 5)
+      AC_CHECK_LIB(xnet, main)
+      CURSES=-lcurses
+  ;;
+  *-sunos5* | *-solaris2*)
+      AC_DEFINE(SUNOS_5,,SunOS 5)
+      AC_CHECK_LIB(socket, main)
+      AC_CHECK_LIB(nsl, main)
+      CURSES=-lcurses
+  ;;
+  *-linux-*)
+      opsys=gnu-linux
+      AC_DEFINE(GNU_LINUX,,GNU Linux)
+  ;;
+  *-nec-sysv4*)
+      AC_CHECK_LIB(nsl, gethostbyname)
+      AC_CHECK_LIB(socket, socket)
+  ;;
+  *-freebsd*)
+      AC_DEFINE(FREEBSD,,FreeBSD)
+      AC_CHECK_LIB(gnugetopt, getopt_long)
+  ;;
+  *-freebsd3.2)
+      AC_DEFINE(FREEBSD_32,,FreeBSD 3.2)
+  ;;
+  *-openbsd*)
+      opsys=openbsd
+      AC_DEFINE(OPEN_BSD,,OpenBSD)
+  ;;
+  *-bsdi*)
+      opsys=bsdi
+      OTHER_METHOD="mtu_kvm.o"
+      AC_CHECK_LIB(kvm, main)
+  ;;
+esac
+
+dnl -------------------------------
+dnl Endian-ness check
+dnl -------------------------------
+AC_WORDS_BIGENDIAN
+
+dnl -------------------------------
+dnl check the size in byte of the C
+dnl -------------------------------
+dnl AC_CHECK_SIZEOF(char)
+dnl AC_CHECK_SIZEOF(int)
+dnl AC_CHECK_SIZEOF(short)
+dnl AC_CHECK_SIZEOF(long)
+
+dnl ----------------------------
+dnl check existance of functions
+dnl ----------------------------
+AC_CHECK_FUNCS(bcopy bzero strerror inet_aton daemon snprintf vsnprintf strlcat strlcpy if_nametoindex if_indextoname getifaddrs)
+AC_CHECK_FUNCS(setproctitle, ,[AC_CHECK_LIB(util, setproctitle, [LIBS="$LIBS -lutil"; AC_DEFINE(HAVE_SETPROCTITLE)])])
+
+AC_CHECK_LIB(c, inet_ntop, [AC_DEFINE(HAVE_INET_NTOP,,inet_ntop)])
+AC_CHECK_LIB(c, inet_pton, [AC_DEFINE(HAVE_INET_PTON,,inet_pton)])
+AC_CHECK_LIB(crypt, crypt)
+AC_CHECK_LIB(resolv, res_init)
+AC_CHECK_LIB(m, main)
+
+dnl ---------------------------------------------------
+dnl Check existance of libpthread
+dnl ---------------------------------------------------
+AC_CHECK_LIB(pthread, pthread_create)
+
+dnl ---------------------------------------------------
+dnl Check existance of libxml2
+dnl ---------------------------------------------------
+AC_CHECK_LIB(xml2, xmlParseFile)
+ 
+dnl ---------------------------------------------------
+dnl Check existance of libyaml
+dnl ---------------------------------------------------
+AC_CHECK_LIB(yaml, yaml_get_version_string, [], [
+    echo "Error! You need to install LibYAML." 
+    exit -1
+    ])
+
+dnl ---------------------------------------------------
+dnl Check existance of libxmlrpc_server
+dnl ---------------------------------------------------
+AC_CHECK_LIB(xmlrpc_server, xmlrpc_server_version_major, [LIBS="$LIBS -lxmlrpc_cpp -lxmlrpc_server_abyss++"], [
+    echo "Error! You need to install xmlrpc-c."
+    exit -1
+    ])
+
+dnl ---------------------------------------------------
+dnl BSD/OS 4.1 define inet_XtoY function as __inet_XtoY
+dnl ---------------------------------------------------
+AC_CHECK_FUNC(__inet_ntop, AC_DEFINE(HAVE_INET_NTOP))
+AC_CHECK_FUNC(__inet_pton, AC_DEFINE(HAVE_INET_PTON))
+AC_CHECK_FUNC(__inet_aton, AC_DEFINE(HAVE_INET_ATON))
+
+dnl ---------------------------------------------------
+dnl Checking zlib.h and libz
+dnl ---------------------------------------------------
+AC_CHECK_HEADER(zlib.h)
+AC_CHECK_LIB(z, compress, HAVE_ZLIB=yes)
+if test $ac_cv_header_zlib_h = no -o $HAVE_ZLIB = ""; then
+  AC_MSG_ERROR([zlib is required by DRAGON. Please install zlib and make sure your have /usr/include/zlib.h and /usr/lib/libz.so])
+fi
+
+dnl ----------------------------
+dnl check sa_len of sockaddr
+dnl ----------------------------
+AC_MSG_CHECKING(whether struct sockaddr has a sa_len field)
+AC_TRY_COMPILE([#include <sys/types.h>
+#include <sys/socket.h>
+],[static struct sockaddr ac_i;int ac_j = sizeof (ac_i.sa_len);],
+[AC_MSG_RESULT(yes)
+ AC_DEFINE(HAVE_SA_LEN,,sa_len)],
+ AC_MSG_RESULT(no))
+
+dnl ----------------------------
+dnl check sin_len of sockaddr_in
+dnl ----------------------------
+AC_MSG_CHECKING(whether struct sockaddr_in has a sin_len field)
+AC_TRY_COMPILE([#include <sys/types.h>
+#include <netinet/in.h>
+],[static struct sockaddr_in ac_i;int ac_j = sizeof (ac_i.sin_len);],
+[AC_MSG_RESULT(yes)
+ AC_DEFINE(HAVE_SIN_LEN,,sin_len)],
+ AC_MSG_RESULT(no))
+
+dnl ----------------------------
+dnl check sun_len of sockaddr_un
+dnl ----------------------------
+AC_MSG_CHECKING(whether struct sockaddr_un has a sun_len field)
+AC_TRY_COMPILE([#include <sys/types.h>
+#include <sys/un.h>
+],[static struct sockaddr_un ac_i;int ac_j = sizeof (ac_i.sun_len);],
+[AC_MSG_RESULT(yes)
+ AC_DEFINE(HAVE_SUN_LEN,,sun_len)],
+ AC_MSG_RESULT(no))
+
+dnl ----------------------------
+dnl check socklen_t exist or not
+dnl ----------------------------
+AC_MSG_CHECKING(whther socklen_t is defined)
+AC_TRY_COMPILE([#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+],[socklen_t ac_x;],
+[AC_MSG_RESULT(yes)
+ AC_DEFINE(HAVE_SOCKLEN_T,,socklen_t)],
+ AC_MSG_RESULT(no))
+
+dnl ------------------------
+dnl check struct sockaddr_dl
+dnl ------------------------
+AC_MSG_CHECKING(whether struct sockaddr_dl exist)
+AC_EGREP_HEADER(sockaddr_dl,
+net/if_dl.h,
+[AC_MSG_RESULT(yes)
+ AC_DEFINE(HAVE_SOCKADDR_DL,,sockaddr_dl)],
+ AC_MSG_RESULT(no))
+
+dnl ---------------------------
+dnl Check htonl works correctly
+dnl ---------------------------
+AC_MSG_CHECKING(for working htonl)
+AC_CACHE_VAL(ac_cv_htonl_works, [
+AC_TRY_LINK([#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif],
+[htonl (0);],
+ac_cv_htonl_works=yes,
+ac_cv_htonl_works=no)])
+AC_MSG_RESULT($ac_cv_htonl_works)
+
+AC_OUTPUT(
+	Makefile
+	src/Makefile
+	src/common/Makefile
+	src/api/Makefile
+	src/geni/Makefile
+	src/compute/Makefile
+	src/main/Makefile
+	src/tedbManager/Makefile
+	src/resvManager/Makefile
+	src/policyManager/Makefile
+,
+	echo timestamp > stamp-h
+)
+
+echo "
+ARCHSTONE MX-TCE configuration
+-------------------
+mxtce version           : ${VERSION}
+host operationg system  : ${host_os}
+source code location    : ${srcdir}
+compiler                : ${CC}
+compiler flags          : ${CFLAGS}
+directory for pid files : ${ac_piddir}
+"

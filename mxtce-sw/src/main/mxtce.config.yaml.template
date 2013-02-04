@@ -1,0 +1,24 @@
+---
+apiServer:
+    'client': 'localhost'
+    port: 2089
+
+tedbManager:
+    domains:
+        'testdomain-1.net':
+            source:  'file'
+            file:    'testdomain-1.net.xml'	
+        'ion.internet2.edu':
+             source:  'file'
+             file:    'ion.xml'	
+
+resvManager:
+    pushApiServer:
+        port: 2091	
+        client: 'localhost'
+
+policyManager:
+
+computeWorker:
+    type: 'simpleComputeWorker'
+...

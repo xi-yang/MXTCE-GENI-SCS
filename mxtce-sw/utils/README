@@ -1,0 +1,12 @@
+-- runyaml.pl --
+
+A perl script to parse a yaml file that is of OSCARSv6 createResv format. 
+It launch the mxtce_test API client with the parameters loaded from yaml.
+
+Note: you may need to install these perl modules 
+	cpan> install YAML::XS Time::ParseDate
+
+To run:
+	perl runyaml.pl example1.yaml 
+
+----------------
