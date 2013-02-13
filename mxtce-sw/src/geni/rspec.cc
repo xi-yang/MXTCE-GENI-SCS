@@ -1084,6 +1084,15 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 xmlNodePtr xmlIfNode;
                 for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
                 {
+                    if (xmlIfNode->type == XML_ELEMENT_NODE &&
+                        strncasecmp((const char*)xmlIfNode->name, "link_shared_vlan", 16) == 0)
+                        break;
+                }
+                // skip shared_vlan links
+                if (xmlIfNode != NULL)
+                    continue;
+                for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
+                {
                     if (xmlIfNode->type == XML_ELEMENT_NODE )
                     {
                         if (strncasecmp((const char*)xmlIfNode->name, "interface_ref", 12) == 0) 
