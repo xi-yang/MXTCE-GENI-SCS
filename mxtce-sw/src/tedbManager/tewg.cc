@@ -1904,18 +1904,17 @@ void TEWG::PruneHopVlans(string& exclusionUrn, string& vlanRange)
                     continue;
                 ISCD_L2SC* iscd = (ISCD_L2SC*)(*it);
                 iscd->availableVlanTags.DeleteTags(excludedVtags.TagBitmask(), MAX_VLAN_NUM);
+                iscd->assignedVlanTags.AddTags(excludedVtags.TagBitmask(), MAX_VLAN_NUM);
             }
             if (L->GetRemoteLink() != NULL) 
             {
-                list<ISCD*>::iterator it;
                 for (it = L->GetRemoteLink()->GetSwCapDescriptors().begin(); it != L->GetRemoteLink()->GetSwCapDescriptors().end(); it++)
                 {
                     if ((*it)->switchingType != LINK_IFSWCAP_L2SC)
                         continue;
                     ISCD_L2SC* iscd = (ISCD_L2SC*)(*it);
-                    ConstraintTagSet excludedVtags(MAX_VLAN_NUM);
-                    excludedVtags.LoadRangeString(vlanRange);
                     iscd->availableVlanTags.DeleteTags(excludedVtags.TagBitmask(), MAX_VLAN_NUM);
+                    iscd->assignedVlanTags.AddTags(excludedVtags.TagBitmask(), MAX_VLAN_NUM);
                 }
             }
         }
