@@ -236,7 +236,7 @@ public:
     void DeleteTags(u_char* bitmask, int max_num)
         {
             assert(bitmask);
-            for (int i = 1; i < (max_num-1)/8+1 && i < numBytes; i++)
+            for (int i = 0; i < (max_num-1)/8+1 && i < numBytes; i++)
                 byteArray[i] &= (~bitmask[i]);
         }
     bool HasTag(u_int32_t tag)
