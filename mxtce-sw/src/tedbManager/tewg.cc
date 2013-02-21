@@ -1885,6 +1885,31 @@ void TEWG::PruneByExclusionUrn(string& exclusionUrn)
     }
 }
 
+void TEWG::PruneHopVlans(string& exclusionUrn, string& vlanRange)
+{
+    list<TLink*>::iterator itl = tLinks.begin();
+    itl = tLinks.begin();
+    while (itl != tLinks.end())
+    {
+        TLink* L = *itl;
+        ++itl;
+        if (L->VerifyContainUrn(exclusionUrn)) 
+        {
+            list<ISCD*>::iterator it;
+            for (it = L->GetSwCapDescriptors().begin(); it != L->GetSwCapDescriptors().end(); it++)
+            {
+                if ((*it)->switchingType != LINK_IFSWCAP_L2SC)
+                    continue;
+                ISCD_L2SC* iscd = (ISCD_L2SC*)(*it);
+                ConstraintTagSet excludedVtags(MAX_VLAN_NUM);
+                excludedVtags.LoadRangeString(vlanRange);
+                iscd->availableVlanTags.DeleteTags(excludedVtags.TagBitmask(), MAX_VLAN_NUM);
+            }
+        }
+    }
+}
+
+
 list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode, bool cleanStart)
 {
     // init TWorkData in TLinks
