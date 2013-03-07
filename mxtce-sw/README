@@ -1,2 +1,7 @@
 Download and install 
 http://pyyaml.org/download/libyaml/yaml-0.1.4.tar.gz
+
+Download and install
+http://sourceforge.net/projects/xmlrpc-c/files/Xmlrpc-c%20Super%20Stable/
+
+yum install libxml2-devel
