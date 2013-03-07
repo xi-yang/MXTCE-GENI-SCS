@@ -997,11 +997,10 @@ void TEDB::PopulateXmlTrees()
             if (domain == NULL)
             {
                 domain = new DBDomain(this, 0, domainName);
-                domain->SetXmlElement(domainLevel);            
                 dbDomains.push_back(domain);
                 newDomain = true;
             }
-
+            domain->SetXmlElement(domainLevel);            
             domain->UpdateFromXML(true);
         }
 

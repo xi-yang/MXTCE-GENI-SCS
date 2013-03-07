@@ -5,3 +5,10 @@ Download and install
 http://sourceforge.net/projects/xmlrpc-c/files/Xmlrpc-c%20Super%20Stable/
 
 yum install libxml2-devel
+
+For 64-bit system, you may need to
+cp -rf /usr/local/lib/libyaml* /usr/lib64/
+cp -rf /usr/local/lib/libxmlrpc* /usr/lib64/
+
+To test:
+cat  pcs-request1.xml | curl -X POST -H 'Content-type: text/xml' -d @-  http://oingo.dragon.maxgigapop.net:8081/geni/xmlrpc
