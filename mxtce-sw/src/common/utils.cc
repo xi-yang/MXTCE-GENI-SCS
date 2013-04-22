@@ -261,10 +261,10 @@ void CleanupXmlString(string& str)
     }
 }
 
-u_int64_t StringToBandwidth(string& strBandwidth) 
+u_int64_t StringToBandwidth(string& strBandwidth, u_int64_t defaultFactor) 
 {
     u_int64_t bandwidth = 0LLU;
-    u_int64_t factor = 1LLU;
+    u_int64_t factor = defaultFactor;
     if (strcasestr(strBandwidth.c_str(), "K"))
     {
         factor = 1000LLU;

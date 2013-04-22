@@ -237,29 +237,33 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "capacity", 8) == 0)
                                                 {
                                                     xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
-                                                    u_int64_t bw;
-                                                    sscanf((const char*)pBuf, "%llu", &bw);
+                                                    string bwStr;
+                                                    StripXmlString(bwStr, pBuf);
+                                                    u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                                     aRLink->SetMaxBandwidth(bw);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "maximumReservableCapacity", 8) == 0)
                                                 {
                                                     xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
-                                                    u_int64_t bw;
-                                                    sscanf((const char*)pBuf, "%llu", &bw);
+                                                    string bwStr;
+                                                    StripXmlString(bwStr, pBuf);
+                                                    u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                                     aRLink->SetMaxReservableBandwidth(bw);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "minimumReservableCapacity", 8) == 0)
                                                 {
                                                     xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
-                                                    u_int64_t bw;
-                                                    sscanf((const char*)pBuf, "%llu", &bw);
+                                                    string bwStr;
+                                                    StripXmlString(bwStr, pBuf);
+                                                    u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                                     aRLink->SetMinReservableBandwidth(bw);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "granularity", 8) == 0)
                                                 {
                                                     xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
-                                                    u_int64_t bw;
-                                                    sscanf((const char*)pBuf, "%llu", &bw);
+                                                    string bwStr;
+                                                    StripXmlString(bwStr, pBuf);
+                                                    u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                                     aRLink->SetBandwidthGranularity(bw);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "switchingCapabilityDescriptor", 29) == 0)
@@ -305,29 +309,33 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                     else if (strncasecmp((const char*)xmlLinkNode->name, "capacity", 8) == 0)
                                     {
                                         xmlChar* pBuf = xmlNodeGetContent(xmlLinkNode);
-                                        u_int64_t bw;
-                                        sscanf((const char*)pBuf, "%llu", &bw);
+                                        string bwStr;
+                                        StripXmlString(bwStr, pBuf);
+                                        u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                         aPort->SetMaxBandwidth(bw);
                                     }
                                     else if (strncasecmp((const char*)xmlLinkNode->name, "maximumReservableCapacity", 8) == 0)
                                     {
                                         xmlChar* pBuf = xmlNodeGetContent(xmlLinkNode);
-                                        u_int64_t bw;
-                                        sscanf((const char*)pBuf, "%llu", &bw);
+                                        string bwStr;
+                                        StripXmlString(bwStr, pBuf);
+                                        u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                         aPort->SetMaxReservableBandwidth(bw);
                                     }
                                     else if (strncasecmp((const char*)xmlLinkNode->name, "minimumReservableCapacity", 8) == 0)
                                     {
                                         xmlChar* pBuf = xmlNodeGetContent(xmlLinkNode);
-                                        u_int64_t bw;
-                                        sscanf((const char*)pBuf, "%llu", &bw);
+                                        string bwStr;
+                                        StripXmlString(bwStr, pBuf);
+                                        u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                         aPort->SetMinReservableBandwidth(bw);
                                     }
                                     else if (strncasecmp((const char*)xmlLinkNode->name, "granularity", 8) == 0)
                                     {
                                         xmlChar* pBuf = xmlNodeGetContent(xmlLinkNode);
-                                        u_int64_t bw;
-                                        sscanf((const char*)pBuf, "%llu", &bw);
+                                        string bwStr;
+                                        StripXmlString(bwStr, pBuf);
+                                        u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                         aPort->SetBandwidthGranularity(bw);
                                     }
                                 }
@@ -402,7 +410,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             if (strncasecmp((const char*)xmlNode->name, "link", 4) == 0) 
             {
                 list<string> ifRefs;
-                u_int64_t capacity = 1000000000; //1g by default
+                u_int64_t capacity = 1000000; //host interface 1g by default
                 for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
                 {
                     if (xmlIfNode->type == XML_ELEMENT_NODE )
@@ -416,7 +424,9 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                         else if (strncasecmp((const char*)xmlIfNode->name, "property", 8) == 0) 
                         {                            
                             xmlChar* capStr = xmlGetProp(xmlIfNode,  (const xmlChar*)"capacity");
-                            sscanf((const char*)capStr, "%llu", &capacity);
+                            string bwStr;
+                            StripXmlString(bwStr, capStr);
+                            capacity = StringToBandwidth(bwStr, 1000);
                         }
                     }
                 }
@@ -898,7 +908,9 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                                 else if (strncasecmp((const char*) xmlNode1->name, "capacity", 8) == 0) 
                                 {
                                     xmlChar* pBuf = xmlNodeGetContent(xmlNode1);
-                                    sscanf((const char*) pBuf, "%llu", &bw);
+                                    string bwStr;
+                                    StripXmlString(bwStr, pBuf);
+                                    u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                 }
                                 else if (strncasecmp((const char*) xmlNode1->name, "switchingCapabilityDescriptor", 30) == 0) 
                                 {
@@ -965,7 +977,9 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                                 else if (strncasecmp((const char*) xmlNode1->name, "capacity", 8) == 0) 
                                 {
                                     xmlChar* pBuf = xmlNodeGetContent(xmlNode1);
-                                    sscanf((const char*) pBuf, "%llu", &bw);
+                                    string bwStr;
+                                    StripXmlString(bwStr, pBuf);
+                                    u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                 }
                                 else if (strncasecmp((const char*) xmlNode1->name, "switchingCapabilityDescriptor", 30) == 0) 
                                 {
@@ -1080,7 +1094,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
             else if (!hasStitchingExt && strncasecmp((const char*)xmlNode->name, "link", 4) == 0)
             {
                 list<string> ifRefs;
-                u_int64_t bw = 100000000; //100m by default
+                u_int64_t bw = 100000; //100m by default
                 xmlNodePtr xmlIfNode;
                 for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
                 {
@@ -1118,9 +1132,10 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                         {
                             xmlChar* capStr = xmlGetProp(xmlIfNode,  (const xmlChar*)"capacity");
                             if (capStr != NULL)
-                            {
-                                sscanf((const char*)capStr, "%llu", &bw);
-                                bw *= 1000; // temp hack to be compatible with PG
+{
+                                string bwStr;
+                                StripXmlString(bwStr, capStr);
+                                u_int64_t bw = StringToBandwidth(bwStr, 1000);
                             }
                         }
                     }

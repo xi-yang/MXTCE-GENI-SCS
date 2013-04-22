@@ -530,7 +530,7 @@ extern "C"
 void StripXmlString(string& str, xmlChar* val);
 void CleanupXmlString(string& str);
 
-u_int64_t StringToBandwidth(string& strBandwidth);
+u_int64_t StringToBandwidth(string& strBandwidth, u_int64_t defaultFactor=1LLU);
 
 string GetUrnField(string& urn, const char* field);
 
