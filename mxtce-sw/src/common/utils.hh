@@ -154,7 +154,7 @@ public:
         }
     void LoadRangeString(string rangeStr)
         {
-            char buf[256];
+            char buf[1024];
             strncpy(buf, rangeStr.c_str(), 256);
             if (strncasecmp(buf, "any", 3) == 0)
             {                
@@ -186,7 +186,7 @@ public:
         }
     void LoadRangeString_WaveGrid_50GHz(string rangeStr)
         {
-            char buf[256];
+            char buf[1024];
             strncpy(buf, rangeStr.c_str(), 256);
             if (strncasecmp(buf, "tunable", 5) == 0 || strncasecmp(buf, "any", 3) == 0)
             {                
@@ -384,8 +384,8 @@ public:
     string GetRangeString() 
         { 
             string rangeStr = "";
-            char buf[128];
-            char buf2[16];
+            char buf[1024];
+            char buf2[32];
             if (numBits == MAX_VLAN_NUM && HasTag(VTAG_UNTAGGED))
                 strcpy(buf, "0");
             else
@@ -442,9 +442,9 @@ public:
         string GetRangeString_WaveGrid_50GHz() 
             { 
                 string rangeStr = "";
-                char buf[128];
-                char buf2[16];
-                char buf3[4];
+                char buf[1024];
+                char buf2[32];
+                char buf3[8];
                 if (numBits == MAX_WAVE_NUM && HasTag(WAVE_TUNABLE))
                 {
                     strcpy(buf, "tunable");
