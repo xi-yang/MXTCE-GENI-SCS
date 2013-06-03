@@ -193,12 +193,12 @@ time_t get_mtime(const char *path)
     return statbuf.st_mtime;
 }
 
-void SplitString(string& str, vector<string> tokens, const string& delimiters, bool trimEmpty)
+void SplitString(string& str, vector<string>& tokens, const string& delim, bool trimEmpty)
 {
     string::size_type pos, lastPos = 0;
     while (true) 
     {
-        pos = str.find_first_of(delimiters, lastPos);
+        pos = str.find_first_of(delim, lastPos);
         if (pos == std::string::npos) 
         {
             pos = str.length();

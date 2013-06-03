@@ -529,7 +529,7 @@ extern "C"
     time_t get_mtime(const char *path);
 }
 
-void SplitString(string& str, vector<string> tokens, const string& delimiters=" ", bool trimEmpty=false);
+void SplitString(string& str, vector<string>& tokens, const string& delim=" ", bool trimEmpty=false);
 
 void StripXmlString(string& str, xmlChar* val);
 void CleanupXmlString(string& str);
