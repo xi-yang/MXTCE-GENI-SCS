@@ -193,6 +193,27 @@ time_t get_mtime(const char *path)
     return statbuf.st_mtime;
 }
 
+void SplitString(string& str, vector<string> tokens, const string& delimiters, bool trimEmpty)
+{
+    string::size_type pos, lastPos = 0;
+    while (true) 
+    {
+        pos = str.find_first_of(delimiters, lastPos);
+        if (pos == std::string::npos) 
+        {
+            pos = str.length();
+            if (pos != lastPos || !trimEmpty)
+                tokens.push_back(string(str.data() + lastPos, pos - lastPos));
+            break;
+        } 
+        else 
+        {
+            if (pos != lastPos || !trimEmpty)
+                tokens.push_back(string(str.data() + lastPos, pos - lastPos));
+        }
+        lastPos = pos + 1;
+    }
+}
 
 // C1 = 1, H1 = 2 ...
 int wavegrid_50g_to_tag(char ch, int num)

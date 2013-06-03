@@ -116,7 +116,9 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
 
     // create aggregate URN and URL mappings
     GeniAdRSpec::aggregateUrnMap[domainId] = aggrUrn;
-    GeniAdRSpec::aggregateUrlMap[domainId] = aggrUrl;
+    vector<string> urls;
+    SplitString(aggrUrl, urls, ",");
+    GeniAdRSpec::aggregateUrlMap[domainId] = urls.back();
     
     // add AggregateReflector (AR: *:*:*) node/port/link
     sprintf(buf, "urn:publicid:IDN+%s+node+*", domainId.c_str());

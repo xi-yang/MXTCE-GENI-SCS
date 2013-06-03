@@ -39,7 +39,9 @@
 #include <libxml/tree.h>
 #include <libxml/tree.h>
 #include <libxml/xpath.h>
+#include <vector>
 #include <map>
+
 
 #ifndef RETSIGTYPE
 #define RETSIGTYPE void
@@ -526,6 +528,8 @@ extern "C"
 
     time_t get_mtime(const char *path);
 }
+
+void SplitString(string& str, vector<string> tokens, const string& delimiters=" ", bool trimEmpty=false);
 
 void StripXmlString(string& str, xmlChar* val);
 void CleanupXmlString(string& str);
