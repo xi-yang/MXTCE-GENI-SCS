@@ -206,7 +206,7 @@ void XMLRPC_GetVersionMethod::execute(xmlrpc_c::paramList const& paramList, xmlr
     snprintf(urlCstr, 127, "http://%s:%d/%s", hostname, MxTCE::xmlrpcApiServerPort, MxTCE::xmlrpcApiServerPath.c_str());
     valueMap["url"] = xmlrpc_c::value_string(urlCstr);
     map<string, xmlrpc_c::value> apiVersionsMap;
-    apiVersionsMap["2"] = xmlrpc_c::value_string("http://oingo.dragon.maxgigapop.net:8081/geni/xmlrpc");
+    apiVersionsMap["2"] = xmlrpc_c::value_string(urlCstr);
     valueMap["geni_api_versions"] = xmlrpc_c::value_struct(apiVersionsMap);   
     map<string, xmlrpc_c::value> adVersionsMap;
     adVersionsMap["version"] = xmlrpc_c::value_string("3");
