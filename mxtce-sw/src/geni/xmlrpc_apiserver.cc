@@ -207,7 +207,7 @@ void XMLRPC_GetVersionMethod::execute(xmlrpc_c::paramList const& paramList, xmlr
     valueMap["url"] = xmlrpc_c::value_string(urlCstr);
     map<string, xmlrpc_c::value> apiVersionsMap;
     apiVersionsMap["2"] = xmlrpc_c::value_string("http://oingo.dragon.maxgigapop.net:8081/geni/xmlrpc");
-    retMap["geni_api_versions"] = xmlrpc_c::value_struct(apiVersionsMap);   
+    valueMap["geni_api_versions"] = xmlrpc_c::value_struct(apiVersionsMap);   
     map<string, xmlrpc_c::value> adVersionsMap;
     adVersionsMap["version"] = xmlrpc_c::value_string("3");
     adVersionsMap["type"] = xmlrpc_c::value_string("GENI");
@@ -217,15 +217,16 @@ void XMLRPC_GetVersionMethod::execute(xmlrpc_c::paramList const& paramList, xmlr
     extArray.push_back(xmlrpc_c::value_string("http://hpn.east.isi.edu/rspec/ext/stitch/0.1/"));
     extArray.push_back(xmlrpc_c::value_string("http://hpn.east.isi.edu/rspec/ext/stitch/2/"));
     adVersionsMap["extensions"] = xmlrpc_c::value_array(extArray);
-    retMap["geni_ad_rspec_versions"] = xmlrpc_c::value_struct(adVersionsMap);
+    valueMap["geni_ad_rspec_versions"] = xmlrpc_c::value_struct(adVersionsMap);
     map<string, xmlrpc_c::value> requestVersionsMap;
     requestVersionsMap["version"] = xmlrpc_c::value_string("3");
     requestVersionsMap["type"] = xmlrpc_c::value_string("GENI");
     requestVersionsMap["schema"] = xmlrpc_c::value_string("http://www.geni.net/resources/rspec/3/request.xsd");
     requestVersionsMap["namespace"] = xmlrpc_c::value_string("http://www.geni.net/resources/rspec/3");
     requestVersionsMap["extensions"] = xmlrpc_c::value_array(extArray);
-    retMap["geni_request_rspec_versions"] = xmlrpc_c::value_struct(requestVersionsMap);
+    valueMap["geni_request_rspec_versions"] = xmlrpc_c::value_struct(requestVersionsMap);
     // end composing 'value' struct
+    retMap["value"] = valueMap;
     *retvalP = xmlrpc_c::value_struct(retMap);
     XMLRPC_APIServer::xmlrpcApiLock.Unlock();
 }
