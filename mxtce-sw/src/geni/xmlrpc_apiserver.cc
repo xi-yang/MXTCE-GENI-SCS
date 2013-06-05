@@ -226,7 +226,7 @@ void XMLRPC_GetVersionMethod::execute(xmlrpc_c::paramList const& paramList, xmlr
     requestVersionsMap["extensions"] = xmlrpc_c::value_array(extArray);
     valueMap["geni_request_rspec_versions"] = xmlrpc_c::value_struct(requestVersionsMap);
     // end composing 'value' struct
-    retMap["value"] = valueMap;
+    retMap["value"] = xmlrpc_c::value_struct(valueMap);
     *retvalP = xmlrpc_c::value_struct(retMap);
     XMLRPC_APIServer::xmlrpcApiLock.Unlock();
 }
