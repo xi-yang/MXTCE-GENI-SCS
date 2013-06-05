@@ -90,10 +90,19 @@ class XMLRPC_ComputePathMethod: public XMLRPC_BaseMethod {
 public:
     XMLRPC_ComputePathMethod(MxTCE* tce):XMLRPC_BaseMethod(tce) {
         this->_signature = "?";
-        this->_help = "compute path method";
+        this->_help = "compute_path method";
     }
     void execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const  retvalP);
     void ReturnGeniError(xmlrpc_c::value* const retvalP, int errCode, const char* errMsg);
+};
+
+class XMLRPC_GetVersionMethod: public XMLRPC_BaseMethod {    
+public:
+    XMLRPC_GetVersionMethod(MxTCE* tce):XMLRPC_BaseMethod(tce) {
+        this->_signature = "?";
+        this->_help = "get_version method";
+    }
+    void execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const  retvalP);
 };
 
 
