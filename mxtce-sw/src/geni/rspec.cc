@@ -718,6 +718,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                 snprintf(str, 1024, "<granularity>%llu</granularity>", tl->GetBandwidthGranularity());
                 strcat(buf, str);
                 strcat(buf, tl->GetSwcapXmlString().c_str());
+                /* disabled in stitch-v0.1 : to be used in v2
                 if (!aggrCapabilities.empty())
                 {
                     strcat(buf, "<capabilities>");
@@ -729,6 +730,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                     }
                     strcat(buf, "</capabilities>");
                 }
+                */
                 snprintf(str, 1024, "</link>");
                 strcat(buf, str);
             }
