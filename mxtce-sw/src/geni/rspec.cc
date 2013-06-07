@@ -101,10 +101,11 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                             {
                                 if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "aggregatetype", 9) == 0) 
                                 {
-                                    string strPlainUrn;
+                                    string domainType;
                                     xmlChar* pBuf = xmlNodeGetContent(xmlNode);
-                                    StripXmlString(strPlainUrn, pBuf);
-                                    if (strPlainUrn.compare("orca") == 0)
+                                    StripXmlString(domainType, pBuf);
+                                    //$$$ TODO: add domainType into domainTypeMap in MxTCE main thread (synced to access)
+                                    if (domainType.compare("orca") == 0)
                                             isPlainUrn = false;
                                     break;
                                 }   
@@ -222,7 +223,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                         //$$ create link
                                         xmlChar* xmlLinkId = xmlGetProp(xmlLinkNode,  (const xmlChar*)"id");
                                         string linkName = (const char*)xmlLinkId;
-                                        string linkShortName = GetUrnField(linkName, "link");
+                                        string linkShortName = (aDomain->isPlainUrn() ? GetUrnField(linkName, "link") : linkName);
                                         if (linkShortName.empty())
                                             linkName += ":**";
                                         RLink* aRLink = new RLink(linkName);
@@ -238,7 +239,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                                     xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
                                                     string rlName;
                                                     StripXmlString(rlName, pBuf);
-                                                    string rlShortName = GetUrnField(rlName, "link");
+                                                    string rlShortName = (aDomain->isPlainUrn() ? GetUrnField(rlName, "link"): rlName);
                                                     if (rlShortName.empty())
                                                         rlName += ":**";
                                                     aRLink->SetRemoteLinkName(rlName);
@@ -298,8 +299,8 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                         if (i1 != string::npos) 
                                         {
                                             aggrHasAllWildcardRemoteId = true;
-                                            string nodeShortName = GetUrnField(aNode->GetName(), "node");
-                                            string portShortName = GetUrnField(aPort->GetName(), "port");
+                                            string nodeShortName = (aDomain->isPlainUrn() ? GetUrnField(aNode->GetName(), "node") : aNode->GetName());
+                                            string portShortName = (aDomain->isPlainUrn() ? (aPort->GetName(), "port") : aPort->GetName());
                                             sprintf(buf, "*:*-to-%s-%s:*", nodeShortName.c_str(), portShortName.c_str());
                                             remoteLinkName.replace(i1, 5, buf);
                                             aRLink->SetRemoteLinkName(remoteLinkName);
@@ -369,7 +370,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
         for (; itn != aDomain->GetNodes().end(); itn++)
         {
             Node* aNode = (Node*) (*itn).second;
-            string nodeShortName = GetUrnField(aNode->GetName(), "node");
+            string nodeShortName = (aDomain->isPlainUrn() ? GetUrnField(aNode->GetName(), "node") : aNode->GetName());
             if (nodeShortName.find("*") == 0)
                 continue;
             sprintf(buf, "urn:publicid:IDN+%s+stitchport+%s:*-%s-*", domainId.c_str(), nodeShortName.c_str(), nodeShortName.c_str());
@@ -448,12 +449,12 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                 }
                 if (ifRefs.size() != 2)
                     continue;
-                string nodeShortName = GetUrnField(ifRefs.front(), "node");
+                string nodeShortName = (aDomain->isPlainUrn() ? GetUrnField(ifRefs.front(), "node") : ifRefs.front());
                 string nodeId1 = "urn:publicid:IDN+";
                 nodeId1 += domainId;
                 nodeId1 += "+node+";
                 nodeId1 += nodeShortName;
-                nodeShortName = GetUrnField(ifRefs.back(), "node");
+                nodeShortName = (aDomain->isPlainUrn() ? GetUrnField(ifRefs.back(), "node") : ifRefs.back());
                 string nodeId2 = "urn:publicid:IDN+";
                 nodeId2 += domainId;
                 nodeId2 += "+node+";
@@ -497,7 +498,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                 // get portname and linkname
                                 string portName = ifId;
                                 string linkName = ifId;
-                                string linkShortName = GetUrnField(linkName, "link");
+                                string linkShortName = (aDomain->isPlainUrn() ? GetUrnField(linkName, "link") : linkName);
                                 if (linkShortName.size() == 0)
                                 {
                                     linkName += ":**";
@@ -552,7 +553,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                 }
                                 RLink* aRLink = new RLink(linkName);
                                 string remoteLinkName = (ifId == rspecLink->GetName() ? rspecLink->GetRemoteLinkName() : rspecLink->GetName());
-                                string remoteLinkShortName = GetUrnField(remoteLinkName, "link");
+                                string remoteLinkShortName = (aDomain->isPlainUrn() ? GetUrnField(remoteLinkName, "link") : remoteLinkName);
                                 if (remoteLinkShortName.size() == 0)
                                 {
                                     remoteLinkName += ":**";
@@ -587,7 +588,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                         aNode = new Node(0, nodeId);
                                         string portName = ifId;
                                         string linkName = ifId;
-                                        string linkShortName = GetUrnField(linkName, "link");
+                                        string linkShortName = (aDomain->isPlainUrn() ?GetUrnField(linkName, "link") : linkName);
                                         if (linkShortName.size() == 0)
                                         {
                                             linkName += ":**";
@@ -597,7 +598,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                             portName.replace(linkName.size()-linkShortName.size()-1, linkShortName.size()+1, "");
                                         }
                                         string remoteLinkName = (ifId == (*itRL)->GetName() ? (*itRL)->GetRemoteLinkName() : (*itRL)->GetName());
-                                        string remoteLinkShortName = GetUrnField(remoteLinkName, "link");
+                                        string remoteLinkShortName = (aDomain->isPlainUrn() ? GetUrnField(remoteLinkName, "link") : remoteLinkName);
                                         if (remoteLinkShortName.size() == 0)
                                         {
                                             remoteLinkName += ":**";
@@ -633,9 +634,9 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                         else
                                         {
                                             // add remotePort/Link (portname:*-to-nodename-portname:*) if host is attached to abstract port (*:*)
-                                            string nodeShortName = GetUrnField(aNode->GetName(), "node");
-                                            string portShortName = GetUrnField(aPort->GetName(), "port");
-                                            sprintf(buf, ":*-to-%s-%s:*", nodeShortName.c_str(), portShortName.c_str());
+                                            string nodeShortName = (aDomain->isPlainUrn() ? GetUrnField(aNode->GetName(), "node") : aNode->GetName());
+                                            string portShortName = (aDomain->isPlainUrn() ? GetUrnField(aPort->GetName(), "port") : aPort->GetName());
+                                            sprintf(buf, ":*-to-%s-%s:*", nodeShortName.c_str(), portShortName.c_str()); 
                                             if (i2 == string::npos)
                                                 remoteLinkName.replace(i1, 4, buf);
                                             else
@@ -651,7 +652,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                             remotePort->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
                                             remotePort->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
                                             remotePort->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
-                                            string remoteNodeShortName = GetUrnField(remoteLinkName, "node");
+                                            string remoteNodeShortName = (aDomain->isPlainUrn() ?GetUrnField(remoteLinkName, "node") : remoteLinkName);
                                             string remoteNodeName = "urn:publicid:IDN+";
                                             remoteNodeName += domainId;
                                             remoteNodeName += "+node+";
@@ -1071,7 +1072,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
             }
             // parse node info and store client_id references
             else if (!hasStitchingExt && strncasecmp((const char*)xmlNode->name, "node", 4) == 0)
-{
+            {
                 xmlChar* xmlAggrId = xmlGetProp(xmlNode, (const xmlChar*) "component_manager_id");
                 string aggrName = (const char*) xmlAggrId;
                 string shortAggrName = GetUrnField(aggrName, "domain");
@@ -1080,6 +1081,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 if (xmlNodeId != NULL)
                 {
                     string nodeName = (const char*)xmlNodeId;
+                    //$$$ TODO: look for domain type and determine whether isPlainUrn
                     shortNodeName = GetUrnField(nodeName, "node");
                 }
                 xmlNodePtr xmlIfNode;
