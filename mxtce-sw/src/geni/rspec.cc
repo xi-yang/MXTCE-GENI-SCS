@@ -82,6 +82,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
 
     char buf[1024*1024*16];
     //get domain info: rspec/stitching/aggregate
+    bool isPlainUrn = true;
     xmlNodePtr rspecRoot = xmlDocGetRootElement(rspecDoc);
     xmlNodePtr xmlNode;
     xmlNodePtr aggrNode = NULL;
@@ -95,8 +96,21 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                 {
                     if (aggrNode->type == XML_ELEMENT_NODE )
                     {
-                        if (strncasecmp((const char*)aggrNode->name, "aggregate", 9) == 0) 
+                        if (strncasecmp((const char*)aggrNode->name, "aggregate", 9) == 0) {
+                            for (xmlNode = aggrNode->children; xmlNode != NULL; xmlNode = xmlNode->next) 
+                            {
+                                if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "aggregatetype", 9) == 0) 
+                                {
+                                    string strPlainUrn;
+                                    xmlChar* pBuf = xmlNodeGetContent(xmlNode);
+                                    StripXmlString(strPlainUrn, pBuf);
+                                    if (strPlainUrn.compare("orca") == 0)
+                                            isPlainUrn = false;
+                                    break;
+                                }   
+                            }
                             break;
+                        }
                     }
                 }
                 break;
@@ -113,7 +127,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     string aggrUrl = (const char*)xmlGetProp(aggrNode,  (const xmlChar*)"url");
     string domainId = GetUrnField(aggrUrn, "domain");
     Domain* aDomain = new Domain(0, domainId);
-
+    aDomain->setPlainUrn(isPlainUrn);
     // create aggregate URN and URL mappings
     GeniAdRSpec::aggregateUrnMap[domainId] = aggrUrn;
     vector<string> urls;
@@ -679,6 +693,10 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     char str[1024];
     sprintf(buf, "<topology xmlns=\"http://ogf.org/schema/network/topology/ctrlPlane/20110826/\" id =\"%s-t%d\"><domain id=\"%s\">",
         domainId.c_str(), (int)time(0), domainId.c_str());
+    if (!aDomain->isPlainUrn()) 
+    {
+        strcat(buf, "<isPlainUrn>false</isPlainUrn>");
+    }
     map<string, Node*, strcmpless>::iterator itn = aDomain->GetNodes().begin();
     for (; itn != aDomain->GetNodes().end(); itn++)
     {

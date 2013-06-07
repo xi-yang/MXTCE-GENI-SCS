@@ -57,7 +57,7 @@ void DBDomain::UpdateFromXML(bool populateSubLevels)
         {
             bool newNode = false;
             string nodeName = (const char*)xmlGetProp(nodeLevel, (const xmlChar*)"id");
-            string aName = nodeName = GetUrnField(nodeName, "node");
+            string aName = nodeName = (this->isPlainUrn()? GetUrnField(nodeName, "node") : nodeName);
             if (aName.length() > 0)
                 nodeName = aName;
             DBNode* node = NULL;
@@ -94,7 +94,15 @@ void DBDomain::UpdateFromXML(bool populateSubLevels)
                 }
             }
         }
-
+        else if (nodeLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)nodeLevel->name, "isPlainUrn", 10) == 0)
+        {
+            string strIsNested;
+            StripXmlString(strIsNested, xmlNodeGetContent(nodeLevel));
+            if (strIsNested.compare("false") == 0)
+            {
+                this->plainUrn = false;
+            }
+        }
         // TODO: parse NodeIfAdaptMatrix?
     }
     // cleanup nodes that no longer exist in XML
@@ -117,6 +125,7 @@ void DBDomain::UpdateFromXML(bool populateSubLevels)
 TDomain* DBDomain::Checkout(TGraph* tg)
 {
     TDomain* td = new TDomain(this->_id, this->name, this->address);
+    td->setPlainUrn(this->plainUrn);
     map<string, Node*, strcmpless>::iterator itn = this->nodes.begin();
     for (; itn != this->nodes.end(); itn++) 
     {
@@ -164,7 +173,7 @@ void DBNode::UpdateFromXML(bool populateSubLevels)
         {
             bool newPort = false;
             string portName = (const char*)xmlGetProp(portLevel, (const xmlChar*)"id");
-            string aName = GetUrnField(portName, "port");
+            string aName = (this->GetDomain()->isPlainUrn() ? GetUrnField(portName, "port") : portName);
             if (aName.length() > 0)
                 portName = aName;
             DBPort* port = NULL;
@@ -282,7 +291,7 @@ void DBPort::UpdateFromXML(bool populateSubLevels)
         {
             bool newLink = false;
             string linkName = (const char*)xmlGetProp(linkLevel, (const xmlChar*)"id");
-            string aName = GetUrnField(linkName, "link");
+            string aName = (this->GetNode()->GetDomain()->isPlainUrn() ?GetUrnField(linkName, "link") : linkName);
             if (aName.length() > 0)
                 linkName = aName;
 
@@ -1084,7 +1093,7 @@ DBNode* TEDB::LookupNodeByURN(string& urn)
     DBDomain* dbd = LookupDomainByURN(urn);
     if (dbd == NULL)
         return NULL;
-    string nodeName = GetUrnField(urn, "node");
+    string nodeName = (dbd->isPlainUrn() ? GetUrnField(urn, "node") : urn);
     map<string, Node*, strcmpless>::iterator itn = dbd->GetNodes().find(nodeName);
     if (itn == dbd->GetNodes().end())
         return NULL;
@@ -1097,7 +1106,7 @@ DBPort* TEDB::LookupPortByURN(string& urn)
     DBNode* dbn = LookupNodeByURN(urn);
     if (dbn == NULL)
         return NULL;
-    string portName = GetUrnField(urn, "port");
+    string portName = (dbn->GetDomain()->isPlainUrn() ? GetUrnField(urn, "port") : urn);
     map<string, Port*, strcmpless>::iterator itp = dbn->GetPorts().find(portName);
     if (itp == dbn->GetPorts().end())
         return NULL;
@@ -1110,7 +1119,7 @@ DBLink* TEDB::LookupLinkByURN(string& urn)
     DBPort* dbp = LookupPortByURN(urn);
     if (dbp == NULL)
         return NULL;
-    string linkName = GetUrnField(urn, "link");
+    string linkName = (dbp->GetNode()->GetDomain()->isPlainUrn() ? GetUrnField(urn, "link") : urn);
     map<string, Link*, strcmpless>::iterator itl = dbp->GetLinks().find(linkName);
     if (itl == dbp->GetLinks().end())
         return NULL;

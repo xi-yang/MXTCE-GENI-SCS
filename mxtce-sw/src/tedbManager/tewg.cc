@@ -42,6 +42,7 @@ TDomain* TDomain::Clone(bool newSubLevels)
 {
     TDomain* td = new TDomain(this->_id, this->name, this->address);
     td->disabled = this->disabled;
+    td->plainUrn = this->plainUrn;
     map<string, Node*, strcmpless>::iterator itn = this->nodes.begin();
     for (; itn != this->nodes.end(); itn++)
         td->nodes[(*itn).first] = (newSubLevels ? ((TNode*)(*itn).second)->Clone(newSubLevels) : (*itn).second);
