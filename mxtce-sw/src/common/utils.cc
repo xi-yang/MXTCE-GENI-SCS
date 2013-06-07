@@ -308,8 +308,8 @@ u_int64_t StringToBandwidth(string& strBandwidth, u_int64_t defaultFactor)
 string GetUrnField(string& urn, const char* field) 
 {
     string name = "";
-    char str[128];
-    snprintf(str, 128, "%s=", field);
+    char str[1024];
+    snprintf(str, 1024, "%s=", field);
     char* ptr = (char*)strstr(urn.c_str(), str);
     if (ptr == NULL)
     {
@@ -373,11 +373,11 @@ void ParseFQUrn(string& urn, string& domain, string& node, string& port, string&
 // example geni urn: 'urn:publicid:IDN+ion.internet2.edu+node+rtr.newy'
 void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, string& link) 
 {
-    char buf[256];
+    char buf[1024];
     char *pbuf=buf, *ps=NULL;
     if (strncmp(urn.c_str(), "urn:ogf:network:", 16) == 0) 
     {
-        strncpy(buf, urn.c_str()+16, 256);
+        strncpy(buf, urn.c_str()+16, 1024);
         ps = strstr(pbuf, ":");
         if (ps != NULL)
         {
@@ -414,7 +414,7 @@ void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, st
     } else if (strncmp(urn.c_str(), "urn:publicid:IDN+", 17) == 0) 
     {
         string type;
-        strncpy(buf, urn.c_str()+17, 256);
+        strncpy(buf, urn.c_str()+17, 1024);
         ps = strstr(pbuf, "+");
         if (ps != NULL)
         {
