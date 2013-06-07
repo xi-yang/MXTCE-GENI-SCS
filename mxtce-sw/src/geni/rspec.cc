@@ -223,9 +223,12 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                         //$$ create link
                                         xmlChar* xmlLinkId = xmlGetProp(xmlLinkNode,  (const xmlChar*)"id");
                                         string linkName = (const char*)xmlLinkId;
-                                        string linkShortName = (aDomain->isPlainUrn() ? GetUrnField(linkName, "link") : linkName);
-                                        if (linkShortName.empty())
-                                            linkName += ":**";
+                                        if (aDomain->isPlainUrn())
+                                        {
+                                            string linkShortName = GetUrnField(linkName, "link");
+                                            if (linkShortName.empty())
+                                                linkName += ":**";
+                                        }
                                         RLink* aRLink = new RLink(linkName);
                                         aPort->AddLink(aRLink);
                                         //$$ fill in link params
@@ -239,9 +242,12 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                                     xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
                                                     string rlName;
                                                     StripXmlString(rlName, pBuf);
-                                                    string rlShortName = (aDomain->isPlainUrn() ? GetUrnField(rlName, "link"): rlName);
-                                                    if (rlShortName.empty())
-                                                        rlName += ":**";
+                                                    if (aDomain->isPlainUrn())
+                                                    {
+                                                        string rlShortName = GetUrnField(rlName, "link");
+                                                        if (rlShortName.empty())
+                                                            rlName += ":**";
+                                                    }
                                                     aRLink->SetRemoteLinkName(rlName);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "TrafficEngineeringMetric", 18) == 0)
@@ -498,16 +504,17 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                 // get portname and linkname
                                 string portName = ifId;
                                 string linkName = ifId;
-                                string linkShortName = (aDomain->isPlainUrn() ? GetUrnField(linkName, "link") : linkName);
-                                if (linkShortName.size() == 0)
-                                {
-                                    linkName += ":**";
+                                if (aDomain->isPlainUrn()) {
+                                    string linkShortName = GetUrnField(linkName, "link");
+                                    if (linkShortName.size() == 0)
+                                    {
+                                        linkName += ":**";
+                                    }
+                                    else 
+                                    {
+                                        portName.replace(linkName.size()-linkShortName.size()-1, linkShortName.size()+1, "");
+                                    }
                                 }
-                                else 
-                                {
-                                    portName.replace(linkName.size()-linkShortName.size()-1, linkShortName.size()+1, "");
-                                }
-
                                 bool portExisted = false, linkExisted = false;
                                 map<string, Port*, strcmpless>::iterator itp = aNode->GetPorts().begin();
                                 for (; itp != aNode->GetPorts().end(); itp++)
@@ -553,10 +560,13 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                 }
                                 RLink* aRLink = new RLink(linkName);
                                 string remoteLinkName = (ifId == rspecLink->GetName() ? rspecLink->GetRemoteLinkName() : rspecLink->GetName());
-                                string remoteLinkShortName = (aDomain->isPlainUrn() ? GetUrnField(remoteLinkName, "link") : remoteLinkName);
-                                if (remoteLinkShortName.size() == 0)
+                                if (aDomain->isPlainUrn())
                                 {
-                                    remoteLinkName += ":**";
+                                    string remoteLinkShortName = GetUrnField(remoteLinkName, "link");
+                                    if (remoteLinkShortName.size() == 0)
+                                    {
+                                        remoteLinkName += ":**";
+                                    }
                                 }
                                 aRLink->SetRemoteLinkName(remoteLinkName);
                                 aRLink->SetMetric(1);
@@ -588,20 +598,26 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                         aNode = new Node(0, nodeId);
                                         string portName = ifId;
                                         string linkName = ifId;
-                                        string linkShortName = (aDomain->isPlainUrn() ?GetUrnField(linkName, "link") : linkName);
-                                        if (linkShortName.size() == 0)
+                                        if (aDomain->isPlainUrn())
                                         {
-                                            linkName += ":**";
-                                        }
-                                        else 
-                                        {
-                                            portName.replace(linkName.size()-linkShortName.size()-1, linkShortName.size()+1, "");
+                                            string linkShortName = GetUrnField(linkName, "link");
+                                            if (linkShortName.size() == 0)
+                                            {
+                                                linkName += ":**";
+                                            }
+                                            else 
+                                            {
+                                                portName.replace(linkName.size()-linkShortName.size()-1, linkShortName.size()+1, "");
+                                            }
                                         }
                                         string remoteLinkName = (ifId == (*itRL)->GetName() ? (*itRL)->GetRemoteLinkName() : (*itRL)->GetName());
-                                        string remoteLinkShortName = (aDomain->isPlainUrn() ? GetUrnField(remoteLinkName, "link") : remoteLinkName);
-                                        if (remoteLinkShortName.size() == 0)
+                                        if (aDomain->isPlainUrn())
                                         {
-                                            remoteLinkName += ":**";
+                                            string remoteLinkShortName = GetUrnField(remoteLinkName, "link");
+                                            if (remoteLinkShortName.size() == 0)
+                                            {
+                                                remoteLinkName += ":**";
+                                            }
                                         }
                                         map<string, Port*, strcmpless>::iterator itp = aNode->GetPorts().find(portName);
                                         Port* aPort;
