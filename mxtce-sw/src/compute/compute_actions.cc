@@ -1749,8 +1749,8 @@ void Action_FinalizeServiceTopology_MP2P::Process()
         }
         else
         {
-            char buf[256];
-            snprintf(buf, 256, "Action_FinalizeServiceTopology_MP2P::Process() No feasible path found for GRI: %s, Path: %s under Context: %s!", 
+            char buf[1024];
+            snprintf(buf, 1024, "Action_FinalizeServiceTopology_MP2P::Process() No feasible path found for GRI: %s, Path: %s under Context: %s!", 
                 userConstraint->getGri().c_str(), userConstraint->getPathId().c_str(), this->context.c_str());
             LOG(buf << endl);
             // TODO: set conext-action error msg 

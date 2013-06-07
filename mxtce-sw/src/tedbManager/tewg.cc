@@ -59,8 +59,8 @@ void TNode::AddLocalLink(TLink* link)
 {
     if (HasLocalLink(link))
     {
-        char buf[128];
-        snprintf(buf, 128, "Node::AddLocalLink raises Excaption: local link %s:%s has already existed.", 
+        char buf[1024];
+        snprintf(buf, 1024, "Node::AddLocalLink raises Excaption: local link %s:%s has already existed.", 
             link->GetPort()->GetName().c_str(), link->GetName().c_str());
         throw TEDBException(buf);
     }
@@ -74,8 +74,8 @@ void TNode::AddRemoteLink(TLink* link)
         throw TEDBException((char*)"TNode::AddRmoteLink raises Excaption: invalid remote link parenet port is 'null'.");
     else if (HasRemoteLink(link))
     {
-        char buf[128];
-        snprintf(buf, 128, "Node::AddRemoteLink raises Excaption: remote link %s:%s has already existed.", 
+        char buf[1024];
+        snprintf(buf, 1024, "Node::AddRemoteLink raises Excaption: remote link %s:%s has already existed.", 
             link->GetPort()->GetName().c_str(), link->GetName().c_str());
         throw TEDBException(buf);
     }
@@ -866,7 +866,7 @@ TLink* TGraph::LookupLinkByURN(string& urn)
 void TGraph::LoadPath(list<TLink*> path)
 {
     string domainName, nodeName, portName, linkName;
-    char buf[256];
+    char buf[1024];
     list<TLink*>::iterator itL;
     TLink* lastLink = NULL;
     for (itL = path.begin(); itL != path.end(); itL++)
@@ -893,12 +893,12 @@ void TGraph::LoadPath(list<TLink*> path)
             ParseFQUrn(urn, domainName, nodeName, portName, linkName);
             if (domainName.length() == 0 || nodeName.length() == 0 || portName.length() == 0 || linkName.length() == 0)
             {
-                snprintf(buf, 256, "TGraph::LoadPath raises Exception: invalid link urn '%s'", urn.c_str());
+                snprintf(buf, 1024, "TGraph::LoadPath raises Exception: invalid link urn '%s'", urn.c_str());
                 throw TEDBException(buf);
             }
             if (LookupLinkByURN(urn) != NULL || LookupPortByURN(urn) != NULL)
             {
-                snprintf(buf, 256, "TGraph::LoadPath raises Exception: duplicate link '%s' in path", urn.c_str());
+                snprintf(buf, 1024, "TGraph::LoadPath raises Exception: duplicate link '%s' in path", urn.c_str());
                 throw TEDBException(buf);
             }
             link->SetName(linkName);
@@ -969,46 +969,46 @@ TGraph* TGraph::Clone()
 void TGraph::LogDump()
 {
     char buf[1024000]; //up to 1000K
-    char str[256];
+    char str[1024];
     strcpy(buf, "TEWG Dump...\n");
     list<TDomain*>::iterator itd = this->tDomains.begin();
     for (; itd != this->tDomains.end(); itd++)
     {
         TDomain* td = (*itd);
-        snprintf(str, 256, "<domain id=%s>\n", td->GetName().c_str());
+        snprintf(str, 1024, "<domain id=%s>\n", td->GetName().c_str());
         strcat(buf, str);
         map<string, Node*, strcmpless>::iterator itn = td->GetNodes().begin();
         for (; itn != td->GetNodes().end(); itn++)
         {
             TNode* tn = (TNode*)(*itn).second;
-            snprintf(str, 256, "\t<node id=%s>\n", tn->GetName().c_str());
+            snprintf(str, 1024, "\t<node id=%s>\n", tn->GetName().c_str());
             strcat(buf, str);
             map<string, Port*, strcmpless>::iterator itp = tn->GetPorts().begin();
             for (; itp != tn->GetPorts().end(); itp++)
             {
                 TPort* tp = (TPort*)(*itp).second;
-                snprintf(str, 256, "\t\t<port id=%s>\n", tp->GetName().c_str());
+                snprintf(str, 1024, "\t\t<port id=%s>\n", tp->GetName().c_str());
                 strcat(buf, str);
                 map<string, Link*, strcmpless>::iterator itl = tp->GetLinks().begin();
                 for (; itl != tp->GetLinks().end(); itl++) 
                 {
                     TLink* tl = (TLink*)(*itl).second;
-                    snprintf(str, 256, "\t\t\t<link id=%s>\n", tl->GetName().c_str());
+                    snprintf(str, 1024, "\t\t\t<link id=%s>\n", tl->GetName().c_str());
                     strcat(buf, str);
                     if (tl->GetRemoteLink())
                     {
-                        snprintf(str, 256, "\t\t\t\t<remoteLinkId>domain=%s:node=%s:port=%s:link=%s</remoteLinkId>\n",  
+                        snprintf(str, 1024, "\t\t\t\t<remoteLinkId>domain=%s:node=%s:port=%s:link=%s</remoteLinkId>\n",  
                             tl->GetRemoteLink()->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
                             tl->GetRemoteLink()->GetPort()->GetNode()->GetName().c_str(),
                             tl->GetRemoteLink()->GetPort()->GetName().c_str(), 
                             tl->GetRemoteLink()->GetName().c_str());
                         strcat(buf, str);
                     }
-                    snprintf(str, 256, "\t\t\t\t<AvailableBandwidth>%llu</AvailableBandwidth>\n", tl->GetAvailableBandwidth());
+                    snprintf(str, 1024, "\t\t\t\t<AvailableBandwidth>%llu</AvailableBandwidth>\n", tl->GetAvailableBandwidth());
                     strcat(buf, str);
                     if (tl->GetTheISCD())
                     {
-                        snprintf(str, 256, "\t\t\t\t<SwitchingCapabilityDescriptors> <switchingcapType=%d><encodingType=%d><capacity=%llu> </SwitchingCapabilityDescriptors>\n",  
+                        snprintf(str, 1024, "\t\t\t\t<SwitchingCapabilityDescriptors> <switchingcapType=%d><encodingType=%d><capacity=%llu> </SwitchingCapabilityDescriptors>\n",  
                             tl->GetTheISCD()->switchingType,
                             tl->GetTheISCD()->encodingType,
                             tl->GetTheISCD()->capacity);
@@ -1020,21 +1020,21 @@ void TGraph::LogDump()
                         list<TDelta*>::iterator itD = tl->GetDeltaList().begin();
                         for (; itD != tl->GetDeltaList().end(); itD++)
                         {
-                            snprintf(str, 256, "[bw=%llu:%d-%d] ", ((TLinkDelta*)(*itD))->GetBandwidth(), (int)(*itD)->GetStartTime(), (int)(*itD)->GetEndTime());
+                            snprintf(str, 1024, "[bw=%llu:%d-%d] ", ((TLinkDelta*)(*itD))->GetBandwidth(), (int)(*itD)->GetStartTime(), (int)(*itD)->GetEndTime());
                             strcat(buf, str);
                         }
                         strcat(buf, "</DeltaList>\n");
                     }
-                    snprintf(str, 256, "\t\t\t</link>\n");
+                    snprintf(str, 1024, "\t\t\t</link>\n");
                     strcat(buf, str);
                 }
-                snprintf(str, 256, "\t\t</port>\n");
+                snprintf(str, 1024, "\t\t</port>\n");
                 strcat(buf, str);
             }
-            snprintf(str, 256, "\t</node>\n");
+            snprintf(str, 1024, "\t</node>\n");
             strcat(buf, str);
         }
-        snprintf(str, 256, "</domain>\n");
+        snprintf(str, 1024, "</domain>\n");
         strcat(buf, str);
     }    
     LOG_DEBUG(buf);
@@ -1694,7 +1694,7 @@ TPath* TPath::Clone(bool doExpandRemoteLink)
 void TPath::LogDump()
 {
     char buf[10240]; //up to 10K
-    char str[256];
+    char str[1024];
     sprintf(buf, "TPath (cost=%lf):", this->cost);
     if (path.size() == 0)
     {
@@ -1706,7 +1706,7 @@ void TPath::LogDump()
         for (; itL != path.end(); itL++)
         {
             TLink* L = *itL;
-            snprintf(str, 256, " ->%s:%s:%s:%s",
+            snprintf(str, 1024, " ->%s:%s:%s:%s",
                 L->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
                 L->GetPort()->GetNode()->GetName().c_str(),
                 L->GetPort()->GetName().c_str(), 
@@ -1724,12 +1724,12 @@ void TPath::LogDump()
             }
             if (iscd_l2sc)
             {
-                snprintf(str, 256, " (suggestedVlan:%s) ", iscd_l2sc->suggestedVlanTags.GetRangeString().c_str());
+                snprintf(str, 1024, " (suggestedVlan:%s) ", iscd_l2sc->suggestedVlanTags.GetRangeString().c_str());
                 strcat(buf, str);
             }    
             if (iscd_lsc && iscd_lsc->channelRepresentation == ITU_GRID_50GHZ) // for test 
             {
-                snprintf(str, 256, " (suggestedWave:%s) ", iscd_lsc->suggestedWavelengths.GetRangeString_WaveGrid_50GHz().c_str());
+                snprintf(str, 1024, " (suggestedWave:%s) ", iscd_lsc->suggestedWavelengths.GetRangeString_WaveGrid_50GHz().c_str());
                 strcat(buf, str);
             }
         }
@@ -1738,7 +1738,7 @@ void TPath::LogDump()
             strcat(buf, " with feasible scheules: ");
         for (; itS != this->schedules.end(); itS++)
         {
-            snprintf(str, 256, " [start:%d-duration:%d] ", (int)(*itS)->GetStartTime(), (*itS)->GetDuration());
+            snprintf(str, 1024, " [start:%d-duration:%d] ", (int)(*itS)->GetStartTime(), (*itS)->GetDuration());
             strcat(buf, str);
         }
     }
@@ -2212,23 +2212,23 @@ void TEWG::ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<T
 void TEWG::LogDumpWithFlags()
 {
     char buf[102400]; //up to 100K
-    char str[256];
+    char str[1024];
     strcpy(buf, "TEWG Dump...\n");
     list<TDomain*>::iterator itd = this->tDomains.begin();
     for (; itd != this->tDomains.end(); itd++)
     {
         TDomain* td = (*itd);
-        snprintf(str, 256, "<domain id=%s>\n", td->GetName().c_str());
+        snprintf(str, 1024, "<domain id=%s>\n", td->GetName().c_str());
         strcat(buf, str);
         map<string, Node*, strcmpless>::iterator itn = td->GetNodes().begin();
         for (; itn != td->GetNodes().end(); itn++)
         {
             TNode* tn = (TNode*)(*itn).second;
-            snprintf(str, 128, "\t<node id=%s>\n", tn->GetName().c_str());
+            snprintf(str, 1024, "\t<node id=%s>\n", tn->GetName().c_str());
             strcat(buf, str);
             if (tn->GetWorkData())
             {
-                snprintf(str, 128, "\t\t<visited=%d> <filteroff=%d>\n",
+                snprintf(str, 1024, "\t\t<visited=%d> <filteroff=%d>\n",
                     TWDATA(tn)->visited, TWDATA(tn)->filteroff);
                 strcat(buf, str);
             }
@@ -2236,39 +2236,39 @@ void TEWG::LogDumpWithFlags()
             for (; itp != tn->GetPorts().end(); itp++)
             {
                 TPort* tp = (TPort*)(*itp).second;
-                snprintf(str, 128, "\t\t<port id=%s>\n", tp->GetName().c_str());
+                snprintf(str, 1024, "\t\t<port id=%s>\n", tp->GetName().c_str());
                 strcat(buf, str);
                 map<string, Link*, strcmpless>::iterator itl = tp->GetLinks().begin();
                 for (; itl != tp->GetLinks().end(); itl++) 
                 {
                     TLink* tl = (TLink*)(*itl).second;
-                    snprintf(str, 128, "\t\t\t<link id=%s>\n", tl->GetName().c_str());
+                    snprintf(str, 1024, "\t\t\t<link id=%s>\n", tl->GetName().c_str());
                     strcat(buf, str);
                     if (tl->GetWorkData())
                     {
-                        snprintf(str, 128, "\t\t\t\t<visited=%d> <filteroff=%d>\n",  
+                        snprintf(str, 1024, "\t\t\t\t<visited=%d> <filteroff=%d>\n",  
                             TWDATA(tl)->visited, TWDATA(tl)->filteroff);
                         strcat(buf, str);
                     }
                     if (tl->GetRemoteLink())
                     {
-                        snprintf(str, 128, "\t\t\t\t<remoteLinkId>domain=%s:node=%s:port=%s:link=%s</remoteLinkId>\n",  
+                        snprintf(str, 1024, "\t\t\t\t<remoteLinkId>domain=%s:node=%s:port=%s:link=%s</remoteLinkId>\n",  
                             tl->GetRemoteLink()->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
                             tl->GetRemoteLink()->GetPort()->GetNode()->GetName().c_str(),
                             tl->GetRemoteLink()->GetPort()->GetName().c_str(), 
                             tl->GetRemoteLink()->GetName().c_str());
                         strcat(buf, str);
                     }
-                    snprintf(str, 128, "\t\t\t</link>\n");
+                    snprintf(str, 1024, "\t\t\t</link>\n");
                     strcat(buf, str);
                 }
-                snprintf(str, 128, "\t\t</port>\n");
+                snprintf(str, 1024, "\t\t</port>\n");
                 strcat(buf, str);
             }
-            snprintf(str, 128, "\t</node>\n");
+            snprintf(str, 1024, "\t</node>\n");
             strcat(buf, str);
         }
-        snprintf(str, 128, "</domain>\n");
+        snprintf(str, 1024, "</domain>\n");
         strcat(buf, str);
     }    
     LOG_DEBUG(buf);

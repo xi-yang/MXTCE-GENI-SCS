@@ -1131,7 +1131,7 @@ DBLink* TEDB::LookupLinkByURN(string& urn)
 void TEDB::LogDump()
 {
     char buf[1024000]; //up to 1000K
-    char str[256];
+    char str[1024];
     
     int nD = dbDomains.size();
     int nN = dbNodes.size();
@@ -1141,51 +1141,51 @@ void TEDB::LogDump()
     for (; itd != this->dbDomains.end(); itd++)
     {
         DBDomain* td = (*itd);
-        snprintf(str, 256, "<domain id=%s>\n", td->GetName().c_str());
+        snprintf(str, 1024, "<domain id=%s>\n", td->GetName().c_str());
         strcat(buf, str);
         map<string, Node*, strcmpless>::iterator itn = td->GetNodes().begin();
         for (; itn != td->GetNodes().end(); itn++)
         {
             DBNode* tn = (DBNode*)(*itn).second;
-            snprintf(str, 256, "\t<node id=%s>\n", tn->GetName().c_str());
+            snprintf(str, 1024, "\t<node id=%s>\n", tn->GetName().c_str());
             strcat(buf, str);
             map<string, Port*, strcmpless>::iterator itp = tn->GetPorts().begin();
             for (; itp != tn->GetPorts().end(); itp++)
             {
                 DBPort* tp = (DBPort*)(*itp).second;
-                snprintf(str, 256, "\t\t<port id=%s>\n", tp->GetName().c_str());
+                snprintf(str, 1024, "\t\t<port id=%s>\n", tp->GetName().c_str());
                 strcat(buf, str);
                 map<string, Link*, strcmpless>::iterator itl = tp->GetLinks().begin();
                 for (; itl != tp->GetLinks().end(); itl++) 
                 {
                     DBLink* tl = (DBLink*)(*itl).second;
-                    snprintf(str, 256, "\t\t\t<link id=%s>\n", tl->GetName().c_str());
+                    snprintf(str, 1024, "\t\t\t<link id=%s>\n", tl->GetName().c_str());
                     strcat(buf, str);
                     if (tl->GetRemoteLink())
                     {
-                        snprintf(str, 256, "\t\t\t\t<remoteLinkId>domain=%s:node=%s:port=%s:link=%s</remoteLinkId>\n",  
+                        snprintf(str, 1024, "\t\t\t\t<remoteLinkId>domain=%s:node=%s:port=%s:link=%s</remoteLinkId>\n",  
                             tl->GetRemoteLink()->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
                             tl->GetRemoteLink()->GetPort()->GetNode()->GetName().c_str(),
                             tl->GetRemoteLink()->GetPort()->GetName().c_str(), 
                             tl->GetRemoteLink()->GetName().c_str());
                         strcat(buf, str);
                     }
-                    snprintf(str, 256, "\t\t\t\t<MaxBandwidth>%llu</MaxBandwidth>\n", tl->GetMaxBandwidth());
+                    snprintf(str, 1024, "\t\t\t\t<MaxBandwidth>%llu</MaxBandwidth>\n", tl->GetMaxBandwidth());
                     strcat(buf, str);
-                    snprintf(str, 256, "\t\t\t\t<MaxReservableBandwidth>%llu</MaxReservableBandwidth>\n", tl->GetMaxReservableBandwidth());
+                    snprintf(str, 1024, "\t\t\t\t<MaxReservableBandwidth>%llu</MaxReservableBandwidth>\n", tl->GetMaxReservableBandwidth());
                     strcat(buf, str);
-                    snprintf(str, 256, "\t\t\t\t<Granularity>%llu</Granularity>\n", tl->GetBandwidthGranularity());
+                    snprintf(str, 1024, "\t\t\t\t<Granularity>%llu</Granularity>\n", tl->GetBandwidthGranularity());
                     strcat(buf, str);
-                    snprintf(str, 256, "\t\t\t</link>\n");
+                    snprintf(str, 1024, "\t\t\t</link>\n");
                     strcat(buf, str);
                 }
-                snprintf(str, 256, "\t\t</port>\n");
+                snprintf(str, 1024, "\t\t</port>\n");
                 strcat(buf, str);
             }
-            snprintf(str, 256, "\t</node>\n");
+            snprintf(str, 1024, "\t</node>\n");
             strcat(buf, str);
         }
-        snprintf(str, 256, "</domain>\n");
+        snprintf(str, 1024, "</domain>\n");
         strcat(buf, str);
     }    
     LOG_DEBUG(buf);
