@@ -825,10 +825,17 @@ TDomain* TGraph::LookupDomainByURN(string& urn)
 
 TNode* TGraph::LookupNodeByURN(string& urn)
 {
+    list<TNode*>::iterator it = this->GetNodes().begin();
+    for (; it != this->GetNodes().end(); it++)
+    {
+        if ((*it)->GetName().compare(urn) == 0)
+            return (*it);
+    }
+
     TDomain* td = LookupDomainByURN(urn);
     if (td == NULL)
         return NULL;
-    string nodeName = (td->isPlainUrn() ? GetUrnField(urn, "node") : urn);
+    string nodeName = GetUrnField(urn, "node");
     map<string, Node*, strcmpless>::iterator itn = td->GetNodes().find(nodeName);
     if (itn == td->GetNodes().end())
         return NULL;
@@ -838,10 +845,17 @@ TNode* TGraph::LookupNodeByURN(string& urn)
 
 TPort* TGraph::LookupPortByURN(string& urn)
 {
+    list<TPort*>::iterator it = this->GetPorts().begin();
+    for (; it != this->GetPorts().end(); it++)
+    {
+        if ((*it)->GetName().compare(urn) == 0)
+            return (*it);
+    }
+    
     TNode* tn = LookupNodeByURN(urn);
     if (tn == NULL)
         return NULL;
-    string portName = (tn->GetDomain()->isPlainUrn() ? GetUrnField(urn, "port") : urn);
+    string portName = GetUrnField(urn, "port");
     map<string, Port*, strcmpless>::iterator itp = tn->GetPorts().find(portName);
     if (itp == tn->GetPorts().end())
         return NULL;
@@ -851,6 +865,13 @@ TPort* TGraph::LookupPortByURN(string& urn)
 
 TLink* TGraph::LookupLinkByURN(string& urn)
 {
+    list<TLink*>::iterator it = this->GetLinks().begin();
+    for (; it != this->GetLinks().end(); it++)
+    {
+        if ((*it)->GetName().compare(urn) == 0)
+            return (*it);
+    }
+
     TPort* tp = LookupPortByURN(urn);
     if (tp == NULL)
         return NULL;
