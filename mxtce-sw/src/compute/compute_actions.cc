@@ -254,12 +254,30 @@ void Action_ComputeKSP::Process()
             throw ComputeThreadException((char*)"Action_ProcessRequestTopology_MP2P::Process() No USER_CONSTRAINT_LIST data from compute worker.");
         this->_userConstraint = userConsList->front();
     }
+    TLink* srcLink = tewg->LookupLinkByURN(this->_userConstraint->getSrcendpoint());
+    TPort* srcPort = tewg->LookupPortByURN(this->_userConstraint->getSrcendpoint());
     TNode* srcNode = tewg->LookupNodeByURN(this->_userConstraint->getSrcendpoint());
     if (srcNode == NULL)
-        throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown source URN!");
+    {
+        if (srcPort != NULL)
+            srcNode = (TNode*)srcPort->GetNode();
+        else if (srcLink != NULL)
+            srcNode= (TNode*)srcLink->GetPort()->GetNode();
+        else
+            throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown source URN!");
+    }
+    TLink* dstLink = tewg->LookupLinkByURN(this->_userConstraint->getDestendpoint());
+    TPort* dstPort = tewg->LookupPortByURN(this->_userConstraint->getDestendpoint());
     TNode* dstNode = tewg->LookupNodeByURN(this->_userConstraint->getDestendpoint());
     if (dstNode == NULL)
-        throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown destination URN!");
+    {
+        if (dstPort != NULL)
+            dstNode= (TNode*)dstPort->GetNode();
+        else if (dstLink != NULL)
+            dstNode= (TNode*)dstLink->GetPort()->GetNode();
+        else
+            throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown destination URN!");
+    }
     u_int64_t bw = (this->_bandwidth == 0 ? (u_int64_t)this->_userConstraint->getBandwidth() : this->_bandwidth);
     //if (this->_userConstraint->getCoschedreq()&& this->_userConstraint->getCoschedreq()->getMinbandwidth() > bw)
     //    bw = this->_userConstraint->getCoschedreq()->getMinbandwidth();

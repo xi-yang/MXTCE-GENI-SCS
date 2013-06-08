@@ -823,7 +823,6 @@ TDomain* TGraph::LookupDomainByURN(string& urn)
     return LookupDomainByName(domainName);
 }
 
-
 TNode* TGraph::LookupNodeByURN(string& urn)
 {
     TDomain* td = LookupDomainByURN(urn);
@@ -831,14 +830,8 @@ TNode* TGraph::LookupNodeByURN(string& urn)
         return NULL;
     string nodeName = (td->isPlainUrn() ? GetUrnField(urn, "node") : urn);
     map<string, Node*, strcmpless>::iterator itn = td->GetNodes().find(nodeName);
-    if (itn == td->GetNodes().end()) 
-    {
-        TPort* tp = LookupPortByURN(urn);
-        if (tp == NULL)
-            return NULL;
-        else
-            return (TNode*)tp->GetNode();
-    }
+    if (itn == td->GetNodes().end())
+        return NULL;
     return (TNode*)(*itn).second;
 }
 
@@ -851,13 +844,7 @@ TPort* TGraph::LookupPortByURN(string& urn)
     string portName = (tn->GetDomain()->isPlainUrn() ? GetUrnField(urn, "port") : urn);
     map<string, Port*, strcmpless>::iterator itp = tn->GetPorts().find(portName);
     if (itp == tn->GetPorts().end())
-    {
-        TLink* tl = LookupLinkByURN(urn);
-        if (tl == NULL)
-            return NULL;
-        else
-            return (TPort*)tl->GetPort();
-    }
+        return NULL;
     return (TPort*)(*itp).second;
 }
 
