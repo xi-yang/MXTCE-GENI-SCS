@@ -946,12 +946,31 @@ void Action_ComputeSchedulesWithKSP::Process()
     if (tewg == NULL)
         throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() No Ordered Aggregate Time Series available for computation!");
 
-    TNode* srcNode = tewg->LookupNodeByURN(_userConstraint->getSrcendpoint());
+    TLink* srcLink = tewg->LookupLinkByURN(this->_userConstraint->getSrcendpoint());
+    TPort* srcPort = tewg->LookupPortByURN(this->_userConstraint->getSrcendpoint());
+    TNode* srcNode = tewg->LookupNodeByURN(this->_userConstraint->getSrcendpoint());
     if (srcNode == NULL)
-        throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() unknown source URN!");
-    TNode* dstNode = tewg->LookupNodeByURN(_userConstraint->getDestendpoint());
+    {
+        if (srcPort != NULL)
+            srcNode = (TNode*)srcPort->GetNode();
+        else if (srcLink != NULL)
+            srcNode= (TNode*)srcLink->GetPort()->GetNode();
+        else
+            throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() unknown source URN!");
+    }
+    TLink* dstLink = tewg->LookupLinkByURN(this->_userConstraint->getDestendpoint());
+    TPort* dstPort = tewg->LookupPortByURN(this->_userConstraint->getDestendpoint());
+    TNode* dstNode = tewg->LookupNodeByURN(this->_userConstraint->getDestendpoint());
     if (dstNode == NULL)
-        throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() unknown destination URN!");
+    {
+        if (dstPort != NULL)
+            dstNode= (TNode*)dstPort->GetNode();
+        else if (dstLink != NULL)
+            dstNode= (TNode*)dstLink->GetPort()->GetNode();
+        else
+            throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() unknown destination URN!");
+    }
+        
     u_int64_t bw = (this->GetReqBandwidth() == 0 ? _userConstraint->getBandwidth():this->GetReqBandwidth());
     u_int32_t duration = (this->GetReqVolume() == 0 ? _userConstraint->getEndtime()-_userConstraint->getStarttime():this->GetReqVolume()/this->GetReqBandwidth());
     if (_userConstraint->getCoschedreq()&& _userConstraint->getCoschedreq()->getMinbandwidth() > bw)
