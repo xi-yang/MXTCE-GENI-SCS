@@ -1116,6 +1116,13 @@ DBPort* TEDB::LookupPortByURN(string& urn)
 
 DBLink* TEDB::LookupLinkByURN(string& urn)
 {
+    list<DBLink*>::iterator it = this->dbLinks.begin();
+    for (; it != this->dbLinks.end(); it++)
+    {
+        if ((*it)->GetName().compare(urn) == 0)
+            return (*it);
+    }
+
     DBPort* dbp = LookupPortByURN(urn);
     if (dbp == NULL)
         return NULL;
