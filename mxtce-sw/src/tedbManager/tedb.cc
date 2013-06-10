@@ -1119,7 +1119,7 @@ DBLink* TEDB::LookupLinkByURN(string& urn)
     DBDomain* dbd = LookupDomainByURN(urn);
     if (dbd == NULL)
         return NULL;
-    if (dbd->isPlainUrn())
+    if (!dbd->isPlainUrn())
     {
         map<string, Node*, strcmpless>::iterator itn = dbd->GetNodes().begin();
         for (; itn != dbd->GetNodes().end(); itn++) {
