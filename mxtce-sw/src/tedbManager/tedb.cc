@@ -1116,17 +1116,24 @@ DBPort* TEDB::LookupPortByURN(string& urn)
 
 DBLink* TEDB::LookupLinkByURN(string& urn)
 {
-    list<DBLink*>::iterator it = this->dbLinks.begin();
-    for (; it != this->dbLinks.end(); it++)
+    DBDomain* dbd = LookupDomainByURN(urn);
+    if (dbd->isPlainUrn())
     {
-        if ((*it)->GetName().compare(urn) == 0)
-            return (*it);
-    }
-
+        map<string, Node*, strcmpless>::iterator itn = dbd->GetNodes().begin();
+        for (; itn != dbd->GetNodes().end(); itn++) {
+            map<string, Port*, strcmpless>::iterator itp = (*itn).second->GetPorts().begin();
+            for (; itp != (*itn).second->GetPorts().end(); itp++) {
+                map<string, Link*, strcmpless>::iterator itl = (*itp).second->GetLinks().find(urn);
+                if (itl != (*itp).second->GetLinks().end())
+                    return (DBLink*)(*itl).second;
+            }
+        }
+    }    
+    
     DBPort* dbp = LookupPortByURN(urn);
     if (dbp == NULL)
         return NULL;
-    string linkName = (dbp->GetNode()->GetDomain()->isPlainUrn() ? GetUrnField(urn, "link") : urn);
+    string linkName = GetUrnField(urn, "link");
     map<string, Link*, strcmpless>::iterator itl = dbp->GetLinks().find(linkName);
     if (itl == dbp->GetLinks().end())
         return NULL;
