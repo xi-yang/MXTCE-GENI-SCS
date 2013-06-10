@@ -1117,6 +1117,8 @@ DBPort* TEDB::LookupPortByURN(string& urn)
 DBLink* TEDB::LookupLinkByURN(string& urn)
 {
     DBDomain* dbd = LookupDomainByURN(urn);
+    if (dbd == NULL)
+        return NULL;
     if (dbd->isPlainUrn())
     {
         map<string, Node*, strcmpless>::iterator itn = dbd->GetNodes().begin();
