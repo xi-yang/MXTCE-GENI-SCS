@@ -1370,7 +1370,8 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             list<TLink*>::iterator itL2 = itL;
             itL2++;
             while (itL2 != path->GetPath().end() && 
-                ((*itL2)->GetName().find("node=*") != string::npos || (*itL2)->GetName().find("port=*") != string::npos))
+                ((*itL2)->GetName().find("node=*") != string::npos || (*itL2)->GetName().find("port=*") != string::npos
+                    ||  (*itL2)->GetName().find("-*:") != string::npos) ||  (*itL2)->GetName().find(":*-") != string::npos)
             {
                 itL2 = path->GetPath().erase(itL2);
             }
@@ -1394,6 +1395,14 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             if (iErase != string::npos)
             {
                 linkName.erase(linkName.begin()+iErase, linkName.end());
+            } 
+            else 
+            {
+                iErase = linkName.find(":**");
+                if (iErase != string::npos)
+                {
+                    linkName.erase(linkName.begin()+iErase, linkName.end());
+                } 
             }
             // TODO: convert DCN URN into GENI URN
             snprintf(str, 1024, "<link id=\"%s\">", (tl->GetPort()->GetNode()->GetDomain()->isPlainUrn() ? ConvertLinkUrn_Dnc2Geni(linkName).c_str() : ConvertLinkUrn_Dnc2GeniExt(linkName).c_str()));
