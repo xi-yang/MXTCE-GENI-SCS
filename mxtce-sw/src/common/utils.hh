@@ -540,6 +540,10 @@ string GetUrnField(string& urn, const char* field);
 
 string ConvertLinkUrn_Dnc2Geni(string& urn);
 
+string GetUrnFieldExt(string& urn, const char* field);
+
+string ConvertLinkUrn_Dnc2GeniExt(string& urn);
+
 void ParseFQUrn(string& urn, string& domain, string& node, string& port, string& link);
 
 void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, string& link);

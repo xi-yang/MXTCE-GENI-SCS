@@ -308,8 +308,8 @@ u_int64_t StringToBandwidth(string& strBandwidth, u_int64_t defaultFactor)
 string GetUrnField(string& urn, const char* field) 
 {
     string name = "";
-    char str[1024];
-    snprintf(str, 1024, "%s=", field);
+    char str[128];
+    snprintf(str, 128, "%s=", field);
     char* ptr = (char*)strstr(urn.c_str(), str);
     if (ptr == NULL)
     {
@@ -339,11 +339,74 @@ string GetUrnField(string& urn, const char* field)
     return name;
 }
 
+string GetUrnFieldExt(string& urn, const char* field) 
+{
+    string name = "";
+    char str[128];
+    char str2[128];
+    snprintf(str, 128, "%s=", field);
+    char* ptr = (char*)strstr(urn.c_str(), str);
+    if (ptr == NULL)
+        return name;
+    char* ptr2 = NULL;
+    int offset = 0;
+    if (strncmp(field, "domain", 4) == 0 || strncmp(field, "aggregate", 4) == 0)
+    {
+        ptr2 = strstr(urn.c_str(), ":node=");
+    }
+    else if (strncmp(field, "node", 4) == 0) 
+    {
+        ptr2 = strstr(urn.c_str(), ":port=");
+    }
+    else if (strncmp(field, "port", 4) == 0)
+    {
+        ptr2 = strstr(urn.c_str(), ":link=");
+    }
+    else if (strncmp(field, "link", 4) == 0)
+    {
+        ptr2 = (char*)urn.c_str() + urn.length();
+    }
+    else
+        return name;
+    
+    ptr += (strlen(field)+1);
+    if (ptr2 == NULL)
+        name = (const char*)ptr;
+    else 
+    {
+        strncpy(str, ptr, ptr2-ptr);
+        str[ptr2-ptr] = 0;
+        name = (const char*)str;
+    }
+    return name;
+}
+
 string ConvertLinkUrn_Dnc2Geni(string& urn) 
 {
     string domain, node, port, link;
     string geniUrn = "urn:publicid:IDN+";
     ParseFQUrn(urn, domain, node, port, link);
+    geniUrn += domain;
+    geniUrn += "+interface+";
+    geniUrn += node;
+    geniUrn += ":";
+    geniUrn += port;
+    if (!link.empty())
+    {
+        geniUrn += ":";
+        geniUrn += link;
+    }
+    return geniUrn;
+}
+
+string ConvertLinkUrn_Dnc2GeniExt(string& urn) 
+{
+    string domain, node, port, link;
+    domain = GetUrnFieldExt(urn, "domain");
+    node = GetUrnFieldExt(urn, "node");
+    port = GetUrnFieldExt(urn, "port");
+    link = GetUrnFieldExt(urn, "link");
+    string geniUrn = "urn:publicid:IDN+";
     geniUrn += domain;
     geniUrn += "+interface+";
     geniUrn += node;

@@ -1357,7 +1357,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 itL = path->GetPath().erase(itL);
                 continue;
             }
-            string domainId = GetUrnField(tl->GetName(), "domain");
+            string domainId = (tl->GetPort()->GetNode()->GetDomain()->isPlainUrn() ? GetUrnField(tl->GetName(), "domain") : GetUrnFieldExt(tl->GetName(), "domain"));
             string aggregateUrn = "";
             if (!domainId.empty() && GeniAdRSpec::aggregateUrnMap.find(domainId) != GeniAdRSpec::aggregateUrnMap.end())
             {
@@ -1396,7 +1396,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 linkName.erase(linkName.begin()+iErase, linkName.end());
             }
             // TODO: convert DCN URN into GENI URN
-            snprintf(str, 1024, "<link id=\"%s\">", ConvertLinkUrn_Dnc2Geni(linkName).c_str());
+            snprintf(str, 1024, "<link id=\"%s\">", (tl->GetPort()->GetNode()->GetDomain()->isPlainUrn() ? ConvertLinkUrn_Dnc2Geni(linkName).c_str() : ConvertLinkUrn_Dnc2GeniExt(linkName).c_str()));
             strcat(buf, str);
             snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", tl->GetMetric());
             strcat(buf, str);
