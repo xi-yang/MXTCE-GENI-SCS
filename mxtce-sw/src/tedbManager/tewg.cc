@@ -921,13 +921,16 @@ void TGraph::LoadPath(list<TLink*> path)
                 snprintf(buf, 1024, "TGraph::LoadPath raises Exception: duplicate link '%s' in path", urn.c_str());
                 throw TEDBException(buf);
             }
-            link->SetName(linkName);
         }
         TDomain* domain = LookupDomainByName(domainName);
         if (domain == NULL)
         {
             domain = new TDomain(0, domainName);
             AddDomain(domain);
+        }
+        if (domain->isPlainUrn())
+        {
+            link->SetName(linkName);
         }
         TNode* node = LookupNodeByURN(urn);
         if (node == NULL)
