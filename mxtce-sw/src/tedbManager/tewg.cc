@@ -892,9 +892,6 @@ void TGraph::LoadPath(list<TLink*> path)
     for (itL = path.begin(); itL != path.end(); itL++)
     {
         TLink* link = *itL;
-        TPort* port = (link->GetPort() != NULL ? (TPort*)link->GetPort() : NULL);
-        TNode* node = (port != NULL && port->GetNode() != NULL ? (TNode*)port->GetNode() : NULL);
-        TDomain* domain = (node != NULL && node->GetDomain() != NULL ? (TDomain*)node->GetDomain() : NULL);
         string urn = link->GetName();
         if (urn.find("urn") == string::npos)
         {
@@ -913,35 +910,41 @@ void TGraph::LoadPath(list<TLink*> path)
         }
         else
         {
-            ParseFQUrn(urn, domainName, nodeName, portName, linkName);
-            if (domainName.length() == 0 || nodeName.length() == 0 || portName.length() == 0 || linkName.length() == 0)
+            if (link->GetPort() != NULL && link->GetPort()->GetNode() != NULL 
+                    && link->GetPort()->GetNode()->GetDomain() != NULL
+                    && link->GetPort()->GetNode()->GetDomain()->isPlainUrn())
             {
-                snprintf(buf, 1024, "TGraph::LoadPath raises Exception: invalid link urn '%s'", urn.c_str());
-                throw TEDBException(buf);
+                domainName = urn;
+                nodeName = urn;
+                portName = urn;
+                linkName = urn;
             }
-            if (LookupLinkByURN(urn) != NULL || LookupPortByURN(urn) != NULL)
+            else 
             {
-                snprintf(buf, 1024, "TGraph::LoadPath raises Exception: duplicate link '%s' in path", urn.c_str());
-                throw TEDBException(buf);
-            }            
-            if (domain != NULL && domain->isPlainUrn())
-            {
-                link->SetName(linkName);
+                ParseFQUrn(urn, domainName, nodeName, portName, linkName);
+                if (domainName.length() == 0 || nodeName.length() == 0 || portName.length() == 0 || linkName.length() == 0)
+                {
+                    snprintf(buf, 1024, "TGraph::LoadPath raises Exception: invalid link urn '%s'", urn.c_str());
+                    throw TEDBException(buf);
+                }
+                if (LookupLinkByURN(urn) != NULL || LookupPortByURN(urn) != NULL)
+                {
+                    snprintf(buf, 1024, "TGraph::LoadPath raises Exception: duplicate link '%s' in path", urn.c_str());
+                    throw TEDBException(buf);
+                }
             }
+            link->SetName(linkName);
         }
-        
-        TDomain *loadedDomain = LookupDomainByName(domainName);
-        if (loadedDomain)
+        TDomain* domain = LookupDomainByName(domainName);
+        if (domain == NULL)
         {
-            if (domain == NULL)
-                domain = new TDomain(0, domainName);
+            domain = new TDomain(0, domainName);
             AddDomain(domain);
         }
-        TNode* lodaedNode = LookupNodeByURN(urn);
-        if (lodaedNode == NULL)
+        TNode* node = LookupNodeByURN(urn);
+        if (node == NULL)
         {
-            if (node == NULL)
-                node = new TNode(0, nodeName);
+            node = new TNode(0, nodeName);
             AddNode(domain, node);
             if (lastLink != NULL)
             {
@@ -951,8 +954,7 @@ void TGraph::LoadPath(list<TLink*> path)
                 link->SetRemoteLink(lastLink);
             }
         }
-        if (port == NULL)
-            port = new TPort(link->GetId(), portName);
+        TPort* port = new TPort(link->GetId(), portName);
         AddPort(node, port);
         AddLink(port, link);
         lastLink = link;
