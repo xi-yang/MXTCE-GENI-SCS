@@ -400,22 +400,11 @@ string ConvertLinkUrn_Dnc2Geni(string& urn)
 
 string ConvertLinkUrn_Dnc2GeniExt(string& urn) 
 {
-    string domain, node, port, link;
-    domain = GetUrnFieldExt(urn, "domain");
-    node = GetUrnFieldExt(urn, "node");
-    port = GetUrnFieldExt(urn, "port");
-    link = GetUrnFieldExt(urn, "link");
-    string geniUrn = "urn:publicid:IDN+";
-    geniUrn += domain;
-    geniUrn += "+interface+";
-    geniUrn += node;
-    geniUrn += ":";
-    geniUrn += port;
-    if (!link.empty())
-    {
-        geniUrn += ":";
-        geniUrn += link;
-    }
+    string link = GetUrnFieldExt(urn, "link");
+    if (strstr(link.c_str(), "urn:publicid:IDN+") != NULL)
+        return link;
+    string geniUrn = "urn:publicid:IDN+interface+";
+    geniUrn += link;
     return geniUrn;
 }
 
