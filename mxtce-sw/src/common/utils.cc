@@ -351,15 +351,15 @@ string GetUrnFieldExt(string& urn, const char* field)
     char* ptr2 = NULL;
     if (strncmp(field, "domain", 4) == 0 || strncmp(field, "aggregate", 4) == 0)
     {
-        ptr2 = strstr(urn.c_str(), ":node=");
+        ptr2 = strstr((char*)urn.c_str(), ":node=");
     }
     else if (strncmp(field, "node", 4) == 0) 
     {
-        ptr2 = strstr(urn.c_str(), ":port=");
+        ptr2 = strstr((char*)urn.c_str(), ":port=");
     }
     else if (strncmp(field, "port", 4) == 0)
     {
-        ptr2 = strstr(urn.c_str(), ":link=");
+        ptr2 = strstr((char*)urn.c_str(), ":link=");
     }
     else if (strncmp(field, "link", 4) == 0)
     {
