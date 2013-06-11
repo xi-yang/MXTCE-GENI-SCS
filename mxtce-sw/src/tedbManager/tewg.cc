@@ -921,7 +921,8 @@ void TGraph::LoadPath(list<TLink*> path)
                 snprintf(buf, 1024, "TGraph::LoadPath raises Exception: duplicate link '%s' in path", urn.c_str());
                 throw TEDBException(buf);
             }            
-            if (link->GetPort() && link->GetPort()->GetNode && link->GetPort()->GetNode()->GetDomain() 
+            if (link->GetPort() != NULL && link->GetPort()->GetNode() != NULL 
+                    && link->GetPort()->GetNode()->GetDomain() != NULL
                     && link->GetPort()->GetNode()->GetDomain()->isPlainUrn())
             {
                 link->SetName(linkName);
