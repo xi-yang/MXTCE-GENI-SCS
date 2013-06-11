@@ -912,7 +912,7 @@ void TGraph::LoadPath(list<TLink*> path)
         {
             if (link->GetPort() != NULL && link->GetPort()->GetNode() != NULL 
                     && link->GetPort()->GetNode()->GetDomain() != NULL
-                    && link->GetPort()->GetNode()->GetDomain()->isPlainUrn())
+                    && !link->GetPort()->GetNode()->GetDomain()->isPlainUrn())
             {
                 domainName = urn;
                 nodeName = urn;
