@@ -939,6 +939,10 @@ void TGraph::LoadPath(list<TLink*> path)
         if (domain == NULL)
         {
             domain = new TDomain(0, domainName);
+            if (link->GetPort() != NULL && link->GetPort()->GetNode() != NULL 
+                    && link->GetPort()->GetNode()->GetDomain() != NULL
+                    && !link->GetPort()->GetNode()->GetDomain()->isPlainUrn())
+                domain->setPlainUrn(false);
             AddDomain(domain);
         }
         TNode* node = LookupNodeByURN(urn);
