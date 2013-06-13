@@ -42,7 +42,7 @@ TDomain* TDomain::Clone(bool newSubLevels)
 {
     TDomain* td = new TDomain(this->_id, this->name, this->address);
     td->disabled = this->disabled;
-    td->plainUrn = this->plainUrn;
+    td->nestedUrn = this->nestedUrn;
     map<string, Node*, strcmpless>::iterator itn = this->nodes.begin();
     for (; itn != this->nodes.end(); itn++)
         td->nodes[(*itn).first] = (newSubLevels ? ((TNode*)(*itn).second)->Clone(newSubLevels) : (*itn).second);
@@ -875,7 +875,7 @@ TLink* TGraph::LookupLinkByURN(string& urn)
     TPort* tp = LookupPortByURN(urn);
     if (tp == NULL)
         return NULL;
-    string linkName = (tp->GetNode()->GetDomain()->isPlainUrn() ? GetUrnField(urn, "link") : urn);
+    string linkName = (tp->GetNode()->GetDomain()->isNestedUrn() ? GetUrnField(urn, "link") : urn);
     map<string, Link*, strcmpless>::iterator itl = tp->GetLinks().find(linkName);
     if (itl == tp->GetLinks().end())
         return NULL;
@@ -912,7 +912,7 @@ void TGraph::LoadPath(list<TLink*> path)
         {
             if (link->GetPort() != NULL && link->GetPort()->GetNode() != NULL 
                     && link->GetPort()->GetNode()->GetDomain() != NULL
-                    && !link->GetPort()->GetNode()->GetDomain()->isPlainUrn())
+                    && !link->GetPort()->GetNode()->GetDomain()->isNestedUrn())
             {
                 domainName = urn;
                 nodeName = urn;
@@ -941,8 +941,8 @@ void TGraph::LoadPath(list<TLink*> path)
             domain = new TDomain(0, domainName);
             if (link->GetPort() != NULL && link->GetPort()->GetNode() != NULL 
                     && link->GetPort()->GetNode()->GetDomain() != NULL
-                    && !link->GetPort()->GetNode()->GetDomain()->isPlainUrn())
-                domain->setPlainUrn(false);
+                    && !link->GetPort()->GetNode()->GetDomain()->isNestedUrn())
+                domain->setNestedUrn(false);
             AddDomain(domain);
         }
         TNode* node = LookupNodeByURN(urn);
