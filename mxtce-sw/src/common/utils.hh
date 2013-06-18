@@ -529,6 +529,8 @@ extern "C"
     time_t get_mtime(const char *path);
 }
 
+const char* getVersionString();
+
 void SplitString(string& str, vector<string>& tokens, const string& delim=" ", bool trimEmpty=false);
 
 void StripXmlString(string& str, xmlChar* val);
