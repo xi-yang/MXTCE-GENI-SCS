@@ -40,6 +40,7 @@
 const char* getVersionString()
 {
     const char* versionString = "$Revision$ - $Date$";
+    return versionString;
 }
 
 int readn (int fd, char *ptr, int nbytes)
