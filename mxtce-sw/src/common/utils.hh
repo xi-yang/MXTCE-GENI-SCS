@@ -365,8 +365,8 @@ public:
             int low = this->LowestTag();
             int high = this->HighestTag();
             int tag = RandomTag(low, high);
-            if (tag%2 == 0)
-                return RandomTag(tag, high);
+            if (tag%2 == 0 && tag < high)
+                return RandomTag(tag+1, high);
             else
                 return RandomTag(low, tag);                
         }
