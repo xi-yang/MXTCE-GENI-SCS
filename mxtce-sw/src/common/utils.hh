@@ -343,7 +343,7 @@ public:
             int tag;
             if (start%2 == 0)
             {
-                for (tag = start+1; tag < numBits; tag++)
+                for (tag = start; tag < numBits; tag++)
                 {
                     if (HasTag(tag))
                         return tag;
