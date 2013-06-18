@@ -37,6 +37,7 @@
 #include "rspec.hh"
 #include "workflow.hh"
 #include <map>
+#include <algorithm>
 
 Lock XMLRPC_APIServer::xmlrpcApiLock; // lock to assure only one API call is served at a time
 
@@ -198,7 +199,7 @@ void XMLRPC_GetVersionMethod::execute(xmlrpc_c::paramList const& paramList, xmlr
     map<string, xmlrpc_c::value> valueMap;
     // compose fixed 'value' struct
     string verStr = getVersionString();
-    std::replace( verStr.begin(), verStr.end(), '$', ' ');
+    replace( verStr.begin(), verStr.end(), '$', ' ');
     valueMap["code_tag"] = xmlrpc_c::value_string(verStr.c_str());
     valueMap["interface"] = xmlrpc_c::value_string("scs");
     char hostname[32];
