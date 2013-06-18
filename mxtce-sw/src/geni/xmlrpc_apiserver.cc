@@ -197,7 +197,9 @@ void XMLRPC_GetVersionMethod::execute(xmlrpc_c::paramList const& paramList, xmlr
     retMap["code"] = xmlrpc_c::value_struct(codeMap);
     map<string, xmlrpc_c::value> valueMap;
     // compose fixed 'value' struct
-    valueMap["code_tag"] = xmlrpc_c::value_string(getVersionString());
+    string verStr = getVersionString();
+    std::replace( verStr.begin(), verStr.end(), '$', ' ');
+    valueMap["code_tag"] = xmlrpc_c::value_string(verStr.c_str());
     valueMap["interface"] = xmlrpc_c::value_string("scs");
     char hostname[32];
     gethostname(hostname, sizeof(hostname));
