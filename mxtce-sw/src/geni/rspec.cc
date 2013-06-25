@@ -703,18 +703,19 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                         aDomain->AddNode(aNode);
                         if (!aDomain->isNestedUrn()) // special case for ExoGENI
                         {
-                            string trueShortName = GetUrnField(aNode->GetName(), "node");
-                            if (trueShortName.compare("*") == 0)
+                            string trueShortDomainName = GetUrnField(aNode->GetName(), "domain");
+                            string trueShortNodeName = GetUrnField(aNode->GetName(), "node");
+                            if (trueShortNodeName.compare("*") == 0)
                                 continue;
-                            sprintf(buf, "urn:publicid:IDN+%s+stitchport+%s:*", domainId.c_str(), trueShortName.c_str());
+                            sprintf(buf, "urn:publicid:IDN+%s+stitchport+%s:*", trueShortDomainName.c_str(), trueShortNodeName.c_str());
                             string aPortId = buf;
-                            Port aPort = new Port(0, aPortId);
+                            Port* aPort = new Port(0, aPortId);
                             aNode->AddPort(aPort);
                             aPort->SetMaxBandwidth(100000000000ULL);
                             aPort->SetMaxReservableBandwidth(100000000000ULL);
                             aPort->SetMinReservableBandwidth(0);
                             aPort->SetBandwidthGranularity(0);
-                            sprintf(buf, "urn:publicid:IDN+%s+interface+%s:*:*", domainId.c_str(), trueShortName.c_str());
+                            sprintf(buf, "urn:publicid:IDN+%s+interface+%s:*:*", trueShortDomainName.c_str(), trueShortNodeName.c_str());
                             string aLinkId = buf;
                             RLink* aLink = new RLink(aLinkId);
                             aLink->SetMetric(1);
