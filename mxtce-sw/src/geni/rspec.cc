@@ -1377,7 +1377,8 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         {
             TLink *tl = *itL;
             // trim artificial hops so i == path->GetPath().size() means last hop 
-            if (tl->GetName().find("node=*") != string::npos || tl->GetName().find("port=*") != string::npos || tl->GetName().find("interface+*")!= string::npos)
+            if (tl->GetName().find("node=*") != string::npos || tl->GetName().find("port=*") != string::npos 
+                    || tl->GetName().find("interface+*")!= string::npos || tl->GetName().find(":*:")!= string::npos)
             {
                 itL = path->GetPath().erase(itL);
                 continue;
