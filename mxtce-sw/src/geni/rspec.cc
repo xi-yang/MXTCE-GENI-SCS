@@ -418,7 +418,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             arPort->AddLink(arLink);
             
             aLink->SetRemoteLinkName(arLink->GetName());
-            arLink->SetRemoteLinkName(aLink->GetName());
+            arLink->SetRemoteLinkName(aLink->GetName());            
         }
     }
 
@@ -701,6 +701,30 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                     if (aNode != NULL)
                     {
                         aDomain->AddNode(aNode);
+                        if (!aDomain->isNestedUrn()) // special case for ExoGENI
+                        {
+                            string trueShortName = GetUrnField(aNode->GetName(), "node");
+                            if (trueShortName.compare("*") == 0)
+                                continue;
+                            sprintf(buf, "urn:publicid:IDN+%s+stitchport+%s:*", domainId.c_str(), trueShortName.c_str());
+                            string aPortId = buf;
+                            Port aPort = new Port(0, aPortId);
+                            aNode->AddPort(aPort);
+                            aPort->SetMaxBandwidth(100000000000ULL);
+                            aPort->SetMaxReservableBandwidth(100000000000ULL);
+                            aPort->SetMinReservableBandwidth(0);
+                            aPort->SetBandwidthGranularity(0);
+                            sprintf(buf, "urn:publicid:IDN+%s+interface+%s:*:*", domainId.c_str(), trueShortName.c_str());
+                            string aLinkId = buf;
+                            RLink* aLink = new RLink(aLinkId);
+                            aLink->SetMetric(1);
+                            aLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
+                            aLink->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
+                            aLink->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
+                            aLink->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
+                            aLink->SetSwcapXmlString(defaultSwcapStr);
+                            aPort->AddLink(aLink);
+                        }
                     }
                 }
             }
