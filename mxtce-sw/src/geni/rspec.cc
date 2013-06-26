@@ -701,12 +701,20 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                     if (aNode != NULL)
                     {
                         aDomain->AddNode(aNode);
-                        if (!aDomain->isNestedUrn()) // special case for ExoGENI
+                        if (!aDomain->isNestedUrn()) // special case for ExoGENI (vmsite)
                         {
                             string trueShortDomainName = GetUrnField(aNode->GetName(), "domain");
                             string trueShortNodeName = GetUrnField(aNode->GetName(), "node");
                             if (trueShortNodeName.compare("*") == 0)
                                 continue;
+                            if (GeniAdRSpec::aggregateUrnMap.find(trueShortDomainName) != GeniAdRSpec::aggregateUrnMap.end()) 
+                            {
+                                GeniAdRSpec::aggregateUrnMap[trueShortDomainName] = aggrUrn;
+                            }
+                            if (GeniAdRSpec::aggregateUrlMap.find(trueShortDomainName) != GeniAdRSpec::aggregateUrlMap.end()) 
+                            {
+                                GeniAdRSpec::aggregateUrlMap[trueShortDomainName] = urls.back();
+                            }
                             sprintf(buf, "urn:publicid:IDN+%s+stitchport+%s:*", trueShortDomainName.c_str(), trueShortNodeName.c_str());
                             string aPortId = buf;
                             Port* aPort = new Port(0, aPortId);
