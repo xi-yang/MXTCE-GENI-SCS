@@ -86,7 +86,7 @@ void WorkflowData::LoadPath(TPath* tp)
     {
         TLink* L = *itp;
         Dependency* D = new Dependency();
-        string hopUrn = ConvertLinkUrn_Dnc2Geni(L->GetName());
+        string hopUrn = (L->GetPort()->GetNode()->GetDomain()->isNestedUrn() ? ConvertLinkUrn_Dnc2Geni(L->GetName()) : ConvertLinkUrn_Dnc2GeniExt(L->GetName()));
         D->SetHopUrn(hopUrn);
         string domainId = GetUrnField(L->GetName(), "domain");
         if (GeniAdRSpec::aggregateUrnMap.find(domainId) != GeniAdRSpec::aggregateUrnMap.end())
