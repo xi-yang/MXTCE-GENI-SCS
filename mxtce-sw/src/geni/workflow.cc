@@ -116,10 +116,8 @@ void WorkflowData::ComputeDependency()
         if (itD2 != dependencies.end())
         {
             Dependency* D2 = *itD2;
-            string domain1 = GetUrnField(D1->GetHopUrn(), "domain");
-            string domain2 = GetUrnField(D2->GetHopUrn(), "domain");
             // skip same domain/aggregate dependency
-            if (domain1.compare(domain2) == 0)
+            if (D1->GetAggregateUrn().compare(D2->GetAggregateUrn()) == 0)
                 continue;
             TLink* L2 = (TLink*)D2->GetResourceRef();
             // D1 depends on D2
@@ -169,9 +167,7 @@ void WorkflowData::ComputeDependency()
             if (itDx == itD1)
                 continue;
             Dependency* Dx = *itDx;
-            string domain1 = GetUrnField(D1->GetHopUrn(), "domain");
-            string domain2 = GetUrnField(Dx->GetHopUrn(), "domain");
-            if (domain1.compare(domain2) != 0)
+            if (D1->GetAggregateUrn().compare(Dx->GetAggregateUrn()) != 0)
                 continue;
             // find same domain hops and get the number
             numSameDomainHops1++;
@@ -195,10 +191,8 @@ void WorkflowData::ComputeDependency()
         if (itD2 != dependencies.end())
         {
             Dependency* D2 = *itD2;
-            string domain1 = GetUrnField(D1->GetHopUrn(), "domain");
-            string domain2 = GetUrnField(D2->GetHopUrn(), "domain");
             // skip same domain/aggregate dependency
-            if (domain1.compare(domain2) == 0)
+            if (D1->GetAggregateUrn().compare(D2->GetAggregateUrn()) == 0)
                 continue;
             TLink* L2 = (TLink*)D2->GetResourceRef();
             list<ISCD*>::iterator itS2 = L2->GetSwCapDescriptors().begin();
@@ -220,9 +214,7 @@ void WorkflowData::ComputeDependency()
                 if (itDy == itD2)
                     continue;
                 Dependency* Dy = *itDy;
-                string domain1 = GetUrnField(D2->GetHopUrn(), "domain");
-                string domain2 = GetUrnField(Dy->GetHopUrn(), "domain");
-                if (domain1.compare(domain2) != 0)
+                if (D2->GetAggregateUrn().compare(Dy->GetAggregateUrn()) != 0)
                     continue;
                 // find same domain hops and get the number
                 numSameDomainHops2++;
@@ -320,9 +312,7 @@ void WorkflowData::ComputeDependency()
             if (itD2 == itD1)
                 continue;
             Dependency* D2 = *itD2;
-            string domain1 = GetUrnField(D1->GetHopUrn(), "domain");
-            string domain2 = GetUrnField(D2->GetHopUrn(), "domain");
-            if (domain1.compare(domain2) != 0)
+            if (D1->GetAggregateUrn().compare(D2->GetAggregateUrn()) != 0)
                 continue;
             LoopFreeMerge(D1, D2);
             LoopFreeMerge(D2, D1);
