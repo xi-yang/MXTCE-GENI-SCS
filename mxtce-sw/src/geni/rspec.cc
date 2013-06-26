@@ -729,10 +729,6 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                             {
                                 GeniAdRSpec::aggregateUrnMap[trueShortDomainName] = aggrUrn;
                                 GeniAdRSpec::aggregateUrlMap[trueShortDomainName] = urls.back();
-                                sprintf(buf, "urn:publicid:IDN+%s+node+*", trueShortDomainName.c_str());
-                                string aNodeId = buf;
-                                Node* aNode = new Node(0, aNodeId);
-                                aDomain->AddNode(aNode);
                                 sprintf(buf, "urn:publicid:IDN+%s+stitchport+*:*", trueShortDomainName.c_str());
                                 aPortId = buf;
                                 Port* aPort = new Port(0, aPortId);
