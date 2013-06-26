@@ -707,11 +707,11 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                             string trueShortNodeName = GetUrnField(aNode->GetName(), "node");
                             if (trueShortNodeName.compare("*") == 0)
                                 continue;
-                            if (GeniAdRSpec::aggregateUrnMap.find(trueShortDomainName) != GeniAdRSpec::aggregateUrnMap.end()) 
+                            if (GeniAdRSpec::aggregateUrnMap.find(trueShortDomainName) == GeniAdRSpec::aggregateUrnMap.end()) 
                             {
                                 GeniAdRSpec::aggregateUrnMap[trueShortDomainName] = aggrUrn;
                             }
-                            if (GeniAdRSpec::aggregateUrlMap.find(trueShortDomainName) != GeniAdRSpec::aggregateUrlMap.end()) 
+                            if (GeniAdRSpec::aggregateUrlMap.find(trueShortDomainName) == GeniAdRSpec::aggregateUrlMap.end()) 
                             {
                                 GeniAdRSpec::aggregateUrlMap[trueShortDomainName] = urls.back();
                             }
