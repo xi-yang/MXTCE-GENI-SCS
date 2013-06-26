@@ -707,14 +707,6 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                             string trueShortNodeName = GetUrnField(aNode->GetName(), "node");
                             if (trueShortNodeName.compare("*") == 0)
                                 continue;
-                            if (GeniAdRSpec::aggregateUrnMap.find(trueShortDomainName) == GeniAdRSpec::aggregateUrnMap.end()) 
-                            {
-                                GeniAdRSpec::aggregateUrnMap[trueShortDomainName] = aggrUrn;
-                            }
-                            if (GeniAdRSpec::aggregateUrlMap.find(trueShortDomainName) == GeniAdRSpec::aggregateUrlMap.end()) 
-                            {
-                                GeniAdRSpec::aggregateUrlMap[trueShortDomainName] = urls.back();
-                            }
                             sprintf(buf, "urn:publicid:IDN+%s+stitchport+%s:*", trueShortDomainName.c_str(), trueShortNodeName.c_str());
                             string aPortId = buf;
                             Port* aPort = new Port(0, aPortId);
@@ -733,6 +725,33 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                             aLink->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
                             aLink->SetSwcapXmlString(defaultSwcapStr);
                             aPort->AddLink(aLink);
+                            if (GeniAdRSpec::aggregateUrnMap.find(trueShortDomainName) == GeniAdRSpec::aggregateUrnMap.end()) 
+                            {
+                                GeniAdRSpec::aggregateUrnMap[trueShortDomainName] = aggrUrn;
+                                GeniAdRSpec::aggregateUrlMap[trueShortDomainName] = urls.back();
+                                sprintf(buf, "urn:publicid:IDN+%s+node+*", trueShortDomainName.c_str());
+                                string aNodeId = buf;
+                                Node* aNode = new Node(0, aNodeId);
+                                aDomain->AddNode(aNode);
+                                sprintf(buf, "urn:publicid:IDN+%s+stitchport+*:*", trueShortDomainName.c_str());
+                                aPortId = buf;
+                                Port* aPort = new Port(0, aPortId);
+                                aNode->AddPort(aPort);
+                                aPort->SetMaxBandwidth(100000000000ULL);
+                                aPort->SetMaxReservableBandwidth(100000000000ULL);
+                                aPort->SetMinReservableBandwidth(0);
+                                aPort->SetBandwidthGranularity(0);
+                                sprintf(buf, "urn:publicid:IDN+%s+interface+*:*:*", trueShortDomainName.c_str());
+                                aLinkId = buf;
+                                RLink* aLink = new RLink(aLinkId);
+                                aLink->SetMetric(1);
+                                aLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
+                                aLink->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
+                                aLink->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
+                                aLink->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
+                                aLink->SetSwcapXmlString(defaultSwcapStr);
+                                aPort->AddLink(aLink);
+                            }
                         }
                     }
                 }
