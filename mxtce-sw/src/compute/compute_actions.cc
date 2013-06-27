@@ -1249,7 +1249,15 @@ void Action_ComputeSchedulesWithKSP::Process()
         TSchedule* schedule = new TSchedule(committedPath->GetSchedules().front()->GetStartTime(), duration);
         resv->GetSchedules().push_back(schedule);
         TGraph* serviceTopo = new TGraph(_userConstraint->getGri());
-        serviceTopo->LoadPath(committedPath->GetPath()); 
+        try {
+                serviceTopo->LoadPath(committedPath->GetPath()); 
+        } catch (TEDBException ex) {
+            if (ex.GetMessage().find("has already existed") != string::npos) {
+                throw new ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() found a path but the path is infeasible for provisioning!");
+            } else {
+                throw new ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() failed to commit a path!");
+            }
+        } 
         resv->SetServiceTopology(serviceTopo);
         string status = "RESERVED"; resv->SetStatus(status);
         resv->BuildDeltaCache();
