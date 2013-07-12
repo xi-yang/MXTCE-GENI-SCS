@@ -777,7 +777,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             Port* tp = (Port*)(*itp).second;
             snprintf(str, 1024, "<port id=\"%s\">", tp->GetName().c_str());
             strcat(buf, str);
-            snprintf(str, 1024, "<capacity>%llu</capacity>", tp->GetMaxBandwidth());
+            snprintf(str, 1024, "<capacity>%llu</capacity>", tp->GetMaxBandwidth()/1000);
             strcat(buf, str);
             snprintf(str, 1024, "<maximumReservableCapacity>%llu</maximumReservableCapacity>", tp->GetMaxReservableBandwidth());
             strcat(buf, str);
@@ -795,7 +795,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                 strcat(buf, str);
                 snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", tl->GetMetric());
                 strcat(buf, str);
-                snprintf(str, 1024, "<capacity>%llu</capacity>", tl->GetMaxBandwidth());
+                snprintf(str, 1024, "<capacity>%llu</capacity>", tl->GetMaxBandwidth()/1000);
                 strcat(buf, str);
                 snprintf(str, 1024, "<maximumReservableCapacity>%llu</maximumReservableCapacity>", tl->GetMaxReservableBandwidth());
                 strcat(buf, str);
@@ -979,7 +979,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                             userCons->setHopExclusionList(hopExclusionList);
                         
                         xmlNodePtr xmlNode1, xmlNode2, xmlNode3, xmlNode4;
-                        u_int64_t bw = 100000;
+                        u_int64_t bw = 100000000; //Mbps
                         string pathType = "strict";
                         string layer = "2";
                         string srcVlan = "any";
@@ -1185,7 +1185,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
             else if (!hasStitchingExt && strncasecmp((const char*)xmlNode->name, "link", 4) == 0)
             {
                 list<string> ifRefs;
-                u_int64_t bw = 100000; //100m by default
+                u_int64_t bw = 100000000; //100m by default
                 xmlNodePtr xmlIfNode;
                 for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
                 {
@@ -1463,13 +1463,13 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             strcat(buf, str);
             if (capacityCstr[0] == 0) 
             {
-                snprintf(capacityCstr, 16, "%llu", tl->GetMaxBandwidth() / 1000);
+                snprintf(capacityCstr, 16, "%llu", tl->GetMaxBandwidth()/1000);
             }
             list<ISCD*>::iterator its = tl->GetSwCapDescriptors().begin();
             for (; its != tl->GetSwCapDescriptors().end(); its++) 
             {
                 ISCD *iscd = *its;
-                snprintf(str, 1024, "<capacity>%llu</capacity>", tl->GetMaxBandwidth());
+                snprintf(str, 1024, "<capacity>%llu</capacity>", tl->GetMaxBandwidth()/1000);
                 strcat(buf, str);
                 snprintf(str, 1024, "<switchingCapabilityDescriptor>");
                 strcat(buf, str);
