@@ -1544,9 +1544,9 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 TLink* tlx = *itNext;
                 if (tlx->GetName().find("node=*") != string::npos || tlx->GetName().find("port=*") != string::npos 
                   || tlx->GetName().find("interface+*")!= string::npos || tlx->GetName().find(":*:")!= string::npos)
-                {
                     itNext++;
-                }
+                else
+                    break;
             }
             if (itNext == path->GetPath().end())
                 snprintf(str, 1024, "<nextHop>null</nextHop>");
