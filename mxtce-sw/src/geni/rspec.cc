@@ -312,21 +312,24 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                             aRLink->SetRemoteLinkName(remoteLinkName);
                                             string remotePortName = remoteLinkName;
                                             remotePortName.replace(remotePortName.size()-2, 2, "");
-                                            Port* remotePort = new Port(0, remotePortName);
-                                            remotePort->SetMaxBandwidth(aPort->GetMaxBandwidth());
-                                            remotePort->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
-                                            remotePort->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
-                                            remotePort->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
-                                            arNode->AddPort(remotePort);
-                                            RLink* remoteLink = new RLink(remoteLinkName);
-                                            remoteLink->SetRemoteLinkName(aRLink->GetName());
-                                            remoteLink->SetMetric(aRLink->GetMetric());
-                                            remoteLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
-                                            remoteLink->SetMaxReservableBandwidth(remotePort->GetMaxReservableBandwidth());
-                                            remoteLink->SetMinReservableBandwidth(remotePort->GetMinReservableBandwidth());
-                                            remoteLink->SetBandwidthGranularity(remotePort->GetBandwidthGranularity());
-                                            remoteLink->SetSwcapXmlString(aRLink->GetSwcapXmlString());
-                                            remotePort->AddLink(remoteLink);
+                                            if (arNode->GetPorts().find(remotePortName) == arNode->GetPorts().end())
+                                            {
+                                                Port* remotePort = new Port(0, remotePortName);
+                                                remotePort->SetMaxBandwidth(aPort->GetMaxBandwidth());
+                                                remotePort->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
+                                                remotePort->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
+                                                remotePort->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
+                                                arNode->AddPort(remotePort);
+                                                RLink* remoteLink = new RLink(remoteLinkName);
+                                                remoteLink->SetRemoteLinkName(aRLink->GetName());
+                                                remoteLink->SetMetric(aRLink->GetMetric());
+                                                remoteLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
+                                                remoteLink->SetMaxReservableBandwidth(remotePort->GetMaxReservableBandwidth());
+                                                remoteLink->SetMinReservableBandwidth(remotePort->GetMinReservableBandwidth());
+                                                remoteLink->SetBandwidthGranularity(remotePort->GetBandwidthGranularity());
+                                                remoteLink->SetSwcapXmlString(aRLink->GetSwcapXmlString());
+                                                remotePort->AddLink(remoteLink);
+                                            }
                                         }
                                     }
                                     else if (strncasecmp((const char*)xmlLinkNode->name, "capacity", 8) == 0)
