@@ -979,7 +979,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                             userCons->setHopExclusionList(hopExclusionList);
                         
                         xmlNodePtr xmlNode1, xmlNode2, xmlNode3, xmlNode4;
-                        u_int64_t bw = 1;
+                        u_int64_t bw = 100000;
                         string pathType = "strict";
                         string layer = "2";
                         string srcVlan = "any";
@@ -1000,7 +1000,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                                     xmlChar* pBuf = xmlNodeGetContent(xmlNode1);
                                     string bwStr;
                                     StripXmlString(bwStr, pBuf);
-                                    u_int64_t bw = StringToBandwidth(bwStr, 1000);
+                                    bw = StringToBandwidth(bwStr, 1000);
                                 }
                                 else if (strncasecmp((const char*) xmlNode1->name, "switchingCapabilityDescriptor", 30) == 0) 
                                 {
@@ -1069,7 +1069,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                                     xmlChar* pBuf = xmlNodeGetContent(xmlNode1);
                                     string bwStr;
                                     StripXmlString(bwStr, pBuf);
-                                    u_int64_t bw = StringToBandwidth(bwStr, 1000);
+                                    bw = StringToBandwidth(bwStr, 1000);
                                 }
                                 else if (strncasecmp((const char*) xmlNode1->name, "switchingCapabilityDescriptor", 30) == 0) 
                                 {
@@ -1238,7 +1238,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
 {
                                 string bwStr;
                                 StripXmlString(bwStr, capStr);
-                                u_int64_t bw = StringToBandwidth(bwStr, 1000);
+                                bw = StringToBandwidth(bwStr, 1000);
                             }
                         }
                     }
