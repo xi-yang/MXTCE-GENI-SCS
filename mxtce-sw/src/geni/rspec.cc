@@ -151,7 +151,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     sprintf(buf, "urn:publicid:IDN+%s+interface+*:*:*", domainId.c_str());
     string arLinkId = buf;
     RLink* arLink = new RLink(arLinkId);
-    arLink->SetMetric(1);
+    arLink->SetMetric(10);
     arLink->SetMaxBandwidth(arPort->GetMaxBandwidth());
     arLink->SetMaxReservableBandwidth(arPort->GetMaxReservableBandwidth());
     arLink->SetMinReservableBandwidth(arPort->GetMinReservableBandwidth());
@@ -161,7 +161,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     sprintf(buf, "urn:publicid:IDN+%s+interface+*:*:**", domainId.c_str());
     string arLinkId2 = buf;
     RLink* arLink2 = new RLink(arLinkId2);
-    arLink2->SetMetric(1);
+    arLink2->SetMetric(10);
     arLink2->SetMaxBandwidth(arPort->GetMaxBandwidth());
     arLink2->SetMaxReservableBandwidth(arPort->GetMaxReservableBandwidth());
     arLink2->SetMinReservableBandwidth(arPort->GetMinReservableBandwidth());
@@ -393,7 +393,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             sprintf(buf, "urn:publicid:IDN+%s+interface+%s:*-%s-*:**", domainId.c_str(), nodeShortName.c_str(), nodeShortName.c_str());
             string aLinkId = buf;
             RLink* aLink = new RLink(aLinkId);
-            aLink->SetMetric(1);
+            aLink->SetMetric(10);
             aLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
             aLink->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
             aLink->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
@@ -412,7 +412,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             sprintf(buf, "urn:publicid:IDN+%s+interface+*:*-to-%s-*:**", domainId.c_str(), nodeShortName.c_str());
             string arLinkId = buf;
             RLink* arLink = new RLink(arLinkId);
-            arLink->SetMetric(1);
+            arLink->SetMetric(10);
             arLink->SetMaxBandwidth(arPort->GetMaxBandwidth());
             arLink->SetMaxReservableBandwidth(arPort->GetMaxReservableBandwidth());
             arLink->SetMinReservableBandwidth(arPort->GetMinReservableBandwidth());
@@ -572,7 +572,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                     }
                                 }
                                 aRLink->SetRemoteLinkName(remoteLinkName);
-                                aRLink->SetMetric(1);
+                                aRLink->SetMetric(10);
                                 aRLink->SetMaxBandwidth((*itRL)->GetMaxBandwidth());
                                 aRLink->SetMaxReservableBandwidth((*itRL)->GetMaxReservableBandwidth());
                                 aRLink->SetMinReservableBandwidth((*itRL)->GetMinReservableBandwidth());
@@ -640,7 +640,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                         RLink* aRLink = new RLink(linkName);
                                         size_t i1 = remoteLinkName.rfind(":*:*");
                                         size_t i2 = remoteLinkName.rfind(":*:**");
-                                        aRLink->SetMetric(1);
+                                        aRLink->SetMetric(10);
                                         aRLink->SetMaxBandwidth((*itRL)->GetMaxBandwidth());
                                         aRLink->SetMaxReservableBandwidth((*itRL)->GetMaxReservableBandwidth());
                                         aRLink->SetMinReservableBandwidth((*itRL)->GetMinReservableBandwidth());
@@ -721,7 +721,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                             sprintf(buf, "urn:publicid:IDN+%s+interface+%s:*:*", trueShortDomainName.c_str(), trueShortNodeName.c_str());
                             string aLinkId = buf;
                             RLink* aLink = new RLink(aLinkId);
-                            aLink->SetMetric(1);
+                            aLink->SetMetric(10);
                             aLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
                             aLink->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
                             aLink->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
@@ -743,7 +743,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                 sprintf(buf, "urn:publicid:IDN+%s+interface+*:*:*", trueShortDomainName.c_str());
                                 aLinkId = buf;
                                 RLink* aLink = new RLink(aLinkId);
-                                aLink->SetMetric(1);
+                                aLink->SetMetric(10);
                                 aLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
                                 aLink->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
                                 aLink->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
