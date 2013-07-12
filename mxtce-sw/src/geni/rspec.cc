@@ -1539,6 +1539,15 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             strcat(buf, str);
             list<TLink*>::iterator itNext = itL;
             itNext++;
+            while (itNext != path->GetPath().end()) 
+            {
+                TLink* tlx = *itNext;
+                if (tlx->GetName().find("node=*") != string::npos || tlx->GetName().find("port=*") != string::npos 
+                  || tlx->GetName().find("interface+*")!= string::npos || tlx->GetName().find(":*:")!= string::npos)
+                {
+                    itNext++;
+                }
+            }
             if (itNext == path->GetPath().end())
                 snprintf(str, 1024, "<nextHop>null</nextHop>");
             else
@@ -1551,7 +1560,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         }
         snprintf(str, 1024, "</path>");
         strcat(buf, str);
-        
+
         // collected allAggregateUrns from above loop
         if (allAggregateUrns.size() >= 2)
         {
