@@ -1481,7 +1481,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
             iscd->suggestedVlanTags.Clear();
             iscd->availableVlanTags.Clear();
             iscd->suggestedVlanTags.AddTag(srcVtag);
-            iscd->assignedVlanTags.AddTag(dstVtag);
+            iscd->assignedVlanTags.AddTag(srcVtag);
         }
         else 
         {
