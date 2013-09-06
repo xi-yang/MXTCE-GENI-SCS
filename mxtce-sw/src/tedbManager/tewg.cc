@@ -1456,6 +1456,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
     // TODO: vlanRange instead of single tags ?  -- (treat  availableVtagRange different ?)
     bool forwardContinued = true;
     // assign srcVtag to suggestedVlanTags along the path in forward direction
+    // TODO: re-evaluate the current rule "treating assignedVlanTags the same as suggestedVlanTags".
     for (iterL = path.begin(); iterL != path.end(); iterL++)
     {
         L = *iterL;
@@ -1478,7 +1479,9 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
                 iscd->availableVlanTags.AddTag(srcVtag);
             }
             iscd->suggestedVlanTags.Clear();
+            iscd->assignedVlanTags.Clear();
             iscd->suggestedVlanTags.AddTag(srcVtag);
+            iscd->assignedVlanTags.AddTag(srcVtag);
         }
         else 
         {
@@ -1487,6 +1490,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
                 iscd->availableVlanTags.Clear();
             }
             iscd->suggestedVlanTags.Clear();
+            iscd->assignedVlanTags.Clear();
             forwardContinued = false;
         }
     }
@@ -1516,6 +1520,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
                     iscd->availableVlanTags.Clear();
                 }
                 iscd->suggestedVlanTags.Clear();
+                iscd->assignedVlanTags.Clear();
             }
             else if ((iscd->suggestedVlanTags.HasTag(srcVtag) || iscd->suggestedVlanTags.IsEmpty()) && !iscd->vlanTranslation)
             {
@@ -1524,6 +1529,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
                     iscd->availableVlanTags.Clear();
                 }
                 iscd->suggestedVlanTags.Clear();
+                iscd->assignedVlanTags.Clear();
                 last = iscd;
             }
             else if (last != NULL && !last->vlanTranslation && iscd->vlanTranslation)
@@ -1533,6 +1539,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
                     iscd->availableVlanTags.Clear();
                 }
                 iscd->suggestedVlanTags.Clear();
+                iscd->assignedVlanTags.Clear();
                 last = NULL;
             }
             else if (!iscd->suggestedVlanTags.IsEmpty()
@@ -1540,6 +1547,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
                 break;
             //iscd->availableVlanTags.AddTag(dstVtag);
             iscd->suggestedVlanTags.AddTag(dstVtag);
+            iscd->assignedVlanTags.AddTag(dstVtag);
         }
     }
 
