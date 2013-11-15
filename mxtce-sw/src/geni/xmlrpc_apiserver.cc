@@ -80,7 +80,8 @@ void XMLRPC_BaseMethod::fire()
 void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value* const retvalP) 
 {
     XMLRPC_APIServer::xmlrpcApiLock.DoLock();
-
+    
+    try {
     if (msgPort == NULL)
         this->init();
 
@@ -170,6 +171,9 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
                 goto _final;        
             }
         }
+    }
+    } catch (exception ex) {
+	;
     }
 
 _final:

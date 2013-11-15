@@ -617,17 +617,17 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
                         if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "interfaceMTU", 17) == 0)
                         {
                             string mtuStr;
-                            StripXmlString(mtuStr, xmlNodeGetContent(specLevel));
+                            StripXmlString(mtuStr, xmlNodeGetContent(specSubLevel));
                             sscanf(mtuStr.c_str(), "%d", &mtu);
                         }
                         else if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "vlanRangeAvailability", 16) == 0)
                         {
-                            StripXmlString(vlanRange, xmlNodeGetContent(specLevel));
+                            StripXmlString(vlanRange, xmlNodeGetContent(specSubLevel));
                         }
                         else if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "vlanTranslation", 10) == 0)
                         {
                             string translationStr;
-                            StripXmlString(translationStr, xmlNodeGetContent(specLevel));
+                            StripXmlString(translationStr, xmlNodeGetContent(specSubLevel));
                             if (strncasecmp(translationStr.c_str(), "true", 4) == 0)
                                 vlanTranslation = true;
                             else
