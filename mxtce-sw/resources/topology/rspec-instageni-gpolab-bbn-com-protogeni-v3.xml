@@ -1,4 +1,4 @@
-<?xml version="1.0" ?><rspec expires="2013-11-26T17:24:41Z" generated="2013-11-26T17:24:41Z" type="advertisement" xmlns="http://www.geni.net/resources/rspec/3" xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.geni.net/resources/rspec/3 http://www.geni.net/resources/rspec/3/ad.xsd http://www.protogeni.net/resources/rspec/ext/emulab/1 http://www.protogeni.net/resources/rspec/ext/emulab/1/ptop_extension.xsd http://hpn.east.isi.edu/rspec/ext/stitch/0.1/ http://hpn.east.isi.edu/rspec/ext/stitch/0.1/stitch-schema.xsd http://www.geni.net/resources/rspec/ext/shared-vlan/1 http://www.geni.net/resources/rspec/ext/shared-vlan/1/ad.xsd http://www.geni.net/resources/rspec/ext/opstate/1 http://www.geni.net/resources/rspec/ext/opstate/1/ad.xsd ">  
+<?xml version="1.0" ?><rspec expires="2013-11-26T17:28:21Z" generated="2013-11-26T17:28:21Z" type="advertisement" xmlns="http://www.geni.net/resources/rspec/3" xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.geni.net/resources/rspec/3 http://www.geni.net/resources/rspec/3/ad.xsd http://www.protogeni.net/resources/rspec/ext/emulab/1 http://www.protogeni.net/resources/rspec/ext/emulab/1/ptop_extension.xsd http://hpn.east.isi.edu/rspec/ext/stitch/0.1/ http://hpn.east.isi.edu/rspec/ext/stitch/0.1/stitch-schema.xsd http://www.geni.net/resources/rspec/ext/shared-vlan/1 http://www.geni.net/resources/rspec/ext/shared-vlan/1/ad.xsd http://www.geni.net/resources/rspec/ext/opstate/1 http://www.geni.net/resources/rspec/ext/opstate/1/ad.xsd ">  
   <external_ref component_id="urn:publicid:IDN+ion.internet2.edu+interface+rtr.newy:ae0:bbn" component_manager_id="urn:publicid:IDN+ion.internet2.edu+authority+am"/>  
   <external_ref component_id="urn:publicid:IDN+NLR+interface+BBNIFACE" component_manager_id="urn:publicid:IDN+NLR+authority+am"/>  
   <rspec_shared_vlan xmlns="http://www.geni.net/resources/rspec/ext/shared-vlan/1">    
@@ -825,15 +825,15 @@
       <link_type name="ethernet-1000000"/>    
   </link>  
 
-  <stitching lastUpdateTime="2013-11-26T17:24:41Z" xmlns="http://hpn.east.isi.edu/rspec/ext/stitch/0.1/">    
+  <stitching lastUpdateTime="2013-11-26T17:28:21Z" xmlns="http://hpn.east.isi.edu/rspec/ext/stitch/0.1/">    
     <aggregate id="urn:publicid:IDN+instageni.gpolab.bbn.com+authority+cm" url="https://boss.instageni.gpolab.bbn.com:12369/protogeni/xmlrpc/am">      
       <aggregatetype>        protogeni      </aggregatetype>      
       <stitchingmode>        chainANDTree      </stitchingmode>      
       <scheduledservices>        false      </scheduledservices>      
       <negotiatedservices>        false      </negotiatedservices>      
       <lifetime id="life">        
-            <start type="time">          2013-11-26T17:24:41Z        </start>        
-            <end type="time">          2013-11-26T17:24:41Z        </end>        
+            <start type="time">          2013-11-26T17:28:21Z        </start>        
+            <end type="time">          2013-11-26T17:28:21Z        </end>        
       </lifetime>      
       <node id="urn:publicid:IDN+instageni.gpolab.bbn.com+node+procurve2">        
           <port id="urn:publicid:IDN+instageni.gpolab.bbn.com+stitchport+procurve2:5.24:ion.newy.ae0">          
