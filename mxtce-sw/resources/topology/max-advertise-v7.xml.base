@@ -160,7 +160,7 @@
                       <switchingCapabilitySpecificInfo>                
                           <switchingCapabilitySpecificInfo_L2sc>                  
                              <interfaceMTU>                    9000                  </interfaceMTU>                  
-                             <vlanRangeAvailability>                    2-4094                  </vlanRangeAvailability>                  
+                             <vlanRangeAvailability>                    3-4094                  </vlanRangeAvailability>                  
                              <vlanTranslation>                    false                  </vlanTranslation>                  
                           </switchingCapabilitySpecificInfo_L2sc>                
                       </switchingCapabilitySpecificInfo>              
