@@ -1312,6 +1312,8 @@ bool TPath::VerifyLoopFree()
     for (iterL = path.begin(); iterL != path.end(); iterL++) 
     {
         TLink* L = *iterL;
+        if (L == NULL)
+            continue;
         list<TLink*>::iterator iterN = iterL;
         iterN++;
         if (iterN == path.end())
@@ -1322,6 +1324,10 @@ bool TPath::VerifyLoopFree()
         while (iterN != path.end())
         {
             TLink* LN = *iterN;
+            if (LN == NULL) {
+                iterN++;
+                continue;
+            }
             if (L->GetPort()->GetNode() == LN->GetPort()->GetNode())
                 return false;
             iterN++;
