@@ -247,13 +247,13 @@ void XMLRPC_ListAggregatesMethod::execute(xmlrpc_c::paramList const& paramList, 
     for (; itau != GeniAdRSpec::aggregateUrnMap.end(); itau++) {
         map<string, xmlrpc_c::value> aggregateMap;
         aggregateMap["urn"] = xmlrpc_c::value_string((*itau).second.c_str());
-        aggregateListMap[(*itau).first] = xmlrpc_c::value_struct(aggregateMap);
-    }
-    itau = GeniAdRSpec::aggregateUrlMap.begin();
-    for (; itau != GeniAdRSpec::aggregateUrlMap.end(); itau++) {
-        if (aggregateListMap.find((*itau).first) != aggregateListMap.end()) {
-            (*(map<string, xmlrpc_c::value>*)(aggregateListMap[(*itau).first]).cValueP)["url"] = xmlrpc_c::value_string((*itau).second.c_str());
+        map<string, string>::iterator itav = GeniAdRSpec::aggregateUrlMap.begin();
+        for (; itav != GeniAdRSpec::aggregateUrlMap.end(); itav++) {
+            if (aggregateListMap.find((*itau).first) != aggregateListMap.end()) {
+                aggregateMap["url"] = xmlrpc_c::value_string((*itau).second.c_str());
+            }
         }
+        aggregateListMap[(*itau).first] = xmlrpc_c::value_struct(aggregateMap);
     }
     valueMap["geni_aggregate_list"] = xmlrpc_c::value_struct(aggregateListMap);   
     retMap["value"] = xmlrpc_c::value_struct(valueMap);
