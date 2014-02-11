@@ -105,6 +105,14 @@ public:
     void execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const  retvalP);
 };
 
+class XMLRPC_ListAggregatesMethod: public XMLRPC_BaseMethod {    
+public:
+    XMLRPC_ListAggregatesMethod(MxTCE* tce):XMLRPC_BaseMethod(tce) {
+        this->_signature = "?";
+        this->_help = "list_aggregates method";
+    }
+    void execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const  retvalP);
+};
 
 #define XMLRPC_APIServerThread XMLRPC_APIServer
 

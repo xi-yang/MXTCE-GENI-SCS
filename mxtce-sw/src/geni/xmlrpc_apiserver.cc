@@ -80,8 +80,7 @@ void XMLRPC_BaseMethod::fire()
 void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value* const retvalP) 
 {
     XMLRPC_APIServer::xmlrpcApiLock.DoLock();
-    
-    try {
+
     if (msgPort == NULL)
         this->init();
 
@@ -172,9 +171,6 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
             }
         }
     }
-    } catch (exception ex) {
-	;
-    }
 
 _final:
 
@@ -230,6 +226,41 @@ void XMLRPC_GetVersionMethod::execute(xmlrpc_c::paramList const& paramList, xmlr
     XMLRPC_APIServer::xmlrpcApiLock.Unlock();
 }
 
+
+void XMLRPC_ListAggregatesMethod::execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value* const retvalP) 
+{
+    XMLRPC_APIServer::xmlrpcApiLock.DoLock();
+    map<string, xmlrpc_c::value> retMap;
+    retMap["geni_api"] = xmlrpc_c::value_int(2);
+    map<string, xmlrpc_c::value> codeMap;
+    codeMap["geni_code"] = xmlrpc_c::value_int(0);
+    retMap["code"] = xmlrpc_c::value_struct(codeMap);
+    map<string, xmlrpc_c::value> valueMap;
+    // compose fixed 'value' struct
+    string verStr = getVersionString();
+    replace( verStr.begin(), verStr.end(), '$', ' ');
+    valueMap["code_tag"] = xmlrpc_c::value_string(verStr.c_str());
+    valueMap["interface"] = xmlrpc_c::value_string("scs");
+    
+    map<string, xmlrpc_c::value> aggregateListMap;
+    map<string, string>::iterator itau = GeniAdRSpec::aggregateUrnMap.begin();
+    for (; itau != GeniAdRSpec::aggregateUrnMap.end(); itau++) {
+        map<string, xmlrpc_c::value> aggregateMap;
+        aggregateMap["urn"] = xmlrpc_c::value_string((*itau).second.c_str());
+        aggregateListMap[(*itau).first] = xmlrpc_c::value_struct(aggregateMap);
+    }
+    itau = GeniAdRSpec::aggregateUrlMap.begin();
+    for (; itau != GeniAdRSpec::aggregateUrlMap.end(); itau++) {
+        if (aggregateListMap.find((*itau).first) != aggregateListMap.end()) {
+            (*(map<string, xmlrpc_c::value>*)(aggregateListMap[(*itau).first]).cValueP)["url"] = xmlrpc_c::value_string((*itau).second.c_str());
+        }
+    }
+    valueMap["geni_aggregate_list"] = xmlrpc_c::value_struct(aggregateListMap);   
+    retMap["value"] = xmlrpc_c::value_struct(valueMap);
+    *retvalP = xmlrpc_c::value_struct(retMap);
+    XMLRPC_APIServer::xmlrpcApiLock.Unlock();
+}
+
 // Server Thread 
 void* XMLRPC_APIServer::Run()
 {
@@ -237,8 +268,10 @@ void* XMLRPC_APIServer::Run()
         xmlrpc_c::registry myRegistry;
         xmlrpc_c::methodPtr const computePathMethodP(new XMLRPC_ComputePathMethod(mxTCE));
         xmlrpc_c::methodPtr const getVersionMethodP(new XMLRPC_GetVersionMethod(mxTCE));
+        xmlrpc_c::methodPtr const listAggregatesMethodP(new XMLRPC_ListAggregatesMethod(mxTCE));
         myRegistry.addMethod("ComputePath", computePathMethodP);
         myRegistry.addMethod("GetVersion", getVersionMethodP);
+        myRegistry.addMethod("ListAggregates", listAggregatesMethodP);
         xmlrpc_c::serverAbyss myAbyssServer(
             xmlrpc_c::serverAbyss::constrOpt()
             .registryP(&myRegistry)
