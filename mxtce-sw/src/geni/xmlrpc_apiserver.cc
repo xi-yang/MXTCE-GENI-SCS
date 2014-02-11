@@ -247,8 +247,8 @@ void XMLRPC_ListAggregatesMethod::execute(xmlrpc_c::paramList const& paramList, 
     for (; itau != GeniAdRSpec::aggregateUrnMap.end(); itau++) {
         map<string, xmlrpc_c::value> aggregateMap;
         aggregateMap["urn"] = xmlrpc_c::value_string((*itau).second.c_str());
-        if (GeniAdRSpec::aggregateUrlMap((*itau).first) != aggregateListMap.end()) {
-            aggregateMap["url"] = GeniAdRSpec::aggregateUrlMap((*itau).second.c_str());
+        if (GeniAdRSpec::aggregateUrlMap.find((*itau).first) != GeniAdRSpec::aggregateUrlMap.end()) {
+            aggregateMap["url"] = xmlrpc_c::value_string(GeniAdRSpec::aggregateUrlMap[(*itau).first].c_str());
         }
         aggregateListMap[(*itau).first] = xmlrpc_c::value_struct(aggregateMap);
     }
