@@ -867,7 +867,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
     string queueName="CORE";
     string topicName="XMLRPC_API_REQUEST";
     char tagBuf[32];
-    snprintf(tagBuf, 31, "xmlrpc_api_request:%d", GeniRequestRSpec::unique_req_id);
+    snprintf(tagBuf, 31, "xmlrpc_api_request:%d", GeniRequestRSpec::unique_req_id++);
     string contextTag= tagBuf;
     Message* msg = new Message(MSG_REQ, queueName, topicName);
     msg->SetContextTag(contextTag);
