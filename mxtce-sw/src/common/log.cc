@@ -101,7 +101,7 @@ void Log::Init(u_int32_t options_val, const string &fileName)
 
 int Log::Logf(const char *format, ...)
 {
-    static char buf[256];
+    static char buf[256*1024];
 
     loggerLock->DoLock();
 
