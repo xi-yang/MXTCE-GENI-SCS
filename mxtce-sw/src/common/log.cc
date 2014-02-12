@@ -108,7 +108,7 @@ int Log::Logf(const char *format, ...)
     buf[0] = 0;
     va_list ap;
     va_start(ap, format);
-    int ret=vsprintf(buf, format, ap);
+    int ret=vsnprintf(buf, 256*1024-1, format, ap);
     if (log_file && (options&LOG_LOGFILE))
         *log_file<< Preamble(LOG_LOGFILE) << buf<<flush;
     if (log_stdout && (options&LOG_STDOUT))
