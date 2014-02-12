@@ -88,6 +88,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     map<string, xmlrpc_c::value> reqStruct = paramList.getStruct(0);
     string urn = xmlrpc_c::value_string(reqStruct["slice_urn"]);
     string rspec = xmlrpc_c::value_string(reqStruct["request_rspec"]);
+    LOGF("XMLRPC_ComputePath (slice_urn='%s') begin with request_rspec => \n%s", urn.c_str(), rspec.c_str());
     map<string, xmlrpc_c::value> options = xmlrpc_c::value_struct(reqStruct["request_options"]);
     bool hold_path = false;
     map<string, xmlrpc_c::value> routing_profile;
@@ -174,6 +175,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
 
 _final:
 
+    LOGF("XMLRPC_ComputePath(slice_urn='%s') ends <=", urn.c_str());
     XMLRPC_APIServer::xmlrpcApiLock.Unlock();
 }
 
