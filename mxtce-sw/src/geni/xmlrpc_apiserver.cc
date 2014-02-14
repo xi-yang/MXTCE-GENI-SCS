@@ -175,7 +175,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
                                 break;
                             }
                         }                        
-                        if (itWV != sortedArray.end())
+                        if (itWV == sortedArray.end())
                         {
                             sortedArray.push_back((*itW).second);
                         }
