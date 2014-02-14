@@ -57,6 +57,7 @@ public:
     virtual ~Dependency() {}
     void Init() {
         aggregateUrn = "";
+        aggregateUrl = "";
         hopUrn = "";
         getVlanFrom = false;
         resourceRef = NULL;
@@ -75,6 +76,15 @@ public:
     bool setGetVlanFrom(bool bl) { getVlanFrom = bl; }
     bool isRoot() { return uppers.empty(); }
     bool isLeaf() { return lowers.empty(); }
+    Dependency* Clone() {
+        Dependency* D = new Dependency;
+        D->aggregateUrn = this->aggregateUrn;
+        D->aggregateUrl = this->aggregateUrl;
+        D->hopUrn = this->hopUrn;
+        D->resourceRef = this->resourceRef;
+        //Do not clone upper and lower dependencies
+        //D->getVlanFrom = this->getVlanFrom;
+    }
 };
 
 class TPath;
@@ -91,9 +101,11 @@ protected:
 
 public:
     WorkflowData() {}
+    vector<Dependency*>& GetDependencies() { return dependencies; }
     virtual ~WorkflowData() {}
     virtual void LoadPath(TPath* tp);
     virtual void ComputeDependency();
+    virtual void MergeDependencies(vector<Dependency*>& addDependencies);
     virtual void GenerateXmlRpcData();
     virtual xmlrpc_c::value GetXmlRpcData();
 };

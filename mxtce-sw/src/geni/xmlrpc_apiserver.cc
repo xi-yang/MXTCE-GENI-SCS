@@ -160,10 +160,36 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
                 {
                     map<string, xmlrpc_c::value> retWfdMap;
                     map<string, WorkflowData*>::iterator itW = replyRspec.GetWorkflowDataMap().begin();
+                    list<WorkflowData*> sortedArray;
                     for (; itW != replyRspec.GetWorkflowDataMap().end(); itW++)
                     {
+                        // xml form of workflow data for individual path
                         retWfdMap[(*itW).first] = ((WorkflowData*)(*itW).second)->GetXmlRpcData();
+                        // add to sorted array of the workflow data in ascending order of path length
+                        list<WorkflowData*>::iterator itWV = sortedArray.begin();
+                        for (; itWV != sortedArray.end(); itWV++) 
+                        {
+                            if ((*itWV)->GetDependencies().size() < ((WorkflowData*)(*itW).second)->GetDependencies().size())
+                            {
+                                itWV = sortedArray.insert(itWV, (*itW).second);
+                                break;
+                            }
+                        }                        
+                        if (itWV != sortedArray.end())
+                        {
+                            sortedArray.push_back((*itW).second);
+                        }
                     }
+                    // merge multi-path workflow data in descending order of path length
+                    list<WorkflowData*>::reverse_iterator ritW = sortedArray.rbegin();
+                    WorkflowData* combinedWorkflowData = *ritW;
+                    ritW++;
+                    for (; ritW != sortedArray.rend(); ritW++)
+                    {
+                        combinedWorkflowData->MergeDependencies((*ritW)->GetDependencies());
+                    }
+                    combinedWorkflowData->GenerateXmlRpcData();
+                    retWfdMap["all_paths_merged"] = combinedWorkflowData->GetXmlRpcData();
                     valueMap["workflow_data"] = xmlrpc_c::value_struct(retWfdMap);
                 }
                 retMap["value"] = xmlrpc_c::value_struct(valueMap);

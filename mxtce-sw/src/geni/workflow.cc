@@ -320,6 +320,99 @@ void WorkflowData::ComputeDependency()
     }
 }
 
+void WorkflowData::MergeDependencies(vector<Dependency*>& newDependencies)
+{
+    vector<Dependency*>::iterator itD;
+    vector<Dependency*>::iterator itAD = newDependencies.begin();
+    for (; itAD != newDependencies.end(); itAD++)
+    {
+        Dependency* AD = *itAD;
+        Dependency* newD = NULL;
+        for (itD = dependencies.begin(); itD != dependencies.end(); itD++)
+        {
+            Dependency* D = *itD;
+            if (D->GetHopUrn() == AD->GetHopUrn()) {
+                newD = D;
+                break;
+            }
+        }
+        if (newD == NULL) {
+            // copy the dependency block over
+            newD = AD->Clone();
+            dependencies.push_back(newD);
+        }
+        // copy all dependency relationships from AD to D
+        vector<Dependency*>::iterator itADU = AD->GetUppers().begin();
+        for (; itADU != AD->GetUppers().end(); itADU++) {
+            Dependency* ADU = *itADU;
+            // if ADU exists in this->dependencies, copy the upper relation to newD.
+            for (itD = dependencies.begin(); itD != dependencies.end(); itD++)
+            {
+                Dependency* D = *itD;
+                if (D->GetHopUrn() == ADU->GetHopUrn()) {
+                    bool relationExisted = false;
+                    vector<Dependency*>::iterator DL = D->GetLowers().begin();
+                    for (; DL != D->GetLowers().end(); DL++)
+                    {
+                        if ((*DL)->GetHopUrn() == newD->GetHopUrn()) 
+                        {
+                            relationExisted = false;
+                            break;
+                        }
+                    }
+                    if (relationExisted) 
+                    {
+                        break;
+                    }
+                    bool loop_d_new = this->CheckDependencyLoop(D, newD);
+                    // if D->newD does not exist and D->newD is loop free
+                    if (!loop_d_new) 
+                    {
+                        D->GetLowers().push_back(newD);
+                        newD->GetUppers().push_back(D);
+                        D->setGetVlanFrom(true);
+                    }
+                    break;
+                }
+            }
+        }
+        vector<Dependency*>::iterator itADL = AD->GetLowers().begin();
+        for (; itADL != AD->GetLowers().end(); itADL++) {
+            Dependency* ADL = *itADL;
+            // if ADU exists in this->dependencies, add the upper relation to newD.
+            for (itD = dependencies.begin(); itD != dependencies.end(); itD++)
+            {
+                Dependency* D = *itD;
+                if (D->GetHopUrn() == ADL->GetHopUrn()) {
+                    bool relationExisted = false;
+                    vector<Dependency*>::iterator DU = D->GetUppers().begin();
+                    for (; DU != D->GetUppers().end(); DU++)
+                    {
+                        if ((*DU)->GetHopUrn() == newD->GetHopUrn()) 
+                        {
+                            relationExisted = false;
+                            break;
+                        }
+                    }
+                    if (relationExisted) 
+                    {
+                        break;
+                    }
+                    bool loop_new_d = this->CheckDependencyLoop(newD, D);
+                    // if newD->D does not exist and newD->D is loop free
+                    if (!loop_new_d) 
+                    {
+                        newD->GetLowers().push_back(D);
+                        D->GetUppers().push_back(newD);
+                        newD->setGetVlanFrom(true);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}
+
 // generating a 'struct' member whose value is an array of 'dependencies'
 void WorkflowData::GenerateXmlRpcData()
 {
