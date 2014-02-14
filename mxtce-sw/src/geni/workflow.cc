@@ -430,12 +430,17 @@ void WorkflowData::GenerateXmlRpcData()
     xmlrpc_c::value_array anArray(arrayData);
     map<string, xmlrpc_c::value> aMap;
     aMap["dependencies"] = anArray;
-    xmlRpcData = xmlrpc_c::value_struct(aMap);
+    if (xmlRpcData != NULL) 
+    {
+        delete xmlRpcData;
+    }
+    xmlRpcData = new xmlrpc_c::value;
+    *xmlRpcData = xmlrpc_c::value_struct(aMap);
 }
 
-xmlrpc_c::value WorkflowData::GetXmlRpcData()
+xmlrpc_c::value* WorkflowData::GetXmlRpcData()
 {
-    if (xmlRpcData.isInstantiated())
+    if (xmlRpcData->isInstantiated())
         return xmlRpcData;
     GenerateXmlRpcData();   
     return xmlRpcData;

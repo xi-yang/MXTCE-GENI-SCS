@@ -164,7 +164,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
                     for (; itW != replyRspec.GetWorkflowDataMap().end(); itW++)
                     {
                         // xml form of workflow data for individual path
-                        retWfdMap[(*itW).first] = ((WorkflowData*)(*itW).second)->GetXmlRpcData();
+                        retWfdMap[(*itW).first] = *((WorkflowData*)(*itW).second)->GetXmlRpcData();
                         // add to sorted array of the workflow data in ascending order of path length
                         list<WorkflowData*>::iterator itWV = sortedArray.begin();
                         for (; itWV != sortedArray.end(); itWV++) 
@@ -189,7 +189,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
                         combinedWorkflowData->MergeDependencies((*ritW)->GetDependencies());
                     }
                     combinedWorkflowData->GenerateXmlRpcData();
-                    retWfdMap["all_paths_merged"] = combinedWorkflowData->GetXmlRpcData();
+                    retWfdMap["all_paths_merged"] = *combinedWorkflowData->GetXmlRpcData();
                     valueMap["workflow_data"] = xmlrpc_c::value_struct(retWfdMap);
                 }
                 retMap["value"] = xmlrpc_c::value_struct(valueMap);

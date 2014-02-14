@@ -92,7 +92,7 @@ class WorkflowData
 {
 protected:
     vector<Dependency*> dependencies;
-    xmlrpc_c::value xmlRpcData;
+    xmlrpc_c::value* xmlRpcData;
 
 protected:
     bool CheckDependencyLoop(Dependency* current, Dependency* newD);
@@ -100,14 +100,14 @@ protected:
     xmlrpc_c::value DumpXmlRpcDataRecursive(Dependency* D);
 
 public:
-    WorkflowData() {}
+    WorkflowData() { xmlRpcData = NULL; }
     vector<Dependency*>& GetDependencies() { return dependencies; }
     virtual ~WorkflowData() {}
     virtual void LoadPath(TPath* tp);
     virtual void ComputeDependency();
     virtual void MergeDependencies(vector<Dependency*>& addDependencies);
     virtual void GenerateXmlRpcData();
-    virtual xmlrpc_c::value GetXmlRpcData();
+    virtual xmlrpc_c::value* GetXmlRpcData();
 };
 
 
