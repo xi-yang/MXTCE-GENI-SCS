@@ -331,7 +331,7 @@ void WorkflowData::MergeDependencies(vector<Dependency*>& newDependencies)
         for (itD = dependencies.begin(); itD != dependencies.end(); itD++)
         {
             Dependency* D = *itD;
-            if (D->GetHopUrn() == AD->GetHopUrn()) {
+            if (D->GetHopUrn().compare(AD->GetHopUrn()) == 0) {
                 newD = D;
                 break;
             }
@@ -349,12 +349,12 @@ void WorkflowData::MergeDependencies(vector<Dependency*>& newDependencies)
             for (itD = dependencies.begin(); itD != dependencies.end(); itD++)
             {
                 Dependency* D = *itD;
-                if (D->GetHopUrn() == ADU->GetHopUrn()) {
+                if (D->GetHopUrn().compare(ADU->GetHopUrn()) == 0) {
                     bool relationExisted = false;
                     vector<Dependency*>::iterator DL = D->GetLowers().begin();
                     for (; DL != D->GetLowers().end(); DL++)
                     {
-                        if ((*DL)->GetHopUrn() == newD->GetHopUrn()) 
+                        if ((*DL)->GetHopUrn().compare(newD->GetHopUrn()) == 0) 
                         {
                             relationExisted = false;
                             break;
@@ -383,12 +383,12 @@ void WorkflowData::MergeDependencies(vector<Dependency*>& newDependencies)
             for (itD = dependencies.begin(); itD != dependencies.end(); itD++)
             {
                 Dependency* D = *itD;
-                if (D->GetHopUrn() == ADL->GetHopUrn()) {
+                if (D->GetHopUrn().compare(ADL->GetHopUrn()) == 0) {
                     bool relationExisted = false;
                     vector<Dependency*>::iterator DU = D->GetUppers().begin();
                     for (; DU != D->GetUppers().end(); DU++)
                     {
-                        if ((*DU)->GetHopUrn() == newD->GetHopUrn()) 
+                        if ((*DU)->GetHopUrn().compare(newD->GetHopUrn()) == 0) 
                         {
                             relationExisted = false;
                             break;
