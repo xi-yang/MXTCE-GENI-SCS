@@ -1228,7 +1228,23 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                                     continue;
                                 string clientId = (const char*)xmlClientId;
                                 if (clientIdUrnMap.find(clientId) != clientIdUrnMap.end())
-                                    ifRefs.push_back(clientIdUrnMap[clientId]);
+                                {
+                                    list<string>::iterator itif = ifRefs.begin();
+                                    string aggr1 = GetUrnField(clientIdUrnMap[clientId], "aggregate");
+                                    for (; itif != ifRefs.end(); itif++)
+                                    {
+                                        string aggr2 = GetUrnField((*itif), "aggregate");
+                                        if (aggr1.compare(aggr2) == 0) 
+                                        {
+                                            break;
+                                        }
+                                    }
+                                    // only add aggregate-unique interface to ifRefs
+                                    if (itif == ifRefs.end())
+                                    {
+                                        ifRefs.push_back(clientIdUrnMap[clientId]);
+                                    }
+                                }
                             }
                         }
                         else if (strncasecmp((const char*)xmlIfNode->name, "property", 8) == 0) 
