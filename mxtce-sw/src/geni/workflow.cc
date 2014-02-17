@@ -356,7 +356,7 @@ void WorkflowData::MergeDependencies(vector<Dependency*>& newDependencies)
                     {
                         if ((*DL)->GetHopUrn().compare(newD->GetHopUrn()) == 0) 
                         {
-                            relationExisted = false;
+                            relationExisted = true;
                             break;
                         }
                     }
@@ -390,7 +390,7 @@ void WorkflowData::MergeDependencies(vector<Dependency*>& newDependencies)
                     {
                         if ((*DU)->GetHopUrn().compare(newD->GetHopUrn()) == 0) 
                         {
-                            relationExisted = false;
+                            relationExisted = true;
                             break;
                         }
                     }
