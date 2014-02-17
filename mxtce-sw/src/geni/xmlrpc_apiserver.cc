@@ -189,7 +189,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
                         combinedWorkflowData->MergeDependencies((*ritW)->GetDependencies());
                     }
                     combinedWorkflowData->GenerateXmlRpcData();
-                    retWfdMap["all_paths_merged"] = *combinedWorkflowData->GetXmlRpcData();
+                    retWfdMap["##all_paths_merged##"] = *combinedWorkflowData->GetXmlRpcData();
                     valueMap["workflow_data"] = xmlrpc_c::value_struct(retWfdMap);
                 }
                 retMap["value"] = xmlrpc_c::value_struct(valueMap);
