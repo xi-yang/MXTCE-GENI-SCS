@@ -69,6 +69,7 @@ void XMLRPC_BaseMethod::fire()
     // TODO: use callback to stop eventmaster (need to modify MessagePort to hook up extra callback)
     XMLRPC_TimeoutOrCallback* timeoutOrCallback = new XMLRPC_TimeoutOrCallback(evtMaster);
     assert(evtMaster);
+    msgPort->GetMsgInQueue().clear();
     this->msgPort->SetMessageCallback(timeoutOrCallback);
     evtMaster->Schedule(timeoutOrCallback);
     evtMaster->Run();
@@ -135,7 +136,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
         for (; itm != msgPort->GetMsgInQueue().end(); itm++) 
         {
             Message* replyMsg = *itm;
-            if (replyMsg->GetContextTag() == contextTag)
+            if (replyMsg->GetContextTag().compare(contextTag) == 0)
             {
                 GeniManifestRSpec replyRspec(&reqRspec);
                 try {
