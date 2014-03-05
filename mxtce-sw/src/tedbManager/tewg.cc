@@ -1113,9 +1113,9 @@ void TPath::ExpandWithRemoteLinks()
         remoteL = (TLink*)L->GetRemoteLink();
         if (iterNextL == path.end())
             break;
-        if ((*iterNextL) != remoteL && L->GetLocalEnd() != (*iterNextL)->GetLocalEnd())
+        if ((*iterNextL) != remoteL && remoteL != NULL && L->GetLocalEnd() != (*iterNextL)->GetLocalEnd())
         {
-            path.insert(iterNextL, (TLink*)L->GetRemoteLink());
+            path.insert(iterNextL, remoteL);
         }
         iterL = iterNextL;
     }
