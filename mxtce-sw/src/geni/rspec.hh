@@ -102,6 +102,7 @@ public:
 public:
     static map<string, string> aggregateUrnMap;
     static map<string, string> aggregateUrlMap;
+    static map<string, string> aggregateTypeMap;
 };
 
 class Message;

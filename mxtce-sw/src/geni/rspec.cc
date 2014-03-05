@@ -74,6 +74,17 @@ static string defaultSwcapStr = "<switchingCapabilityDescriptor>\
 
 map<string, string> GeniAdRSpec::aggregateUrnMap;
 map<string, string> GeniAdRSpec::aggregateUrlMap;
+map<string, string> GeniAdRSpec::aggregateTypeMap;
+
+static bool AggregateHasNestedUrn(string& domainId)
+{
+    string aggrType = "";
+    if (GeniAdRSpec::aggregateUrnMap.find(domainId) != GeniAdRSpec::aggregateUrnMap.end())
+        aggrType = GeniAdRSpec::aggregateUrnMap[domainId];
+    if (aggrType.compare("orca") == 0)
+        return false;
+    return true;
+}
 
 xmlDocPtr GeniAdRSpec::TranslateToNML()
 {
@@ -86,6 +97,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     xmlNodePtr rspecRoot = xmlDocGetRootElement(rspecDoc);
     xmlNodePtr xmlNode;
     xmlNodePtr aggrNode = NULL;
+    string aggrType = "";
     for (xmlNode = rspecRoot->children; xmlNode != NULL; xmlNode = xmlNode->next)
     {
         if (xmlNode->type == XML_ELEMENT_NODE )
@@ -101,12 +113,8 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                             {
                                 if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "aggregatetype", 9) == 0) 
                                 {
-                                    string domainType;
                                     xmlChar* pBuf = xmlNodeGetContent(xmlNode);
-                                    StripXmlString(domainType, pBuf);
-                                    //$$$ TODO: add domainType into domainTypeMap in MxTCE main thread (synced to access)
-                                    if (domainType.compare("orca") == 0)
-                                            isNestedUrn = false;
+                                    StripXmlString(aggrType, pBuf);
                                     break;
                                 }   
                             }
@@ -131,6 +139,11 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     aDomain->setNestedUrn(isNestedUrn);
     // create aggregate URN and URL mappings
     GeniAdRSpec::aggregateUrnMap[domainId] = aggrUrn;
+    GeniAdRSpec::aggregateUrnMap[domainId] = aggrType;
+    if (aggrType.compare("orca") == 0)
+    {
+        isNestedUrn = false;
+    }
     vector<string> urls;
     SplitString(aggrUrl, urls, ",");
     GeniAdRSpec::aggregateUrlMap[domainId] = urls.back();
@@ -242,7 +255,9 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                                     xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
                                                     string rlName;
                                                     StripXmlString(rlName, pBuf);
-                                                    if (aDomain->isNestedUrn())
+                                                    string domainId = GetUrnField(rlName, "domain");
+                                                    // check if remote domain is nestedUrn
+                                                    if (AggregateHasNestedUrn(domainId))
                                                     {
                                                         string rlShortName = GetUrnField(rlName, "link");
                                                         if (rlShortName.empty())
