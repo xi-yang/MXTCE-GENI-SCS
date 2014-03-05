@@ -435,7 +435,7 @@ void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, st
     if (strncmp(urn.c_str(), "urn:ogf:network:", 16) == 0) 
     {
         strncpy(buf, urn.c_str()+16, 1024);
-        ps = strstr(pbuf, ":");
+        ps = strstr(pbuf, ":domain=");
         if (ps != NULL)
         {
             *ps = 0;
@@ -444,7 +444,7 @@ void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, st
             return;
         domain = pbuf;
         pbuf = ps+1;
-        ps = strstr(pbuf, ":");
+        ps = strstr(pbuf, ":node=");
         if (ps != NULL)
         {
             *ps = 0;
@@ -453,7 +453,7 @@ void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, st
             return;
         node = pbuf;
         pbuf = ps+1;
-        ps = strstr(pbuf, ":");
+        ps = strstr(pbuf, ":port=");
         if (ps != NULL)
         {
             *ps = 0;
@@ -462,7 +462,7 @@ void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, st
             return;
         port = pbuf;
         pbuf = ps+1;
-        ps = strstr(pbuf, ":");
+        ps = strstr(pbuf, ":link=");
         if (ps != NULL)
         {
             return;
