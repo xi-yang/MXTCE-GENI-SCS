@@ -333,7 +333,13 @@ string GetUrnField(string& urn, const char* field)
             return name;
     }
     ptr += (strlen(field)+1);
-    char* ptr2 = strstr(ptr, ":"); 
+    char* ptr2 = NULL;
+    if (strncmp(field, "domain", 4) == 0 || strncmp(field, "aggregate", 4) == 0)
+        ptr2 = strstr(ptr, ":node");
+    else if (strncmp(field, "node", 4) == 0)
+        ptr2 = strstr(ptr, ":port");
+    else if (strncmp(field, "port", 4) == 0)
+        ptr2 = strstr(ptr, ":link");     
     if (ptr2 == NULL)
         name = (const char*)ptr;
     else 
