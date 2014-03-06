@@ -100,9 +100,9 @@ public:
     xmlDocPtr TranslateToNML();
     // TODO: extract policy data
 public:
+    static map<string, string> aggregateTypeMap;
     static map<string, string> aggregateUrnMap;
     static map<string, string> aggregateUrlMap;
-    static map<string, string> aggregateTypeMap;
 };
 
 class Message;

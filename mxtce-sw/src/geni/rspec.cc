@@ -72,15 +72,15 @@ static string defaultSwcapStr = "<switchingCapabilityDescriptor>\
         </switchingCapabilitySpecificInfo>\
       </switchingCapabilityDescriptor>";
 
+map<string, string> GeniAdRSpec::aggregateTypeMap;
 map<string, string> GeniAdRSpec::aggregateUrnMap;
 map<string, string> GeniAdRSpec::aggregateUrlMap;
-map<string, string> GeniAdRSpec::aggregateTypeMap;
 
 static bool AggregateHasNestedUrn(string& domainId)
 {
     string aggrType = "";
-    if (GeniAdRSpec::aggregateUrnMap.find(domainId) != GeniAdRSpec::aggregateUrnMap.end())
-        aggrType = GeniAdRSpec::aggregateUrnMap[domainId];
+    if (GeniAdRSpec::aggregateTypeMap.find(domainId) != GeniAdRSpec::aggregateTypeMap.end())
+        aggrType = GeniAdRSpec::aggregateTypeMap[domainId];
     if (aggrType.compare("orca") == 0)
         return false;
     return true;
@@ -136,14 +136,14 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     string aggrUrl = (const char*)xmlGetProp(aggrNode,  (const xmlChar*)"url");
     string domainId = GetUrnField(aggrUrn, "domain");
     Domain* aDomain = new Domain(0, domainId);
+    // create aggregate URN, URL and Type mappings
     aDomain->setNestedUrn(isNestedUrn);
-    // create aggregate URN and URL mappings
-    GeniAdRSpec::aggregateUrnMap[domainId] = aggrUrn;
-    GeniAdRSpec::aggregateUrnMap[domainId] = aggrType;
+    GeniAdRSpec::aggregateTypeMap[domainId] = aggrType;
     if (aggrType.compare("orca") == 0)
     {
         isNestedUrn = false;
     }
+    GeniAdRSpec::aggregateUrnMap[domainId] = aggrUrn;
     vector<string> urls;
     SplitString(aggrUrl, urls, ",");
     GeniAdRSpec::aggregateUrlMap[domainId] = urls.back();
