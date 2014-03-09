@@ -137,12 +137,12 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     string domainId = GetUrnField(aggrUrn, "domain");
     Domain* aDomain = new Domain(0, domainId);
     // create aggregate URN, URL and Type mappings
-    aDomain->setNestedUrn(isNestedUrn);
     GeniAdRSpec::aggregateTypeMap[domainId] = aggrType;
     if (aggrType.compare("orca") == 0)
     {
         isNestedUrn = false;
     }
+    aDomain->setNestedUrn(isNestedUrn);
     GeniAdRSpec::aggregateUrnMap[domainId] = aggrUrn;
     vector<string> urls;
     SplitString(aggrUrl, urls, ",");
