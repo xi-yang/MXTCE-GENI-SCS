@@ -144,7 +144,7 @@ void MxTCE::Start()
 
     // join threads
     apiServerThread->Join();
-	xmlrpcApiServerThread->Join();
+    xmlrpcApiServerThread->Join();
     tedbManThread->Join();
     resvManThread->Join();
     policyManThread->Join();
@@ -205,7 +205,7 @@ void MxTCEMessageHandler::Run()
                 return;
             }
 
-            // init computing thread port and routes on messge router and start thread
+            // init computing thread port and routes on message router and start thread
             string computeThreadPortName = computingThread->GetName();
             mxTCE->GetMessageRouter()->AddPort(computeThreadPortName);
             string computeThreadQueueName = MxTCE::computeThreadPrefix + computingThread->GetName();
@@ -224,7 +224,7 @@ void MxTCEMessageHandler::Run()
             mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic4, MxTCE::resvManPortName);
             // resvMan reply to computeThread with TEWG and added deltaList
             mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic5, computeThreadPortName);
-            // TODO: policyMan can be invloved in the above TEWG chain and add policy modifiers to TEWG
+            // TODO: policyMan can be involved in the above TEWG chain and add policy modifiers to TEWG
             mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic6, MxTCE::policyManPortName);
             mxTCE->GetMessageRouter()->AddRoute(computeThreadQueueName,routeTopic7, computeThreadPortName);
 

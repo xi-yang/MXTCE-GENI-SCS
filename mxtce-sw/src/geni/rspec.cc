@@ -1160,7 +1160,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 string shortAggrName = GetUrnField(aggrName, "domain");
                 string shortNodeName = "*";
                 xmlChar* xmlNodeId = xmlGetProp(xmlNode,  (const xmlChar*)"component_id");
-                if (xmlNodeId != NULL)
+                if (xmlNodeId != NULL && strstr((const char*)xmlNodeId, "urn:") != NULL)
                 {
                     string nodeName = (const char*)xmlNodeId;
                     //$$$ TODO: look for domain type and determine whether isNestedUrn
