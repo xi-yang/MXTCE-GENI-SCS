@@ -84,6 +84,7 @@ public:
         D->resourceRef = this->resourceRef;
         //Do not clone upper and lower dependencies
         //D->getVlanFrom = this->getVlanFrom;
+        return D;
     }
 };
 
