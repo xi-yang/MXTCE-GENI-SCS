@@ -1175,7 +1175,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                         {
                             string ifId = "";
                             xmlChar* xmlIfId = xmlGetProp(xmlIfNode, (const xmlChar*) "component_id");
-                            if (xmlIfId != NULL) 
+                            if (xmlIfId != NULL && strstr((const char*)xmlIfId, "urn:") != NULL)
                             {
                                 ifId = (const char*) xmlIfId;
                             }
@@ -1230,7 +1230,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                         if (strncasecmp((const char*)xmlIfNode->name, "interface_ref", 12) == 0) 
                         {
                             xmlChar* xmlIfId = xmlGetProp(xmlIfNode,  (const xmlChar*)"component_id");
-                            if (xmlIfId != NULL)
+                            if (xmlIfId != NULL && strstr((const char*)xmlIfId, "urn:") != NULL)
                             {
                                 string ifId = (const char*)xmlIfId;
                                 ifRefs.push_back(ifId);
