@@ -92,6 +92,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     LOGF("XMLRPC_ComputePath (slice_urn='%s') begins with request_rspec: \n%s\n", urn.c_str(), rspec.c_str());
     map<string, xmlrpc_c::value> options = xmlrpc_c::value_struct(reqStruct["request_options"]);
     bool hold_path = false;
+    bool workflow_paths_merged = false;
     map<string, xmlrpc_c::value> routing_profile;
     u_int32_t start_time = 0, end_time = 0;
     if (options.find("geni_hold_path") != options.end()) {
@@ -105,6 +106,9 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     }
     if (options.find("geni_routing_profile") != options.end()) {
         routing_profile = xmlrpc_c::value_struct(options["geni_routing_profile"]);
+    }
+    if (options.find("geni_workflow_paths_merged") != options.end()) {
+        workflow_paths_merged = xmlrpc_c::value_boolean(options["geni_workflow_paths_merged"]);
     }
     
     GeniRequestRSpec reqRspec(rspec);
@@ -182,15 +186,18 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
                         }
                     }
                     // merge multi-path workflow data in descending order of path length
-                    list<WorkflowData*>::reverse_iterator ritW = sortedArray.rbegin();
-                    WorkflowData* combinedWorkflowData = *ritW;
-                    ritW++;
-                    for (; ritW != sortedArray.rend(); ritW++)
+                    if (workflow_paths_merged)
                     {
-                        combinedWorkflowData->MergeDependencies((*ritW)->GetDependencies());
+                        list<WorkflowData*>::reverse_iterator ritW = sortedArray.rbegin();
+                        WorkflowData* combinedWorkflowData = *ritW;
+                        ritW++;
+                        for (; ritW != sortedArray.rend(); ritW++)
+                        {
+                            combinedWorkflowData->MergeDependencies((*ritW)->GetDependencies());
+                        }
+                        combinedWorkflowData->GenerateXmlRpcData();
+                        retWfdMap["##all_paths_merged##"] = *combinedWorkflowData->GetXmlRpcData();
                     }
-                    combinedWorkflowData->GenerateXmlRpcData();
-                    retWfdMap["##all_paths_merged##"] = *combinedWorkflowData->GetXmlRpcData();
                     valueMap["workflow_data"] = xmlrpc_c::value_struct(retWfdMap);
                 }
                 retMap["value"] = xmlrpc_c::value_struct(valueMap);
