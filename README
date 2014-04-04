@@ -1,2 +1,43 @@
-Download and install 
+1. Pre-compile:
+- Download and install:
 http://pyyaml.org/download/libyaml/yaml-0.1.4.tar.gz
+
+
+2. After-compile
+cat > /usr/local/etc/mxtce.config.yaml
+
+---
+apiServer:
+    'client': 'localhost'
+    port: 2089
+
+tedbManager:
+    domains:
+        'instageni.gpolab.bbn.com':
+            source:  'file'
+            file:    'rspec-instageni-gpolab-bbn-com-protogeni-v3.xml'
+        'utah.geniracks.net':
+            source:  'file'
+            file:    'rspec-utah-geniracks-net-protogeni-v3.xml'
+        'other.aggregate.org':
+            source:  'file'
+            file:    'rspec-other-aggregate-ad-file.xml'
+
+resvManager:
+    pushApiServer:
+        port: 2092
+        client: 'localhost'
+
+policyManager:
+
+computeWorker:
+    type: 'multip2pComputeWorker'
+
+
+3. To run
+cd the_directory_with_topology_files
+/usr/local/mxtce-sw/src/main/mxtce -d
+
+
+4. Watch log
+tail -f /var/log/mxtce.log
