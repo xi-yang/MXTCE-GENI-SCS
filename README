@@ -1,9 +1,14 @@
-1. Pre-compile:
-- Download and install:
+1. Pre-compile
+- Download and install
 http://pyyaml.org/download/libyaml/yaml-0.1.4.tar.gz
 
 
-2. After-compile
+2. To compile
+./configure
+make
+
+
+3. Create config file
 cat > /usr/local/etc/mxtce.config.yaml
 
 ---
@@ -34,10 +39,10 @@ computeWorker:
     type: 'multip2pComputeWorker'
 
 
-3. To run
-cd the_directory_with_topology_files
+4. To run
+cd the_directory_with_topology_ad_files
 /usr/local/mxtce-sw/src/main/mxtce -d
 
 
-4. Watch log
+5. Watch log
 tail -f /var/log/mxtce.log
