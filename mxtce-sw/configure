@@ -7735,7 +7735,7 @@ fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_lib_xmlrpc_server_xmlrpc_server_version_major" >&5
 $as_echo "$ac_cv_lib_xmlrpc_server_xmlrpc_server_version_major" >&6; }
 if test "x$ac_cv_lib_xmlrpc_server_xmlrpc_server_version_major" = x""yes; then
-  LIBS="$LIBS -lxmlrpc_cpp -lxmlrpc_server_abyss++"
+  LIBS="$LIBS -lxmlrpc_cpp -lxmlrpc_server_abyss++ -lxmlrpc_server++ -lxmlrpc++"
 else
 
     echo "Error! You need to install xmlrpc-c."
