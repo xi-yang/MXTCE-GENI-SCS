@@ -37,6 +37,12 @@
 #include <libxml2/libxml/xpath.h>
 #include <libxml2/libxml/xpathInternals.h>
 
+const char* getVersionString()
+{
+    const char* versionString = "$Revision$ - $Date$";
+    return versionString;
+}
+
 int readn (int fd, char *ptr, int nbytes)
 {
     int nleft;
@@ -193,6 +199,27 @@ time_t get_mtime(const char *path)
     return statbuf.st_mtime;
 }
 
+void SplitString(string& str, vector<string>& tokens, const string& delim, bool trimEmpty)
+{
+    string::size_type pos, lastPos = 0;
+    while (true) 
+    {
+        pos = str.find_first_of(delim, lastPos);
+        if (pos == std::string::npos) 
+        {
+            pos = str.length();
+            if (pos != lastPos || !trimEmpty)
+                tokens.push_back(string(str.data() + lastPos, pos - lastPos));
+            break;
+        } 
+        else 
+        {
+            if (pos != lastPos || !trimEmpty)
+                tokens.push_back(string(str.data() + lastPos, pos - lastPos));
+        }
+        lastPos = pos + 1;
+    }
+}
 
 // C1 = 1, H1 = 2 ...
 int wavegrid_50g_to_tag(char ch, int num)
@@ -261,10 +288,10 @@ void CleanupXmlString(string& str)
     }
 }
 
-u_int64_t StringToBandwidth(string& strBandwidth) 
+u_int64_t StringToBandwidth(string& strBandwidth, u_int64_t defaultFactor) 
 {
     u_int64_t bandwidth = 0LLU;
-    u_int64_t factor = 1LLU;
+    u_int64_t factor = defaultFactor;
     if (strcasestr(strBandwidth.c_str(), "K"))
     {
         factor = 1000LLU;
@@ -287,7 +314,7 @@ u_int64_t StringToBandwidth(string& strBandwidth)
 string GetUrnField(string& urn, const char* field) 
 {
     string name = "";
-    char str[128];
+    char str[1024];
     snprintf(str, 128, "%s=", field);
     char* ptr = (char*)strstr(urn.c_str(), str);
     if (ptr == NULL)
@@ -306,7 +333,54 @@ string GetUrnField(string& urn, const char* field)
             return name;
     }
     ptr += (strlen(field)+1);
-    char* ptr2 = strstr(ptr, ":"); 
+    char* ptr2 = NULL;
+    if (strncmp(field, "domain", 4) == 0 || strncmp(field, "aggregate", 4) == 0)
+        ptr2 = strstr(ptr, ":node");
+    else if (strncmp(field, "node", 4) == 0)
+        ptr2 = strstr(ptr, ":port");
+    else if (strncmp(field, "port", 4) == 0)
+        ptr2 = strstr(ptr, ":link");     
+    if (ptr2 == NULL)
+        name = (const char*)ptr;
+    else 
+    {
+        strncpy(str, ptr, ptr2-ptr);
+        str[ptr2-ptr] = 0;
+        name = (const char*)str;
+    }
+    return name;
+}
+
+string GetUrnFieldExt(string& urn, const char* field) 
+{
+    string name = "";
+    char str[1024];
+    char str2[128];
+    snprintf(str, 128, "%s=", field);
+    char* ptr = (char*)strstr(urn.c_str(), str);
+    if (ptr == NULL)
+        return name;
+    char* ptr2 = NULL;
+    if (strncmp(field, "domain", 4) == 0 || strncmp(field, "aggregate", 4) == 0)
+    {
+        ptr2 = strstr((char*)urn.c_str(), ":node=");
+    }
+    else if (strncmp(field, "node", 4) == 0) 
+    {
+        ptr2 = strstr((char*)urn.c_str(), ":port=");
+    }
+    else if (strncmp(field, "port", 4) == 0)
+    {
+        ptr2 = strstr((char*)urn.c_str(), ":link=");
+    }
+    else if (strncmp(field, "link", 4) == 0)
+    {
+        ptr2 = (char*)urn.c_str() + urn.length();
+    }
+    else
+        return name;
+    
+    ptr += (strlen(field)+1);
     if (ptr2 == NULL)
         name = (const char*)ptr;
     else 
@@ -336,6 +410,16 @@ string ConvertLinkUrn_Dnc2Geni(string& urn)
     return geniUrn;
 }
 
+string ConvertLinkUrn_Dnc2GeniExt(string& urn) 
+{
+    string link = GetUrnFieldExt(urn, "link");
+    if (strstr(link.c_str(), "urn:publicid:IDN+") != NULL)
+        return link;
+    string geniUrn = "urn:publicid:IDN+interface+";
+    geniUrn += link;
+    return geniUrn;
+}
+
 void ParseFQUrn(string& urn, string& domain, string& node, string& port, string& link) 
 {
     domain = GetUrnField(urn, "domain");
@@ -352,12 +436,12 @@ void ParseFQUrn(string& urn, string& domain, string& node, string& port, string&
 // example geni urn: 'urn:publicid:IDN+ion.internet2.edu+node+rtr.newy'
 void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, string& link) 
 {
-    char buf[256];
+    char buf[1024];
     char *pbuf=buf, *ps=NULL;
     if (strncmp(urn.c_str(), "urn:ogf:network:", 16) == 0) 
     {
-        strncpy(buf, urn.c_str()+16, 256);
-        ps = strstr(pbuf, ":");
+        strncpy(buf, urn.c_str()+16, 1024);
+        ps = strstr(pbuf, ":domain=");
         if (ps != NULL)
         {
             *ps = 0;
@@ -366,7 +450,7 @@ void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, st
             return;
         domain = pbuf;
         pbuf = ps+1;
-        ps = strstr(pbuf, ":");
+        ps = strstr(pbuf, ":node=");
         if (ps != NULL)
         {
             *ps = 0;
@@ -375,7 +459,7 @@ void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, st
             return;
         node = pbuf;
         pbuf = ps+1;
-        ps = strstr(pbuf, ":");
+        ps = strstr(pbuf, ":port=");
         if (ps != NULL)
         {
             *ps = 0;
@@ -384,7 +468,7 @@ void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, st
             return;
         port = pbuf;
         pbuf = ps+1;
-        ps = strstr(pbuf, ":");
+        ps = strstr(pbuf, ":link=");
         if (ps != NULL)
         {
             return;
@@ -393,7 +477,7 @@ void ParseFQUrnShort(string& urn, string& domain, string& node, string& port, st
     } else if (strncmp(urn.c_str(), "urn:publicid:IDN+", 17) == 0) 
     {
         string type;
-        strncpy(buf, urn.c_str()+17, 256);
+        strncpy(buf, urn.c_str()+17, 1024);
         ps = strstr(pbuf, "+");
         if (ps != NULL)
         {

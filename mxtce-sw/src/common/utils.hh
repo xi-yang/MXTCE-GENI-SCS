@@ -39,7 +39,9 @@
 #include <libxml/tree.h>
 #include <libxml/tree.h>
 #include <libxml/xpath.h>
+#include <vector>
 #include <map>
+
 
 #ifndef RETSIGTYPE
 #define RETSIGTYPE void
@@ -154,7 +156,7 @@ public:
         }
     void LoadRangeString(string rangeStr)
         {
-            char buf[256];
+            char buf[1024];
             strncpy(buf, rangeStr.c_str(), 256);
             if (strncasecmp(buf, "any", 3) == 0)
             {                
@@ -186,7 +188,7 @@ public:
         }
     void LoadRangeString_WaveGrid_50GHz(string rangeStr)
         {
-            char buf[256];
+            char buf[1024];
             strncpy(buf, rangeStr.c_str(), 256);
             if (strncasecmp(buf, "tunable", 5) == 0 || strncasecmp(buf, "any", 3) == 0)
             {                
@@ -236,7 +238,7 @@ public:
     void DeleteTags(u_char* bitmask, int max_num)
         {
             assert(bitmask);
-            for (int i = 1; i < (max_num-1)/8+1 && i < numBytes; i++)
+            for (int i = 0; i < (max_num-1)/8+1 && i < numBytes; i++)
                 byteArray[i] &= (~bitmask[i]);
         }
     bool HasTag(u_int32_t tag)
@@ -331,28 +333,42 @@ public:
                 }
             return 0;
         }
-    u_int32_t RandomTag()
+    u_int32_t RandomTag(int low, int high)
         {
-            // TODO: store last five tags as global, try making a new number
-            int low = this->LowestTag();
-            int high = this->HighestTag();
             if (low == 0)
                 return 0;
             if (low == high)
                 return low;
             int start = low + (int)(random()% (high-low));
             int tag;
-            for (tag = start; tag < numBits; tag++)
+            if (start%2 == 0)
             {
-                if (HasTag(tag))
-                    return tag;
+                for (tag = start; tag < numBits; tag++)
+                {
+                    if (HasTag(tag))
+                        return tag;
+                }
             }
-            for (tag = start-1; tag >= 0; tag--)
+            else
             {
-                if (HasTag(tag))
-                    return tag;
+                for (tag = start; tag >= 0; tag--)
+                {
+                    if (HasTag(tag))
+                        return tag;
+                }
             }
             return 0;
+        }
+    u_int32_t RandomTag()
+        {
+            // TODO: store last five tags as global, try making a new number
+            int low = this->LowestTag();
+            int high = this->HighestTag();
+            int tag = RandomTag(low, high);
+            if (HasTag(tag+1) && tag < high)
+                return RandomTag(tag+1, high);
+            else
+                return RandomTag(low, tag);                
         }
     int Size() 
         {
@@ -384,8 +400,8 @@ public:
     string GetRangeString() 
         { 
             string rangeStr = "";
-            char buf[128];
-            char buf2[16];
+            char buf[1024];
+            char buf2[32];
             if (numBits == MAX_VLAN_NUM && HasTag(VTAG_UNTAGGED))
                 strcpy(buf, "0");
             else
@@ -442,9 +458,9 @@ public:
         string GetRangeString_WaveGrid_50GHz() 
             { 
                 string rangeStr = "";
-                char buf[128];
-                char buf2[16];
-                char buf3[4];
+                char buf[1024];
+                char buf2[32];
+                char buf3[8];
                 if (numBits == MAX_WAVE_NUM && HasTag(WAVE_TUNABLE))
                 {
                     strcpy(buf, "tunable");
@@ -527,14 +543,22 @@ extern "C"
     time_t get_mtime(const char *path);
 }
 
+const char* getVersionString();
+
+void SplitString(string& str, vector<string>& tokens, const string& delim=" ", bool trimEmpty=false);
+
 void StripXmlString(string& str, xmlChar* val);
 void CleanupXmlString(string& str);
 
-u_int64_t StringToBandwidth(string& strBandwidth);
+u_int64_t StringToBandwidth(string& strBandwidth, u_int64_t defaultFactor=1LLU);
 
 string GetUrnField(string& urn, const char* field);
 
 string ConvertLinkUrn_Dnc2Geni(string& urn);
+
+string GetUrnFieldExt(string& urn, const char* field);
+
+string ConvertLinkUrn_Dnc2GeniExt(string& urn);
 
 void ParseFQUrn(string& urn, string& domain, string& node, string& port, string& link);
 

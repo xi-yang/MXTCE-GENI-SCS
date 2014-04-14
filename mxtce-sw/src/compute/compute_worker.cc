@@ -267,7 +267,7 @@ void ComputeResult::RegulatePathInfo(TPath* path)
     // set link name to full qualified URN
     TLink* L;
     string urn;
-    char str[128];
+    char str[1024];
     list<TLink*>::iterator itL = path->GetPath().begin();
     for (; itL != path->GetPath().end(); itL++)
     {

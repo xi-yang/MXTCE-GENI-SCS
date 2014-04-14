@@ -254,12 +254,30 @@ void Action_ComputeKSP::Process()
             throw ComputeThreadException((char*)"Action_ProcessRequestTopology_MP2P::Process() No USER_CONSTRAINT_LIST data from compute worker.");
         this->_userConstraint = userConsList->front();
     }
+    TLink* srcLink = tewg->LookupLinkByURN(this->_userConstraint->getSrcendpoint());
+    TPort* srcPort = tewg->LookupPortByURN(this->_userConstraint->getSrcendpoint());
     TNode* srcNode = tewg->LookupNodeByURN(this->_userConstraint->getSrcendpoint());
     if (srcNode == NULL)
-        throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown source URN!");
+    {
+        if (srcPort != NULL)
+            srcNode = (TNode*)srcPort->GetNode();
+        else if (srcLink != NULL)
+            srcNode= (TNode*)srcLink->GetPort()->GetNode();
+        else
+            throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown source URN!");
+    }
+    TLink* dstLink = tewg->LookupLinkByURN(this->_userConstraint->getDestendpoint());
+    TPort* dstPort = tewg->LookupPortByURN(this->_userConstraint->getDestendpoint());
     TNode* dstNode = tewg->LookupNodeByURN(this->_userConstraint->getDestendpoint());
     if (dstNode == NULL)
-        throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown destination URN!");
+    {
+        if (dstPort != NULL)
+            dstNode= (TNode*)dstPort->GetNode();
+        else if (dstLink != NULL)
+            dstNode= (TNode*)dstLink->GetPort()->GetNode();
+        else
+            throw ComputeThreadException((char*)"Action_ComputeKSP::Process() unknown destination URN!");
+    }
     u_int64_t bw = (this->_bandwidth == 0 ? (u_int64_t)this->_userConstraint->getBandwidth() : this->_bandwidth);
     //if (this->_userConstraint->getCoschedreq()&& this->_userConstraint->getCoschedreq()->getMinbandwidth() > bw)
     //    bw = this->_userConstraint->getCoschedreq()->getMinbandwidth();
@@ -285,7 +303,15 @@ void Action_ComputeKSP::Process()
         for (; itH != this->_userConstraint->getHopExclusionList()->end(); itH++)
         {
             string& hopUrn = *itH;
-            tewg->PruneByExclusionUrn(hopUrn);
+            size_t delim = hopUrn.find("=");
+            if (delim == string::npos) // excluding hop link(s)
+                tewg->PruneByExclusionUrn(hopUrn);
+            else // excluding vlans on the hop link(s)
+            {
+                string aUrn = hopUrn.substr(0, delim);
+                string vlanRange = hopUrn.substr(delim+1);
+                tewg->PruneHopVlans(aUrn, vlanRange);
+            }
         }
     }
     
@@ -920,12 +946,31 @@ void Action_ComputeSchedulesWithKSP::Process()
     if (tewg == NULL)
         throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() No Ordered Aggregate Time Series available for computation!");
 
-    TNode* srcNode = tewg->LookupNodeByURN(_userConstraint->getSrcendpoint());
+    TLink* srcLink = tewg->LookupLinkByURN(this->_userConstraint->getSrcendpoint());
+    TPort* srcPort = tewg->LookupPortByURN(this->_userConstraint->getSrcendpoint());
+    TNode* srcNode = tewg->LookupNodeByURN(this->_userConstraint->getSrcendpoint());
     if (srcNode == NULL)
-        throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() unknown source URN!");
-    TNode* dstNode = tewg->LookupNodeByURN(_userConstraint->getDestendpoint());
+    {
+        if (srcPort != NULL)
+            srcNode = (TNode*)srcPort->GetNode();
+        else if (srcLink != NULL)
+            srcNode= (TNode*)srcLink->GetPort()->GetNode();
+        else
+            throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() unknown source URN!");
+    }
+    TLink* dstLink = tewg->LookupLinkByURN(this->_userConstraint->getDestendpoint());
+    TPort* dstPort = tewg->LookupPortByURN(this->_userConstraint->getDestendpoint());
+    TNode* dstNode = tewg->LookupNodeByURN(this->_userConstraint->getDestendpoint());
     if (dstNode == NULL)
-        throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() unknown destination URN!");
+    {
+        if (dstPort != NULL)
+            dstNode= (TNode*)dstPort->GetNode();
+        else if (dstLink != NULL)
+            dstNode= (TNode*)dstLink->GetPort()->GetNode();
+        else
+            throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() unknown destination URN!");
+    }
+        
     u_int64_t bw = (this->GetReqBandwidth() == 0 ? _userConstraint->getBandwidth():this->GetReqBandwidth());
     u_int32_t duration = (this->GetReqVolume() == 0 ? _userConstraint->getEndtime()-_userConstraint->getStarttime():this->GetReqVolume()/this->GetReqBandwidth());
     if (_userConstraint->getCoschedreq()&& _userConstraint->getCoschedreq()->getMinbandwidth() > bw)
@@ -1204,7 +1249,15 @@ void Action_ComputeSchedulesWithKSP::Process()
         TSchedule* schedule = new TSchedule(committedPath->GetSchedules().front()->GetStartTime(), duration);
         resv->GetSchedules().push_back(schedule);
         TGraph* serviceTopo = new TGraph(_userConstraint->getGri());
-        serviceTopo->LoadPath(committedPath->GetPath()); 
+        try {
+            serviceTopo->LoadPath(committedPath->GetPath()); 
+        } catch (TEDBException ex) {
+            if (ex.GetMessage().find("has already existed") != string::npos) {
+                throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() found a path but the path is infeasible for provisioning!");
+            } else {
+                throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() failed to commit a path!");
+            }
+        } 
         resv->SetServiceTopology(serviceTopo);
         string status = "RESERVED"; resv->SetStatus(status);
         resv->BuildDeltaCache();
@@ -1741,8 +1794,8 @@ void Action_FinalizeServiceTopology_MP2P::Process()
         }
         else
         {
-            char buf[256];
-            snprintf(buf, 256, "Action_FinalizeServiceTopology_MP2P::Process() No feasible path found for GRI: %s, Path: %s under Context: %s!", 
+            char buf[1024];
+            snprintf(buf, 1024, "Action_FinalizeServiceTopology_MP2P::Process() No feasible path found for GRI: %s, Path: %s under Context: %s!", 
                 userConstraint->getGri().c_str(), userConstraint->getPathId().c_str(), this->context.c_str());
             LOG(buf << endl);
             // TODO: set conext-action error msg 

@@ -79,7 +79,7 @@ public:
 };
 
 
-#define MAX_KSP_K 20 // change / configurable
+#define MAX_KSP_K 100 // change / configurable
 class TPath;
 class Apimsg_user_constraint;
 class Action_ComputeKSP: public Action

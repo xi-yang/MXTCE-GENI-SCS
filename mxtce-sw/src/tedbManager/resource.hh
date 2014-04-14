@@ -142,16 +142,19 @@ class Domain: public Resource
 {
 protected:
     map<string, Node*, strcmpless> nodes;
+    bool nestedUrn;
 
 public:
-    Domain(u_int32_t id, string& name): Resource(RTYPE_DOMAIN, id, name) { }
-    Domain(u_int32_t id, string& name, string& address): Resource(RTYPE_DOMAIN, id, name, address) { }
+    Domain(u_int32_t id, string& name): Resource(RTYPE_DOMAIN, id, name) { nestedUrn = true; }
+    Domain(u_int32_t id, string& name, string& address): Resource(RTYPE_DOMAIN, id, name, address) { nestedUrn = true; }
     virtual ~Domain() { }    
     map<string, Node*, strcmpless>& GetNodes() { return nodes; }
     void AddNode(Node* node);
     bool operator==(Domain& aDomain) {
         return (this->name == aDomain.name);
     }
+    bool isNestedUrn() { return nestedUrn; }
+    void setNestedUrn(bool bl) { nestedUrn = bl; }
 };
 
 class Node: public Resource
