@@ -57,7 +57,7 @@ void DBDomain::UpdateFromXML(bool populateSubLevels)
         {
             bool newNode = false;
             string nodeName = (const char*)xmlGetProp(nodeLevel, (const xmlChar*)"id");
-            string aName = nodeName = GetUrnField(nodeName, "node");
+            string aName = nodeName = (this->isNestedUrn()? GetUrnField(nodeName, "node") : nodeName);
             if (aName.length() > 0)
                 nodeName = aName;
             DBNode* node = NULL;
@@ -94,7 +94,15 @@ void DBDomain::UpdateFromXML(bool populateSubLevels)
                 }
             }
         }
-
+        else if (nodeLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)nodeLevel->name, "isNestedUrn", 10) == 0)
+        {
+            string strIsNested;
+            StripXmlString(strIsNested, xmlNodeGetContent(nodeLevel));
+            if (strIsNested.compare("false") == 0)
+            {
+                this->nestedUrn = false;
+            }
+        }
         // TODO: parse NodeIfAdaptMatrix?
     }
     // cleanup nodes that no longer exist in XML
@@ -117,6 +125,7 @@ void DBDomain::UpdateFromXML(bool populateSubLevels)
 TDomain* DBDomain::Checkout(TGraph* tg)
 {
     TDomain* td = new TDomain(this->_id, this->name, this->address);
+    td->setNestedUrn(this->nestedUrn);
     map<string, Node*, strcmpless>::iterator itn = this->nodes.begin();
     for (; itn != this->nodes.end(); itn++) 
     {
@@ -164,7 +173,7 @@ void DBNode::UpdateFromXML(bool populateSubLevels)
         {
             bool newPort = false;
             string portName = (const char*)xmlGetProp(portLevel, (const xmlChar*)"id");
-            string aName = GetUrnField(portName, "port");
+            string aName = (this->GetDomain()->isNestedUrn() ? GetUrnField(portName, "port") : portName);
             if (aName.length() > 0)
                 portName = aName;
             DBPort* port = NULL;
@@ -282,7 +291,7 @@ void DBPort::UpdateFromXML(bool populateSubLevels)
         {
             bool newLink = false;
             string linkName = (const char*)xmlGetProp(linkLevel, (const xmlChar*)"id");
-            string aName = GetUrnField(linkName, "link");
+            string aName = (this->GetNode()->GetDomain()->isNestedUrn() ?GetUrnField(linkName, "link") : linkName);
             if (aName.length() > 0)
                 linkName = aName;
 
@@ -608,17 +617,17 @@ ISCD* DBLink::GetISCDFromXML(xmlNodePtr xmlNode)
                         if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "interfaceMTU", 17) == 0)
                         {
                             string mtuStr;
-                            StripXmlString(mtuStr, xmlNodeGetContent(specLevel));
+                            StripXmlString(mtuStr, xmlNodeGetContent(specSubLevel));
                             sscanf(mtuStr.c_str(), "%d", &mtu);
                         }
                         else if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "vlanRangeAvailability", 16) == 0)
                         {
-                            StripXmlString(vlanRange, xmlNodeGetContent(specLevel));
+                            StripXmlString(vlanRange, xmlNodeGetContent(specSubLevel));
                         }
                         else if (specSubLevel->type == XML_ELEMENT_NODE && strncasecmp((const char*)specSubLevel->name, "vlanTranslation", 10) == 0)
                         {
                             string translationStr;
-                            StripXmlString(translationStr, xmlNodeGetContent(specLevel));
+                            StripXmlString(translationStr, xmlNodeGetContent(specSubLevel));
                             if (strncasecmp(translationStr.c_str(), "true", 4) == 0)
                                 vlanTranslation = true;
                             else
@@ -997,11 +1006,10 @@ void TEDB::PopulateXmlTrees()
             if (domain == NULL)
             {
                 domain = new DBDomain(this, 0, domainName);
-                domain->SetXmlElement(domainLevel);            
                 dbDomains.push_back(domain);
                 newDomain = true;
             }
-
+            domain->SetXmlElement(domainLevel);            
             domain->UpdateFromXML(true);
         }
 
@@ -1085,7 +1093,7 @@ DBNode* TEDB::LookupNodeByURN(string& urn)
     DBDomain* dbd = LookupDomainByURN(urn);
     if (dbd == NULL)
         return NULL;
-    string nodeName = GetUrnField(urn, "node");
+    string nodeName = (dbd->isNestedUrn() ? GetUrnField(urn, "node") : urn);
     map<string, Node*, strcmpless>::iterator itn = dbd->GetNodes().find(nodeName);
     if (itn == dbd->GetNodes().end())
         return NULL;
@@ -1098,7 +1106,7 @@ DBPort* TEDB::LookupPortByURN(string& urn)
     DBNode* dbn = LookupNodeByURN(urn);
     if (dbn == NULL)
         return NULL;
-    string portName = GetUrnField(urn, "port");
+    string portName = (dbn->GetDomain()->isNestedUrn() ? GetUrnField(urn, "port") : urn);
     map<string, Port*, strcmpless>::iterator itp = dbn->GetPorts().find(portName);
     if (itp == dbn->GetPorts().end())
         return NULL;
@@ -1108,6 +1116,22 @@ DBPort* TEDB::LookupPortByURN(string& urn)
 
 DBLink* TEDB::LookupLinkByURN(string& urn)
 {
+    DBDomain* dbd = LookupDomainByURN(urn);
+    if (dbd == NULL)
+        return NULL;
+    if (!dbd->isNestedUrn())
+    {
+        map<string, Node*, strcmpless>::iterator itn = dbd->GetNodes().begin();
+        for (; itn != dbd->GetNodes().end(); itn++) {
+            map<string, Port*, strcmpless>::iterator itp = (*itn).second->GetPorts().begin();
+            for (; itp != (*itn).second->GetPorts().end(); itp++) {
+                map<string, Link*, strcmpless>::iterator itl = (*itp).second->GetLinks().find(urn);
+                if (itl != (*itp).second->GetLinks().end())
+                    return (DBLink*)(*itl).second;
+            }
+        }
+    }    
+    
     DBPort* dbp = LookupPortByURN(urn);
     if (dbp == NULL)
         return NULL;
@@ -1123,7 +1147,7 @@ DBLink* TEDB::LookupLinkByURN(string& urn)
 void TEDB::LogDump()
 {
     char buf[1024000]; //up to 1000K
-    char str[256];
+    char str[1024];
     
     int nD = dbDomains.size();
     int nN = dbNodes.size();
@@ -1133,51 +1157,51 @@ void TEDB::LogDump()
     for (; itd != this->dbDomains.end(); itd++)
     {
         DBDomain* td = (*itd);
-        snprintf(str, 256, "<domain id=%s>\n", td->GetName().c_str());
+        snprintf(str, 1024, "<domain id=%s>\n", td->GetName().c_str());
         strcat(buf, str);
         map<string, Node*, strcmpless>::iterator itn = td->GetNodes().begin();
         for (; itn != td->GetNodes().end(); itn++)
         {
             DBNode* tn = (DBNode*)(*itn).second;
-            snprintf(str, 256, "\t<node id=%s>\n", tn->GetName().c_str());
+            snprintf(str, 1024, "\t<node id=%s>\n", tn->GetName().c_str());
             strcat(buf, str);
             map<string, Port*, strcmpless>::iterator itp = tn->GetPorts().begin();
             for (; itp != tn->GetPorts().end(); itp++)
             {
                 DBPort* tp = (DBPort*)(*itp).second;
-                snprintf(str, 256, "\t\t<port id=%s>\n", tp->GetName().c_str());
+                snprintf(str, 1024, "\t\t<port id=%s>\n", tp->GetName().c_str());
                 strcat(buf, str);
                 map<string, Link*, strcmpless>::iterator itl = tp->GetLinks().begin();
                 for (; itl != tp->GetLinks().end(); itl++) 
                 {
                     DBLink* tl = (DBLink*)(*itl).second;
-                    snprintf(str, 256, "\t\t\t<link id=%s>\n", tl->GetName().c_str());
+                    snprintf(str, 1024, "\t\t\t<link id=%s>\n", tl->GetName().c_str());
                     strcat(buf, str);
                     if (tl->GetRemoteLink())
                     {
-                        snprintf(str, 256, "\t\t\t\t<remoteLinkId>domain=%s:node=%s:port=%s:link=%s</remoteLinkId>\n",  
+                        snprintf(str, 1024, "\t\t\t\t<remoteLinkId>domain=%s:node=%s:port=%s:link=%s</remoteLinkId>\n",  
                             tl->GetRemoteLink()->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
                             tl->GetRemoteLink()->GetPort()->GetNode()->GetName().c_str(),
                             tl->GetRemoteLink()->GetPort()->GetName().c_str(), 
                             tl->GetRemoteLink()->GetName().c_str());
                         strcat(buf, str);
                     }
-                    snprintf(str, 256, "\t\t\t\t<MaxBandwidth>%llu</MaxBandwidth>\n", tl->GetMaxBandwidth());
+                    snprintf(str, 1024, "\t\t\t\t<MaxBandwidth>%llu</MaxBandwidth>\n", tl->GetMaxBandwidth());
                     strcat(buf, str);
-                    snprintf(str, 256, "\t\t\t\t<MaxReservableBandwidth>%llu</MaxReservableBandwidth>\n", tl->GetMaxReservableBandwidth());
+                    snprintf(str, 1024, "\t\t\t\t<MaxReservableBandwidth>%llu</MaxReservableBandwidth>\n", tl->GetMaxReservableBandwidth());
                     strcat(buf, str);
-                    snprintf(str, 256, "\t\t\t\t<Granularity>%llu</Granularity>\n", tl->GetBandwidthGranularity());
+                    snprintf(str, 1024, "\t\t\t\t<Granularity>%llu</Granularity>\n", tl->GetBandwidthGranularity());
                     strcat(buf, str);
-                    snprintf(str, 256, "\t\t\t</link>\n");
+                    snprintf(str, 1024, "\t\t\t</link>\n");
                     strcat(buf, str);
                 }
-                snprintf(str, 256, "\t\t</port>\n");
+                snprintf(str, 1024, "\t\t</port>\n");
                 strcat(buf, str);
             }
-            snprintf(str, 256, "\t</node>\n");
+            snprintf(str, 1024, "\t</node>\n");
             strcat(buf, str);
         }
-        snprintf(str, 256, "</domain>\n");
+        snprintf(str, 1024, "</domain>\n");
         strcat(buf, str);
     }    
     LOG_DEBUG(buf);

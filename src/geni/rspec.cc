@@ -72,8 +72,19 @@ static string defaultSwcapStr = "<switchingCapabilityDescriptor>\
         </switchingCapabilitySpecificInfo>\
       </switchingCapabilityDescriptor>";
 
+map<string, string> GeniAdRSpec::aggregateTypeMap;
 map<string, string> GeniAdRSpec::aggregateUrnMap;
 map<string, string> GeniAdRSpec::aggregateUrlMap;
+
+static bool AggregateHasNestedUrn(string& domainId)
+{
+    string aggrType = "";
+    if (GeniAdRSpec::aggregateTypeMap.find(domainId) != GeniAdRSpec::aggregateTypeMap.end())
+        aggrType = GeniAdRSpec::aggregateTypeMap[domainId];
+    if (aggrType.compare("orca") == 0)
+        return false;
+    return true;
+}
 
 xmlDocPtr GeniAdRSpec::TranslateToNML()
 {
@@ -82,9 +93,11 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
 
     char buf[1024*1024*16];
     //get domain info: rspec/stitching/aggregate
+    bool isNestedUrn = true;
     xmlNodePtr rspecRoot = xmlDocGetRootElement(rspecDoc);
     xmlNodePtr xmlNode;
     xmlNodePtr aggrNode = NULL;
+    string aggrType = "";
     for (xmlNode = rspecRoot->children; xmlNode != NULL; xmlNode = xmlNode->next)
     {
         if (xmlNode->type == XML_ELEMENT_NODE )
@@ -95,8 +108,18 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                 {
                     if (aggrNode->type == XML_ELEMENT_NODE )
                     {
-                        if (strncasecmp((const char*)aggrNode->name, "aggregate", 9) == 0) 
+                        if (strncasecmp((const char*)aggrNode->name, "aggregate", 9) == 0) {
+                            for (xmlNode = aggrNode->children; xmlNode != NULL; xmlNode = xmlNode->next) 
+                            {
+                                if (xmlNode->type == XML_ELEMENT_NODE && strncasecmp((const char*)xmlNode->name, "aggregatetype", 9) == 0) 
+                                {
+                                    xmlChar* pBuf = xmlNodeGetContent(xmlNode);
+                                    StripXmlString(aggrType, pBuf);
+                                    break;
+                                }   
+                            }
                             break;
+                        }
                     }
                 }
                 break;
@@ -113,10 +136,17 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     string aggrUrl = (const char*)xmlGetProp(aggrNode,  (const xmlChar*)"url");
     string domainId = GetUrnField(aggrUrn, "domain");
     Domain* aDomain = new Domain(0, domainId);
-
-    // create aggregate URN and URL mappings
+    // create aggregate URN, URL and Type mappings
+    GeniAdRSpec::aggregateTypeMap[domainId] = aggrType;
+    if (aggrType.compare("orca") == 0)
+    {
+        isNestedUrn = false;
+    }
+    aDomain->setNestedUrn(isNestedUrn);
     GeniAdRSpec::aggregateUrnMap[domainId] = aggrUrn;
-    GeniAdRSpec::aggregateUrlMap[domainId] = aggrUrl;
+    vector<string> urls;
+    SplitString(aggrUrl, urls, ",");
+    GeniAdRSpec::aggregateUrlMap[domainId] = urls.back();
     
     // add AggregateReflector (AR: *:*:*) node/port/link
     sprintf(buf, "urn:publicid:IDN+%s+node+*", domainId.c_str());
@@ -134,7 +164,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     sprintf(buf, "urn:publicid:IDN+%s+interface+*:*:*", domainId.c_str());
     string arLinkId = buf;
     RLink* arLink = new RLink(arLinkId);
-    arLink->SetMetric(1);
+    arLink->SetMetric(10);
     arLink->SetMaxBandwidth(arPort->GetMaxBandwidth());
     arLink->SetMaxReservableBandwidth(arPort->GetMaxReservableBandwidth());
     arLink->SetMinReservableBandwidth(arPort->GetMinReservableBandwidth());
@@ -144,7 +174,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     sprintf(buf, "urn:publicid:IDN+%s+interface+*:*:**", domainId.c_str());
     string arLinkId2 = buf;
     RLink* arLink2 = new RLink(arLinkId2);
-    arLink2->SetMetric(1);
+    arLink2->SetMetric(10);
     arLink2->SetMaxBandwidth(arPort->GetMaxBandwidth());
     arLink2->SetMaxReservableBandwidth(arPort->GetMaxReservableBandwidth());
     arLink2->SetMinReservableBandwidth(arPort->GetMinReservableBandwidth());
@@ -206,9 +236,12 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                         //$$ create link
                                         xmlChar* xmlLinkId = xmlGetProp(xmlLinkNode,  (const xmlChar*)"id");
                                         string linkName = (const char*)xmlLinkId;
-                                        string linkShortName = GetUrnField(linkName, "link");
-                                        if (linkShortName.empty())
-                                            linkName += ":**";
+                                        if (aDomain->isNestedUrn())
+                                        {
+                                            string linkShortName = GetUrnField(linkName, "link");
+                                            if (linkShortName.empty())
+                                                linkName += ":**";
+                                        }
                                         RLink* aRLink = new RLink(linkName);
                                         aPort->AddLink(aRLink);
                                         //$$ fill in link params
@@ -222,9 +255,14 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                                     xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
                                                     string rlName;
                                                     StripXmlString(rlName, pBuf);
-                                                    string rlShortName = GetUrnField(rlName, "link");
-                                                    if (rlShortName.empty())
-                                                        rlName += ":**";
+                                                    string domainId = GetUrnField(rlName, "domain");
+                                                    // check if remote domain is nestedUrn
+                                                    if (AggregateHasNestedUrn(domainId))
+                                                    {
+                                                        string rlShortName = GetUrnField(rlName, "link");
+                                                        if (rlShortName.empty())
+                                                            rlName += ":**";
+                                                    }
                                                     aRLink->SetRemoteLinkName(rlName);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "TrafficEngineeringMetric", 18) == 0)
@@ -237,29 +275,33 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "capacity", 8) == 0)
                                                 {
                                                     xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
-                                                    u_int64_t bw;
-                                                    sscanf((const char*)pBuf, "%llu", &bw);
+                                                    string bwStr;
+                                                    StripXmlString(bwStr, pBuf);
+                                                    u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                                     aRLink->SetMaxBandwidth(bw);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "maximumReservableCapacity", 8) == 0)
                                                 {
                                                     xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
-                                                    u_int64_t bw;
-                                                    sscanf((const char*)pBuf, "%llu", &bw);
+                                                    string bwStr;
+                                                    StripXmlString(bwStr, pBuf);
+                                                    u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                                     aRLink->SetMaxReservableBandwidth(bw);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "minimumReservableCapacity", 8) == 0)
                                                 {
                                                     xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
-                                                    u_int64_t bw;
-                                                    sscanf((const char*)pBuf, "%llu", &bw);
+                                                    string bwStr;
+                                                    StripXmlString(bwStr, pBuf);
+                                                    u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                                     aRLink->SetMinReservableBandwidth(bw);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "granularity", 8) == 0)
                                                 {
                                                     xmlChar* pBuf = xmlNodeGetContent(xmlParamNode);
-                                                    u_int64_t bw;
-                                                    sscanf((const char*)pBuf, "%llu", &bw);
+                                                    string bwStr;
+                                                    StripXmlString(bwStr, pBuf);
+                                                    u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                                     aRLink->SetBandwidthGranularity(bw);
                                                 }
                                                 else if (strncasecmp((const char*)xmlParamNode->name, "switchingCapabilityDescriptor", 29) == 0)
@@ -278,56 +320,63 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                         if (i1 != string::npos) 
                                         {
                                             aggrHasAllWildcardRemoteId = true;
-                                            string nodeShortName = GetUrnField(aNode->GetName(), "node");
-                                            string portShortName = GetUrnField(aPort->GetName(), "port");
+                                            string nodeShortName = (aDomain->isNestedUrn() ? GetUrnField(aNode->GetName(), "node") : aNode->GetName());
+                                            string portShortName = (aDomain->isNestedUrn() ? (aPort->GetName(), "port") : aPort->GetName());
                                             sprintf(buf, "*:*-to-%s-%s:*", nodeShortName.c_str(), portShortName.c_str());
                                             remoteLinkName.replace(i1, 5, buf);
                                             aRLink->SetRemoteLinkName(remoteLinkName);
                                             string remotePortName = remoteLinkName;
                                             remotePortName.replace(remotePortName.size()-2, 2, "");
-                                            Port* remotePort = new Port(0, remotePortName);
-                                            remotePort->SetMaxBandwidth(aPort->GetMaxBandwidth());
-                                            remotePort->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
-                                            remotePort->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
-                                            remotePort->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
-                                            arNode->AddPort(remotePort);
-                                            RLink* remoteLink = new RLink(remoteLinkName);
-                                            remoteLink->SetRemoteLinkName(aRLink->GetName());
-                                            remoteLink->SetMetric(aRLink->GetMetric());
-                                            remoteLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
-                                            remoteLink->SetMaxReservableBandwidth(remotePort->GetMaxReservableBandwidth());
-                                            remoteLink->SetMinReservableBandwidth(remotePort->GetMinReservableBandwidth());
-                                            remoteLink->SetBandwidthGranularity(remotePort->GetBandwidthGranularity());
-                                            remoteLink->SetSwcapXmlString(aRLink->GetSwcapXmlString());
-                                            remotePort->AddLink(remoteLink);
+                                            if (arNode->GetPorts().find(remotePortName) == arNode->GetPorts().end())
+                                            {
+                                                Port* remotePort = new Port(0, remotePortName);
+                                                remotePort->SetMaxBandwidth(aPort->GetMaxBandwidth());
+                                                remotePort->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
+                                                remotePort->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
+                                                remotePort->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
+                                                arNode->AddPort(remotePort);
+                                                RLink* remoteLink = new RLink(remoteLinkName);
+                                                remoteLink->SetRemoteLinkName(aRLink->GetName());
+                                                remoteLink->SetMetric(aRLink->GetMetric());
+                                                remoteLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
+                                                remoteLink->SetMaxReservableBandwidth(remotePort->GetMaxReservableBandwidth());
+                                                remoteLink->SetMinReservableBandwidth(remotePort->GetMinReservableBandwidth());
+                                                remoteLink->SetBandwidthGranularity(remotePort->GetBandwidthGranularity());
+                                                remoteLink->SetSwcapXmlString(aRLink->GetSwcapXmlString());
+                                                remotePort->AddLink(remoteLink);
+                                            }
                                         }
                                     }
                                     else if (strncasecmp((const char*)xmlLinkNode->name, "capacity", 8) == 0)
                                     {
                                         xmlChar* pBuf = xmlNodeGetContent(xmlLinkNode);
-                                        u_int64_t bw;
-                                        sscanf((const char*)pBuf, "%llu", &bw);
+                                        string bwStr;
+                                        StripXmlString(bwStr, pBuf);
+                                        u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                         aPort->SetMaxBandwidth(bw);
                                     }
                                     else if (strncasecmp((const char*)xmlLinkNode->name, "maximumReservableCapacity", 8) == 0)
                                     {
                                         xmlChar* pBuf = xmlNodeGetContent(xmlLinkNode);
-                                        u_int64_t bw;
-                                        sscanf((const char*)pBuf, "%llu", &bw);
+                                        string bwStr;
+                                        StripXmlString(bwStr, pBuf);
+                                        u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                         aPort->SetMaxReservableBandwidth(bw);
                                     }
                                     else if (strncasecmp((const char*)xmlLinkNode->name, "minimumReservableCapacity", 8) == 0)
                                     {
                                         xmlChar* pBuf = xmlNodeGetContent(xmlLinkNode);
-                                        u_int64_t bw;
-                                        sscanf((const char*)pBuf, "%llu", &bw);
+                                        string bwStr;
+                                        StripXmlString(bwStr, pBuf);
+                                        u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                         aPort->SetMinReservableBandwidth(bw);
                                     }
                                     else if (strncasecmp((const char*)xmlLinkNode->name, "granularity", 8) == 0)
                                     {
                                         xmlChar* pBuf = xmlNodeGetContent(xmlLinkNode);
-                                        u_int64_t bw;
-                                        sscanf((const char*)pBuf, "%llu", &bw);
+                                        string bwStr;
+                                        StripXmlString(bwStr, pBuf);
+                                        u_int64_t bw = StringToBandwidth(bwStr, 1000);
                                         aPort->SetBandwidthGranularity(bw);
                                     }
                                 }
@@ -345,7 +394,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
         for (; itn != aDomain->GetNodes().end(); itn++)
         {
             Node* aNode = (Node*) (*itn).second;
-            string nodeShortName = GetUrnField(aNode->GetName(), "node");
+            string nodeShortName = (aDomain->isNestedUrn() ? GetUrnField(aNode->GetName(), "node") : aNode->GetName());
             if (nodeShortName.find("*") == 0)
                 continue;
             sprintf(buf, "urn:publicid:IDN+%s+stitchport+%s:*-%s-*", domainId.c_str(), nodeShortName.c_str(), nodeShortName.c_str());
@@ -359,7 +408,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             sprintf(buf, "urn:publicid:IDN+%s+interface+%s:*-%s-*:**", domainId.c_str(), nodeShortName.c_str(), nodeShortName.c_str());
             string aLinkId = buf;
             RLink* aLink = new RLink(aLinkId);
-            aLink->SetMetric(1);
+            aLink->SetMetric(10);
             aLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
             aLink->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
             aLink->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
@@ -378,7 +427,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             sprintf(buf, "urn:publicid:IDN+%s+interface+*:*-to-%s-*:**", domainId.c_str(), nodeShortName.c_str());
             string arLinkId = buf;
             RLink* arLink = new RLink(arLinkId);
-            arLink->SetMetric(1);
+            arLink->SetMetric(10);
             arLink->SetMaxBandwidth(arPort->GetMaxBandwidth());
             arLink->SetMaxReservableBandwidth(arPort->GetMaxReservableBandwidth());
             arLink->SetMinReservableBandwidth(arPort->GetMinReservableBandwidth());
@@ -387,7 +436,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             arPort->AddLink(arLink);
             
             aLink->SetRemoteLinkName(arLink->GetName());
-            arLink->SetRemoteLinkName(aLink->GetName());
+            arLink->SetRemoteLinkName(aLink->GetName());            
         }
     }
 
@@ -402,7 +451,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             if (strncasecmp((const char*)xmlNode->name, "link", 4) == 0) 
             {
                 list<string> ifRefs;
-                u_int64_t capacity = 1000000000; //1g by default
+                u_int64_t capacity = 1000000; //host interface 1g by default
                 for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
                 {
                     if (xmlIfNode->type == XML_ELEMENT_NODE )
@@ -416,18 +465,20 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                         else if (strncasecmp((const char*)xmlIfNode->name, "property", 8) == 0) 
                         {                            
                             xmlChar* capStr = xmlGetProp(xmlIfNode,  (const xmlChar*)"capacity");
-                            sscanf((const char*)capStr, "%llu", &capacity);
+                            string bwStr;
+                            StripXmlString(bwStr, capStr);
+                            capacity = StringToBandwidth(bwStr, 1000);
                         }
                     }
                 }
                 if (ifRefs.size() != 2)
                     continue;
-                string nodeShortName = GetUrnField(ifRefs.front(), "node");
+                string nodeShortName = (aDomain->isNestedUrn() ? GetUrnField(ifRefs.front(), "node") : ifRefs.front());
                 string nodeId1 = "urn:publicid:IDN+";
                 nodeId1 += domainId;
                 nodeId1 += "+node+";
                 nodeId1 += nodeShortName;
-                nodeShortName = GetUrnField(ifRefs.back(), "node");
+                nodeShortName = (aDomain->isNestedUrn() ? GetUrnField(ifRefs.back(), "node") : ifRefs.back());
                 string nodeId2 = "urn:publicid:IDN+";
                 nodeId2 += domainId;
                 nodeId2 += "+node+";
@@ -471,16 +522,17 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                 // get portname and linkname
                                 string portName = ifId;
                                 string linkName = ifId;
-                                string linkShortName = GetUrnField(linkName, "link");
-                                if (linkShortName.size() == 0)
-                                {
-                                    linkName += ":**";
+                                if (aDomain->isNestedUrn()) {
+                                    string linkShortName = GetUrnField(linkName, "link");
+                                    if (linkShortName.size() == 0)
+                                    {
+                                        linkName += ":**";
+                                    }
+                                    else 
+                                    {
+                                        portName.replace(linkName.size()-linkShortName.size()-1, linkShortName.size()+1, "");
+                                    }
                                 }
-                                else 
-                                {
-                                    portName.replace(linkName.size()-linkShortName.size()-1, linkShortName.size()+1, "");
-                                }
-
                                 bool portExisted = false, linkExisted = false;
                                 map<string, Port*, strcmpless>::iterator itp = aNode->GetPorts().begin();
                                 for (; itp != aNode->GetPorts().end(); itp++)
@@ -526,13 +578,16 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                 }
                                 RLink* aRLink = new RLink(linkName);
                                 string remoteLinkName = (ifId == rspecLink->GetName() ? rspecLink->GetRemoteLinkName() : rspecLink->GetName());
-                                string remoteLinkShortName = GetUrnField(remoteLinkName, "link");
-                                if (remoteLinkShortName.size() == 0)
+                                if (aDomain->isNestedUrn())
                                 {
-                                    remoteLinkName += ":**";
+                                    string remoteLinkShortName = GetUrnField(remoteLinkName, "link");
+                                    if (remoteLinkShortName.size() == 0)
+                                    {
+                                        remoteLinkName += ":**";
+                                    }
                                 }
                                 aRLink->SetRemoteLinkName(remoteLinkName);
-                                aRLink->SetMetric(1);
+                                aRLink->SetMetric(10);
                                 aRLink->SetMaxBandwidth((*itRL)->GetMaxBandwidth());
                                 aRLink->SetMaxReservableBandwidth((*itRL)->GetMaxReservableBandwidth());
                                 aRLink->SetMinReservableBandwidth((*itRL)->GetMinReservableBandwidth());
@@ -561,20 +616,26 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                         aNode = new Node(0, nodeId);
                                         string portName = ifId;
                                         string linkName = ifId;
-                                        string linkShortName = GetUrnField(linkName, "link");
-                                        if (linkShortName.size() == 0)
+                                        if (aDomain->isNestedUrn())
                                         {
-                                            linkName += ":**";
-                                        }
-                                        else 
-                                        {
-                                            portName.replace(linkName.size()-linkShortName.size()-1, linkShortName.size()+1, "");
+                                            string linkShortName = GetUrnField(linkName, "link");
+                                            if (linkShortName.size() == 0)
+                                            {
+                                                linkName += ":**";
+                                            }
+                                            else 
+                                            {
+                                                portName.replace(linkName.size()-linkShortName.size()-1, linkShortName.size()+1, "");
+                                            }
                                         }
                                         string remoteLinkName = (ifId == (*itRL)->GetName() ? (*itRL)->GetRemoteLinkName() : (*itRL)->GetName());
-                                        string remoteLinkShortName = GetUrnField(remoteLinkName, "link");
-                                        if (remoteLinkShortName.size() == 0)
+                                        if (aDomain->isNestedUrn())
                                         {
-                                            remoteLinkName += ":**";
+                                            string remoteLinkShortName = GetUrnField(remoteLinkName, "link");
+                                            if (remoteLinkShortName.size() == 0)
+                                            {
+                                                remoteLinkName += ":**";
+                                            }
                                         }
                                         map<string, Port*, strcmpless>::iterator itp = aNode->GetPorts().find(portName);
                                         Port* aPort;
@@ -594,7 +655,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                         RLink* aRLink = new RLink(linkName);
                                         size_t i1 = remoteLinkName.rfind(":*:*");
                                         size_t i2 = remoteLinkName.rfind(":*:**");
-                                        aRLink->SetMetric(1);
+                                        aRLink->SetMetric(10);
                                         aRLink->SetMaxBandwidth((*itRL)->GetMaxBandwidth());
                                         aRLink->SetMaxReservableBandwidth((*itRL)->GetMaxReservableBandwidth());
                                         aRLink->SetMinReservableBandwidth((*itRL)->GetMinReservableBandwidth());
@@ -607,9 +668,9 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                         else
                                         {
                                             // add remotePort/Link (portname:*-to-nodename-portname:*) if host is attached to abstract port (*:*)
-                                            string nodeShortName = GetUrnField(aNode->GetName(), "node");
-                                            string portShortName = GetUrnField(aPort->GetName(), "port");
-                                            sprintf(buf, ":*-to-%s-%s:*", nodeShortName.c_str(), portShortName.c_str());
+                                            string nodeShortName = (aDomain->isNestedUrn() ? GetUrnField(aNode->GetName(), "node") : aNode->GetName());
+                                            string portShortName = (aDomain->isNestedUrn() ? GetUrnField(aPort->GetName(), "port") : aPort->GetName());
+                                            sprintf(buf, ":*-to-%s-%s:*", nodeShortName.c_str(), portShortName.c_str()); 
                                             if (i2 == string::npos)
                                                 remoteLinkName.replace(i1, 4, buf);
                                             else
@@ -625,7 +686,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                             remotePort->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
                                             remotePort->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
                                             remotePort->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
-                                            string remoteNodeShortName = GetUrnField(remoteLinkName, "node");
+                                            string remoteNodeShortName = (aDomain->isNestedUrn() ?GetUrnField(remoteLinkName, "node") : remoteLinkName);
                                             string remoteNodeName = "urn:publicid:IDN+";
                                             remoteNodeName += domainId;
                                             remoteNodeName += "+node+";
@@ -658,6 +719,54 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                     if (aNode != NULL)
                     {
                         aDomain->AddNode(aNode);
+                        if (!aDomain->isNestedUrn()) // special case for ExoGENI (vmsite)
+                        {
+                            string trueShortDomainName = GetUrnField(aNode->GetName(), "domain");
+                            string trueShortNodeName = GetUrnField(aNode->GetName(), "node");
+                            if (trueShortNodeName.compare("*") == 0)
+                                continue;
+                            sprintf(buf, "urn:publicid:IDN+%s+stitchport+%s:*", trueShortDomainName.c_str(), trueShortNodeName.c_str());
+                            string aPortId = buf;
+                            Port* aPort = new Port(0, aPortId);
+                            aNode->AddPort(aPort);
+                            aPort->SetMaxBandwidth(100000000000ULL);
+                            aPort->SetMaxReservableBandwidth(100000000000ULL);
+                            aPort->SetMinReservableBandwidth(0);
+                            aPort->SetBandwidthGranularity(0);
+                            sprintf(buf, "urn:publicid:IDN+%s+interface+%s:*:*", trueShortDomainName.c_str(), trueShortNodeName.c_str());
+                            string aLinkId = buf;
+                            RLink* aLink = new RLink(aLinkId);
+                            aLink->SetMetric(10);
+                            aLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
+                            aLink->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
+                            aLink->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
+                            aLink->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
+                            aLink->SetSwcapXmlString(defaultSwcapStr);
+                            aPort->AddLink(aLink);
+                            if (GeniAdRSpec::aggregateUrnMap.find(trueShortDomainName) == GeniAdRSpec::aggregateUrnMap.end()) 
+                            {
+                                GeniAdRSpec::aggregateUrnMap[trueShortDomainName] = aggrUrn;
+                                GeniAdRSpec::aggregateUrlMap[trueShortDomainName] = urls.back();
+                                sprintf(buf, "urn:publicid:IDN+%s+stitchport+*:*", trueShortDomainName.c_str());
+                                aPortId = buf;
+                                Port* aPort = new Port(0, aPortId);
+                                aNode->AddPort(aPort);
+                                aPort->SetMaxBandwidth(100000000000ULL);
+                                aPort->SetMaxReservableBandwidth(100000000000ULL);
+                                aPort->SetMinReservableBandwidth(0);
+                                aPort->SetBandwidthGranularity(0);
+                                sprintf(buf, "urn:publicid:IDN+%s+interface+*:*:*", trueShortDomainName.c_str());
+                                aLinkId = buf;
+                                RLink* aLink = new RLink(aLinkId);
+                                aLink->SetMetric(10);
+                                aLink->SetMaxBandwidth(aPort->GetMaxBandwidth());
+                                aLink->SetMaxReservableBandwidth(aPort->GetMaxReservableBandwidth());
+                                aLink->SetMinReservableBandwidth(aPort->GetMinReservableBandwidth());
+                                aLink->SetBandwidthGranularity(aPort->GetBandwidthGranularity());
+                                aLink->SetSwcapXmlString(defaultSwcapStr);
+                                aPort->AddLink(aLink);
+                            }
+                        }
                     }
                 }
             }
@@ -667,6 +776,10 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     char str[1024];
     sprintf(buf, "<topology xmlns=\"http://ogf.org/schema/network/topology/ctrlPlane/20110826/\" id =\"%s-t%d\"><domain id=\"%s\">",
         domainId.c_str(), (int)time(0), domainId.c_str());
+    if (!aDomain->isNestedUrn()) 
+    {
+        strcat(buf, "<isNestedUrn>false</isNestedUrn>");
+    }
     map<string, Node*, strcmpless>::iterator itn = aDomain->GetNodes().begin();
     for (; itn != aDomain->GetNodes().end(); itn++)
     {
@@ -679,7 +792,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             Port* tp = (Port*)(*itp).second;
             snprintf(str, 1024, "<port id=\"%s\">", tp->GetName().c_str());
             strcat(buf, str);
-            snprintf(str, 1024, "<capacity>%llu</capacity>", tp->GetMaxBandwidth());
+            snprintf(str, 1024, "<capacity>%llu</capacity>", tp->GetMaxBandwidth()/1000);
             strcat(buf, str);
             snprintf(str, 1024, "<maximumReservableCapacity>%llu</maximumReservableCapacity>", tp->GetMaxReservableBandwidth());
             strcat(buf, str);
@@ -697,7 +810,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                 strcat(buf, str);
                 snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", tl->GetMetric());
                 strcat(buf, str);
-                snprintf(str, 1024, "<capacity>%llu</capacity>", tl->GetMaxBandwidth());
+                snprintf(str, 1024, "<capacity>%llu</capacity>", tl->GetMaxBandwidth()/1000);
                 strcat(buf, str);
                 snprintf(str, 1024, "<maximumReservableCapacity>%llu</maximumReservableCapacity>", tl->GetMaxReservableBandwidth());
                 strcat(buf, str);
@@ -706,6 +819,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                 snprintf(str, 1024, "<granularity>%llu</granularity>", tl->GetBandwidthGranularity());
                 strcat(buf, str);
                 strcat(buf, tl->GetSwcapXmlString().c_str());
+                /* disabled in stitch-v0.1 : to be used in v2
                 if (!aggrCapabilities.empty())
                 {
                     strcat(buf, "<capabilities>");
@@ -717,6 +831,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                     }
                     strcat(buf, "</capabilities>");
                 }
+                */
                 snprintf(str, 1024, "</link>");
                 strcat(buf, str);
             }
@@ -767,7 +882,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
     string queueName="CORE";
     string topicName="XMLRPC_API_REQUEST";
     char tagBuf[32];
-    snprintf(tagBuf, 31, "xmlrpc_api_request:%d", GeniRequestRSpec::unique_req_id);
+    snprintf(tagBuf, 31, "xmlrpc_api_request:%d", GeniRequestRSpec::unique_req_id++);
     string contextTag= tagBuf;
     Message* msg = new Message(MSG_REQ, queueName, topicName);
     msg->SetContextTag(contextTag);
@@ -879,7 +994,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                             userCons->setHopExclusionList(hopExclusionList);
                         
                         xmlNodePtr xmlNode1, xmlNode2, xmlNode3, xmlNode4;
-                        u_int64_t bw = 1;
+                        u_int64_t bw = 100000000; //Mbps
                         string pathType = "strict";
                         string layer = "2";
                         string srcVlan = "any";
@@ -898,7 +1013,9 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                                 else if (strncasecmp((const char*) xmlNode1->name, "capacity", 8) == 0) 
                                 {
                                     xmlChar* pBuf = xmlNodeGetContent(xmlNode1);
-                                    sscanf((const char*) pBuf, "%llu", &bw);
+                                    string bwStr;
+                                    StripXmlString(bwStr, pBuf);
+                                    bw = StringToBandwidth(bwStr, 1000);
                                 }
                                 else if (strncasecmp((const char*) xmlNode1->name, "switchingCapabilityDescriptor", 30) == 0) 
                                 {
@@ -965,7 +1082,9 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                                 else if (strncasecmp((const char*) xmlNode1->name, "capacity", 8) == 0) 
                                 {
                                     xmlChar* pBuf = xmlNodeGetContent(xmlNode1);
-                                    sscanf((const char*) pBuf, "%llu", &bw);
+                                    string bwStr;
+                                    StripXmlString(bwStr, pBuf);
+                                    bw = StringToBandwidth(bwStr, 1000);
                                 }
                                 else if (strncasecmp((const char*) xmlNode1->name, "switchingCapabilityDescriptor", 30) == 0) 
                                 {
@@ -1035,15 +1154,16 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
             }
             // parse node info and store client_id references
             else if (!hasStitchingExt && strncasecmp((const char*)xmlNode->name, "node", 4) == 0)
-{
+            {
                 xmlChar* xmlAggrId = xmlGetProp(xmlNode, (const xmlChar*) "component_manager_id");
                 string aggrName = (const char*) xmlAggrId;
                 string shortAggrName = GetUrnField(aggrName, "domain");
                 string shortNodeName = "*";
                 xmlChar* xmlNodeId = xmlGetProp(xmlNode,  (const xmlChar*)"component_id");
-                if (xmlNodeId != NULL)
+                if (xmlNodeId != NULL && strstr((const char*)xmlNodeId, "urn:") != NULL)
                 {
                     string nodeName = (const char*)xmlNodeId;
+                    //$$$ TODO: look for domain type and determine whether isNestedUrn
                     shortNodeName = GetUrnField(nodeName, "node");
                 }
                 xmlNodePtr xmlIfNode;
@@ -1055,7 +1175,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                         {
                             string ifId = "";
                             xmlChar* xmlIfId = xmlGetProp(xmlIfNode, (const xmlChar*) "component_id");
-                            if (xmlIfId != NULL) 
+                            if (xmlIfId != NULL && strstr((const char*)xmlIfId, "urn:") != NULL)
                             {
                                 ifId = (const char*) xmlIfId;
                             }
@@ -1084,12 +1204,33 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 xmlNodePtr xmlIfNode;
                 for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
                 {
+                    if (xmlIfNode->type == XML_ELEMENT_NODE)
+                    {
+                        if (strncasecmp((const char*)xmlIfNode->name, "link_shared_vlan", 16) == 0)
+                        {
+                            break;
+                        }
+                        else if (strncasecmp((const char*)xmlIfNode->name, "link_type", 16) == 0)
+                        {
+                            xmlChar* pBuf = xmlNodeGetContent(xmlIfNode);
+                            string linkTypeValue;
+                            StripXmlString(linkTypeValue, pBuf);
+                            if (linkTypeValue.compare("vlan") != 0)
+                                break;
+                        }
+                    }
+                }
+                // skip shared_vlan links
+                if (xmlIfNode != NULL)
+                    continue;
+                for (xmlIfNode = xmlNode->children; xmlIfNode != NULL; xmlIfNode = xmlIfNode->next)
+                {
                     if (xmlIfNode->type == XML_ELEMENT_NODE )
                     {
                         if (strncasecmp((const char*)xmlIfNode->name, "interface_ref", 12) == 0) 
                         {
                             xmlChar* xmlIfId = xmlGetProp(xmlIfNode,  (const xmlChar*)"component_id");
-                            if (xmlIfId != NULL)
+                            if (xmlIfId != NULL && strstr((const char*)xmlIfId, "urn:") != NULL)
                             {
                                 string ifId = (const char*)xmlIfId;
                                 ifRefs.push_back(ifId);
@@ -1102,16 +1243,33 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                                     continue;
                                 string clientId = (const char*)xmlClientId;
                                 if (clientIdUrnMap.find(clientId) != clientIdUrnMap.end())
-                                    ifRefs.push_back(clientIdUrnMap[clientId]);
+                                {
+                                    list<string>::iterator itif = ifRefs.begin();
+                                    string aggr1 = GetUrnField(clientIdUrnMap[clientId], "aggregate");
+                                    for (; itif != ifRefs.end(); itif++)
+                                    {
+                                        string aggr2 = GetUrnField((*itif), "aggregate");
+                                        if (aggr1.compare(aggr2) == 0) 
+                                        {
+                                            break;
+                                        }
+                                    }
+                                    // only add aggregate-unique interface to ifRefs
+                                    if (itif == ifRefs.end())
+                                    {
+                                        ifRefs.push_back(clientIdUrnMap[clientId]);
+                                    }
+                                }
                             }
                         }
                         else if (strncasecmp((const char*)xmlIfNode->name, "property", 8) == 0) 
                         {
                             xmlChar* capStr = xmlGetProp(xmlIfNode,  (const xmlChar*)"capacity");
                             if (capStr != NULL)
-                            {
-                                sscanf((const char*)capStr, "%llu", &bw);
-                                bw *= 1000; // temp hack to be compatible with PG
+{
+                                string bwStr;
+                                StripXmlString(bwStr, capStr);
+                                bw = StringToBandwidth(bwStr, 1000);
                             }
                         }
                     }
@@ -1220,11 +1378,14 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
     }
     this->rspecDoc = xmlCopyDoc(this->pairedRequestRspec->GetRspecXmlDoc(), 1);
     xmlNodePtr rspecRoot = xmlDocGetRootElement(this->rspecDoc);
-    xmlSetProp(rspecRoot,  (const xmlChar*)"type", (const xmlChar*)"request");
+    xmlSetProp(rspecRoot,  (const xmlChar*)"type", (const xmlChar*)"request"); 
     string schemaLoc = (const char*)xmlGetProp(rspecRoot,  (const xmlChar*)"schemaLocation");
     if (schemaLoc.find("http://hpn.east.isi.edu/rspec/ext/stitch/0.1/") == string::npos) {
         schemaLoc += " http://hpn.east.isi.edu/rspec/ext/stitch/0.1/ http://hpn.east.isi.edu/rspec/ext/stitch/0.1/stitch-schema.xsd";
-        xmlSetProp(rspecRoot,  (const xmlChar*)"xsi:schemaLocation", (const xmlChar*)schemaLoc.c_str());
+        if (xmlSearchNs(rspecDoc, rspecRoot,  (const xmlChar*)"xs") != NULL)
+            xmlSetProp(rspecRoot,  (const xmlChar*)"xs:schemaLocation", (const xmlChar*)schemaLoc.c_str());
+        else
+            xmlSetProp(rspecRoot,  (const xmlChar*)"xsi:schemaLocation", (const xmlChar*)schemaLoc.c_str());
     }
     
     xmlNodePtr xmlNode, stitchingNode = NULL;
@@ -1273,12 +1434,13 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         {
             TLink *tl = *itL;
             // trim artificial hops so i == path->GetPath().size() means last hop 
-            if (tl->GetName().find("node=*") != string::npos || tl->GetName().find("port=*") != string::npos)
+            if (tl->GetName().find("node=*") != string::npos || tl->GetName().find("port=*") != string::npos 
+                    || tl->GetName().find("interface+*")!= string::npos || tl->GetName().find(":*:")!= string::npos)
             {
                 itL = path->GetPath().erase(itL);
                 continue;
             }
-            string domainId = GetUrnField(tl->GetName(), "domain");
+            string domainId = (tl->GetPort()->GetNode()->GetDomain()->isNestedUrn() ? GetUrnField(tl->GetName(), "domain") : GetUrnFieldExt(tl->GetName(), "domain"));
             string aggregateUrn = "";
             if (!domainId.empty() && GeniAdRSpec::aggregateUrnMap.find(domainId) != GeniAdRSpec::aggregateUrnMap.end())
             {
@@ -1291,7 +1453,8 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             list<TLink*>::iterator itL2 = itL;
             itL2++;
             while (itL2 != path->GetPath().end() && 
-                ((*itL2)->GetName().find("node=*") != string::npos || (*itL2)->GetName().find("port=*") != string::npos))
+                ((*itL2)->GetName().find("node=*") != string::npos || (*itL2)->GetName().find("port=*") != string::npos
+                    ||  (*itL2)->GetName().find("-*:") != string::npos ||  (*itL2)->GetName().find(":*-") != string::npos))
             {
                 itL2 = path->GetPath().erase(itL2);
             }
@@ -1315,21 +1478,29 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             if (iErase != string::npos)
             {
                 linkName.erase(linkName.begin()+iErase, linkName.end());
+            } 
+            else 
+            {
+                iErase = linkName.find(":**");
+                if (iErase != string::npos)
+                {
+                    linkName.erase(linkName.begin()+iErase, linkName.end());
+                } 
             }
             // TODO: convert DCN URN into GENI URN
-            snprintf(str, 1024, "<link id=\"%s\">", ConvertLinkUrn_Dnc2Geni(linkName).c_str());
+            snprintf(str, 1024, "<link id=\"%s\">", (tl->GetPort()->GetNode()->GetDomain()->isNestedUrn() ? ConvertLinkUrn_Dnc2Geni(linkName).c_str() : ConvertLinkUrn_Dnc2GeniExt(linkName).c_str()));
             strcat(buf, str);
             snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", tl->GetMetric());
             strcat(buf, str);
             if (capacityCstr[0] == 0) 
             {
-                snprintf(capacityCstr, 16, "%llu", tl->GetMaxBandwidth() / 1000);
+                snprintf(capacityCstr, 16, "%llu", tl->GetMaxBandwidth()/1000);
             }
             list<ISCD*>::iterator its = tl->GetSwCapDescriptors().begin();
             for (; its != tl->GetSwCapDescriptors().end(); its++) 
             {
                 ISCD *iscd = *its;
-                snprintf(str, 1024, "<capacity>%llu</capacity>", tl->GetMaxBandwidth());
+                snprintf(str, 1024, "<capacity>%llu</capacity>", tl->GetMaxBandwidth()/1000);
                 strcat(buf, str);
                 snprintf(str, 1024, "<switchingCapabilityDescriptor>");
                 strcat(buf, str);
@@ -1399,6 +1570,15 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             strcat(buf, str);
             list<TLink*>::iterator itNext = itL;
             itNext++;
+            while (itNext != path->GetPath().end()) 
+            {
+                TLink* tlx = *itNext;
+                if (tlx->GetName().find("node=*") != string::npos || tlx->GetName().find("port=*") != string::npos 
+                  || tlx->GetName().find("interface+*")!= string::npos || tlx->GetName().find(":*:")!= string::npos)
+                    itNext++;
+                else
+                    break;
+            }
             if (itNext == path->GetPath().end())
                 snprintf(str, 1024, "<nextHop>null</nextHop>");
             else
@@ -1411,7 +1591,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         }
         snprintf(str, 1024, "</path>");
         strcat(buf, str);
-        
+
         // collected allAggregateUrns from above loop
         if (allAggregateUrns.size() >= 2)
         {

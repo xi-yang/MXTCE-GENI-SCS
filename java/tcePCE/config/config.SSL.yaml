@@ -1,5 +1,0 @@
----
-soap:
-    publishTo:  'https://localhost:9020/tcePCE'
-    
-rmUrl: 'https://localhost:9006/OSCARS/resourceManager'

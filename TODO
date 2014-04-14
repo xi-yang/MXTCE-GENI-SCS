@@ -1,4 +1,0 @@
-1. handle L2SC + PSC1/4 special case
-2. handle short URN
-3. catch all exceptions to make stable run
-4. clean up debug printout and temp files

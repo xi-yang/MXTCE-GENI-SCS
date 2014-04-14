@@ -67,7 +67,7 @@ public:
     void fire();
 };
 
-#define MAX_MSG_PORT_POLL_TIME 5 // seconds
+#define MAX_MSG_PORT_POLL_TIME 10 // seconds
 
 class XMLRPC_TimeoutOrCallback: public Timer, public MessagePortCallback {
 private:
@@ -77,12 +77,14 @@ private:
 public:
     XMLRPC_TimeoutOrCallback(EventMaster* em): Timer((int)MAX_MSG_PORT_POLL_TIME, (int)0), evtMaster(em) { }
     virtual void Run() {
-        if (evtMaster != NULL);
+        if (evtMaster != NULL) {
             evtMaster->Stop();
+        }
     }
     virtual void hookRunCallback() {
-        if (evtMaster != NULL);
+        if (evtMaster != NULL) {
             evtMaster->Stop();
+        }
     }    
 };
 
@@ -90,12 +92,29 @@ class XMLRPC_ComputePathMethod: public XMLRPC_BaseMethod {
 public:
     XMLRPC_ComputePathMethod(MxTCE* tce):XMLRPC_BaseMethod(tce) {
         this->_signature = "?";
-        this->_help = "compute path method";
+        this->_help = "compute_path method";
     }
     void execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const  retvalP);
     void ReturnGeniError(xmlrpc_c::value* const retvalP, int errCode, const char* errMsg);
 };
 
+class XMLRPC_GetVersionMethod: public XMLRPC_BaseMethod {    
+public:
+    XMLRPC_GetVersionMethod(MxTCE* tce):XMLRPC_BaseMethod(tce) {
+        this->_signature = "?";
+        this->_help = "get_version method";
+    }
+    void execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const  retvalP);
+};
+
+class XMLRPC_ListAggregatesMethod: public XMLRPC_BaseMethod {    
+public:
+    XMLRPC_ListAggregatesMethod(MxTCE* tce):XMLRPC_BaseMethod(tce) {
+        this->_signature = "?";
+        this->_help = "list_aggregates method";
+    }
+    void execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value * const  retvalP);
+};
 
 #define XMLRPC_APIServerThread XMLRPC_APIServer
 

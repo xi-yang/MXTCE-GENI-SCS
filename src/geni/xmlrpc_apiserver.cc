@@ -37,6 +37,7 @@
 #include "rspec.hh"
 #include "workflow.hh"
 #include <map>
+#include <algorithm>
 
 Lock XMLRPC_APIServer::xmlrpcApiLock; // lock to assure only one API call is served at a time
 
@@ -68,6 +69,7 @@ void XMLRPC_BaseMethod::fire()
     // TODO: use callback to stop eventmaster (need to modify MessagePort to hook up extra callback)
     XMLRPC_TimeoutOrCallback* timeoutOrCallback = new XMLRPC_TimeoutOrCallback(evtMaster);
     assert(evtMaster);
+    msgPort->GetMsgInQueue().clear();
     this->msgPort->SetMessageCallback(timeoutOrCallback);
     evtMaster->Schedule(timeoutOrCallback);
     evtMaster->Run();
@@ -87,8 +89,10 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     map<string, xmlrpc_c::value> reqStruct = paramList.getStruct(0);
     string urn = xmlrpc_c::value_string(reqStruct["slice_urn"]);
     string rspec = xmlrpc_c::value_string(reqStruct["request_rspec"]);
+    LOGF("XMLRPC_ComputePath (slice_urn='%s') begins with request_rspec: \n%s\n", urn.c_str(), rspec.c_str());
     map<string, xmlrpc_c::value> options = xmlrpc_c::value_struct(reqStruct["request_options"]);
     bool hold_path = false;
+    bool workflow_paths_merged = false;
     map<string, xmlrpc_c::value> routing_profile;
     u_int32_t start_time = 0, end_time = 0;
     if (options.find("geni_hold_path") != options.end()) {
@@ -102,6 +106,9 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     }
     if (options.find("geni_routing_profile") != options.end()) {
         routing_profile = xmlrpc_c::value_struct(options["geni_routing_profile"]);
+    }
+    if (options.find("geni_workflow_paths_merged") != options.end()) {
+        workflow_paths_merged = xmlrpc_c::value_boolean(options["geni_workflow_paths_merged"]);
     }
     
     GeniRequestRSpec reqRspec(rspec);
@@ -133,7 +140,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
         for (; itm != msgPort->GetMsgInQueue().end(); itm++) 
         {
             Message* replyMsg = *itm;
-            if (replyMsg->GetContextTag() == contextTag)
+            if (replyMsg->GetContextTag().compare(contextTag) == 0)
             {
                 GeniManifestRSpec replyRspec(&reqRspec);
                 try {
@@ -158,9 +165,38 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
                 {
                     map<string, xmlrpc_c::value> retWfdMap;
                     map<string, WorkflowData*>::iterator itW = replyRspec.GetWorkflowDataMap().begin();
+                    list<WorkflowData*> sortedArray;
                     for (; itW != replyRspec.GetWorkflowDataMap().end(); itW++)
                     {
-                        retWfdMap[(*itW).first] = ((WorkflowData*)(*itW).second)->GetXmlRpcData();
+                        // xml form of workflow data for individual path
+                        retWfdMap[(*itW).first] = *((WorkflowData*)(*itW).second)->GetXmlRpcData();
+                        // add to sorted array of the workflow data in ascending order of path length
+                        list<WorkflowData*>::iterator itWV = sortedArray.begin();
+                        for (; itWV != sortedArray.end(); itWV++) 
+                        {
+                            if ((*itWV)->GetDependencies().size() < ((WorkflowData*)(*itW).second)->GetDependencies().size())
+                            {
+                                itWV = sortedArray.insert(itWV, (*itW).second);
+                                break;
+                            }
+                        }                        
+                        if (itWV == sortedArray.end())
+                        {
+                            sortedArray.push_back((*itW).second);
+                        }
+                    }
+                    // merge multi-path workflow data in descending order of path length
+                    if (workflow_paths_merged)
+                    {
+                        list<WorkflowData*>::reverse_iterator ritW = sortedArray.rbegin();
+                        WorkflowData* combinedWorkflowData = *ritW;
+                        ritW++;
+                        for (; ritW != sortedArray.rend(); ritW++)
+                        {
+                            combinedWorkflowData->MergeDependencies((*ritW)->GetDependencies());
+                        }
+                        combinedWorkflowData->GenerateXmlRpcData();
+                        retWfdMap["##all_paths_merged##"] = *combinedWorkflowData->GetXmlRpcData();
                     }
                     valueMap["workflow_data"] = xmlrpc_c::value_struct(retWfdMap);
                 }
@@ -173,6 +209,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
 
 _final:
 
+    LOGF("XMLRPC_ComputePath(slice_urn='%s') ends!\n", urn.c_str());
     XMLRPC_APIServer::xmlrpcApiLock.Unlock();
 }
 
@@ -186,13 +223,88 @@ void XMLRPC_ComputePathMethod::ReturnGeniError(xmlrpc_c::value* const retvalP, i
     *retvalP = xmlrpc_c::value_struct(retMap);
 }
 
+
+void XMLRPC_GetVersionMethod::execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value* const retvalP) 
+{
+    XMLRPC_APIServer::xmlrpcApiLock.DoLock();
+    map<string, xmlrpc_c::value> retMap;
+    retMap["geni_api"] = xmlrpc_c::value_int(2);
+    map<string, xmlrpc_c::value> codeMap;
+    codeMap["geni_code"] = xmlrpc_c::value_int(0);
+    retMap["code"] = xmlrpc_c::value_struct(codeMap);
+    map<string, xmlrpc_c::value> valueMap;
+    // compose fixed 'value' struct
+    string verStr = getVersionString();
+    replace( verStr.begin(), verStr.end(), '$', ' ');
+    valueMap["code_tag"] = xmlrpc_c::value_string(verStr.c_str());
+    valueMap["interface"] = xmlrpc_c::value_string("scs");
+    char hostname[32];
+    gethostname(hostname, sizeof(hostname));
+    char urlCstr[128];
+    snprintf(urlCstr, 127, "http://%s:%d/%s", hostname, MxTCE::xmlrpcApiServerPort, MxTCE::xmlrpcApiServerPath.c_str());
+    valueMap["url"] = xmlrpc_c::value_string(urlCstr);
+    map<string, xmlrpc_c::value> apiVersionsMap;
+    apiVersionsMap["2"] = xmlrpc_c::value_string(urlCstr);
+    valueMap["geni_api_versions"] = xmlrpc_c::value_struct(apiVersionsMap);   
+    vector<xmlrpc_c::value> extArray;
+    extArray.push_back(xmlrpc_c::value_string("http://hpn.east.isi.edu/rspec/ext/stitch/0.1/"));
+    extArray.push_back(xmlrpc_c::value_string("http://hpn.east.isi.edu/rspec/ext/stitch/2/"));
+    map<string, xmlrpc_c::value> requestVersionsMap;
+    requestVersionsMap["version"] = xmlrpc_c::value_string("3");
+    requestVersionsMap["type"] = xmlrpc_c::value_string("GENI");
+    requestVersionsMap["schema"] = xmlrpc_c::value_string("http://www.geni.net/resources/rspec/3/request.xsd");
+    requestVersionsMap["namespace"] = xmlrpc_c::value_string("http://www.geni.net/resources/rspec/3");
+    requestVersionsMap["extensions"] = xmlrpc_c::value_array(extArray);
+    valueMap["geni_request_rspec_versions"] = xmlrpc_c::value_struct(requestVersionsMap);
+    // end composing 'value' struct
+    retMap["value"] = xmlrpc_c::value_struct(valueMap);
+    *retvalP = xmlrpc_c::value_struct(retMap);
+    XMLRPC_APIServer::xmlrpcApiLock.Unlock();
+}
+
+
+void XMLRPC_ListAggregatesMethod::execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value* const retvalP) 
+{
+    XMLRPC_APIServer::xmlrpcApiLock.DoLock();
+    map<string, xmlrpc_c::value> retMap;
+    retMap["geni_api"] = xmlrpc_c::value_int(2);
+    map<string, xmlrpc_c::value> codeMap;
+    codeMap["geni_code"] = xmlrpc_c::value_int(0);
+    retMap["code"] = xmlrpc_c::value_struct(codeMap);
+    map<string, xmlrpc_c::value> valueMap;
+    // compose fixed 'value' struct
+    string verStr = getVersionString();
+    replace( verStr.begin(), verStr.end(), '$', ' ');
+    valueMap["code_tag"] = xmlrpc_c::value_string(verStr.c_str());
+    valueMap["interface"] = xmlrpc_c::value_string("scs");
+    
+    map<string, xmlrpc_c::value> aggregateListMap;
+    map<string, string>::iterator itau = GeniAdRSpec::aggregateUrnMap.begin();
+    for (; itau != GeniAdRSpec::aggregateUrnMap.end(); itau++) {
+        map<string, xmlrpc_c::value> aggregateMap;
+        aggregateMap["urn"] = xmlrpc_c::value_string((*itau).second.c_str());
+        if (GeniAdRSpec::aggregateUrlMap.find((*itau).first) != GeniAdRSpec::aggregateUrlMap.end()) {
+            aggregateMap["url"] = xmlrpc_c::value_string(GeniAdRSpec::aggregateUrlMap[(*itau).first].c_str());
+        }
+        aggregateListMap[(*itau).first] = xmlrpc_c::value_struct(aggregateMap);
+    }
+    valueMap["geni_aggregate_list"] = xmlrpc_c::value_struct(aggregateListMap);   
+    retMap["value"] = xmlrpc_c::value_struct(valueMap);
+    *retvalP = xmlrpc_c::value_struct(retMap);
+    XMLRPC_APIServer::xmlrpcApiLock.Unlock();
+}
+
 // Server Thread 
 void* XMLRPC_APIServer::Run()
 {
     try {
         xmlrpc_c::registry myRegistry;
         xmlrpc_c::methodPtr const computePathMethodP(new XMLRPC_ComputePathMethod(mxTCE));
+        xmlrpc_c::methodPtr const getVersionMethodP(new XMLRPC_GetVersionMethod(mxTCE));
+        xmlrpc_c::methodPtr const listAggregatesMethodP(new XMLRPC_ListAggregatesMethod(mxTCE));
         myRegistry.addMethod("ComputePath", computePathMethodP);
+        myRegistry.addMethod("GetVersion", getVersionMethodP);
+        myRegistry.addMethod("ListAggregates", listAggregatesMethodP);
         xmlrpc_c::serverAbyss myAbyssServer(
             xmlrpc_c::serverAbyss::constrOpt()
             .registryP(&myRegistry)

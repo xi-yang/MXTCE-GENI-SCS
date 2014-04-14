@@ -86,9 +86,9 @@ void WorkflowData::LoadPath(TPath* tp)
     {
         TLink* L = *itp;
         Dependency* D = new Dependency();
-        string hopUrn = ConvertLinkUrn_Dnc2Geni(L->GetName());
+        string hopUrn = (L->GetPort()->GetNode()->GetDomain()->isNestedUrn() ? ConvertLinkUrn_Dnc2Geni(L->GetName()) : ConvertLinkUrn_Dnc2GeniExt(L->GetName()));
         D->SetHopUrn(hopUrn);
-        string domainId = GetUrnField(L->GetName(), "domain");
+        string domainId = GetUrnField(hopUrn, "domain");
         if (GeniAdRSpec::aggregateUrnMap.find(domainId) != GeniAdRSpec::aggregateUrnMap.end())
         {
             D->SetAggregateUrn(GeniAdRSpec::aggregateUrnMap[domainId]);
@@ -116,10 +116,8 @@ void WorkflowData::ComputeDependency()
         if (itD2 != dependencies.end())
         {
             Dependency* D2 = *itD2;
-            string domain1 = GetUrnField(D1->GetHopUrn(), "domain");
-            string domain2 = GetUrnField(D2->GetHopUrn(), "domain");
             // skip same domain/aggregate dependency
-            if (domain1.compare(domain2) == 0)
+            if (D1->GetAggregateUrn().compare(D2->GetAggregateUrn()) == 0)
                 continue;
             TLink* L2 = (TLink*)D2->GetResourceRef();
             // D1 depends on D2
@@ -169,9 +167,7 @@ void WorkflowData::ComputeDependency()
             if (itDx == itD1)
                 continue;
             Dependency* Dx = *itDx;
-            string domain1 = GetUrnField(D1->GetHopUrn(), "domain");
-            string domain2 = GetUrnField(Dx->GetHopUrn(), "domain");
-            if (domain1.compare(domain2) != 0)
+            if (D1->GetAggregateUrn().compare(Dx->GetAggregateUrn()) != 0)
                 continue;
             // find same domain hops and get the number
             numSameDomainHops1++;
@@ -195,10 +191,8 @@ void WorkflowData::ComputeDependency()
         if (itD2 != dependencies.end())
         {
             Dependency* D2 = *itD2;
-            string domain1 = GetUrnField(D1->GetHopUrn(), "domain");
-            string domain2 = GetUrnField(D2->GetHopUrn(), "domain");
             // skip same domain/aggregate dependency
-            if (domain1.compare(domain2) == 0)
+            if (D1->GetAggregateUrn().compare(D2->GetAggregateUrn()) == 0)
                 continue;
             TLink* L2 = (TLink*)D2->GetResourceRef();
             list<ISCD*>::iterator itS2 = L2->GetSwCapDescriptors().begin();
@@ -220,9 +214,7 @@ void WorkflowData::ComputeDependency()
                 if (itDy == itD2)
                     continue;
                 Dependency* Dy = *itDy;
-                string domain1 = GetUrnField(D2->GetHopUrn(), "domain");
-                string domain2 = GetUrnField(Dy->GetHopUrn(), "domain");
-                if (domain1.compare(domain2) != 0)
+                if (D2->GetAggregateUrn().compare(Dy->GetAggregateUrn()) != 0)
                     continue;
                 // find same domain hops and get the number
                 numSameDomainHops2++;
@@ -320,12 +312,103 @@ void WorkflowData::ComputeDependency()
             if (itD2 == itD1)
                 continue;
             Dependency* D2 = *itD2;
-            string domain1 = GetUrnField(D1->GetHopUrn(), "domain");
-            string domain2 = GetUrnField(D2->GetHopUrn(), "domain");
-            if (domain1.compare(domain2) != 0)
+            if (D1->GetAggregateUrn().compare(D2->GetAggregateUrn()) != 0)
                 continue;
             LoopFreeMerge(D1, D2);
             LoopFreeMerge(D2, D1);
+        }
+    }
+}
+
+void WorkflowData::MergeDependencies(vector<Dependency*>& newDependencies)
+{
+    vector<Dependency*>::iterator itD;
+    vector<Dependency*>::iterator itAD = newDependencies.begin();
+    for (; itAD != newDependencies.end(); itAD++)
+    {
+        Dependency* AD = *itAD;
+        Dependency* newD = NULL;
+        for (itD = dependencies.begin(); itD != dependencies.end(); itD++)
+        {
+            Dependency* D = *itD;
+            if (D->GetHopUrn().compare(AD->GetHopUrn()) == 0) {
+                newD = D;
+                break;
+            }
+        }
+        if (newD == NULL) {
+            // copy the dependency block over
+            newD = AD->Clone();
+            dependencies.push_back(newD);
+        }
+        // copy all dependency relationships from AD to D
+        vector<Dependency*>::iterator itADU = AD->GetUppers().begin();
+        for (; itADU != AD->GetUppers().end(); itADU++) {
+            Dependency* ADU = *itADU;
+            // if ADU exists in this->dependencies, copy the upper relation to newD.
+            for (itD = dependencies.begin(); itD != dependencies.end(); itD++)
+            {
+                Dependency* D = *itD;
+                if (D->GetHopUrn().compare(ADU->GetHopUrn()) == 0) {
+                    bool relationExisted = false;
+                    vector<Dependency*>::iterator DL = D->GetLowers().begin();
+                    for (; DL != D->GetLowers().end(); DL++)
+                    {
+                        if ((*DL)->GetHopUrn().compare(newD->GetHopUrn()) == 0) 
+                        {
+                            relationExisted = true;
+                            break;
+                        }
+                    }
+                    if (relationExisted) 
+                    {
+                        break;
+                    }
+                    bool loop_d_new = this->CheckDependencyLoop(D, newD);
+                    // if D->newD does not exist and D->newD is loop free
+                    if (!loop_d_new) 
+                    {
+                        D->GetLowers().push_back(newD);
+                        newD->GetUppers().push_back(D);
+                        D->setGetVlanFrom(true);
+                    }
+                    break;
+                }
+            }
+        }
+        vector<Dependency*>::iterator itADL = AD->GetLowers().begin();
+        for (; itADL != AD->GetLowers().end(); itADL++) {
+            Dependency* ADL = *itADL;
+            // if ADU exists in this->dependencies, add the upper relation to newD.
+            for (itD = dependencies.begin(); itD != dependencies.end(); itD++)
+            {
+                Dependency* D = *itD;
+                if (D->GetHopUrn().compare(ADL->GetHopUrn()) == 0) {
+                    bool relationExisted = false;
+                    vector<Dependency*>::iterator DU = D->GetUppers().begin();
+                    for (; DU != D->GetUppers().end(); DU++)
+                    {
+                        if ((*DU)->GetHopUrn().compare(newD->GetHopUrn()) == 0) 
+                        {
+                            relationExisted = true;
+                            break;
+                        }
+                    }
+                    if (relationExisted) 
+                    {
+                        break;
+                    }
+                    bool loop_new_d = this->CheckDependencyLoop(newD, D);
+                    // if newD->D does not exist and newD->D is loop free
+                    if (!loop_new_d) 
+                    {
+                        newD->GetLowers().push_back(D);
+                        D->GetUppers().push_back(newD);
+                        newD->setGetVlanFrom(true);
+                    }
+                    break;
+                }
+            }
         }
     }
 }
@@ -347,12 +430,17 @@ void WorkflowData::GenerateXmlRpcData()
     xmlrpc_c::value_array anArray(arrayData);
     map<string, xmlrpc_c::value> aMap;
     aMap["dependencies"] = anArray;
-    xmlRpcData = xmlrpc_c::value_struct(aMap);
+    if (xmlRpcData != NULL) 
+    {
+        delete xmlRpcData;
+    }
+    xmlRpcData = new xmlrpc_c::value;
+    *xmlRpcData = xmlrpc_c::value_struct(aMap);
 }
 
-xmlrpc_c::value WorkflowData::GetXmlRpcData()
+xmlrpc_c::value* WorkflowData::GetXmlRpcData()
 {
-    if (xmlRpcData.isInstantiated())
+    if (xmlRpcData->isInstantiated())
         return xmlRpcData;
     GenerateXmlRpcData();   
     return xmlRpcData;

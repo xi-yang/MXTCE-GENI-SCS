@@ -398,6 +398,7 @@ public:
     void RevokeResvDeltas(string& resvName);
     void PruneByBandwidth(u_int64_t bw);
     void PruneByExclusionUrn(string& exclusionUrn);
+    void PruneHopVlans(string& exclusionUrn, string& vlanRange);
     list<TLink*> ComputeDijkstraPath(TNode* srcNode, TNode* dstLink, bool cleanStart=false);
     void ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<TPath*>& KSP);
     void LogDumpWithFlags();

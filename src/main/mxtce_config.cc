@@ -166,7 +166,13 @@ void MxTCEConfig::ParseLevel4Config(char* key1, char* key2, char* key3, char* ke
     {
         if (strcasecmp(key2, "domains") == 0)
         {
-            if (strcasecmp(key4, "file") == 0)
+            if (strcasecmp(key4, "type") == 0)
+            {
+                string domainId = key3;
+                string domainType = val;
+                // TODO: create a domain-type map ?
+            }
+            else if (strcasecmp(key4, "file") == 0)
             {
                 string domainFile = val;
                 MxTCE::xmlDomainFileList.push_back(domainFile);
