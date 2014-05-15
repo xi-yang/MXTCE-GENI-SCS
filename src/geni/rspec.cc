@@ -1156,6 +1156,8 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
             else if (!hasStitchingExt && strncasecmp((const char*)xmlNode->name, "node", 4) == 0)
             {
                 xmlChar* xmlAggrId = xmlGetProp(xmlNode, (const xmlChar*) "component_manager_id");
+                if (xmlAggrId == NULL) 
+                    continue;
                 string aggrName = (const char*) xmlAggrId;
                 string shortAggrName = GetUrnField(aggrName, "domain");
                 string shortNodeName = "*";
