@@ -1542,7 +1542,7 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
                 iscd->suggestedVlanTags.Clear();
                 iscd->assignedVlanTags.Clear();
             }
-            else if ((iscd->suggestedVlanTags.HasTag(srcVtag) || iscd->suggestedVlanTags.IsEmpty()) && !iscd->vlanTranslation)
+            else if (iscd->suggestedVlanTags.HasTag(srcVtag) || (iscd->suggestedVlanTags.IsEmpty()&& !iscd->vlanTranslation)
             {
                 if (!preserveVlanAvailabilityRange) 
                 {
