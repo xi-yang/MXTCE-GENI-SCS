@@ -89,7 +89,7 @@ public:
     static Log& Instance() {return logger;}
     static void Init(u_int32_t options_val, const string& fileName);
     static const string Preamble(LogOption option);
-    static void EnableOption(LogOption opt) {options != opt;}
+    static void EnableOption(LogOption opt) {options |= opt;}
     static void DisableOption(LogOption opt) {options &= (~opt);}
     static int Logf(const char *format, ...);
 };
