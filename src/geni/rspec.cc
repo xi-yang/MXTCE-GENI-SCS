@@ -1375,7 +1375,8 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                     list<string>::iterator itR = ifRefs.begin();
                     for (; itR != ifRefs.end(); itR++) 
                     {
-                        mpvMap[*itR] = "any";
+                        string vlanAny = "any";
+                        (*mpvMap)[*itR] = vlanAny;
                     }
                     userCons->setMultiPointVlanMap(mpvMap);
                 }
