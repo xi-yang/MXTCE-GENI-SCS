@@ -176,6 +176,8 @@ protected:
     // routing profile
     list<string>* hopInclusionList;
     list<string>* hopExclusionList;
+    map<string, string>* multiPointVlanMap;
+    list<string>* designatedMPBridgeAggregates;
     bool preserveVlanAvailabilityRange;
     // mp2p_constraints
     string path_id;
@@ -183,13 +185,14 @@ protected:
 public:
 
     Apimsg_user_constraint() {
-        this->initVar();
+        this->initVars();
     }
 
     virtual ~Apimsg_user_constraint() {
+        this->freeVars();
     }
 
-    void initVar() {
+    void initVars() {
         this->gri = "";
         this->start_time = 0;
         this->end_time = 0;
@@ -213,12 +216,26 @@ public:
         this->flexMaxBandwidth = 0;
         this->flexMinBandwidth = 0;
         this->flexGranularity = 0;
+        // TODO: free memory in destructor
         this->hopInclusionList = NULL;
         this->hopExclusionList = NULL;
+        this->multiPointVlanMap = NULL;
+        this->designatedMPBridgeAggregates = NULL;
         this->preserveVlanAvailabilityRange = false;
         this->path_id = "";
     }
 
+    void freeVars() {
+        if (this->hopInclusionList != NULL)
+            delete this->hopInclusionList;
+        if (this->hopExclusionList != NULL)
+            delete this->hopExclusionList;
+        if (this->multiPointVlanMap != NULL)
+            delete this->multiPointVlanMap;
+        if (this->designatedMPBridgeAggregates != NULL)
+            delete this->designatedMPBridgeAggregates;
+    }
+    
     void setGri(string t_gri) {
         this->gri = t_gri;
     }
@@ -394,7 +411,23 @@ public:
     void setHopExclusionList(list<string>* el) {
         this->hopExclusionList = el;
     }
-    
+
+    map<string, string>* getMultiPointVlanMap() {
+        return this->multiPointVlanMap;
+    }
+
+    void setMultiPointVlanMap(map<string, string>* pm) {
+        this->multiPointVlanMap = pm;
+    }
+
+    list<string>* getDesignatedMPBridgeAggregates() {
+        return this->designatedMPBridgeAggregates;
+    }
+
+    void setDesignatedMPBridgeAggregates(list<string>* pl) {
+        this->designatedMPBridgeAggregates = pl;
+    }
+
     bool getPreserveVlanAvailabilityRange() {
         return this->preserveVlanAvailabilityRange;
     }

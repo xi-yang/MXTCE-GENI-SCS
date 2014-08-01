@@ -960,6 +960,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                             hopInclusionList->pop_back();
                         // 2. explicit hop inclusion and exclusion list
                         list<string>* hopExclusionList = NULL;
+                        list<string>* designatedBridgeAggrList = NULL;
                         if (routingProfile.find(pathId) != routingProfile.end())
                         {
                             map<string, xmlrpc_c::value> anRP = xmlrpc_c::value_struct(routingProfile[pathId]);
@@ -985,6 +986,18 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                                     hopExclusionList->push_back(hopUrn);
                                 }
                             }
+                            if (anRP.find("designated_bridge_aggregate_list") != anRP.end())
+                            {
+                                vector<xmlrpc_c::value> bridgeAggrList = xmlrpc_c::value_array(anRP["designated_bridge_aggregate_list"]).vectorValueValue();
+                                vector<xmlrpc_c::value>::iterator itA = bridgeAggrList.begin();
+                                for (; itA != bridgeAggrList.end(); itA++)
+                                {
+                                    string bridgeAggrUrn = xmlrpc_c::value_string(*itA);
+                                    if (designatedBridgeAggrList == NULL)
+                                        designatedBridgeAggrList = new list<string>;
+                                    designatedBridgeAggrList->push_back(bridgeAggrUrn);
+                                }
+                            }
                         }
                         if (!hopInclusionList->empty())
                             userCons->setHopInclusionList(hopInclusionList);
@@ -992,6 +1005,8 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                             delete hopInclusionList;
                         if (hopExclusionList != NULL)
                             userCons->setHopExclusionList(hopExclusionList);
+                        if (designatedBridgeAggrList != NULL)
+                            userCons->setDesignatedMPBridgeAggregates(designatedBridgeAggrList);
                         
                         xmlNodePtr xmlNode1, xmlNode2, xmlNode3, xmlNode4;
                         u_int64_t bw = 100000000; //Mbps
@@ -1274,7 +1289,8 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                         }
                     }
                 }
-                if (ifRefs.size() != 2)
+                
+                if (ifRefs.size() < 2)
                     continue;
                 string domainA = GetUrnField(ifRefs.front(), "domain");
                 string domainZ = GetUrnField(ifRefs.back(), "domain");
@@ -1308,6 +1324,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 // adding explicit routing_profile for multi-aggregate link
                 list<string>* hopInclusionList = NULL;
                 list<string>* hopExclusionList = NULL;
+                list<string>* designatedBridgeAggrList = NULL;
                 if (routingProfile.find(pathId) != routingProfile.end()) 
                 {
                     map<string, xmlrpc_c::value> anRP = xmlrpc_c::value_struct(routingProfile[pathId]);
@@ -1333,11 +1350,37 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                             hopExclusionList->push_back(hopUrn);
                         }
                     }
+                    if (anRP.find("designated_bridge_aggregate_list") != anRP.end()) {
+                        vector<xmlrpc_c::value> bridgeAggrList = xmlrpc_c::value_array(anRP["designated_bridge_aggregate_list"]).vectorValueValue();
+                        vector<xmlrpc_c::value>::iterator itA = bridgeAggrList.begin();
+                        for (; itA != bridgeAggrList.end(); itA++) {
+                            string bridgeAggrUrn = xmlrpc_c::value_string(*itA);
+                            if (designatedBridgeAggrList == NULL)
+                                designatedBridgeAggrList = new list<string>;
+                            designatedBridgeAggrList->push_back(bridgeAggrUrn);
+                        }
+                    }
                 }
                 if (hopInclusionList != NULL)
                     userCons->setHopInclusionList(hopInclusionList);
                 if (hopExclusionList != NULL)
                     userCons->setHopExclusionList(hopExclusionList);
+                if (designatedBridgeAggrList != NULL)
+                    userCons->setDesignatedMPBridgeAggregates(designatedBridgeAggrList);
+                // Handle multi-point bridging: !!!currently multi-point vlan bridging 
+                // request is only represented through a multi-point link in rspec main body.
+                if (ifRefs.size() > 2) 
+                {
+                    map<string, string>* mpvMap = new map<string, string>;
+                    list<string>::iterator itR = ifRefs.begin();
+                    for (; itR != ifRefs.end(); itR++) 
+                    {
+                        string vlanAny = "any";
+                        (*mpvMap)[*itR] = vlanAny;
+                    }
+                    userCons->setMultiPointVlanMap(mpvMap);
+                }
+                
                 TLV* tlv = NULL;
                 tlv = (TLV*) (new u_int8_t[TLV_HEAD_SIZE + sizeof (userCons)]);
                 tlv->type = MSG_TLV_VOID_PTR;
