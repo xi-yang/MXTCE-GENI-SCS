@@ -45,7 +45,7 @@ void* MPVBComputeWorker::hookRun()
 {
     // create workflow with action list (construct relationships)
     string actionName = "Action_ProcessRequestTopology_MPVB";
-    //@@ Action* actionRoot = new Action_ProcessRequestTopology_MPVB(actionName, this);
+    Action* actionRoot = new Action_ProcessRequestTopology_MPVB(actionName, this);
     actions.push_back(actionRoot);
         
     // schedule the top level action(s)

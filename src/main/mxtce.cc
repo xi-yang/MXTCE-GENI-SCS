@@ -300,13 +300,17 @@ void MxTCEMessageHandler::HandleException(Message* msg, string& errMsg) {
     Message* msg_reply = new Message(MSG_REPLY, queue, topic);
     if (msg->GetTopic().find("XMLRPC_API_REQUEST") != string::npos) {
         topic = "XMLRPC_API_REPLY";
+        if (msg->GetTopic() == "XMLRPC_API_REQUEST_MPVB") {
+            topic = "XMLRPC_API_REPLY_MPVB";
+        }
         msg_reply->SetTopic(topic);
         msg_reply->SetContextTag(msg->GetContextTag());
     }
     TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
     tlv->type = MSG_TLV_VOID_PTR;
     tlv->length = sizeof(void*);
-    ComputeResult* result = new ComputeResult();
+    string gri = "";
+    ComputeResult* result = new ComputeResult(gri);
     result->SetErrMessage(errMsg);
     memcpy(tlv->value, &result, sizeof(void*));
     list<TLV*>::iterator itlv;

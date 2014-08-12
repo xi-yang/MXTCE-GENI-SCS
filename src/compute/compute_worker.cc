@@ -35,6 +35,7 @@
 #include "compute_worker.hh"
 #include "simple_worker.hh"
 #include "multip2p_worker.hh"
+#include "mpvb_worker.hh"
 
 list<ComputeWorker*> ComputeWorkerFactory::workers;
 int ComputeWorkerFactory::serialNum = 0;

@@ -32,8 +32,8 @@
  */
 
 
-#ifndef __MVPB_WORKER_HH__
-#define __MVPB_WORKER_HH__
+#ifndef __MPVB_WORKER_HH__
+#define __MPVB_WORKER_HH__
 
 #include "types.hh"
 #include "event.hh"
@@ -44,14 +44,14 @@
 
 using namespace std;
 
-class MVPBComputeWorker: public ComputeWorker
+class MPVBComputeWorker: public ComputeWorker
 {
 protected:
     // common workflow data
     
 public:
-    MVPBComputeWorker(string n):ComputeWorker(n) { }
-    virtual ~MVPBComputeWorker();
+    MPVBComputeWorker(string n):ComputeWorker(n) { }
+    virtual ~MPVBComputeWorker();
     virtual void* hookRun();
 };
 
