@@ -83,7 +83,6 @@ public:
     MessageRouter* GetMessageRouter() { return messageRouter; }
     void Start();
     void CheckMessage();
-    void HandleException(Message* msg, string& errMsg);
 };
 
 
@@ -97,6 +96,7 @@ public:
     MxTCEMessageHandler(MxTCE* tce): mxTCE(tce) { }
     ~MxTCEMessageHandler() { }
     virtual void Run();
+    void HandleException(Message* msg, string& errMsg);
 };
 
     

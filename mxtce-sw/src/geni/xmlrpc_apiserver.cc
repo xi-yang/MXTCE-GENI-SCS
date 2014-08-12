@@ -48,6 +48,10 @@ void XMLRPC_BaseMethod::init()
     mxTCE->GetMessageRouter()->AddPort(MxTCE::xmlrpcApiServerPortName);
     string routeQueue = "CORE", routeTopic1 = "XMLRPC_API_REQUEST", routeTopic2 = "XMLRPC_API_REPLY";
     mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic1, MxTCE::loopbackPortName);
+    routeTopic1 = "XMLRPC_API_REQUEST_MPVB"; // additional message of same category
+    mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic1, MxTCE::loopbackPortName);
+    mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic2, MxTCE::xmlrpcApiServerPortName);
+    routeTopic2 = "XMLRPC_API_REPLY_MPVB"; // additional message of same category
     mxTCE->GetMessageRouter()->AddRoute(routeQueue,routeTopic2, MxTCE::xmlrpcApiServerPortName);
     msgPort = MessagePipeFactory::LookupMessagePipe(MxTCE::xmlrpcApiServerPortName)->GetClientPort();
     assert(msgPort);

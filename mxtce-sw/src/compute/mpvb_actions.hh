@@ -44,9 +44,9 @@ class Action_ProcessRequestTopology_MPVB: public Action
     protected:
     
     public:
-        Action_ProcessRequestTopology(): Action(){ }
-        Action_ProcessRequestTopology(string& n, ComputeWorker* w): Action(n, w) { }
-        virtual ~Action_ProcessRequestTopology() { }
+        Action_ProcessRequestTopology_MPVB(): Action(){ }
+        Action_ProcessRequestTopology_MPVB(string& n, ComputeWorker* w): Action(n, w) { }
+        virtual ~Action_ProcessRequestTopology_MPVB() { }
     
         virtual void Process();
         virtual bool ProcessChildren();
