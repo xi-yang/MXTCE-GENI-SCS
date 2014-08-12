@@ -53,7 +53,8 @@ libcompute_a_LIBADD =
 am_libcompute_a_OBJECTS = action.$(OBJEXT) scheduling.$(OBJEXT) \
 	compute_actions.$(OBJEXT) compute_worker.$(OBJEXT) \
 	simple_worker.$(OBJEXT) schedule_worker.$(OBJEXT) \
-	multip2p_worker.$(OBJEXT)
+	multip2p_worker.$(OBJEXT) mpvb_actions.$(OBJEXT) \
+	mpvb_worker.$(OBJEXT) 
 libcompute_a_OBJECTS = $(am_libcompute_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -197,7 +198,7 @@ libcompute_a_SOURCES = action.hh scheduling.hh compute_actions.hh \
 	compute_worker.hh simple_worker.hh schedule_worker.hh \
 	multip2p_worker.hh action.cc scheduling.cc compute_actions.cc \
 	compute_worker.cc simple_worker.cc schedule_worker.cc \
-	multip2p_worker.cc
+	multip2p_worker.cc mpvb_actions.cc mpvb_worker.cc
 all: all-am
 
 .SUFFIXES:
@@ -290,6 +291,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/schedule_worker.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scheduling.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/simple_worker.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpvb_actions.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpvb_worker.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

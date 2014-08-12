@@ -1379,6 +1379,8 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                         (*mpvMap)[*itR] = vlanAny;
                     }
                     userCons->setMultiPointVlanMap(mpvMap);
+                    topicName="XMLRPC_API_REQUEST_MPVB";
+                    msg->SetTopic(topicName);
                 }
                 
                 TLV* tlv = NULL;

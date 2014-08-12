@@ -214,6 +214,8 @@ ComputeWorker* ComputeWorkerFactory::CreateComputeWorker(string type)
         worker = new SimpleComputeWorker(buf);
     else if (type =="multip2pComputeWorker") 
         worker = new MultiP2PComputeWorker(buf);
+    else if (type =="mpvbComputeWorker") 
+        worker = new MPVBComputeWorker(buf);
     else 
     {   
         snprintf(buf, 128, "Unknown computeWorkerThread type: %s", type.c_str());

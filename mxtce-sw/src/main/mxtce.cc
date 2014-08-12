@@ -174,9 +174,25 @@ void MxTCEMessageHandler::Run()
     if (msg)
     {
         msg->LogDump();
-        if (msg->GetType() == MSG_REQ && (msg->GetTopic() == "API_REQUEST" || msg->GetTopic() == "XMLRPC_API_REQUEST" )) {
+        if (msg->GetType() == MSG_REQ && (msg->GetTopic().find("API_REQUEST") != string::npos || msg->GetTopic().find("XMLRPC_API_REQUEST") != string::npos)) 
+        {
             // creating computeWorkerThread and pass user request parameters
-            ComputeWorker* computingThread = ComputeWorkerFactory::CreateComputeWorker(MxTCE::defaultComputeWorkerType);
+            string computeWorkerType = MxTCE::defaultComputeWorkerType;
+            if (msg->GetTopic() == "XMLRPC_API_REQUEST_MPVB")
+            {
+                computeWorkerType = "mpvbComputeWorker"; // multi-point-vlan-bridge worker
+            }
+            ComputeWorker* computingThread = ComputeWorkerFactory::CreateComputeWorker(computeWorkerType);
+            if (computingThread == NULL) 
+            {
+                char buf[128];
+                snprintf(buf, 128, "!!Error: Cannot create compute worker thread of type : %s", computeWorkerType.c_str());
+                LOGF("!!Error: Cannot create compute worker thread of type : %s", computeWorkerType.c_str());
+                string errMsg = buf;
+                this->HandleException(msg, errMsg); 
+                delete msg;
+                return;
+            }
             if (msg->GetTLVList().size() > 0) 
             {
                 Apimsg_user_constraint* userConstraint;
@@ -200,8 +216,9 @@ void MxTCEMessageHandler::Run()
                 char buf[128];
                 snprintf(buf, 128, "Empty TLV list (USER_CONSTRAINT_LIST) in API_REQUEST message from : %s", msg->GetPort()->GetName().c_str());
                 LOGF("!!Error: Empty TLV list (USER_CONSTRAINT_LIST) in API_REQUEST message from : %s", msg->GetPort()->GetName().c_str());
-                // TODO: catch this exception!
-                //throw TCEException(buf);
+                string errMsg = buf;
+                this->HandleException(msg, errMsg);
+                delete msg;
                 return;
             }
 
@@ -246,8 +263,9 @@ void MxTCEMessageHandler::Run()
                 char buf[128];
                 snprintf(buf, 128, "Unknown computeWorkerThread: %s", msg->GetPort()->GetName().c_str());
                 LOGF("!!Error: Unknown computeWorkerThread: %s", msg->GetPort()->GetName().c_str());
-                // TODO: catch this exception!
-                //throw TCEException(buf);
+                string errMsg = buf;
+                this->HandleException(msg, errMsg); 
+                delete msg;
                 return;
             }
             Message* msg_reply = msg->Duplicate();
@@ -272,6 +290,27 @@ void MxTCEMessageHandler::Run()
             computingThread->Join();
         }
     }
-
     delete msg; //msg consumed
 }
+
+
+void MxTCEMessageHandler::HandleException(Message* msg, string& errMsg) {
+    string queue = "CORE";
+    string topic = "API_REPLY";
+    Message* msg_reply = new Message(MSG_REPLY, queue, topic);
+    if (msg->GetTopic().find("XMLRPC_API_REQUEST") != string::npos) {
+        topic = "XMLRPC_API_REPLY";
+        msg_reply->SetTopic(topic);
+        msg_reply->SetContextTag(msg->GetContextTag());
+    }
+    TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
+    tlv->type = MSG_TLV_VOID_PTR;
+    tlv->length = sizeof(void*);
+    ComputeResult* result = new ComputeResult();
+    result->SetErrMessage(errMsg);
+    memcpy(tlv->value, &result, sizeof(void*));
+    list<TLV*>::iterator itlv;
+    msg_reply->AddTLV(tlv);
+    mxTCE->GetLoopbackPort()->PostLocalMessage(msg_reply);
+}
+

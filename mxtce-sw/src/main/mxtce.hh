@@ -76,13 +76,14 @@ public:
     static bool tempTest;
 
 public:
-	MxTCE( const string& configFile);
-	~MxTCE();
+    MxTCE( const string& configFile);
+    ~MxTCE();
     MxTCEConfig* GetConfigParser() { return configParser; }
     MessagePortLoopback* GetLoopbackPort() { return loopbackPort; }
     MessageRouter* GetMessageRouter() { return messageRouter; }
     void Start();
     void CheckMessage();
+    void HandleException(Message* msg, string& errMsg);
 };
 
 
