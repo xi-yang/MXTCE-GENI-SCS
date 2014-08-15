@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  */
 
+#include "mpvb_worker.hh"
 #include "compute_actions.hh"
 #include "mpvb_actions.hh"
 #include <cmath>
@@ -64,17 +65,17 @@ void Action_ProcessRequestTopology_MPVB::Process()
     actionName = "Action_PrestageCompute_MPVB";
     Action_PrestageCompute_MPVB* actionPrestage = new Action_PrestageCompute_MPVB(actionName, this->GetComputeWorker());
     this->GetComputeWorker()->GetActions().push_back(actionPrestage);
-    actionTewg->AddChild(actionTewg);
+    actionTewg->AddChild(actionPrestage);
 
     // add Action_ComputeServiceTopology_MPVB
     actionName = "Action_ComputeServiceTopology_MPVB";
-    Action_ComputeServiceTopology_MPVB* actionCompute = new Action_PrestageCompute_MPVB(actionName, this->GetComputeWorker());
+    Action_ComputeServiceTopology_MPVB* actionCompute = new Action_ComputeServiceTopology_MPVB(actionName, this->GetComputeWorker());
     this->GetComputeWorker()->GetActions().push_back(actionCompute);
     actionPrestage->AddChild(actionCompute);
 
     // add Action_FinalizeServiceTopology_MPVB
-    actionName = "Action_ComputeServiceTopology_MPVB";
-    Action_FinalizeServiceTopology_MPVB* actionFinalize = new Action_PrestageCompute_MPVB(actionName, this->GetComputeWorker());
+    actionName = "Action_FinalizeServiceTopology_MPVB";
+    Action_FinalizeServiceTopology_MPVB* actionFinalize = new Action_FinalizeServiceTopology_MPVB(actionName, this->GetComputeWorker());
     this->GetComputeWorker()->GetActions().push_back(actionFinalize);
     actionCompute->AddChild(actionFinalize);
     
@@ -144,7 +145,7 @@ void Action_PrestageCompute_MPVB::Process()
         TNode* node = *itN;
         if (node->GetWorkData() == NULL)
             node->SetWorkData(new WorkData());
-        if (userConstraint->getMultiPointVlanMap().find(node->GetName()) != userConstraint->getMultiPointVlanMap().end()) 
+        if (userConstraint->getMultiPointVlanMap()->find(node->GetName()) != userConstraint->getMultiPointVlanMap()->end()) 
         {
             int* pT = new int(MPVB_TYPE_T);
             node->GetWorkData()->SetData("MPVB_TYPE", pT);
@@ -175,10 +176,16 @@ void Action_PrestageCompute_MPVB::Process()
     this->GetComputeWorker()->SetWorkflowData("CURRENT_TERMINAL", terminals->front());
     
     // create {T} graph 
-    TGraph* SMT = new TGraph;
-    for (itN = terminals->bgin(); itN != terminals->GetNodes().end(); itN++) 
+    string tgName = "SMT";
+    TGraph* SMT = new TGraph(tgName);
+    for (itN = terminals->begin(); itN != terminals->end(); itN++) 
     {
-        SMT->AddNode(*itN);
+	TDomain* td = (TDomain*)(*itN)->GetDomain();
+	if (SMT->LookupDomainByName(td->GetName()) == NULL)
+        {
+             SMT->AddDomain(td);
+	}
+        SMT->AddNode(td, *itN);
     }
     this->GetComputeWorker()->SetWorkflowData("SERVICE_TOPOLOGY", SMT);
 
