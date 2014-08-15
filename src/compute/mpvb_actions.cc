@@ -148,7 +148,7 @@ void Action_PrestageCompute_MPVB::Process()
         map<string, string>::iterator itM = userConstraint->getMultiPointVlanMap()->begin();
         for (; itM != userConstraint->getMultiPointVlanMap()->end(); itM++)
         {
-            if (node->VerifyContainUrn(itM->seoncd))
+            if (node->VerifyContainUrn(itM->second))
             {
                 int* pT = new int(MPVB_TYPE_T);
                 node->GetWorkData()->SetData("MPVB_TYPE", pT);

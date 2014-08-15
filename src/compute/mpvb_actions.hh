@@ -117,10 +117,10 @@ private:
     map<TNode*, map<TNode*, list<TPath*>*>*> cacheMap;
 public:
     ~KSPCache() {
-        map<string, map<string, list<TPath*>*>*>::iterator itM = cacheMap.begin();
+        map<TNode*, map<TNode*, list<TPath*>*>*>::iterator itM = cacheMap.begin();
         for (; itM != cacheMap.end(); itM++) {
-            map<string, list<TPath*>*>* entry = itM->second;
-            map<string, list<TPath*>*>::iterator itM2 = entry->begin();
+            map<TNode*, list<TPath*>*>* entry = itM->second;
+            map<TNode*, list<TPath*>*>::iterator itM2 = entry->begin();
             for (; itM2 != entry->end(); itM2++) {
                 // delete KSP
                 list<TPath*>* ksp = itM2->second;
@@ -136,9 +136,9 @@ public:
 
     void Add(TNode* srcNode, TNode* dstNode, list<TPath*>* ksp) {
         if (cacheMap.find(srcNode) == cacheMap.end()) {
-            cacheMap[srcNode] = new map<string, list<TPath*>*>;
+            cacheMap[srcNode] = new map<TNode*, list<TPath*>*>;
         }
-        map<string, list<TPath*>*>* entry = (map<string, list<TPath*>*>*)cacheMap[srcNode];
+        map<TNode*, list<TPath*>*>* entry = (map<TNode*, list<TPath*>*>*)cacheMap[srcNode];
         if (entry->find(dstNode) == entry->end()) {
             (*entry)[dstNode] = ksp;
         }
@@ -147,7 +147,7 @@ public:
     list<TPath*>* Lookup(TNode* srcNode, TNode* dstNode) {
         if (cacheMap.find(srcNode) == cacheMap.end()) 
             return NULL;
-        map<string, list<TPath*>*>* entry = (map<string, list<TPath*>*>*)cacheMap[srcNode];
+        map<TNode*, list<TPath*>*>* entry = (map<TNode*, list<TPath*>*>*)cacheMap[srcNode];
         if (entry->find(dstNode) == entry->end()) 
             return NULL;
         return (*entry)[dstNode];
