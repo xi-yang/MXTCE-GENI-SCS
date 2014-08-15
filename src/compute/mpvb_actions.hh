@@ -111,9 +111,10 @@ class Action_FinalizeServiceTopology_MPVB: public Action
 #define MPVB_TYPE_B 3
 
 
+// TODO: URN vs Node Name
 class KSPCache {
 private:
-    map<string, map<string, list<TPath*>*>*> cacheMap;
+    map<TNode*, map<TNode*, list<TPath*>*>*> cacheMap;
 public:
     ~KSPCache() {
         map<string, map<string, list<TPath*>*>*>::iterator itM = cacheMap.begin();
@@ -134,30 +135,22 @@ public:
     }
 
     void Add(TNode* srcNode, TNode* dstNode, list<TPath*>* ksp) {
-        return this->Add(srcNode->GetName(), dstNode->GetName(), ksp);
-    }
-    
-    void Add(string src, string dst, list<TPath*>* ksp) {
-        if (cacheMap.find(src) == cacheMap.end()) {
-            cacheMap[src] = new map<string, list<TPath*>*>;
+        if (cacheMap.find(srcNode) == cacheMap.end()) {
+            cacheMap[srcNode] = new map<string, list<TPath*>*>;
         }
-        map<string, list<TPath*>*>* entry = (map<string, list<TPath*>*>*)cacheMap[src];
-        if (entry->find(dst) == entry->end()) {
-            (*entry)[dst] = ksp;
+        map<string, list<TPath*>*>* entry = (map<string, list<TPath*>*>*)cacheMap[srcNode];
+        if (entry->find(dstNode) == entry->end()) {
+            (*entry)[dstNode] = ksp;
         }
     }
 
     list<TPath*>* Lookup(TNode* srcNode, TNode* dstNode) {
-        return Lookup(srcNode->GetName(), dstNode->GetName());
-    }
-    
-    list<TPath*>* Lookup(string src, string dst) {
-        if (cacheMap.find(src) == cacheMap.end()) 
+        if (cacheMap.find(srcNode) == cacheMap.end()) 
             return NULL;
-        map<string, list<TPath*>*>* entry = (map<string, list<TPath*>*>*)cacheMap[src];
-        if (entry->find(dst) == entry->end()) 
+        map<string, list<TPath*>*>* entry = (map<string, list<TPath*>*>*)cacheMap[srcNode];
+        if (entry->find(dstNode) == entry->end()) 
             return NULL;
-        return (*entry)[dst];
+        return (*entry)[dstNode];
     }            
 };
 

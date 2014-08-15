@@ -102,6 +102,19 @@ bool TNode::HasRemoteLink(TLink* link)
     return false;
 }
 
+bool TNode::VerifyContainUrn(string& urn) 
+{
+    string domainName = "", nodeName = "", portName = "", linkName = "";
+    ParseFQUrnShort(urn, domainName, nodeName, portName, linkName);
+    if (domainName != this->GetDomain()->GetName())
+        return false;
+    if (nodeName.empty())
+        return true;
+    if (nodeName != this->GetName())
+        return false;
+    return true;
+}
+
 TNode* TNode::Clone(bool newSubLevels)
 {
     TNode* tn = new TNode(this->_id, this->name, this->address);
