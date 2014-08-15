@@ -145,13 +145,19 @@ void Action_PrestageCompute_MPVB::Process()
         TNode* node = *itN;
         if (node->GetWorkData() == NULL)
             node->SetWorkData(new WorkData());
-        if (userConstraint->getMultiPointVlanMap()->find(node->GetName()) != userConstraint->getMultiPointVlanMap()->end()) 
+        map<string, string>::iterator itM = userConstraint->getMultiPointVlanMap()->begin();
+        for (; itM != userConstraint->getMultiPointVlanMap()->end(); itM++)
         {
-            int* pT = new int(MPVB_TYPE_T);
-            node->GetWorkData()->SetData("MPVB_TYPE", pT);
-            terminals->push_back(node); // add to terminal list
-            continue;
+            if (node->VerifyContainUrn(itM->seoncd))
+            {
+                int* pT = new int(MPVB_TYPE_T);
+                node->GetWorkData()->SetData("MPVB_TYPE", pT);
+                terminals->push_back(node); // add to terminal list
+                break;
+            }
         }
+        if (itM != userConstraint->getMultiPointVlanMap()->end())
+            continue;
         non_terminals->push_back(node);
         // check domain and node capabilities for "mp-l2-bridging" and mark as type B
         if (node->GetCapabilities().find("mp-l2-bridging") != node->GetCapabilities().end() 

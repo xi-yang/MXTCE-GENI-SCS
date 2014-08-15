@@ -173,6 +173,7 @@ public:
     list<TLink*>& GetRemoteLinks() { return rmtLinks; }
     void AddRemoteLink(TLink* link);
     bool HasRemoteLink(TLink* link);
+    bool VerifyContainUrn(string& urn);
     TNode* Clone(bool newSubLevels=true);
     bool operator==(TNode& aNode) {
         if (this->domain == NULL && aNode.domain != NULL 
