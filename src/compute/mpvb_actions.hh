@@ -37,6 +37,7 @@
 using namespace std;
 
 #include "action.hh"
+#include "tewg.hh"
 #include <vector>
 
 class Action_ProcessRequestTopology_MPVB: public Action
@@ -137,12 +138,12 @@ public:
     }
     
     void Add(string src, string dst, list<TPath*>* ksp) {
-        if (cacheMap.find(src == cacheMap.end()) {
-            cacheMap.put(src, new map<string, list<TPath*>*>*);            
+        if (cacheMap.find(src) == cacheMap.end()) {
+            cacheMap[src] = new map<string, list<TPath*>*>;
         }
         map<string, list<TPath*>*>* entry = (map<string, list<TPath*>*>*)cacheMap[src];
-        if (entry->find(dst == cacheMap.end()) {
-            entry->put(dst, ksp);
+        if (entry->find(dst) == entry->end()) {
+            (*entry)[dst] = ksp;
         }
     }
 
@@ -150,11 +151,11 @@ public:
         return Lookup(srcNode->GetName(), dstNode->GetName());
     }
     
-    list<TPath*>* Lookup(string stc, string dst) {
+    list<TPath*>* Lookup(string src, string dst) {
         if (cacheMap.find(src) == cacheMap.end()) 
             return NULL;
         map<string, list<TPath*>*>* entry = (map<string, list<TPath*>*>*)cacheMap[src];
-        if (entry->find(dst == cacheMap.end()) 
+        if (entry->find(dst) == entry->end()) 
             return NULL;
         return (*entry)[dst];
     }            
