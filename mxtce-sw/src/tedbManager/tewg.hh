@@ -400,7 +400,7 @@ public:
     void PruneByBandwidth(u_int64_t bw);
     void PruneByExclusionUrn(string& exclusionUrn);
     void PruneHopVlans(string& exclusionUrn, string& vlanRange);
-    list<TLink*> ComputeDijkstraPath(TNode* srcNode, TNode* dstLink, bool cleanStart=false);
+    list<TLink*> ComputeDijkstraPath(TNode* srcNode, TNode* dstNode, bool cleanStart=false, bool equalLinkCost=false);
     void ComputeKShortestPaths(TNode* srcNode, TNode* dstNode, int K, vector<TPath*>& KSP);
     void LogDumpWithFlags();
 };

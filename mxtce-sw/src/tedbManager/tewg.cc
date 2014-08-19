@@ -2000,7 +2000,7 @@ void TEWG::PruneHopVlans(string& exclusionUrn, string& vlanRange)
 }
 
 
-list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode, bool cleanStart)
+list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode, bool cleanStart, bool equalLinkCost)
 {
     // init TWorkData in TLinks
     list<TNode*>::iterator itn = tNodes.begin();
@@ -2025,10 +2025,13 @@ list<TLink*> TEWG::ComputeDijkstraPath(TNode* srcNode, TNode* dstNode, bool clea
         {
             if (cleanStart) 
                 TWDATA(link)->Cleanup();
-            TWDATA(link)->linkCost = link->GetMetric();
+            if (equalLinkCost)
+                TWDATA(link)->linkCost = 1;
+            else
+                TWDATA(link)->linkCost = link->GetMetric();
         }
         else
-            link->SetWorkData(new TWorkData(link->GetMetric(), _INF_));
+            link->SetWorkData(new TWorkData(equalLinkCost ? 1 : link->GetMetric(), _INF_));
         ++itl;
     }
 

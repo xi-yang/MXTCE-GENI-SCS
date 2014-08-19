@@ -43,7 +43,7 @@ using namespace std;
 // TODO:  make the below configurable
 #define MPVB_COMPUTE_TIMEOUT 10 // secs
 #define BACKOFF_NUM 2 
-#define MAX_REENTRY_NUM 10
+#define MAX_REENTRY_NUM 5
 
 class Action_ProcessRequestTopology_MPVB: public Action
 {
