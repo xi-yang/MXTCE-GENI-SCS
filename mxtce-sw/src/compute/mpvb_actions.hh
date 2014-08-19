@@ -40,6 +40,11 @@ using namespace std;
 #include "tewg.hh"
 #include <vector>
 
+// TODO:  make the below configurable
+#define MPVB_COMPUTE_TIMEOUT 10 // secs
+#define BACKOFF_NUM 2 
+#define MAX_REENTRY_NUM 10
+
 class Action_ProcessRequestTopology_MPVB: public Action
 {
     protected:
@@ -73,14 +78,14 @@ class Action_PrestageCompute_MPVB: public Action
 };
 
 
-class Action_ComputeServiceTopology_MPVB: public Action
+class Action_BridgeTerminal_MPVB: public Action
 {
     protected:
     
     public:
-        Action_ComputeServiceTopology_MPVB(): Action(){ }
-        Action_ComputeServiceTopology_MPVB(string& n, ComputeWorker* w): Action(n, w) { }
-        virtual ~Action_ComputeServiceTopology_MPVB() { }
+        Action_BridgeTerminal_MPVB(): Action(){ }
+        Action_BridgeTerminal_MPVB(string& n, ComputeWorker* w): Action(n, w) { }
+        virtual ~Action_BridgeTerminal_MPVB() { }
     
         virtual void Process();
         virtual bool ProcessChildren();
@@ -111,20 +116,19 @@ class Action_FinalizeServiceTopology_MPVB: public Action
 #define MPVB_TYPE_B 3
 
 
-// TODO: URN vs Node Name
 class KSPCache {
 private:
-    map<TNode*, map<TNode*, list<TPath*>*>*> cacheMap;
+    map<TNode*, map<TNode*, vector<TPath*>*>*> cacheMap;
 public:
     ~KSPCache() {
-        map<TNode*, map<TNode*, list<TPath*>*>*>::iterator itM = cacheMap.begin();
+        map<TNode*, map<TNode*, vector<TPath*>*>*>::iterator itM = cacheMap.begin();
         for (; itM != cacheMap.end(); itM++) {
-            map<TNode*, list<TPath*>*>* entry = itM->second;
-            map<TNode*, list<TPath*>*>::iterator itM2 = entry->begin();
+            map<TNode*, vector<TPath*>*>* entry = itM->second;
+            map<TNode*, vector<TPath*>*>::iterator itM2 = entry->begin();
             for (; itM2 != entry->end(); itM2++) {
                 // delete KSP
-                list<TPath*>* ksp = itM2->second;
-                list<TPath*>::iterator itL = ksp->begin();
+                vector<TPath*>* ksp = itM2->second;
+                vector<TPath*>::iterator itL = ksp->begin();
                 for (; itL != ksp->end(); itL++) {
                     delete (*itL);
                 }
@@ -134,20 +138,20 @@ public:
         }
     }
 
-    void Add(TNode* srcNode, TNode* dstNode, list<TPath*>* ksp) {
+    void Add(TNode* srcNode, TNode* dstNode, vector<TPath*>* ksp) {
         if (cacheMap.find(srcNode) == cacheMap.end()) {
-            cacheMap[srcNode] = new map<TNode*, list<TPath*>*>;
+            cacheMap[srcNode] = new map<TNode*, vector<TPath*>*>;
         }
-        map<TNode*, list<TPath*>*>* entry = (map<TNode*, list<TPath*>*>*)cacheMap[srcNode];
+        map<TNode*, vector<TPath*>*>* entry = (map<TNode*, vector<TPath*>*>*)cacheMap[srcNode];
         if (entry->find(dstNode) == entry->end()) {
             (*entry)[dstNode] = ksp;
         }
     }
 
-    list<TPath*>* Lookup(TNode* srcNode, TNode* dstNode) {
+    vector<TPath*>* Lookup(TNode* srcNode, TNode* dstNode) {
         if (cacheMap.find(srcNode) == cacheMap.end()) 
             return NULL;
-        map<TNode*, list<TPath*>*>* entry = (map<TNode*, list<TPath*>*>*)cacheMap[srcNode];
+        map<TNode*, vector<TPath*>*>* entry = (map<TNode*, vector<TPath*>*>*)cacheMap[srcNode];
         if (entry->find(dstNode) == entry->end()) 
             return NULL;
         return (*entry)[dstNode];
