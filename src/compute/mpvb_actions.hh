@@ -75,7 +75,7 @@ class Action_PrestageCompute_MPVB: public Action
         virtual bool ProcessMessages();
         virtual void Finish();
         virtual void CleanUp();
-	void SeedBridgeWithLPH();
+        void SeedBridgeWithLPH();
 };
 
 
@@ -96,6 +96,7 @@ class Action_BridgeTerminal_MPVB: public Action
         vector<TPath*>* ComputeKSPWithCache(TNode* srcNode, TNode* dstNode);
         TPath* BridgeTerminalWithPDH(TNode* bridgeNode, TNode* terminalNode);
         bool VerifyBridgePath(TNode* bridgeNode, TNode* terminalNode, TPath* bridgePath);
+        void BackoffFromTerminal(TGraph* SMT, TNode* terminal);
 };
 
 

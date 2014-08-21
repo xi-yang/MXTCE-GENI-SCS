@@ -405,6 +405,8 @@ void Action_BridgeTerminal_MPVB::Process()
         // crankback and retry with disturbing procedure
         // TODO: call back off (removal / reset logic) method ( go back up to 3rd node in the list)
         // TODO: call reorder rest terminals method
+
+        this->BackoffAndDisturb();
         
         // Compute stop after timeout, but we still have a safe guard limit on number of reentries to make sure thread exit.
         --(*pReentries);
@@ -501,6 +503,63 @@ bool Action_BridgeTerminal_MPVB::VerifyBridgePath(TNode* bridgeNode, TNode* term
         return false;
     if (!SMT->VerifyMPVBConstraints(bridgeNode, bridgeTspec))
         return false;
+}
+
+
+void Action_BridgeTerminal_MPVB::BackoffAndDisturb()
+{
+    TGraph* SMT = (TGraph*)this->GetComputeWorker()->GetWorkflowData("SERVICE_TOPOLOGY");
+    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
+    vector<TNode*>* orderedTerminals = (vector<TNode*>*)this->GetComputeWorker()->GetWorkflowData("ORDERED_TERMINALS");
+    TNode* currentTerminal = (vector<TNode*>*)this->GetComputeWorker()->GetWorkflowData("CURRENT_TERMINAL");
+    int backoffNum = *(int*)this->GetComputeWorker()->GetWorkflowData("BACKOFF_NUM");
+
+    int i = 0;
+    for (; i < orderedTerminals->size(); i++) 
+    {
+        if (orderedTerminals->at(i) == currentTerminal)
+            break;
+    }
+    if (i < backoffNum) // no backoff, just reorder [i+1:]
+    {
+        backoffNum = 0;
+    }
+    else if (i == backoffNum) // backoff 1
+    {
+        backoffNum = 1;
+    }
+    if (i-backoffNum+1) == orderedTerminals->size()-1)
+    {
+        // nothing left to disturb
+        throw ComputeThreadException((char*)"Action_BridgeTerminal_MPVB::BackoffAndDisturb No feasible solution - without room to further disturb the bridging order!");
+    }
+
+    int j = 0;
+    for (; j < backoffNum; j++)
+    {
+        TNode* backoffTerminal = orderedTerminals->begin() + (i-j);
+        backoffTerminal = SMT->LookupSameNode(backoffTerminal); // replace with 
+        // starting from the terminal remove   connected the links and nodes from SMT until reaching a bridgeNode (node with links)
+        this->BackoffFromTerminal(SMT, backoffTerminal);
+    }
+
+    // reorder terminals after (*orderedTerminals)[i-backoff] - simply move next terminal to end of list (?)
+    orderedTerminals->push_back(orderedTerminals->begin()+i+1);
+    orderedTerminals->erase(orderedTerminals->begin()+i+1);
+}
+
+void Action_BridgeTerminal_MPVB::BackoffFromTerminal(TGraph* SMT, TNode* terminal)
+{
+    if (terminal->GetLocalLinks().size() != 1)
+        return;
+    TLink* nextLink = terminal->GetLocalLinks().front();
+    TLink* nextRemoteLink = (TLink*)nextLink->GetRemoteLink();
+    TNode* nextNode = nextLink->GetRemoteEnd();
+    SMT->RemoveLink(nextLink);
+    if (nextRemoteLink)
+        SMT->RemoveLink(nextRemoteLink);
+    SMT->RemoveNode(terminal);
+    this->BackoffFromTerminal(SMT, nextNode);
 }
 
 bool Action_BridgeTerminal_MPVB::ProcessChildren()
