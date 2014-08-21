@@ -904,7 +904,7 @@ TDomain* TGraph::LookupSameDomain(TDomain* domain)
 
 TNode* TGraph::LookupSameNode(TNode* node)
 {
-    TDomain* domain = this->LookupSameDomain(node->GetDomain());
+    TDomain* domain = this->LookupSameDomain((TDomain*)node->GetDomain());
     if (domain == NULL)
         return NULL;
     map<string, Node*, strcmpless>::iterator itn = domain->GetNodes().find(node->GetName());
@@ -916,7 +916,7 @@ TNode* TGraph::LookupSameNode(TNode* node)
 
 TPort* TGraph::LookupSamePort(TPort* port)
 {
-    TNode* node = this->LookupSameNode(port->GetNode());
+    TNode* node = this->LookupSameNode((TNode*)port->GetNode());
     map<string, Port*, strcmpless>::iterator itp = node->GetPorts().find(port->GetName());
     if (itp == node->GetPorts().end())
         return NULL;
@@ -926,7 +926,7 @@ TPort* TGraph::LookupSamePort(TPort* port)
 
 TLink* TGraph::LookupSameLink(TLink* link)
 {
-    TPort* port = this->LookupSamePort(link->GetPort());
+    TPort* port = this->LookupSamePort((TPort*)link->GetPort());
     map<string, Link*, strcmpless>::iterator itl = port->GetLinks().find(link->GetName());
     if (itl == port->GetLinks().end())
         return NULL;
@@ -1093,7 +1093,7 @@ bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node, TServiceSpec& tspec)
         TLink* localLink = *itL;
         bool* visited = (bool*)localLink->GetWorkData()->GetData("MPVB_VISITED");
         *visited = true;
-        TLink* remoteLink = localLink->GetRemoteEnd();
+        TLink* remoteLink = (TLink*)localLink->GetRemoteLink();
         if (remoteLink == NULL)
             continue;
         visited = (bool*)remoteLink->GetWorkData()->GetData("MPVB_VISITED");
@@ -1103,8 +1103,8 @@ bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node, TServiceSpec& tspec)
         *visited = true;
         TServiceSpec* nextTspec = (TServiceSpec*)nextNode->GetWorkData()->GetData("MPVB_TSPEC");
 
-        ConstraintTagSet localLinkVtagSet; 
-        ConstraintTagSet remoteLinkVtagSet;
+        ConstraintTagSet localLinkVtagSet(MAX_VLAN_NUM); 
+        ConstraintTagSet remoteLinkVtagSet(MAX_VLAN_NUM);
         localLink->ProceedByUpdatingVtags(tspec.GetVlanSet(), localLinkVtagSet, true);
         if (localLinkVtagSet.IsEmpty()) // after intersection (w/ translation)
             return false;
