@@ -301,9 +301,17 @@ public:
     TNode* LookupNodeByURN(string& urn);
     TPort* LookupPortByURN(string& urn);
     TLink* LookupLinkByURN(string& urn);
+    TDomain* LookupSameDomain(TDomain* domain);
+    TNode* LookupSameNode(TNode* node);
+    TPort* LookupSamePort(TPort* port);
+    TLink* LookupSameLink(TLink* link);
     void LoadPath(list<TLink*> path);
     TGraph* Clone();
+    bool VerifyMPVBConstraints(TNode* root, TServiceSpec& tspec);
     void LogDump();
+
+protected:    
+    bool VerifyMPVBConstraints_Recursive(TNode* node, TServiceSpec& tspec);
 };
 
 
@@ -352,7 +360,7 @@ public:
             }
         }
     void ExpandWithRemoteLinks();
-    bool VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS);
+    bool VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS, bool keepAllTags = false);
     bool VerifyHopInclusionList(list<string>& inclusionList);
     bool VerifyLoopFree();
     void UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool preserveVlanAvailabilityRange=false);

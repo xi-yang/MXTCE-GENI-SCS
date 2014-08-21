@@ -896,6 +896,44 @@ TLink* TGraph::LookupLinkByURN(string& urn)
 }
 
 
+TDomain* TGraph::LookupSameDomain(TDomain* domain)
+{
+    return this->LookupDomainByName(domain->GetName());
+}
+
+
+TNode* TGraph::LookupSameNode(TNode* node)
+{
+    TDomain* domain = this->LookupSameDomain(node->GetDomain());
+    if (domain == NULL)
+        return NULL;
+    map<string, Node*, strcmpless>::iterator itn = domain->GetNodes().find(node->GetName());
+    if (itn == domain->GetNodes().end())
+        return NULL;
+    return (TNode*)(*itn).second;
+}
+
+
+TPort* TGraph::LookupSamePort(TPort* port)
+{
+    TNode* node = this->LookupSameNode(port->GetNode());
+    map<string, Port*, strcmpless>::iterator itp = node->GetPorts().find(port->GetName());
+    if (itp == node->GetPorts().end())
+        return NULL;
+    return (TPort*)(*itp).second;
+}
+
+
+TLink* TGraph::LookupSameLink(TLink* link)
+{
+    TPort* port = this->LookupSamePort(link->GetPort());
+    map<string, Link*, strcmpless>::iterator itl = port->GetLinks().find(link->GetName());
+    if (itl == port->GetLinks().end())
+        return NULL;
+    return (TLink*)(*itl).second;
+}
+
+
 void TGraph::LoadPath(list<TLink*> path)
 {
     string domainName, nodeName, portName, linkName;
@@ -1014,6 +1052,71 @@ TGraph* TGraph::Clone()
 }
 
 
+bool TGraph::VerifyMPVBConstraints(TNode* root, TServiceSpec& tspec)
+{
+    // reset work data for all nodes and links
+    list<TNode*>::iterator itN = this->GetNodes().begin();
+    for (; itN != this->GetNodes().end(); itN++)
+    {
+        TNode* node = *itN;
+        if (node->GetWorkData() == NULL)
+        {
+            node->SetWorkData(new WorkData());
+        }
+        node->GetWorkData()->SetData("MPVB_VISITED", new bool(false));
+        node->GetWorkData()->SetData("MPVB_TSPEC", new TServiceSpec());
+    }    
+    list<TLink*>::iterator itL = this->GetLinks().begin();
+    for (; itL != this->GetLinks().end(); itL++)
+    {
+        Link* link = *itL;
+        if (link->GetWorkData() == NULL)
+        {
+            link->SetWorkData(new WorkData());
+        }
+        link->GetWorkData()->SetData("MPVB_VISITED", new bool(false));
+        link->GetWorkData()->SetData("MPVB_TSPEC", new TServiceSpec());
+    }    
+
+    // BSF search and verify
+    bool* visited = (bool*)root->GetWorkData()->GetData("MPVB_VISITED");
+    *visited = true;
+    (*(TServiceSpec*)root->GetWorkData()->GetData("MPVB_TSPEC")) = tspec;
+    return VerifyMPVBConstraints_Recursive(root, tspec);
+}
+
+bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node, TServiceSpec& tspec)
+{
+    list<TLink*>::iterator itL = node->GetLocalLinks().begin();
+    for (; itL != node->GetLocalLinks().end(); itL++)
+    {
+        TLink* localLink = *itL;
+        bool* visited = (bool*)localLink->GetWorkData()->GetData("MPVB_VISITED");
+        *visited = true;
+        TLink* remoteLink = localLink->GetRemoteEnd();
+        if (remoteLink == NULL)
+            continue;
+        visited = (bool*)remoteLink->GetWorkData()->GetData("MPVB_VISITED");
+        *visited = true;
+        TNode* nextNode = remoteLink->GetLocalEnd();
+        visited = (bool*)nextNode->GetWorkData()->GetData("MPVB_VISITED");
+        *visited = true;
+        TServiceSpec* nextTspec = (TServiceSpec*)nextNode->GetWorkData()->GetData("MPVB_TSPEC");
+
+        ConstraintTagSet localLinkVtagSet; 
+        ConstraintTagSet remoteLinkVtagSet;
+        localLink->ProceedByUpdatingVtags(tspec.GetVlanSet(), localLinkVtagSet, true);
+        if (localLinkVtagSet.IsEmpty()) // after intersection (w/ translation)
+            return false;
+        remoteLink->ProceedByUpdatingVtags(localLinkVtagSet, remoteLinkVtagSet, true);
+        if (remoteLinkVtagSet.IsEmpty()) // after intersection (w/ translation)
+            return false;
+        nextTspec->GetVlanSet() = remoteLinkVtagSet;
+        if (!VerifyMPVBConstraints_Recursive(nextNode, *nextTspec))
+            return false;
+    }
+    return true;
+}
 
 void TGraph::LogDump()
 {
@@ -1136,7 +1239,7 @@ void TPath::ExpandWithRemoteLinks()
 
 // verify constrains of vlantag, wavelength and cross-layer adaptation (via TSpec) 
 // TODO: support for MLN request types (currently only Ethernet-over-WDM altough other cross-layers are computed but not accounted in results)
-bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_t& wave, TSpec& tspec) 
+bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS, bool keepAllTags)//u_int32_t& srcVtag, u_int32_t& dstVtag, u_int32_t& wave, TSpec& tspec) 
 {
     TLink* L;
     list<TLink*>::iterator iterL;
@@ -1260,6 +1363,11 @@ bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_in
             dstVtag = next_vtagset_trans.RandomTag(); 
         else if (!next_vtagset_trans.HasTag(dstVtag))
             return false;
+        if (keepAllTags)
+        {
+            egrTSS.GetVlanSet() = next_vtagset_trans;
+            return true;
+        }
     }
     else
     {
@@ -1272,8 +1380,17 @@ bool TPath::VerifyTEConstraints(TServiceSpec& ingTSS,TServiceSpec& egrTSS)//u_in
             dstVtag = srcVtag;
         else if (srcVtag == ANY_TAG && dstVtag == ANY_TAG)
             dstVtag = srcVtag = next_vtagset.RandomTag(); 
+        if (keepAllTags)
+        {
+            egrTSS.GetVlanSet() = next_vtagset;
+            if (!next_waveset.IsEmpty())
+            {
+                egrTSS.GetWavelengthSet() = next_waveset;
+            }
+            return true;
+        }
     }
-    //finalize vlans
+    //finalize tag set to a spcecific VLAN / wavelength
     ingTSS.GetVlanSet().Clear();
     if (ingTSS.SWtype == LINK_IFSWCAP_L2SC && ingTSS.ENCtype == LINK_IFSWCAP_ENC_ETH)
         ingTSS.GetVlanSet().AddTag(srcVtag);

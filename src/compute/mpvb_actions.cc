@@ -187,7 +187,8 @@ void Action_PrestageCompute_MPVB::Process()
     // worker-global pointer to current Terminal - the 2nd in the terminals vector
     this->GetComputeWorker()->SetWorkflowData("CURRENT_TERMINAL", terminals[1]);
     
-    // create {T} graph 
+    // create {T} graph  
+    // note: all elements (domains/ nodes/ ports /links) must be duplicates from TEWG
     string tgName = "SMT";
     TGraph* SMT = new TGraph(tgName);
     for (itN = terminals->begin(); itN != terminals->end(); itN++) 
@@ -209,6 +210,7 @@ void Action_PrestageCompute_MPVB::Process()
 // note: LPH = Longest Path Heuristic
 void Action_PrestageCompute_MPVB::SeedBridgeWithLPH()
 {
+    TGraph* SMT = (TGraph*)this->GetComputeWorker()->GetWorkflowData("SERVICE_TOPOLOGY");
     TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
     vector<TNode*>* terminals = (vector<TNode*>*)this->GetComputeWorker()->GetWorkflowData("ORDERED_TERMINALS");
     
@@ -280,14 +282,31 @@ void Action_PrestageCompute_MPVB::SeedBridgeWithLPH()
         terminals.erase(terminals.begin()+min);
     }
     
-    // add the longest path to SMT
+    // add the longest path (seed path) to SMT
     int* pK = (int*)this->GetComputeWorker()->GetWorkflowData("KSP_K");
     vector<TPath*> KSP;
     tewg->ComputeKShortestPaths(reorderedTerminals[0], reorderedTerminals[1], *pK, &KSP);
     if (KSP.empty()) {
         throw ComputeThreadException((char*)"Action_PrestageCompute_MPVB::Process Cannot find feasible seeding path!");
     }
-    // TODO: verify and add a seed path to SMT
+    int i;
+    bool found = false;
+    for (i = 0; i < KSP.size(); i++)
+    {
+        TPath* P = KSP[i];
+        //verify path TE / VLAN constraints
+        string srcVlan = *(string*)reorderedTerminals[0]->GetWorkData()->GetData("VLAN_RANGE");
+        string dstVlan = *(string*)reorderedTerminals[1]->GetWorkData()->GetData("VLAN_RANGE");
+        TServiceSpec srcTSS(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, 1, srcVlan);
+        TServiceSpec dstTSS(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, 1, dstVlan);
+        if (TPath->VerifyTEConstraints(srcTSS, dstTSS, true) && !found) 
+        {
+            // $$ use the path with max(dstTSS.GetVlanSet().size()) instead ?
+            SMT->LoadPath(P->Clone(true));
+            found = true;
+        }
+        delete P;
+    }
 }
 
 bool Action_PrestageCompute_MPVB::ProcessChildren()
@@ -431,7 +450,9 @@ vector<TPath*>* Action_BridgeTerminal_MPVB::ComputeKSPWithCache(TNode* srcNode, 
 // note: PDH = Path Distance Heuristic
 TPath* Action_BridgeTerminal_MPVB::BridgeTerminalWithPDH(TNode* bridgeNode, TNode* terminalNode)
 {
-    // TODO: replace bridgeNode and terminalNode with nodes in TEWG
+    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
+    terminalNode = tewg->LookupSameNode(terminalNode); // replace terminalNode  with same node in TEWG
+    bridgeNode = tewg->LookupSameNode(bridgeNode); // replace bridgeNode  with same node in TEWG
     vector<TPath*>* ksp = this->ComputeKSPWithCache(bridgeNode, terminalNode);
     if (ksp == NULL)
         return NULL;
@@ -448,14 +469,15 @@ TPath* Action_BridgeTerminal_MPVB::BridgeTerminalWithPDH(TNode* bridgeNode, TNod
         
         // ? keep/cache other qualified paths for disturbing procedure?
     }
-
     return bridgePath;
 }
 
 bool Action_BridgeTerminal_MPVB::VerifyBridgePath(TNode* bridgeNode, TNode* terminalNode, TPath* bridgePath)
 {
     TGraph* SMT = (TGraph*)this->GetComputeWorker()->GetWorkflowData("SERVICE_TOPOLOGY");
-    // TODO: replace bridgeNode  with node in SMT
+    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
+    bridgeNode = SMT->LookupSameNode(bridgeNode);   //replace bridgeNode  with same node in SMT
+
     //1. verify loopfree: candidatePath should not hit anothe node in SMT besides the bridgeNode
     list<TLink*>& pathLinks = bridgePath->GetPath();
     list<TLink*>::iterator itL = pathLinks.begin();
@@ -463,20 +485,22 @@ bool Action_BridgeTerminal_MPVB::VerifyBridgePath(TNode* bridgeNode, TNode* term
     {
         TNode* left = (*itL)->GetLocalEnd();
         TNode* right = (*itL)->GetRemoteEnd();
-        // TODO: replace left and right  with nodes in SMT
-        if (left != bridgeNode && SMT->GetNodes().find(left) != SMT->GetNodes().end())
+        if (left != NULL && left != bridgeNode && SMT->LookupSameNode(left) != NULL)
             return false;
-        if (right != bridgeNode && SMT->GetNodes().find(right) != SMT->GetNodes().end())
+        if (right != NULL && right != bridgeNode && SMT->LookupSameNode(right) != NULL)
             return false;
     }
 
-    //Apimsg_user_constraint* userConstraint = this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT");
-
     //2. verify TE constraint for SMT+bridgePath
-    // TODO: replace terminalNode  with node in TEWG
+    terminalNode = tewg->LookupSameNode(terminalNode); // replace terminalNode  with same node in TEWG
     string& terminalVlan = terminalNode->GetWorkData()->GetString("VLAN_RANGE");
-    
-    
+    TServiceSpec terminalTspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, 1, terminalVlan);
+    string bridgeVlan = "any";
+    TServiceSpec bridgeTspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, 1, bridgeVlan);
+    if (!bridgePath->VerifyTEConstraints(terminalVlan,bridgeTspec, true))
+        return false;
+    if (!SMT->VerifyMPVBConstraints(bridgeNode, bridgeTspec))
+        return false;
 }
 
 bool Action_BridgeTerminal_MPVB::ProcessChildren()
