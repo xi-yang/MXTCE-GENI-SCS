@@ -96,6 +96,7 @@ class Action_BridgeTerminal_MPVB: public Action
         vector<TPath*>* ComputeKSPWithCache(TNode* srcNode, TNode* dstNode);
         TPath* BridgeTerminalWithPDH(TNode* bridgeNode, TNode* terminalNode);
         bool VerifyBridgePath(TNode* bridgeNode, TNode* terminalNode, TPath* bridgePath);
+        void BackoffAndDisturb();
         void BackoffFromTerminal(TGraph* SMT, TNode* terminal);
 };
 
@@ -105,15 +106,15 @@ class Action_FinalizeServiceTopology_MPVB: public Action
     protected:
     
     public:
-        Action_FinalizeServiceTopology_MPVB(): Action(){ }
-        Action_FinalizeServiceTopology_MPVB(string& n, ComputeWorker* w): Action(n, w) { }
-        virtual ~Action_FinalizeServiceTopology_MPVB() { }
+	Action_FinalizeServiceTopology_MPVB(): Action(){ }
+	Action_FinalizeServiceTopology_MPVB(string& n, ComputeWorker* w): Action(n, w) { }
+	virtual ~Action_FinalizeServiceTopology_MPVB() { }
     
-        virtual void Process();
-        virtual bool ProcessChildren();
-        virtual bool ProcessMessages();
-        virtual void Finish();
-        virtual void CleanUp();
+	virtual void Process();
+	virtual bool ProcessChildren();
+	virtual bool ProcessMessages();
+	virtual void Finish();
+	virtual void CleanUp();
 };
 
 #define MPVB_TYPE_T 1
@@ -121,46 +122,46 @@ class Action_FinalizeServiceTopology_MPVB: public Action
 #define MPVB_TYPE_B 3
 
 
-class KSPCache {
-private:
-    map<TNode*, map<TNode*, vector<TPath*>*>*> cacheMap;
-public:
-    ~KSPCache() {
-        map<TNode*, map<TNode*, vector<TPath*>*>*>::iterator itM = cacheMap.begin();
-        for (; itM != cacheMap.end(); itM++) {
-            map<TNode*, vector<TPath*>*>* entry = itM->second;
-            map<TNode*, vector<TPath*>*>::iterator itM2 = entry->begin();
-            for (; itM2 != entry->end(); itM2++) {
-                // delete KSP
-                vector<TPath*>* ksp = itM2->second;
-                vector<TPath*>::iterator itL = ksp->begin();
-                for (; itL != ksp->end(); itL++) {
-                    delete (*itL);
-                }
-                delete ksp;
-            }
-            delete entry;
-        }
-    }
+	class KSPCache {
+	private:
+	    map<TNode*, map<TNode*, vector<TPath*>*>*> cacheMap;
+	public:
+	    ~KSPCache() {
+		map<TNode*, map<TNode*, vector<TPath*>*>*>::iterator itM = cacheMap.begin();
+		for (; itM != cacheMap.end(); itM++) {
+		    map<TNode*, vector<TPath*>*>* entry = itM->second;
+		    map<TNode*, vector<TPath*>*>::iterator itM2 = entry->begin();
+		    for (; itM2 != entry->end(); itM2++) {
+			// delete KSP
+			vector<TPath*>* ksp = itM2->second;
+			vector<TPath*>::iterator itL = ksp->begin();
+			for (; itL != ksp->end(); itL++) {
+			    delete (*itL);
+			}
+			delete ksp;
+		    }
+		    delete entry;
+		}
+	    }
 
-    void Add(TNode* srcNode, TNode* dstNode, vector<TPath*>* ksp) {
-        if (cacheMap.find(srcNode) == cacheMap.end()) {
-            cacheMap[srcNode] = new map<TNode*, vector<TPath*>*>;
-        }
-        map<TNode*, vector<TPath*>*>* entry = (map<TNode*, vector<TPath*>*>*)cacheMap[srcNode];
-        if (entry->find(dstNode) == entry->end()) {
-            (*entry)[dstNode] = ksp;
-        }
-    }
+	    void Add(TNode* srcNode, TNode* dstNode, vector<TPath*>* ksp) {
+		if (cacheMap.find(srcNode) == cacheMap.end()) {
+		    cacheMap[srcNode] = new map<TNode*, vector<TPath*>*>;
+		}
+		map<TNode*, vector<TPath*>*>* entry = (map<TNode*, vector<TPath*>*>*)cacheMap[srcNode];
+		if (entry->find(dstNode) == entry->end()) {
+		    (*entry)[dstNode] = ksp;
+		}
+	    }
 
-    vector<TPath*>* Lookup(TNode* srcNode, TNode* dstNode) {
-        if (cacheMap.find(srcNode) == cacheMap.end()) 
-            return NULL;
-        map<TNode*, vector<TPath*>*>* entry = (map<TNode*, vector<TPath*>*>*)cacheMap[srcNode];
-        if (entry->find(dstNode) == entry->end()) 
-            return NULL;
-        return (*entry)[dstNode];
-    }            
-};
+	    vector<TPath*>* Lookup(TNode* srcNode, TNode* dstNode) {
+		if (cacheMap.find(srcNode) == cacheMap.end()) 
+		    return NULL;
+		map<TNode*, vector<TPath*>*>* entry = (map<TNode*, vector<TPath*>*>*)cacheMap[srcNode];
+		if (entry->find(dstNode) == entry->end()) 
+		    return NULL;
+		return (*entry)[dstNode];
+	    }            
+	};
 
 #endif
