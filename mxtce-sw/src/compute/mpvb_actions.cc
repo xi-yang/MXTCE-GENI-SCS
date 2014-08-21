@@ -403,9 +403,7 @@ void Action_BridgeTerminal_MPVB::Process()
     if (bridgePath == NULL) // no feasible solution for bridging nextTerminal 
     {
         // crankback and retry with disturbing procedure
-        // TODO: call back off (removal / reset logic) method ( go back up to 3rd node in the list)
-        // TODO: call reorder rest terminals method
-
+        // call back off (removal / reset logic) and disturb (reorder)  method ( go back up to 2nd node in the list)
         this->BackoffAndDisturb();
         
         // Compute stop after timeout, but we still have a safe guard limit on number of reentries to make sure thread exit.
@@ -511,7 +509,7 @@ void Action_BridgeTerminal_MPVB::BackoffAndDisturb()
     TGraph* SMT = (TGraph*)this->GetComputeWorker()->GetWorkflowData("SERVICE_TOPOLOGY");
     TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
     vector<TNode*>* orderedTerminals = (vector<TNode*>*)this->GetComputeWorker()->GetWorkflowData("ORDERED_TERMINALS");
-    TNode* currentTerminal = (vector<TNode*>*)this->GetComputeWorker()->GetWorkflowData("CURRENT_TERMINAL");
+    TNode* currentTerminal = (TNode*)this->GetComputeWorker()->GetWorkflowData("CURRENT_TERMINAL");
     int backoffNum = *(int*)this->GetComputeWorker()->GetWorkflowData("BACKOFF_NUM");
 
     int i = 0;
@@ -528,7 +526,7 @@ void Action_BridgeTerminal_MPVB::BackoffAndDisturb()
     {
         backoffNum = 1;
     }
-    if (i-backoffNum+1) == orderedTerminals->size()-1)
+    if ((i-backoffNum+1) == orderedTerminals->size()-1)
     {
         // nothing left to disturb
         throw ComputeThreadException((char*)"Action_BridgeTerminal_MPVB::BackoffAndDisturb No feasible solution - without room to further disturb the bridging order!");
@@ -537,14 +535,14 @@ void Action_BridgeTerminal_MPVB::BackoffAndDisturb()
     int j = 0;
     for (; j < backoffNum; j++)
     {
-        TNode* backoffTerminal = orderedTerminals->begin() + (i-j);
+        TNode* backoffTerminal = orderedTerminals->at(i-j);
         backoffTerminal = SMT->LookupSameNode(backoffTerminal); // replace with 
         // starting from the terminal remove   connected the links and nodes from SMT until reaching a bridgeNode (node with links)
         this->BackoffFromTerminal(SMT, backoffTerminal);
     }
 
     // reorder terminals after (*orderedTerminals)[i-backoff] - simply move next terminal to end of list (?)
-    orderedTerminals->push_back(orderedTerminals->begin()+i+1);
+    orderedTerminals->push_back(orderedTerminals->at(i+1));
     orderedTerminals->erase(orderedTerminals->begin()+i+1);
 }
 
