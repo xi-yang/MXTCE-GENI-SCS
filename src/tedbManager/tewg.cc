@@ -898,12 +898,16 @@ TLink* TGraph::LookupLinkByURN(string& urn)
 
 TDomain* TGraph::LookupSameDomain(TDomain* domain)
 {
+    if (domain == NULL)
+        return NULL;
     return this->LookupDomainByName(domain->GetName());
 }
 
 
 TNode* TGraph::LookupSameNode(TNode* node)
 {
+    if (node == NULL)
+        return NULL;
     TDomain* domain = this->LookupSameDomain((TDomain*)node->GetDomain());
     if (domain == NULL)
         return NULL;
@@ -916,6 +920,8 @@ TNode* TGraph::LookupSameNode(TNode* node)
 
 TPort* TGraph::LookupSamePort(TPort* port)
 {
+    if (port == NULL)
+        return NULL;
     TNode* node = this->LookupSameNode((TNode*)port->GetNode());
     map<string, Port*, strcmpless>::iterator itp = node->GetPorts().find(port->GetName());
     if (itp == node->GetPorts().end())
@@ -926,6 +932,8 @@ TPort* TGraph::LookupSamePort(TPort* port)
 
 TLink* TGraph::LookupSameLink(TLink* link)
 {
+    if (link == NULL)
+        return NULL;
     TPort* port = this->LookupSamePort((TPort*)link->GetPort());
     map<string, Link*, strcmpless>::iterator itl = port->GetLinks().find(link->GetName());
     if (itl == port->GetLinks().end())

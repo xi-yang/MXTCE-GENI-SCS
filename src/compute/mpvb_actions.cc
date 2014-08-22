@@ -170,7 +170,7 @@ void Action_PrestageCompute_MPVB::Process()
         non_terminals->push_back(node);
         // check domain and node capabilities for "mp-l2-bridging" and mark as type B
         if (node->GetCapabilities().find("mp-l2-bridging") != node->GetCapabilities().end() 
-            || (node->GetDomain()!= NULL && node->GetDomain()->GetCapabilities().find("mp-l2-bridging") != node->GetCapabilities().end()))
+            || (node->GetDomain()!= NULL && node->GetDomain()->GetCapabilities().find("mp-l2-bridging") != node->GetDomain()->GetCapabilities().end()))
         {
             int* pB = new int(MPVB_TYPE_B);
             node->GetWorkData()->SetData("MPVB_TYPE", pB);
@@ -184,16 +184,13 @@ void Action_PrestageCompute_MPVB::Process()
     // create (re)ordered Terminal List {Z} and non-Terminal list {S}
     this->GetComputeWorker()->SetWorkflowData("ORDERED_TERMINALS", terminals); // Z
     this->GetComputeWorker()->SetWorkflowData("NON_TERMINALS", non_terminals); // S
-
-    this->SeedBridgeWithLPH();
-    
-    // worker-global pointer to current Terminal - the 2nd in the terminals vector
-    this->GetComputeWorker()->SetWorkflowData("CURRENT_TERMINAL", (*terminals)[1]);
     
     // create {T} graph  
     // note: all elements (domains/ nodes/ ports /links) must be duplicates from TEWG
     string tgName = "SMT";
     TGraph* SMT = new TGraph(tgName);
+    this->GetComputeWorker()->SetWorkflowData("SERVICE_TOPOLOGY", SMT);
+    /*
     vector<TNode*>::iterator itvN;
     for (itvN = terminals->begin(); itvN != terminals->end(); itvN++) 
     {
@@ -204,7 +201,12 @@ void Action_PrestageCompute_MPVB::Process()
 	}
         SMT->AddNode(td, (*itvN)->Clone());
     }
-    this->GetComputeWorker()->SetWorkflowData("SERVICE_TOPOLOGY", SMT);
+    */
+
+    this->SeedBridgeWithLPH();
+    
+    // worker-global pointer to current Terminal - the 3rd in the terminals vector
+    this->GetComputeWorker()->SetWorkflowData("CURRENT_TERMINAL", (*terminals)[2]);
 
     // create KSP cache map (computed on the fly with cache search assistance)
     KSPCache* kspCache = new KSPCache();
@@ -271,12 +273,12 @@ void Action_PrestageCompute_MPVB::SeedBridgeWithLPH()
     int second = (*terminals)[first]->GetWorkData()->GetInt("PRE_MAX_NODE_ID");
     reorderedTerminals->push_back((*terminals)[second]);
     terminals->erase(terminals->begin()+first);
-    terminals->erase(terminals->begin()+second);
+    terminals->erase(terminals->begin()+second - (second>first?1:0));
     // reorder remaining terminals by raw sum distance to others (ascending)
     while (!terminals->empty())
     {
-        long sum = 0;
-        long min = _INF_;
+        long min = 0;
+        long sum = _INF_;
         for (i = 0; i < terminals->size(); i++)
         {
             if (sum > (*terminals)[i]->GetWorkData()->GetLong("PRE_SUM_DISTANCE"))
@@ -288,6 +290,8 @@ void Action_PrestageCompute_MPVB::SeedBridgeWithLPH()
         reorderedTerminals->push_back((*terminals)[min]);
         terminals->erase(terminals->begin()+min);
     }
+
+    this->GetComputeWorker()->SetWorkflowData("ORDERED_TERMINALS", reorderedTerminals);
     
     // add the longest path (seed path) to SMT
     int* pK = (int*)this->GetComputeWorker()->GetWorkflowData("KSP_K");
@@ -350,6 +354,7 @@ void Action_PrestageCompute_MPVB::Finish()
 void Action_BridgeTerminal_MPVB::Process()
 {
     TGraph* SMT = (TGraph*)this->GetComputeWorker()->GetWorkflowData("SERVICE_TOPOLOGY");
+    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
     vector<TNode*>* orderedTerminals = (vector<TNode*>*)this->GetComputeWorker()->GetWorkflowData("ORDERED_TERMINALS");
     vector<TNode*>* nonTerminals = (vector<TNode*>*)this->GetComputeWorker()->GetWorkflowData("NON_TERMINALS");
     TNode* currentTerminal = (TNode*)this->GetComputeWorker()->GetWorkflowData("CURRENT_TERMINAL");
@@ -359,7 +364,7 @@ void Action_BridgeTerminal_MPVB::Process()
     list<TNode*>::iterator itN;
     for (itN = SMT->GetNodes().begin(); itN != SMT->GetNodes().end(); itN ++)
     {
-        TNode* node = *itN;
+        TNode* node = tewg->LookupSameNode(*itN); // replace with same node in TEWG
         if (node->GetWorkData()->GetInt("MPVB_TYPE") == MPVB_TYPE_B)
             bridgeNodes.push_back(node);
     }
@@ -487,13 +492,16 @@ bool Action_BridgeTerminal_MPVB::VerifyBridgePath(TNode* bridgeNode, TNode* term
     //1. verify loopfree: candidatePath should not hit anothe node in SMT besides the bridgeNode
     list<TLink*>& pathLinks = bridgePath->GetPath();
     list<TLink*>::iterator itL = pathLinks.begin();
-    for (; itL != pathLinks.end(); itL++)
+    // skip first link / node
+    for (++itL; itL != pathLinks.end(); itL++)
     {
         TNode* left = (*itL)->GetLocalEnd();
         TNode* right = (*itL)->GetRemoteEnd();
-        if (left != NULL && left != bridgeNode && SMT->LookupSameNode(left) != NULL)
+	left = SMT->LookupSameNode(left);
+	right = SMT->LookupSameNode(right);
+        if (left != NULL && left != bridgeNode)
             return false;
-        if (right != NULL && right != bridgeNode && SMT->LookupSameNode(right) != NULL)
+        if (right != NULL && right != bridgeNode)
             return false;
     }
 
