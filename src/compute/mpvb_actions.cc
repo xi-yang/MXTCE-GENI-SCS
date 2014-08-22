@@ -497,8 +497,9 @@ bool Action_BridgeTerminal_MPVB::VerifyBridgePath(TNode* bridgeNode, TNode* term
     for (; itL != pathLinks.end(); itL++)
     {
         TNode* nextNode = (*itL)->GetRemoteEnd();
-        if (nextNode->GetName().find("*") != string::npos)
+        if (nextNode == NULL || nextNode->GetName().find("*") != string::npos)
             continue;
+        nextNode = SMT->LookupSameNode(nextNode);
         if (nextNode != NULL && nextNode != bridgeNode)
             return false;
     }
