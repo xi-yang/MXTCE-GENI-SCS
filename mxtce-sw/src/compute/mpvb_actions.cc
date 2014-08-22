@@ -365,7 +365,8 @@ void Action_BridgeTerminal_MPVB::Process()
     for (itN = SMT->GetNodes().begin(); itN != SMT->GetNodes().end(); itN ++)
     {
         TNode* node = tewg->LookupSameNode(*itN); // replace with same node in TEWG
-        if (node->GetWorkData()->GetInt("MPVB_TYPE") == MPVB_TYPE_B)
+        // skip artificial ("*" containing) nodes
+        if (node->GetWorkData()->GetInt("MPVB_TYPE") == MPVB_TYPE_B && node->GetName().find("*") == string::npos)
             bridgeNodes.push_back(node);
     }
     if (bridgeNodes.empty()) 
@@ -492,16 +493,13 @@ bool Action_BridgeTerminal_MPVB::VerifyBridgePath(TNode* bridgeNode, TNode* term
     //1. verify loopfree: candidatePath should not hit anothe node in SMT besides the bridgeNode
     list<TLink*>& pathLinks = bridgePath->GetPath();
     list<TLink*>::iterator itL = pathLinks.begin();
-    // skip first link / node
-    for (++itL; itL != pathLinks.end(); itL++)
+    // note: direction bridge -> terminal
+    for (; itL != pathLinks.end(); itL++)
     {
-        TNode* left = (*itL)->GetLocalEnd();
-        TNode* right = (*itL)->GetRemoteEnd();
-	left = SMT->LookupSameNode(left);
-	right = SMT->LookupSameNode(right);
-        if (left != NULL && left != bridgeNode)
-            return false;
-        if (right != NULL && right != bridgeNode)
+        TNode* nextNode = (*itL)->GetRemoteEnd();
+        if (nextNode->GetName().find("*") != string::npos)
+            continue;
+        if (nextNode != NULL && nextNode != bridgeNode)
             return false;
     }
 
