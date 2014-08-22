@@ -222,8 +222,10 @@ void Action_PrestageCompute_MPVB::SeedBridgeWithLPH()
     for (i = 0; i < terminals->size(); i++) 
     {
         TNode* srcNode = (*terminals)[i];
-        for (j = 0; j != i && j < terminals->size(); j++)
+        for (j = 0; j < terminals->size(); j++)
         {
+            if (j == i)
+                continue;
             TNode* dstNode = (*terminals)[j];
             dstNode->SetId(j);
             try {
