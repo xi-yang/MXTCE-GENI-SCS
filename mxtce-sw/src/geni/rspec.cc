@@ -218,7 +218,21 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                 {
                     if (xmlPortNode->type == XML_ELEMENT_NODE )
                     {
-                        if (strncasecmp((const char*)xmlPortNode->name, "port", 4) == 0)
+                        if (strncasecmp((const char*)xmlPortNode->name, "capabilities", 10) == 0) 
+                        {
+                            xmlNodePtr xmlCapNode;
+                            for (xmlCapNode = xmlPortNode->children; xmlCapNode != NULL; xmlCapNode = xmlCapNode->next)
+                            {
+                                if (xmlCapNode->type == XML_ELEMENT_NODE && (strncasecmp((const char*)xmlCapNode->name, "capability", 10) == 0))
+                                {
+                                    xmlChar* pBuf = xmlNodeGetContent(xmlCapNode);
+                                    string capStr;
+                                    StripXmlString(capStr, pBuf);
+				    aNode->GetCapabilities()[capStr]="true";
+                                }
+                            }
+                        }
+			else if (strncasecmp((const char*)xmlPortNode->name, "port", 4) == 0)
                         {
                             // create port
                             xmlChar* xmlPortId = xmlGetProp(xmlPortNode,  (const xmlChar*)"id");
@@ -819,27 +833,36 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                 snprintf(str, 1024, "<granularity>%llu</granularity>", tl->GetBandwidthGranularity());
                 strcat(buf, str);
                 strcat(buf, tl->GetSwcapXmlString().c_str());
-                /* disabled in stitch-v0.1 : to be used in v2
-                if (!aggrCapabilities.empty())
-                {
-                    strcat(buf, "<capabilities>");
-                    vector<string>::iterator itCap = aggrCapabilities.begin();
-                    for (; itCap != aggrCapabilities.end(); itCap++)
-                    {
-                        snprintf(str, 1024, "<capability>%s</capability>", (*itCap).c_str());
-                        strcat(buf, str);
-                    }
-                    strcat(buf, "</capabilities>");
-                }
-                */
                 snprintf(str, 1024, "</link>");
                 strcat(buf, str);
             }
             snprintf(str, 1024, "</port>");
             strcat(buf, str);
         }
+        if (!tn->GetCapabilities().empty())
+        {
+            strcat(buf, "<capabilities>");
+            map<string, string>::iterator itm = tn->GetCapabilities().begin();
+            for (; itm != tn->GetCapabilities().end(); itm++)
+            {
+                snprintf(str, 1024, "<capability>%s</capability>", ((string)itm->first).c_str());
+                strcat(buf, str);
+            }
+            strcat(buf, "</capabilities>");
+        }
         snprintf(str, 1024, "</node>");
         strcat(buf, str);
+    }
+    if (!aggrCapabilities.empty())
+    {
+        strcat(buf, "<capabilities>");
+        vector<string>::iterator itCap = aggrCapabilities.begin();
+        for (; itCap != aggrCapabilities.end(); itCap++)
+        {
+            snprintf(str, 1024, "<capability>%s</capability>", (*itCap).c_str());
+            strcat(buf, str);
+        }
+        strcat(buf, "</capabilities>");
     }
     strcat(buf, "</domain></topology>");
     int sizeBuf=strlen(buf);
