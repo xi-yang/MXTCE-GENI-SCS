@@ -206,7 +206,7 @@ void Action_PrestageCompute_MPVB::Process()
     this->SeedBridgeWithLPH();
     
     // worker-global pointer to current Terminal - the 3rd in the terminals vector
-    this->GetComputeWorker()->SetWorkflowData("CURRENT_TERMINAL", (*terminals)[2]);
+    this->GetComputeWorker()->SetWorkflowData("CURRENT_TERMINAL", (*terminals)[1]);
 
     // create KSP cache map (computed on the fly with cache search assistance)
     KSPCache* kspCache = new KSPCache();
@@ -379,6 +379,7 @@ void Action_BridgeTerminal_MPVB::Process()
         if ((*itvN) == currentTerminal)
             break;
     }
+    itvN++;
     if (itvN == orderedTerminals->end()) 
     {
         throw ComputeThreadException((char*)"Action_BridgeTerminal_MPVB::Process End of orderedTerminals list - no more terminal to process!");
