@@ -80,8 +80,8 @@ void Action_ProcessRequestTopology_MPVB::Process()
     actionCompute->AddChild(actionFinalize);
     
     // change to Timer event with a timeout value
-    this->SetType(EVENT_TIMER);
-    this->SetInterval(MPVB_COMPUTE_TIMEOUT, 0);
+    //this->SetType(EVENT_TIMER);
+    //this->SetInterval(MPVB_COMPUTE_TIMEOUT, 0);
 }
 
 bool Action_ProcessRequestTopology_MPVB::ProcessChildren()
@@ -89,12 +89,15 @@ bool Action_ProcessRequestTopology_MPVB::ProcessChildren()
     LOG(name<<"ProcessChildren() called"<<endl);
 
     // check for timeout - throw exception if still having child working
+    /*
     if (!Action::ProcessChildren())
-   {
+    {
         // throwing exception will lead to Cleanup() that cancels all child actions
         throw ComputeThreadException((char*)"Action_ProcessRequestTopology_MPVB::ProcessChildren() Time out while computation is still in progress!");
     }
     return true;
+    */
+    return Action::ProcessChildren();
 }
 
 bool Action_ProcessRequestTopology_MPVB::ProcessMessages()
@@ -148,7 +151,7 @@ void Action_PrestageCompute_MPVB::Process()
     {
         TNode* node = *itN;
         if (node->GetWorkData() == NULL)
-            node->SetWorkData(new WorkData());
+            node->SetWorkData(new TWorkData());
         map<string, string>::iterator itM = userConstraint->getMultiPointVlanMap()->begin();
         for (; itM != userConstraint->getMultiPointVlanMap()->end(); itM++)
         {
@@ -238,6 +241,7 @@ void Action_PrestageCompute_MPVB::SeedBridgeWithLPH()
                 if (pMD == NULL)
                 {
                     pMD = new long(0);
+                    pMNID = new u_int32_t(0);
                 }
                 if (*pMD < path.size()) {
                     *pMD = path.size();
