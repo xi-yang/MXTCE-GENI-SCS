@@ -87,6 +87,7 @@ public:
     void SetParent(Action* p) { parent = p; }
     list<Action*>& GetChildren() { return children; } 
     void AddChild(Action* child) { child->SetComputeWorker(worker);  child->SetParent(this); children.push_back(child); } 
+    void AddChildFront(Action* child) { child->SetComputeWorker(worker);  child->SetParent(this); children.push_front(child); } 
     void SendMessage(MessageType type, string& queue, string& topic, list<TLV*>& tlvs);
     void SendMessage(MessageType type, string& queue, string& topic, string& contextTag, list<TLV*>& tlvs);
     void SendMessage(MessageType type, string& queue, string& topic, list<TLV*>& tlvs, string& expectReturnTopic);

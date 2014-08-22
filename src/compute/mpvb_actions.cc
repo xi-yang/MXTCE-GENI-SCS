@@ -426,7 +426,7 @@ void Action_BridgeTerminal_MPVB::Process()
     string actionName = "Action_BridgeTerminal_MPVB";
     Action_BridgeTerminal_MPVB* actionCompute = new Action_BridgeTerminal_MPVB(actionName, this->GetComputeWorker());
     this->GetComputeWorker()->GetActions().push_back(actionCompute);
-    this->AddChild(actionCompute);
+    this->AddChildFront(actionCompute);
 }
 
 vector<TPath*>* Action_BridgeTerminal_MPVB::ComputeKSPWithCache(TNode* srcNode, TNode* dstNode)
@@ -597,6 +597,9 @@ void Action_FinalizeServiceTopology_MPVB::Process()
     // process / transform successful result 
     // TODO: both success and failure replies are sent by Action_ProcessRequestTopology_MPVB::Finish
     
+    TGraph* SMT = (TGraph*)this->GetComputeWorker()->GetWorkflowData("SERVICE_TOPOLOGY");
+
+    SMT->LogDump();
 }
 
 bool Action_FinalizeServiceTopology_MPVB::ProcessChildren()
