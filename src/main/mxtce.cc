@@ -204,7 +204,7 @@ void MxTCEMessageHandler::Run()
                 }
                 computingThread->SetWorkflowData("USER_CONSTRAINT_LIST", userConsList);
                 // special handling for XMLRPC API
-                if (msg->GetTopic() == "XMLRPC_API_REQUEST" ) {
+                if (msg->GetTopic().find("XMLRPC_API_REQUEST") != string::npos) {
                     string* apiType = new string("XMLRPC-API");
                     computingThread->SetWorkflowData("API_TYPE", apiType);
                     string* contextTag = new string(msg->GetContextTag());
