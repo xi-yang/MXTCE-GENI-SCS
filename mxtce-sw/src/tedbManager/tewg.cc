@@ -1020,7 +1020,7 @@ void TGraph::LoadPath(list<TLink*> path)
         TPort* port = LookupPortByURN(urn);
         if (port == NULL)
         {
-            new TPort(link->GetId(), portName);
+            port = new TPort(link->GetId(), portName);
             AddPort(node, port);
             AddLink(port, link);
         }
