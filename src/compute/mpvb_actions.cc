@@ -613,8 +613,9 @@ void Action_FinalizeServiceTopology_MPVB::Process()
     // process / transform successful result 
     TGraph* SMT = (TGraph*)this->GetComputeWorker()->GetWorkflowData("SERVICE_TOPOLOGY");
     vector<TNode*>* orderedTerminals = (vector<TNode*>*)this->GetComputeWorker()->GetWorkflowData("ORDERED_TERMINALS");
-    TNode* firstTerminal = SMT->LookupSameNode(orderedTerminals->at(0));
+    TNode* firstTerminal = orderedTerminals->at(0);
     string terminalVlan = firstTerminal->GetWorkData()->GetString("VLAN_RANGE");
+    TNode* firstTerminal = SMT->LookupSameNode(firstTerminal); // replace terminal with SMT node
     TServiceSpec terminalTspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, 1, terminalVlan);
     if (!SMT->VerifyMPVBConstraints(firstTerminal, terminalTspec))
         throw ComputeThreadException((char*)"Action_FinalizeServiceTopology_MPVB::Process Failed to verify final SMT VLANs!");
