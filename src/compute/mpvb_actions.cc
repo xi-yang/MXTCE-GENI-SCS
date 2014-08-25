@@ -114,7 +114,31 @@ void Action_ProcessRequestTopology_MPVB::CleanUp()
 
 void Action_ProcessRequestTopology_MPVB::Finish()
 {
-    // TODO: both success and failure replies are sent by Action_ProcessRequestTopology_MPVB::Finish
+    list<TLV*> tlvList;
+
+    string* errMsg = this->GetComputeWorker()->GetWorkflowData("ERROR_MSG");
+    if (errMsg != NULL && !errMsg->empty())
+    {
+        ComputeResult* result = new ComputeResult(userConsList->front()->getGri());
+        string errMsg = "Action_ProcessRequestTopology_MPVB::Finish Cannot find the MPVB the RequestTopology.";
+        result->SetErrMessage(errMsg);
+        TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
+        tlv->type = MSG_TLV_VOID_PTR;
+        tlv->length = sizeof(void*);
+        memcpy(tlv->value, &result, sizeof(void*));
+        tlvList.push_back(tlv);
+    }
+    else 
+    {
+        // TODO: assemble MPVB TGraph into ComputeResult
+        TGraph* SMT = (TGraph*)this->GetComputeWorker()->GetWorkflowData("SERVICE_TOPOLOGY");
+    }
+    string queue = MxTCE::computeThreadPrefix + worker->GetName();
+    string topic = "COMPUTE_REPLY";
+    SendMessage(MSG_REPLY, queue, topic, tlvList);
+
+    // stop out from event loop
+    Action::Finish();
 }
 
 
@@ -610,16 +634,15 @@ void Action_FinalizeServiceTopology_MPVB::Process()
 {
     // TODO: SMT-PDH final improvement ?
 
-    // process / transform successful result 
+    // finalize VLAN bridging for SMT nodes and links 
     TGraph* SMT = (TGraph*)this->GetComputeWorker()->GetWorkflowData("SERVICE_TOPOLOGY");
     vector<TNode*>* orderedTerminals = (vector<TNode*>*)this->GetComputeWorker()->GetWorkflowData("ORDERED_TERMINALS");
     TNode* firstTerminal = orderedTerminals->at(0);
     string terminalVlan = firstTerminal->GetWorkData()->GetString("VLAN_RANGE");
     firstTerminal = SMT->LookupSameNode(firstTerminal); // replace terminal with SMT node
     TServiceSpec terminalTspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, 1, terminalVlan);
-    if (!SMT->VerifyMPVBConstraints(firstTerminal, terminalTspec))
+    if (!SMT->VerifyMPVBConstraints(firstTerminal, terminalTspec)) // TODO: add arg (finalizeVlans = true)
         throw ComputeThreadException((char*)"Action_FinalizeServiceTopology_MPVB::Process Failed to verify final SMT VLANs!");
-    // TODO: assemble ComputeResult
     SMT->LogDump();    
 }
 
