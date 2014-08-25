@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  */
 
+#include "mxtce.hh"
 #include "mpvb_worker.hh"
 #include "compute_actions.hh"
 #include "mpvb_actions.hh"
@@ -114,14 +115,14 @@ void Action_ProcessRequestTopology_MPVB::CleanUp()
 
 void Action_ProcessRequestTopology_MPVB::Finish()
 {
-    list<TLV*> tlvList;
+    Apimsg_user_constraint* userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT");
 
-    string* errMsg = this->GetComputeWorker()->GetWorkflowData("ERROR_MSG");
+    list<TLV*> tlvList;
+    string* errMsg = (string*)this->GetComputeWorker()->GetWorkflowData("ERROR_MSG");
     if (errMsg != NULL && !errMsg->empty())
     {
-        ComputeResult* result = new ComputeResult(userConsList->front()->getGri());
-        string errMsg = "Action_ProcessRequestTopology_MPVB::Finish Cannot find the MPVB the RequestTopology.";
-        result->SetErrMessage(errMsg);
+        ComputeResult* result = new ComputeResult(userConstraint->getGri());
+        result->SetErrMessage(*errMsg);
         TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
         tlv->type = MSG_TLV_VOID_PTR;
         tlv->length = sizeof(void*);
@@ -133,7 +134,7 @@ void Action_ProcessRequestTopology_MPVB::Finish()
         // TODO: assemble MPVB TGraph into ComputeResult
         TGraph* SMT = (TGraph*)this->GetComputeWorker()->GetWorkflowData("SERVICE_TOPOLOGY");
     }
-    string queue = MxTCE::computeThreadPrefix + worker->GetName();
+    string queue = MxTCE::computeThreadPrefix + this->GetComputeWorker()->GetName();
     string topic = "COMPUTE_REPLY";
     SendMessage(MSG_REPLY, queue, topic, tlvList);
 
@@ -229,8 +230,7 @@ void Action_PrestageCompute_MPVB::Process()
 
     this->SeedBridgeWithLPH();
     
-    // worker-global pointer to current Terminal - the 2nd in the terminals vector
-    terminals = (vector<TNode*>*)this->GetComputeWorker()->GetWorkflowData("ORDERED_TERMINALS")
+    terminals = (vector<TNode*>*)this->GetComputeWorker()->GetWorkflowData("ORDERED_TERMINALS");
     this->GetComputeWorker()->SetWorkflowData("CURRENT_TERMINAL", (*terminals)[1]);
 
     // create KSP cache map (computed on the fly with cache search assistance)
@@ -338,6 +338,8 @@ void Action_PrestageCompute_MPVB::SeedBridgeWithLPH()
         {
             // $$ use the path with max(dstTSS.GetVlanSet().size()) instead ?
             SMT->LoadPath(P->Clone(true)->GetPath());
+            LOG_DEBUG("SeedLongestPath:");
+	    P->LogDump();
             found = true;
         }
         delete P;
@@ -516,6 +518,8 @@ bool Action_BridgeTerminal_MPVB::VerifyBridgePath(TNode* bridgeNode, TNode* term
     TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
     bridgeNode = SMT->LookupSameNode(bridgeNode);   //replace bridgeNode  with same node in SMT
 
+    LOG_DEBUG("VerifyBridgePath:");
+    bridgePath->LogDump();
     //1. verify loopfree: candidatePath should not hit anothe node in SMT besides the bridgeNode
     list<TLink*>& pathLinks = bridgePath->GetPath();
     list<TLink*>::iterator itL = pathLinks.begin();
