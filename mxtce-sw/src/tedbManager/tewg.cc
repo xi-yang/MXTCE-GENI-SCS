@@ -1017,9 +1017,13 @@ void TGraph::LoadPath(list<TLink*> path)
                 link->SetRemoteLink(lastLink);
             }
         }
-        TPort* port = new TPort(link->GetId(), portName);
-        AddPort(node, port);
-        AddLink(port, link);
+        TPort* port = LookupPortByURN(urn);
+        if (port == NULL)
+        {
+            new TPort(link->GetId(), portName);
+            AddPort(node, port);
+            AddLink(port, link);
+        }
         lastLink = link;
     }
 }
