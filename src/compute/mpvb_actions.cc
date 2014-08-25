@@ -114,7 +114,7 @@ void Action_ProcessRequestTopology_MPVB::CleanUp()
 
 void Action_ProcessRequestTopology_MPVB::Finish()
 {
-
+    // TODO: both success and failure replies are sent by Action_ProcessRequestTopology_MPVB::Finish
 }
 
 
@@ -601,7 +601,6 @@ void Action_BridgeTerminal_MPVB::CleanUp()
 
 void Action_BridgeTerminal_MPVB::Finish()
 {
-    // TODO: final improvement
 }
 
 
@@ -609,12 +608,19 @@ void Action_BridgeTerminal_MPVB::Finish()
 
 void Action_FinalizeServiceTopology_MPVB::Process()
 {
-    // process / transform successful result 
-    // TODO: both success and failure replies are sent by Action_ProcessRequestTopology_MPVB::Finish
-    
-    TGraph* SMT = (TGraph*)this->GetComputeWorker()->GetWorkflowData("SERVICE_TOPOLOGY");
+    // TODO: SMT-PDH final improvement ?
 
+    // process / transform successful result 
+    TGraph* SMT = (TGraph*)this->GetComputeWorker()->GetWorkflowData("SERVICE_TOPOLOGY");
+    vector<TNode*>* orderedTerminals = (vector<TNode*>*)this->GetComputeWorker()->GetWorkflowData("ORDERED_TERMINALS");
+    TNode* firstTerminal = orderedTerminals->at(0);  
+    string terminalVlan = firstTerminal->GetWorkData()->GetString("VLAN_RANGE");
+    TServiceSpec terminalTspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, 1, terminalVlan);
+    SMT->VerifyMPVBConstraints(firstTerminal, terminalTspec);
+    
     SMT->LogDump();
+
+    
 }
 
 bool Action_FinalizeServiceTopology_MPVB::ProcessChildren()
