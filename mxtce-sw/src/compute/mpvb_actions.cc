@@ -205,7 +205,8 @@ void Action_PrestageCompute_MPVB::Process()
 
     this->SeedBridgeWithLPH();
     
-    // worker-global pointer to current Terminal - the 3rd in the terminals vector
+    // worker-global pointer to current Terminal - the 2nd in the terminals vector
+    terminals = (vector<TNode*>*)this->GetComputeWorker()->GetWorkflowData("ORDERED_TERMINALS")
     this->GetComputeWorker()->SetWorkflowData("CURRENT_TERMINAL", (*terminals)[1]);
 
     // create KSP cache map (computed on the fly with cache search assistance)
@@ -429,7 +430,7 @@ void Action_BridgeTerminal_MPVB::Process()
     else // proceed to next terminal
     {
         SMT->LoadPath(bridgePath->Clone(true)->GetPath()); //  (LoadPath should be indempotent at domain and node levels, but not for port and link) 
-        currentTerminal = nextTerminal;
+        this->GetComputeWorker()->SetWorkflowData("CURRENT_TERMINAL", nextTerminal);
         *pReentries = MAX_REENTRY_NUM;
         if (currentTerminal == orderedTerminals->back()) 
             return; // we have bridged all terminals sucessfully
