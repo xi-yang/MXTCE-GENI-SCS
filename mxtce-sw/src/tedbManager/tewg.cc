@@ -1126,6 +1126,8 @@ bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node, TServiceSpec& tspec)
         nextTspec->GetVlanSet() = remoteLinkVtagSet;
         if (!VerifyMPVBConstraints_Recursive(nextNode, *nextTspec))
             return false;
+        // final tspec VLANs must result from intersecting (w/ transaltion) with all branches 
+        tspec.GetVlanSet() = nextTspec->GetVlanSet();
     }
     return true;
 }
