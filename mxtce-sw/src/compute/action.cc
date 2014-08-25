@@ -43,7 +43,7 @@ void Action::Run()
 {
     list<Action*>::iterator ita;
     char buf[256];
-    string errMsg;
+    string* errMsg = NULL;
 
     if (!worker->GetMessagePort()->IsUp())
     {
@@ -68,8 +68,8 @@ void Action::Run()
             CleanUp();
             snprintf(buf, 256, "Action::Run caught Exception: %s", e.what());
             LOG(buf << endl);
-            errMsg = buf;
-            this->GetComputeWorker()->SetWorkflowData("ERROR_MSG", &errMsg);
+            errMsg = new string(buf);
+            this->GetComputeWorker()->SetWorkflowData("ERROR_MSG", errMsg);
             if (parent == NULL) // root action will fail directly as no parent will clean up for it
                 throw ComputeThreadException(buf);
             break;
@@ -112,8 +112,8 @@ void Action::Run()
             CleanUp();
             snprintf(buf, 256, "Action::Run caught Exception: %s", e.what());
             LOG(buf << endl);
-            errMsg = buf;
-            this->GetComputeWorker()->SetWorkflowData("ERROR_MSG", &errMsg);
+            errMsg = new string(buf);
+            this->GetComputeWorker()->SetWorkflowData("ERROR_MSG", errMsg);
             if (parent == NULL) // root action will fail directly as no parent will clean up for it
                 throw ComputeThreadException(buf);
             break;
@@ -137,8 +137,8 @@ void Action::Run()
             CleanUp();
             snprintf(buf, 256, "Action::Run caught Exception: %s", e.what());
             LOG(buf << endl);
-            errMsg = buf;
-            this->GetComputeWorker()->SetWorkflowData("ERROR_MSG", &errMsg);
+            errMsg = new string(buf);
+            this->GetComputeWorker()->SetWorkflowData("ERROR_MSG", errMsg);
             if (parent == NULL) // root action will fail directly as no parent will clean up for it
                 throw ComputeThreadException(buf);
             break;
@@ -162,8 +162,8 @@ void Action::Run()
         snprintf(buf, 256, "Action::Run() gets into unknown state: %d\n", state);
         LOG(buf << endl);
         CleanUp();
-        errMsg = buf;
-        this->GetComputeWorker()->SetWorkflowData("ERROR_MSG", &errMsg);
+        errMsg = new string(buf);
+        this->GetComputeWorker()->SetWorkflowData("ERROR_MSG", errMsg);
         throw ComputeThreadException(buf);
     }
 }
