@@ -1077,7 +1077,9 @@ bool TGraph::VerifyMPVBConstraints(TNode* root, ConstraintTagSet& vtagSet, bool 
         }
         node->GetWorkData()->SetData("MPVB_VISITED", new bool(false));
         // TODO: all bridge vlanRange = any; all terminal vlanRange <= from terminalVlanMap
-        node->GetWorkData()->SetData("MPVB_VLAN", (new ConstraintTagSet(MAX_VLAN_NUM))->AddTag(ANY_TAG));
+	ConstraintTagSet *pVtagSet = new ConstraintTagSet(MAX_VLAN_NUM);
+	pVtagSet->AddTag(ANY_TAG);
+        node->GetWorkData()->SetData("MPVB_VLAN", pVtagSet);
     }    
     list<TLink*>::iterator itL = this->GetLinks().begin();
     for (; itL != this->GetLinks().end(); itL++)
@@ -1088,7 +1090,9 @@ bool TGraph::VerifyMPVBConstraints(TNode* root, ConstraintTagSet& vtagSet, bool 
             link->SetWorkData(new WorkData());
         }
         link->GetWorkData()->SetData("MPVB_VISITED", new bool(false));
-        link->GetWorkData()->SetData("MPVB_VLAN", (new ConstraintTagSet(MAX_VLAN_NUM))->AddTag(ANY_TAG));
+	ConstraintTagSet *pVtagSet = new ConstraintTagSet(MAX_VLAN_NUM);
+	pVtagSet->AddTag(ANY_TAG);
+        link->GetWorkData()->SetData("MPVB_VLAN", pVtagSet); 
         if (finalizeVlan)
         {
             link->GetWorkData()->SetData("SUGGESTED_VLAN", new u_int32_t(ANY_TAG));            
