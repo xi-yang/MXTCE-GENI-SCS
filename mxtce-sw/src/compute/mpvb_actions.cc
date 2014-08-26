@@ -636,7 +636,7 @@ void Action_BridgeTerminal_MPVB::Finish()
 
 void Action_FinalizeServiceTopology_MPVB::Process()
 {
-    // TODO: SMT-PDH final improvement ?
+    // ?? SMT-PDH final improvement ?
 
     // finalize VLAN bridging for SMT nodes and links 
     TGraph* SMT = (TGraph*)this->GetComputeWorker()->GetWorkflowData("SERVICE_TOPOLOGY");
@@ -645,7 +645,7 @@ void Action_FinalizeServiceTopology_MPVB::Process()
     string terminalVlan = firstTerminal->GetWorkData()->GetString("VLAN_RANGE");
     firstTerminal = SMT->LookupSameNode(firstTerminal); // replace terminal with SMT node
     TServiceSpec terminalTspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, 1, terminalVlan);
-    if (!SMT->VerifyMPVBConstraints(firstTerminal, terminalTspec)) // TODO: add arg (finalizeVlans = true)
+    if (!SMT->VerifyMPVBConstraints(firstTerminal, terminalTspec, true)) // finalizeVlan = true
         throw ComputeThreadException((char*)"Action_FinalizeServiceTopology_MPVB::Process Failed to verify final SMT VLANs!");
     SMT->LogDump();    
 }

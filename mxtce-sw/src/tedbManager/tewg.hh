@@ -307,11 +307,11 @@ public:
     TLink* LookupSameLink(TLink* link);
     void LoadPath(list<TLink*> path);
     TGraph* Clone();
-    bool VerifyMPVBConstraints(TNode* root, TServiceSpec& tspec);
+    bool VerifyMPVBConstraints(TNode* root, TServiceSpec& tspec, bool finalizeVlan=false);
     void LogDump();
 
 protected:    
-    bool VerifyMPVBConstraints_Recursive(TNode* node, TServiceSpec& tspec);
+    bool VerifyMPVBConstraints_Recursive(TNode* node, TServiceSpec& tspec, bool finalizeVlan=false);
 };
 
 
