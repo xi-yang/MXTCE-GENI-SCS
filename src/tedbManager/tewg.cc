@@ -1064,7 +1064,7 @@ TGraph* TGraph::Clone()
 }
 
 
-bool TGraph::VerifyMPVBConstraints(TNode* root, TServiceSpec& tspec)
+bool TGraph::VerifyMPVBConstraints(TNode* root, ConstraintTagSet& vtagSet, bool finalizeVlan)
 {
     // reset work data for all nodes and links
     list<TNode*>::iterator itN = this->GetNodes().begin();
@@ -1076,7 +1076,8 @@ bool TGraph::VerifyMPVBConstraints(TNode* root, TServiceSpec& tspec)
             node->SetWorkData(new WorkData());
         }
         node->GetWorkData()->SetData("MPVB_VISITED", new bool(false));
-        node->GetWorkData()->SetData("MPVB_TSPEC", new TServiceSpec());
+        // TODO: all bridge vlanRange = any; all terminal vlanRange <= from terminalVlanMap
+        node->GetWorkData()->SetData("MPVB_VLAN", (new ConstraintTagSet(MAX_VLAN_NUM))->AddTag(ANY_TAG));
     }    
     list<TLink*>::iterator itL = this->GetLinks().begin();
     for (; itL != this->GetLinks().end(); itL++)
@@ -1087,24 +1088,32 @@ bool TGraph::VerifyMPVBConstraints(TNode* root, TServiceSpec& tspec)
             link->SetWorkData(new WorkData());
         }
         link->GetWorkData()->SetData("MPVB_VISITED", new bool(false));
-        link->GetWorkData()->SetData("MPVB_TSPEC", new TServiceSpec());
+        link->GetWorkData()->SetData("MPVB_VLAN", (new ConstraintTagSet(MAX_VLAN_NUM))->AddTag(ANY_TAG));
+        if (finalizeVlan)
+        {
+            link->GetWorkData()->SetData("SUGGESTED_VLAN", new u_int32_t(ANY_TAG));            
+        }
     }    
 
     // BSF search and verify
     bool* visited = (bool*)root->GetWorkData()->GetData("MPVB_VISITED");
     *visited = true;
-    (*(TServiceSpec*)root->GetWorkData()->GetData("MPVB_TSPEC")) = tspec;
-    return VerifyMPVBConstraints_Recursive(root, tspec);
+    (*(ConstraintTagSet*)root->GetWorkData()->GetData("MPVB_VLAN")) = vtagSet;
+    return VerifyMPVBConstraints_Recursive(root, vtagSet, finalizeVlan);
 }
 
-bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node, TServiceSpec& tspec)
+bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node, ConstraintTagSet& vtagSet, bool finalizeVlan)
 {
     list<TLink*>::iterator itL = node->GetLocalLinks().begin();
     for (; itL != node->GetLocalLinks().end(); itL++)
     {
         TLink* localLink = *itL;
         bool* visited = (bool*)localLink->GetWorkData()->GetData("MPVB_VISITED");
+        if (*visited) // in a trree, nextLink visited == nextNode visited
+            continue;
         *visited = true;
+        bool vlanTranslation = false;
+        // TODO: check vlanTranslation on localLink
         TLink* remoteLink = (TLink*)localLink->GetRemoteLink();
         if (remoteLink == NULL)
             continue;
@@ -1113,21 +1122,45 @@ bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node, TServiceSpec& tspec)
         TNode* nextNode = remoteLink->GetLocalEnd();
         visited = (bool*)nextNode->GetWorkData()->GetData("MPVB_VISITED");
         *visited = true;
-        TServiceSpec* nextTspec = (TServiceSpec*)nextNode->GetWorkData()->GetData("MPVB_TSPEC");
+        ConstraintTagSet& nextVtagSet = *(ConstraintTagSet*)nextNode->GetWorkData()->GetData("MPVB_VLAN");
 
         ConstraintTagSet localLinkVtagSet(MAX_VLAN_NUM); 
         ConstraintTagSet remoteLinkVtagSet(MAX_VLAN_NUM);
-        localLink->ProceedByUpdatingVtags(tspec.GetVlanSet(), localLinkVtagSet, true);
+        localLink->ProceedByUpdatingVtags(vtagSet, localLinkVtagSet, true);
         if (localLinkVtagSet.IsEmpty()) // after intersection (w/ translation)
             return false;
         remoteLink->ProceedByUpdatingVtags(localLinkVtagSet, remoteLinkVtagSet, true);
         if (remoteLinkVtagSet.IsEmpty()) // after intersection (w/ translation)
             return false;
-        nextTspec->GetVlanSet() = remoteLinkVtagSet;
-        if (!VerifyMPVBConstraints_Recursive(nextNode, *nextTspec))
+        nextVtagSet = remoteLinkVtagSet;
+        if (!VerifyMPVBConstraints_Recursive(nextNode, nextVtagSet, finalizeVlan))
             return false;
-        // final tspec VLANs must result from intersecting (w/ transaltion) with all branches 
-        tspec.GetVlanSet() = nextTspec->GetVlanSet();
+        // ntersect with all non-translatin links; if all translate, remains "any" or terminalVlan
+        if (!vlanTranslation)
+        {
+            vtagSet.Intersect(nextVtagSet);
+        }
+    }
+    if (finalizeVlan)
+    {
+        u_int32_t localSuggestedVlan = vtagSet.RandomTag();
+        for (; itL != node->GetLocalLinks().end(); itL++)
+        {
+            TLink* localLink = *itL;
+            TLink* remoteLink = (TLink*)localLink->GetRemoteLink();
+            ConstraintTagSet& linkVtagSet = *(ConstraintTagSet*)localLink->GetWorkData()->GetData("MPVB_VLAN");
+            localLink->ProceedByUpdatingVtags(vtagSet, linkVtagSet, true);
+            u_int32_t suggestedLocalLinkVlan = *(u_int32_t*)node->GetWorkData()->GetData("SUGGESTED_VLAN");
+            if (suggestedLocalLinkVlan == ANY_TAG)
+            {
+                suggestedLocalLinkVlan = localSuggestedVlan;
+                if (remoteLink != NULL)
+                {
+                    // TODO: if remoteLink has suggested vlan != ANY, use that
+                    
+                }
+            }
+        }
     }
     return true;
 }
