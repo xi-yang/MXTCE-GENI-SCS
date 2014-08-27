@@ -1023,6 +1023,7 @@ void TGraph::LoadPath(list<TLink*> path)
             port = new TPort(link->GetId(), portName);
             AddPort(node, port);
             AddLink(port, link);
+            AddLink(node, link);
         }
         lastLink = link;
     }
