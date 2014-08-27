@@ -941,7 +941,120 @@ TLink* TGraph::LookupSameLink(TLink* link)
     return (TLink*)(*itl).second;
 }
 
+void TGraph::LoadPath(list<TLink*> path)
+{
+    list<TLink*> expandedPath;
+    list<TLink*>::iterator itL;
+    for (itL = path.begin(); itL != path.end(); itL++)
+    {
+        TLink* link = *itL;
+        TLink* remoteLink = (TLink*)link->GetRemoteLink();
+        if (expandedPath.find(link) != expandedPath.end())
+            expandedPath.push_back(link);
+        if (remoteLink != NULL expandedPath.find(remoteLink) != expandedPath.end())
+            expandedPath.push_back(remoteLink);
+    }
 
+    char buf[1024];
+    string domainName, nodeName, portName, linkName;
+    for (itL = expandedPath.begin(); itL != expandedPath.end(); itL++)  
+    {
+        TLink* origLink = *itL;
+        TLink* link = origLink->Clone();
+        string urn = link->GetName();
+        if (urn.find("urn") == string::npos)
+        {
+            linkName = link->GetName();
+            portName = link->GetPort()->GetName();
+            nodeName = link->GetPort()->GetNode()->GetName();
+            domainName = link->GetPort()->GetNode()->GetDomain()->GetName();
+            urn = "urn:ogf:network:domain=";
+            urn += domainName;
+            urn += ":node=";
+            urn += nodeName;
+            urn += ":port=";
+            urn += portName;
+            urn += ":link=";
+            urn += linkName;
+        }
+        else
+        {
+            if (link->GetPort() != NULL && link->GetPort()->GetNode() != NULL 
+                    && link->GetPort()->GetNode()->GetDomain() != NULL
+                    && !link->GetPort()->GetNode()->GetDomain()->isNestedUrn())
+            {
+                domainName = urn;
+                nodeName = urn;
+                portName = urn;
+                linkName = urn;
+            }
+            else 
+            {
+                ParseFQUrn(urn, domainName, nodeName, portName, linkName);
+                if (domainName.length() == 0 || nodeName.length() == 0 || portName.length() == 0 || linkName.length() == 0)
+                {
+                    snprintf(buf, 1024, "TGraph::LoadPath raises Exception: invalid link urn '%s'", urn.c_str());
+                    throw TEDBException(buf);
+                }
+                if (LookupLinkByURN(urn) != NULL || LookupPortByURN(urn) != NULL)
+                {
+                    snprintf(buf, 1024, "TGraph::LoadPath raises Exception: duplicate link '%s' in path", urn.c_str());
+                    throw TEDBException(buf);
+                }
+            }
+            link->SetName(linkName);
+        }
+        
+        TDomain* domain = LookupDomainByName(domainName);
+        if (domain == NULL)
+        {
+            domain = new TDomain(0, domainName);
+            if (link->GetPort() != NULL && link->GetPort()->GetNode() != NULL 
+                    && link->GetPort()->GetNode()->GetDomain() != NULL
+                    && !link->GetPort()->GetNode()->GetDomain()->isNestedUrn())
+                domain->setNestedUrn(false);
+            AddDomain(domain);
+        }
+        TNode* node = LookupNodeByURN(urn);
+        if (node == NULL)
+        {
+            node = new TNode(0, nodeName);
+            AddNode(domain, node);
+        }
+        TPort* port = LookupPortByURN(urn);
+        if (port == NULL)
+        {
+            port = new TPort(link->GetId(), portName);
+            AddPort(node, port);
+        }
+        if (port->GetLinks().find(link->GetName()) == port->GetLinks().end())
+        {
+            AddLink(port, link);
+            AddLink(node, link);
+        }
+    }
+
+    // pair up link<-->remoteLink
+    for (itL = expandedPath.begin(); itL != expandedPath.end(); itL++)  
+    {
+        TLink* origLink = *itL;
+        TLink* origRemoteLink = (TLink*)origLink->GetRemoteLink();
+        if (origRemoteLink == NULL)
+            continue;
+        TLink* link = this->LookupSameLink(origLink);
+        TLink* remoteLink = this->LookupSameLink(origRemoteLink);
+        if (link == NULL || remoteLink == NULL)
+            continue;
+        link->SetRemoteLink(remoteLink);
+        remoteLink->SetRemoteLink(link);
+        link->SetRemoteEnd(remoteLink->GetLocalEnd());
+        remoteLink->SetRemoteEnd(link->GetLocalEnd());
+        link->GetLocalEnd()->AddRemoteLink(remoteLink;
+        remoteLink->GetLocalEnd()->AddRemoteLink(link);
+     }
+ }
+
+/*
 void TGraph::LoadPath(list<TLink*> path)
 {
     string domainName, nodeName, portName, linkName;
@@ -1033,7 +1146,7 @@ void TGraph::LoadPath(list<TLink*> path)
         lastLink = link;
     }
 }
-
+*/
 
 TGraph* TGraph::Clone()
 {
@@ -1082,9 +1195,13 @@ bool TGraph::VerifyMPVBConstraints(TNode* root, ConstraintTagSet& vtagSet, bool 
             node->SetWorkData(new WorkData());
         }
         node->GetWorkData()->SetData("MPVB_VISITED", new bool(false));
-        // TODO: all bridge vlanRange = any; all terminal vlanRange <= from terminalVlanMap
-	ConstraintTagSet *pVtagSet = new ConstraintTagSet(MAX_VLAN_NUM);
-	pVtagSet->AddTag(ANY_TAG);
+        
+        string* pVlanRange = (string*)node->GetWorkData()->GetData("VLAN_RANGE");
+        ConstraintTagSet *pVtagSet = new ConstraintTagSet(MAX_VLAN_NUM);
+        if (pVlanRange != NULL && !pVlanRange->empty())
+            pVtagSet->LoadRangeString(*pVlanRange); // load terminal vlanRange
+        else
+            pVtagSet->AddTag(ANY_TAG);  // bridge node vlanRange = any; 
         node->GetWorkData()->SetData("MPVB_VLAN", pVtagSet);
     }    
     list<TLink*>::iterator itL = this->GetLinks().begin();
@@ -1096,8 +1213,8 @@ bool TGraph::VerifyMPVBConstraints(TNode* root, ConstraintTagSet& vtagSet, bool 
             link->SetWorkData(new WorkData());
         }
         link->GetWorkData()->SetData("MPVB_VISITED", new bool(false));
-	ConstraintTagSet *pVtagSet = new ConstraintTagSet(MAX_VLAN_NUM);
-	pVtagSet->AddTag(ANY_TAG);
+        ConstraintTagSet *pVtagSet = new ConstraintTagSet(MAX_VLAN_NUM);
+        pVtagSet->AddTag(ANY_TAG);
         link->GetWorkData()->SetData("MPVB_VLAN", pVtagSet); 
         if (finalizeVlan)
         {
@@ -1122,8 +1239,18 @@ bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node, ConstraintTagSet& vtag
         if (*visited) // in a trree, nextLink visited == nextNode visited
             continue;
         *visited = true;
+        // check vlanTranslation on localLink
         bool vlanTranslation = false;
-        // TODO: check vlanTranslation on localLink
+        list<ISCD*>::iterator itSwCap = localLink->GetSwCapDescriptors().begin();
+        for (; itSwCap != localLink->GetSwCapDescriptors().end(); itSwCap++)
+        {
+             // The non-L2SC layers are temoperaty here and yet to remove.
+            if ((*itSwCap)->switchingType != LINK_IFSWCAP_L2SC || (*itSwCap)->encodingType != LINK_IFSWCAP_ENC_ETH)
+                continue;
+            ISCD_L2SC* iscd = (ISCD_L2SC*)(*itSwCap);
+            vlanTranslation = iscd->vlanTranslation();
+            break;
+        }
         TLink* remoteLink = (TLink*)localLink->GetRemoteLink();
         if (remoteLink == NULL)
             continue;
@@ -1166,8 +1293,9 @@ bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node, ConstraintTagSet& vtag
                 suggestedLocalLinkVlan = localSuggestedVlan;
                 if (remoteLink != NULL)
                 {
-                    // TODO: if remoteLink has suggested vlan != ANY, use that
-                    
+                    u_int32_t& suggestedRemoteLinkVlan = *(u_int32_t*)remoteLink->GetWorkData()->GetData("SUGGESTED_VLAN");
+                    if (suggestedRemoteLinkVlan != ANY_TAG)
+                        suggestedLocalLinkVlan = suggestedRemoteLinkVlan;
                 }
             }
         }

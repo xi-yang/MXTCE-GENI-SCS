@@ -337,7 +337,7 @@ void Action_PrestageCompute_MPVB::SeedBridgeWithLPH()
         if (P->VerifyTEConstraints(srcTSS, dstTSS, true) && !found) 
         {
             // $$ use the path with max(dstTSS.GetVlanSet().size()) instead ?
-            SMT->LoadPath(P->Clone(true)->GetPath());
+            SMT->LoadPath(P->GetPath());
             LOG_DEBUG("SeedLongestPath:");
 	    P->LogDump();
             found = true;
@@ -455,7 +455,7 @@ void Action_BridgeTerminal_MPVB::Process()
     }
     else // proceed to next terminal
     {
-        SMT->LoadPath(bridgePath->Clone(true)->GetPath()); //  (LoadPath should be indempotent at domain and node levels, but not for port and link) 
+        SMT->LoadPath(bridgePath->GetPath()); //  (LoadPath should be indempotent at domain and node levels, but not for port and link) 
         this->GetComputeWorker()->SetWorkflowData("CURRENT_TERMINAL", nextTerminal);
         *pReentries = MAX_REENTRY_NUM;
         if (nextTerminal == orderedTerminals->back()) 
