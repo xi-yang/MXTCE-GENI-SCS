@@ -1010,8 +1010,6 @@ void TGraph::LoadPath(list<TLink*> path)
             node = new TNode(0, nodeName);
             AddNode(domain, node);
         }
-        node->AddLocalLink(link);
-        link->SetLocalEnd(node);
         if (lastLink != NULL)
         {
             lastLink->SetRemoteEnd(node);
@@ -1026,7 +1024,12 @@ void TGraph::LoadPath(list<TLink*> path)
             port = new TPort(link->GetId(), portName);
             AddPort(node, port);
         }
-        AddLink(port, link);
+        if (port->GetLinks().find(link->GetName()) == port->GetLinks().end())
+        {
+            AddLink(port, link);
+            node->AddLocalLink(link);
+            link->SetLocalEnd(node);
+        }
         lastLink = link;
     }
 }
