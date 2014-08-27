@@ -949,9 +949,9 @@ void TGraph::LoadPath(list<TLink*> path)
     {
         TLink* link = *itL;
         TLink* remoteLink = (TLink*)link->GetRemoteLink();
-        if (expandedPath.find(link) != expandedPath.end())
+        if (find(expandedPath.begin(), expandedPath.end(), link) == expandedPath.end())
             expandedPath.push_back(link);
-        if (remoteLink != NULL expandedPath.find(remoteLink) != expandedPath.end())
+        if (remoteLink != NULL && find(expandedPath.begin(), expandedPath.end(), remoteLink) == expandedPath.end())
             expandedPath.push_back(remoteLink);
     }
 
@@ -1030,7 +1030,8 @@ void TGraph::LoadPath(list<TLink*> path)
         if (port->GetLinks().find(link->GetName()) == port->GetLinks().end())
         {
             AddLink(port, link);
-            AddLink(node, link);
+	    if (!node->HasLocalLink(link))
+                AddLink(node, link);
         }
     }
 
@@ -1049,8 +1050,10 @@ void TGraph::LoadPath(list<TLink*> path)
         remoteLink->SetRemoteLink(link);
         link->SetRemoteEnd(remoteLink->GetLocalEnd());
         remoteLink->SetRemoteEnd(link->GetLocalEnd());
-        link->GetLocalEnd()->AddRemoteLink(remoteLink;
-        remoteLink->GetLocalEnd()->AddRemoteLink(link);
+        if (!link->GetLocalEnd()->HasRemoteLink(remoteLink))
+            link->GetLocalEnd()->AddRemoteLink(remoteLink);
+        if (!remoteLink->GetLocalEnd()->HasRemoteLink(link))
+            remoteLink->GetLocalEnd()->AddRemoteLink(link);
      }
  }
 
@@ -1232,6 +1235,11 @@ bool TGraph::VerifyMPVBConstraints(TNode* root, ConstraintTagSet& vtagSet, bool 
 bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node, ConstraintTagSet& vtagSet, bool finalizeVlan)
 {
     list<TLink*>::iterator itL = node->GetLocalLinks().begin();
+
+       //char buf[1024];
+       //sprintf(buf, "node %s:%s start with [%s]\n", node->GetDomain()->GetName().c_str(), node->GetName().c_str(), vtagSet.GetRangeString().c_str());
+       //LOG_DEBUG(buf);
+
     for (; itL != node->GetLocalLinks().end(); itL++)
     {
         TLink* localLink = *itL;
@@ -1248,7 +1256,7 @@ bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node, ConstraintTagSet& vtag
             if ((*itSwCap)->switchingType != LINK_IFSWCAP_L2SC || (*itSwCap)->encodingType != LINK_IFSWCAP_ENC_ETH)
                 continue;
             ISCD_L2SC* iscd = (ISCD_L2SC*)(*itSwCap);
-            vlanTranslation = iscd->vlanTranslation();
+            vlanTranslation = iscd-vlanTranslation;
             break;
         }
         TLink* remoteLink = (TLink*)localLink->GetRemoteLink();
@@ -1278,14 +1286,21 @@ bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node, ConstraintTagSet& vtag
             vtagSet.Intersect(nextVtagSet);
         }
     }
+       //sprintf(buf, "node %s:%s end with [%s]\n", node->GetDomain()->GetName().c_str(), node->GetName().c_str(), vtagSet.GetRangeString().c_str());
+       //LOG_DEBUG(buf);
     if (finalizeVlan)
     {
+       //sprintf(buf, "node %s:%s [%s]\n", node->GetDomain()->GetName().c_str(), node->GetName().c_str(), vtagSet.GetRangeString().c_str());
+       //LOG_DEBUG(buf);
+
         u_int32_t localSuggestedVlan = vtagSet.RandomTag();
         for (itL = node->GetLocalLinks().begin(); itL != node->GetLocalLinks().end(); itL++)
         {
             TLink* localLink = *itL;
             TLink* remoteLink = (TLink*)localLink->GetRemoteLink();
             ConstraintTagSet& linkVtagSet = *(ConstraintTagSet*)localLink->GetWorkData()->GetData("MPVB_VLAN");
+            //sprintf(buf, "link %s:%s:%s:%s [%s]\n", node->GetDomain()->GetName().c_str(), node->GetName().c_str(), localLink->GetPort()->GetName().c_str(), localLink->GetName().c_str(), linkVtagSet.GetRangeString().c_str());
+            //LOG_DEBUG(buf);
             localLink->ProceedByUpdatingVtags(vtagSet, linkVtagSet, true);
             u_int32_t& suggestedLocalLinkVlan = *(u_int32_t*)localLink->GetWorkData()->GetData("SUGGESTED_VLAN");
             if (suggestedLocalLinkVlan == ANY_TAG)
