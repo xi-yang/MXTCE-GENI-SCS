@@ -1009,13 +1009,16 @@ void TGraph::LoadPath(list<TLink*> path)
         {
             node = new TNode(0, nodeName);
             AddNode(domain, node);
-            if (lastLink != NULL)
-            {
-                lastLink->SetRemoteEnd(node);
-                lastLink->SetRemoteLink(link);
-                link->SetRemoteEnd((TNode*)lastLink->GetPort()->GetNode());
-                link->SetRemoteLink(lastLink);
-            }
+        }
+        node->AddLocalLink(link);
+        link->SetLocalEnd(node);
+        if (lastLink != NULL)
+        {
+            lastLink->SetRemoteEnd(node);
+            node->AddRemoteLink(lastLink);
+            lastLink->SetRemoteLink(link);
+            link->SetRemoteEnd((TNode*)lastLink->GetPort()->GetNode());
+            link->SetRemoteLink(lastLink);
         }
         TPort* port = LookupPortByURN(urn);
         if (port == NULL)
@@ -1023,7 +1026,6 @@ void TGraph::LoadPath(list<TLink*> path)
             port = new TPort(link->GetId(), portName);
             AddPort(node, port);
             AddLink(port, link);
-            AddLink(node, link);
         }
         lastLink = link;
     }
@@ -1149,7 +1151,7 @@ bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node, ConstraintTagSet& vtag
     if (finalizeVlan)
     {
         u_int32_t localSuggestedVlan = vtagSet.RandomTag();
-        for (; itL != node->GetLocalLinks().end(); itL++)
+        for (itL = node->GetLocalLinks().begin(); itL != node->GetLocalLinks().end(); itL++)
         {
             TLink* localLink = *itL;
             TLink* remoteLink = (TLink*)localLink->GetRemoteLink();
