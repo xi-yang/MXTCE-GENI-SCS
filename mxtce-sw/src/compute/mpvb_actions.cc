@@ -458,7 +458,7 @@ void Action_BridgeTerminal_MPVB::Process()
         SMT->LoadPath(bridgePath->Clone(true)->GetPath()); //  (LoadPath should be indempotent at domain and node levels, but not for port and link) 
         this->GetComputeWorker()->SetWorkflowData("CURRENT_TERMINAL", nextTerminal);
         *pReentries = MAX_REENTRY_NUM;
-        if (currentTerminal == orderedTerminals->back()) 
+        if (nextTerminal == orderedTerminals->back()) 
             return; // we have bridged all terminals sucessfully
     }
     // add reentry / next Action_Compute_MPVB as child
