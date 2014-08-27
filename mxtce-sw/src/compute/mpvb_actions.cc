@@ -338,6 +338,14 @@ void Action_PrestageCompute_MPVB::SeedBridgeWithLPH()
         {
             // $$ use the path with max(dstTSS.GetVlanSet().size()) instead ?
             SMT->LoadPath(P->GetPath());
+            TNode* terminalA = SMT->LookupSameNode((*reorderedTerminals)[0]);
+            TNode* terminalZ = SMT->LookupSameNode((*reorderedTerminals)[1]);
+            if (terminalA->GetWorkData() == NULL)
+                terminalA->SetWorkData(new WorkData);
+            terminalA->GetWorkData()->SetData("VLAN_RANGE", new string(srcVlan));
+            if (terminalZ->GetWorkData() == NULL)
+                terminalZ->SetWorkData(new WorkData);
+            terminalZ->GetWorkData()->SetData("VLAN_RANGE", new string(srcVlan));
             LOG_DEBUG("SeedLongestPath:");
 	    P->LogDump();
             found = true;
@@ -456,6 +464,10 @@ void Action_BridgeTerminal_MPVB::Process()
     else // proceed to next terminal
     {
         SMT->LoadPath(bridgePath->GetPath()); //  (LoadPath should be indempotent at domain and node levels, but not for port and link) 
+        TNode* terminalZ = SMT->LookupSameNode(nextTerminal);
+        if (terminalZ->GetWorkData() == NULL)
+            terminalZ->SetWorkData(new WorkData);
+        terminalZ->GetWorkData()->SetData("VLAN_RANGE", new string(*(string*)nextTerminal->GetWorkData()->GetData("VLAN_RANGE")));
         this->GetComputeWorker()->SetWorkflowData("CURRENT_TERMINAL", nextTerminal);
         *pReentries = MAX_REENTRY_NUM;
         if (nextTerminal == orderedTerminals->back()) 
