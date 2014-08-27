@@ -1157,7 +1157,7 @@ bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node, ConstraintTagSet& vtag
             TLink* remoteLink = (TLink*)localLink->GetRemoteLink();
             ConstraintTagSet& linkVtagSet = *(ConstraintTagSet*)localLink->GetWorkData()->GetData("MPVB_VLAN");
             localLink->ProceedByUpdatingVtags(vtagSet, linkVtagSet, true);
-            u_int32_t suggestedLocalLinkVlan = *(u_int32_t*)node->GetWorkData()->GetData("SUGGESTED_VLAN");
+            u_int32_t& suggestedLocalLinkVlan = *(u_int32_t*)localLink->GetWorkData()->GetData("SUGGESTED_VLAN");
             if (suggestedLocalLinkVlan == ANY_TAG)
             {
                 suggestedLocalLinkVlan = localSuggestedVlan;
