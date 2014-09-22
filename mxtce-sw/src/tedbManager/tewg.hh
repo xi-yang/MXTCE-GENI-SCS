@@ -311,7 +311,8 @@ public:
     void LogDump();
 
 protected:    
-    bool VerifyMPVBConstraints_Recursive(TNode* node, ConstraintTagSet& vtagSet, bool finalizeVlan=false);
+    bool VerifyMPVBConstraints_Recursive(TNode* node);
+    void FinalizeMPVBConstraints_Recursive(TNode* node);
 };
 
 
