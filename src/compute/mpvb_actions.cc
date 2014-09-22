@@ -347,7 +347,7 @@ void Action_PrestageCompute_MPVB::SeedBridgeWithLPH()
                 terminalZ->SetWorkData(new WorkData);
             terminalZ->GetWorkData()->SetData("VLAN_RANGE", new string(srcVlan));
             LOG_DEBUG("SeedLongestPath:");
-	    P->LogDump();
+	        //P->LogDump();
             found = true;
         }
         delete P;
@@ -531,7 +531,7 @@ bool Action_BridgeTerminal_MPVB::VerifyBridgePath(TNode* bridgeNode, TNode* term
     bridgeNode = SMT->LookupSameNode(bridgeNode);   //replace bridgeNode  with same node in SMT
 
     LOG_DEBUG("VerifyBridgePath:");
-    bridgePath->LogDump();
+    //bridgePath->LogDump();
     //1. verify loopfree: candidatePath should not hit anothe node in SMT besides the bridgeNode
     list<TLink*>& pathLinks = bridgePath->GetPath();
     list<TLink*>::iterator itL = pathLinks.begin();

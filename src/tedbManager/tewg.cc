@@ -1206,6 +1206,10 @@ bool TGraph::VerifyMPVBConstraints(TNode* root, ConstraintTagSet& vtagSet, bool 
         else
             pVtagSet->AddTag(ANY_TAG);  // bridge node vlanRange = any; 
         node->GetWorkData()->SetData("MPVB_VLAN", pVtagSet);
+        if (finalizeVlan)
+        {
+            node->GetWorkData()->SetData("SUGGESTED_VLAN", new u_int32_t(ANY_TAG));            
+        }
     }    
     list<TLink*>::iterator itL = this->GetLinks().begin();
     for (; itL != this->GetLinks().end(); itL++)
