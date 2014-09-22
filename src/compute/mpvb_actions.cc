@@ -530,7 +530,7 @@ bool Action_BridgeTerminal_MPVB::VerifyBridgePath(TNode* bridgeNode, TNode* term
     TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
     bridgeNode = SMT->LookupSameNode(bridgeNode);   //replace bridgeNode  with same node in SMT
 
-    LOG_DEBUG("VerifyBridgePath:");
+    //LOG_DEBUG("VerifyBridgePath:");
     //bridgePath->LogDump();
     //1. verify loopfree: candidatePath should not hit anothe node in SMT besides the bridgeNode
     list<TLink*>& pathLinks = bridgePath->GetPath();
