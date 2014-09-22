@@ -1234,7 +1234,7 @@ bool TGraph::VerifyMPVBConstraints(TNode* root, ConstraintTagSet& vtagSet, bool 
     *visited = true;
     (*(ConstraintTagSet*)root->GetWorkData()->GetData("MPVB_VLAN")) = vtagSet;
     bool verified = VerifyMPVBConstraints_Recursive(root);
-    if (finalizeVlan) // finalize suggestedVlan
+    if (verified && finalizeVlan) // finalize suggestedVlan
     {
         // reset visited indicator
         for (; itN != this->GetNodes().end(); itN++)
