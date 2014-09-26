@@ -91,7 +91,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     if (rspecDoc == NULL)
         return NULL;
 
-    char buf[1024*1024*16];
+    char* buf = new char[1024*1024*16];
     //get domain info: rspec/stitching/aggregate
     bool isNestedUrn = true;
     xmlNodePtr rspecRoot = xmlDocGetRootElement(rspecDoc);
@@ -868,6 +868,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     int sizeBuf=strlen(buf);
     xmlDocPtr xmlDoc = xmlParseMemory(buf, sizeBuf);
     LOG("$$$ Topology Dump:\n"<<buf<<endl);
+    delete buf;
     return xmlDoc;
 }
 
@@ -1320,9 +1321,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 if (domainA == domainZ)
                     continue;
                 // No stitching between two ExoGENI sites
-                if (GeniAdRSpec::aggregateTypeMap.find(domainA) && GeniAdRSpec::aggregateTypeMap.find(domainZ)
-                    && GeniAdRSpec::aggregateTypeMap[domainA].compare("orca") == 0
-                    && GeniAdRSpec::aggregateTypeMap[domainZ].compare("orca") == 0)
+                if (domainA.find("exogeni.net") != string::npos && domainZ.find("exogeni.net") != string::npos )
                     continue;
                 Apimsg_user_constraint* userCons = new Apimsg_user_constraint();
                 xmlChar* xmlLinkId = xmlGetProp(xmlNode,  (const xmlChar*)"client_id");
