@@ -37,7 +37,6 @@
 #include <libxml2/libxml/xpath.h>
 #include <libxml2/libxml/xpathInternals.h>
 
-
 const char* getVersionString()
 {
     const char* versionString = "$Revision$ - $Date$";

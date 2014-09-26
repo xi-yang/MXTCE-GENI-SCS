@@ -67,7 +67,7 @@ public:
     void fire();
 };
 
-#define MAX_MSG_PORT_POLL_TIME 10 // seconds
+#define MAX_MSG_PORT_POLL_TIME 20 // seconds
 
 class XMLRPC_TimeoutOrCallback: public Timer, public MessagePortCallback {
 private:

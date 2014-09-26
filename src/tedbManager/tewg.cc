@@ -1565,7 +1565,11 @@ void TPath::UpdateLayerSpecInfo(TServiceSpec& ingTSS, TServiceSpec& egrTSS, bool
             else if (!iscd->suggestedVlanTags.IsEmpty()
                     || iscd->suggestedVlanTags.HasTag(dstVtag))
                 break;
-            //iscd->availableVlanTags.AddTag(dstVtag);
+
+	    if (!iscd->availableVlanTags.HasTag(dstVtag) && iscd->vlanTranslation)
+            {
+                dstVtag = iscd->availableVlanTags.RandomTag();
+            }
             iscd->suggestedVlanTags.AddTag(dstVtag);
             iscd->assignedVlanTags.AddTag(dstVtag);
         }
