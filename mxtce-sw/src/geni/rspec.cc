@@ -128,8 +128,9 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     }
     if (aggrNode == NULL) 
     {
-        snprintf(buf, 128, "TopologyXMLImporter::TranslateFromRspec - Cannot locate <stitching> <aggregate> element!");
-        throw TEDBException(buf);
+        char errmsg[128];
+        snprintf(errmsg, 128, "TopologyXMLImporter::TranslateFromRspec - Cannot locate <stitching> <aggregate> element!");
+        throw TEDBException(errmsg);
     }
 
     string aggrUrn = (const char*)xmlGetProp(aggrNode,  (const xmlChar*)"id");
@@ -806,13 +807,13 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             Port* tp = (Port*)(*itp).second;
             snprintf(str, 1024, "<port id=\"%s\">", tp->GetName().c_str());
             strcat(buf, str);
-            snprintf(str, 1024, "<capacity>%llu</capacity>", tp->GetMaxBandwidth()/1000);
+            snprintf(str, 1024, "<capacity>%lu</capacity>", tp->GetMaxBandwidth()/1000);
             strcat(buf, str);
-            snprintf(str, 1024, "<maximumReservableCapacity>%llu</maximumReservableCapacity>", tp->GetMaxReservableBandwidth());
+            snprintf(str, 1024, "<maximumReservableCapacity>%lu</maximumReservableCapacity>", tp->GetMaxReservableBandwidth());
             strcat(buf, str);
-            snprintf(str, 1024, "<minimumReservableCapacity>%llu</minimumReservableCapacity>", tp->GetMinReservableBandwidth());
+            snprintf(str, 1024, "<minimumReservableCapacity>%lu</minimumReservableCapacity>", tp->GetMinReservableBandwidth());
             strcat(buf, str);
-            snprintf(str, 1024, "<granularity>%llu</granularity>", tp->GetBandwidthGranularity());
+            snprintf(str, 1024, "<granularity>%lu</granularity>", tp->GetBandwidthGranularity());
             strcat(buf, str);
             map<string, Link*, strcmpless>::iterator itl = tp->GetLinks().begin();
             for (; itl != tp->GetLinks().end(); itl++) 
@@ -824,13 +825,13 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                 strcat(buf, str);
                 snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", tl->GetMetric());
                 strcat(buf, str);
-                snprintf(str, 1024, "<capacity>%llu</capacity>", tl->GetMaxBandwidth()/1000);
+                snprintf(str, 1024, "<capacity>%lu</capacity>", tl->GetMaxBandwidth()/1000);
                 strcat(buf, str);
-                snprintf(str, 1024, "<maximumReservableCapacity>%llu</maximumReservableCapacity>", tl->GetMaxReservableBandwidth());
+                snprintf(str, 1024, "<maximumReservableCapacity>%lu</maximumReservableCapacity>", tl->GetMaxReservableBandwidth());
                 strcat(buf, str);
-                snprintf(str, 1024, "<minimumReservableCapacity>%llu</minimumReservableCapacity>", tl->GetMinReservableBandwidth());
+                snprintf(str, 1024, "<minimumReservableCapacity>%lu</minimumReservableCapacity>", tl->GetMinReservableBandwidth());
                 strcat(buf, str);
-                snprintf(str, 1024, "<granularity>%llu</granularity>", tl->GetBandwidthGranularity());
+                snprintf(str, 1024, "<granularity>%lu</granularity>", tl->GetBandwidthGranularity());
                 strcat(buf, str);
                 strcat(buf, tl->GetSwcapXmlString().c_str());
                 snprintf(str, 1024, "</link>");
@@ -1566,13 +1567,13 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             strcat(buf, str);
             if (capacityCstr[0] == 0) 
             {
-                snprintf(capacityCstr, 16, "%llu", tl->GetMaxBandwidth()/1000);
+                snprintf(capacityCstr, 16, "%lu", tl->GetMaxBandwidth()/1000);
             }
             list<ISCD*>::iterator its = tl->GetSwCapDescriptors().begin();
             for (; its != tl->GetSwCapDescriptors().end(); its++) 
             {
                 ISCD *iscd = *its;
-                snprintf(str, 1024, "<capacity>%llu</capacity>", tl->GetMaxBandwidth()/1000);
+                snprintf(str, 1024, "<capacity>%lu</capacity>", tl->GetMaxBandwidth()/1000);
                 strcat(buf, str);
                 snprintf(str, 1024, "<switchingCapabilityDescriptor>");
                 strcat(buf, str);
