@@ -395,7 +395,7 @@ public:
                 }
             return num;
         }
-    void Clear() { memset(byteArray, 0, numBytes); }
+    void Clear() { memset(byteArray, 0, numBytes); this->hasAnyTag = false; }
     u_int8_t* TagBitmask() { return byteArray; }
     string GetRangeString() 
         { 
