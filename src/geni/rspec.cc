@@ -1319,6 +1319,11 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 string domainZ = GetUrnField(ifRefs.back(), "domain");
                 if (domainA == domainZ)
                     continue;
+                // No stitching between two ExoGENI sites
+                if (GeniAdRSpec::aggregateTypeMap.find(domainA) && GeniAdRSpec::aggregateTypeMap.find(domainZ)
+                    && GeniAdRSpec::aggregateTypeMap[domainA].compare("orca") == 0
+                    && GeniAdRSpec::aggregateTypeMap[domainZ].compare("orca") == 0)
+                    continue;
                 Apimsg_user_constraint* userCons = new Apimsg_user_constraint();
                 xmlChar* xmlLinkId = xmlGetProp(xmlNode,  (const xmlChar*)"client_id");
                 if (xmlLinkId == NULL)
