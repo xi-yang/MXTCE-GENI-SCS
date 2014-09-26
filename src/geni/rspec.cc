@@ -91,7 +91,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     if (rspecDoc == NULL)
         return NULL;
 
-    char buf[1024*1024*16];
+    char* buf = new char[1024*1024*16];
     //get domain info: rspec/stitching/aggregate
     bool isNestedUrn = true;
     xmlNodePtr rspecRoot = xmlDocGetRootElement(rspecDoc);
@@ -128,8 +128,10 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     }
     if (aggrNode == NULL) 
     {
-        snprintf(buf, 128, "TopologyXMLImporter::TranslateFromRspec - Cannot locate <stitching> <aggregate> element!");
-        throw TEDBException(buf);
+        delete buf;
+        char errmsg[128];
+        snprintf(errmsg, 128, "TopologyXMLImporter::TranslateFromRspec - Cannot locate <stitching> <aggregate> element!");
+        throw TEDBException(errmsg);
     }
 
     string aggrUrn = (const char*)xmlGetProp(aggrNode,  (const xmlChar*)"id");
@@ -792,13 +794,13 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             Port* tp = (Port*)(*itp).second;
             snprintf(str, 1024, "<port id=\"%s\">", tp->GetName().c_str());
             strcat(buf, str);
-            snprintf(str, 1024, "<capacity>%llu</capacity>", tp->GetMaxBandwidth()/1000);
+            snprintf(str, 1024, "<capacity>%lu</capacity>", tp->GetMaxBandwidth()/1000);
             strcat(buf, str);
-            snprintf(str, 1024, "<maximumReservableCapacity>%llu</maximumReservableCapacity>", tp->GetMaxReservableBandwidth());
+            snprintf(str, 1024, "<maximumReservableCapacity>%lu</maximumReservableCapacity>", tp->GetMaxReservableBandwidth());
             strcat(buf, str);
-            snprintf(str, 1024, "<minimumReservableCapacity>%llu</minimumReservableCapacity>", tp->GetMinReservableBandwidth());
+            snprintf(str, 1024, "<minimumReservableCapacity>%lu</minimumReservableCapacity>", tp->GetMinReservableBandwidth());
             strcat(buf, str);
-            snprintf(str, 1024, "<granularity>%llu</granularity>", tp->GetBandwidthGranularity());
+            snprintf(str, 1024, "<granularity>%lu</granularity>", tp->GetBandwidthGranularity());
             strcat(buf, str);
             map<string, Link*, strcmpless>::iterator itl = tp->GetLinks().begin();
             for (; itl != tp->GetLinks().end(); itl++) 
@@ -810,13 +812,13 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                 strcat(buf, str);
                 snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", tl->GetMetric());
                 strcat(buf, str);
-                snprintf(str, 1024, "<capacity>%llu</capacity>", tl->GetMaxBandwidth()/1000);
+                snprintf(str, 1024, "<capacity>%lu</capacity>", tl->GetMaxBandwidth()/1000);
                 strcat(buf, str);
-                snprintf(str, 1024, "<maximumReservableCapacity>%llu</maximumReservableCapacity>", tl->GetMaxReservableBandwidth());
+                snprintf(str, 1024, "<maximumReservableCapacity>%lu</maximumReservableCapacity>", tl->GetMaxReservableBandwidth());
                 strcat(buf, str);
-                snprintf(str, 1024, "<minimumReservableCapacity>%llu</minimumReservableCapacity>", tl->GetMinReservableBandwidth());
+                snprintf(str, 1024, "<minimumReservableCapacity>%lu</minimumReservableCapacity>", tl->GetMinReservableBandwidth());
                 strcat(buf, str);
-                snprintf(str, 1024, "<granularity>%llu</granularity>", tl->GetBandwidthGranularity());
+                snprintf(str, 1024, "<granularity>%lu</granularity>", tl->GetBandwidthGranularity());
                 strcat(buf, str);
                 strcat(buf, tl->GetSwcapXmlString().c_str());
                 /* disabled in stitch-v0.1 : to be used in v2
@@ -845,6 +847,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     int sizeBuf=strlen(buf);
     xmlDocPtr xmlDoc = xmlParseMemory(buf, sizeBuf);
     LOG("$$$ Topology Dump:\n"<<buf<<endl);
+    delete buf;
     return xmlDoc;
 }
 
@@ -1296,6 +1299,9 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 string domainZ = GetUrnField(ifRefs.back(), "domain");
                 if (domainA == domainZ)
                     continue;
+                // No stitching between two ExoGENI sites
+                if (domainA.find("exogeni.net") != string::npos && domainZ.find("exogeni.net") != string::npos )
+                    continue;
                 Apimsg_user_constraint* userCons = new Apimsg_user_constraint();
                 xmlChar* xmlLinkId = xmlGetProp(xmlNode,  (const xmlChar*)"client_id");
                 if (xmlLinkId == NULL)
@@ -1537,13 +1543,13 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
             strcat(buf, str);
             if (capacityCstr[0] == 0) 
             {
-                snprintf(capacityCstr, 16, "%llu", tl->GetMaxBandwidth()/1000);
+                snprintf(capacityCstr, 16, "%lu", tl->GetMaxBandwidth()/1000);
             }
             list<ISCD*>::iterator its = tl->GetSwCapDescriptors().begin();
             for (; its != tl->GetSwCapDescriptors().end(); its++) 
             {
                 ISCD *iscd = *its;
-                snprintf(str, 1024, "<capacity>%llu</capacity>", tl->GetMaxBandwidth()/1000);
+                snprintf(str, 1024, "<capacity>%lu</capacity>", tl->GetMaxBandwidth()/1000);
                 strcat(buf, str);
                 snprintf(str, 1024, "<switchingCapabilityDescriptor>");
                 strcat(buf, str);
