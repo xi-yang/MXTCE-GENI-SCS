@@ -368,6 +368,8 @@ public:
     u_int32_t RandomTag()
         {
             // TODO: store last five tags as global, try making a new number
+            if (this->hasAnyTag)
+                return (u_int32_t)((random() % (this->numBits-1))+1);
             int low = this->LowestTag();
             int high = this->HighestTag();
             int tag = RandomTag(low, high);
