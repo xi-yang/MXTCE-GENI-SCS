@@ -269,7 +269,7 @@ public:
                 return;
             if (this->HasAnyTag())
             {
-                memcpy(tagset.byteArray, this->byteArray, this->numBytes);
+                memcpy(this->byteArray, tagset.byteArray, this->numBytes);
                 this->hasAnyTag = false;
                 return;
             }
