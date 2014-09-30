@@ -1284,8 +1284,27 @@ bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node)
         
         if (!VerifyMPVBConstraints_Recursive(nextNode))
             return false;
+        // check vlanTranslation on localLink
+        bool localLinkVlanTranslation = false;
+        list<ISCD*>::iterator itSwCap = localLink->GetSwCapDescriptors().begin();
+        for (; itSwCap != localLink->GetSwCapDescriptors().end(); itSwCap++)
+        {
+             // The non-L2SC layers are temoperaty here and yet to remove.
+            if ((*itSwCap)->switchingType != LINK_IFSWCAP_L2SC || (*itSwCap)->encodingType != LINK_IFSWCAP_ENC_ETH)
+                continue;
+            ISCD_L2SC* iscd = (ISCD_L2SC*)(*itSwCap);
+            localLinkVlanTranslation = iscd->vlanTranslation;
+            break;
+        }
+        if (localLinkVlanTranslation)
+        {
+            // use 'any' for interface that does translation
+            ConstraintTagSet localLinkVtagSet(MAX_VLAN_NUM);
+            localLinkVtagSet.AddTag(ANY_TAG);
+            listNextVtagSet.push_back(localLinkVtagSet);
+            continue;
+        }
         ConstraintTagSet& nextNodeVtagSet = *(ConstraintTagSet*)nextNode->GetWorkData()->GetData("MPVB_VLAN");
-        
         ConstraintTagSet remoteLinkVtagSet(MAX_VLAN_NUM);
         remoteLink->ProceedByUpdatingVtags(nextNodeVtagSet, remoteLinkVtagSet, true);
         if (remoteLinkVtagSet.IsEmpty()) // after intersection (w/ translation)
