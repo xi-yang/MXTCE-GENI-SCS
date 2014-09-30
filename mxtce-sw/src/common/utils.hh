@@ -267,6 +267,12 @@ public:
             assert(this->base == tagset.base && this->interval == tagset.interval);
             if (tagset.HasAnyTag())
                 return;
+            if (this->HasAnyTag())
+            {
+                memcpy(tagset.byteArray, this->byteArray, this->numBytes);
+                this->hasAnyTag = false;
+                return;
+            }
             for (int i = 0; i < this->numBytes && i < tagset.numBytes; i++)
                 this->byteArray[i] &= tagset.byteArray[i];
             hasAnyTag = false;
