@@ -401,8 +401,10 @@ public:
         { 
             string rangeStr = "";
             if (this->hasAnyTag)
+            {
                 rangeStr = "any";
-            return rangeStr;
+                return rangeStr;
+            }
             char buf[1024];
             char buf2[32];
             if (numBits == MAX_VLAN_NUM && HasTag(VTAG_UNTAGGED))
