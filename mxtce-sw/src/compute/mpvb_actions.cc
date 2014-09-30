@@ -473,12 +473,14 @@ void Action_BridgeTerminal_MPVB::Process()
         if (nextTerminal == orderedTerminals->back()) 
             return; // we have bridged all terminals sucessfully
     }
-    // add reentry / next Action_Compute_MPVB as child
+    // add reentry / next Action_BridgeTerminal_MPVB as child
     this->GetComputeWorker()->SetWorkflowData("REENTRY_NUM", pReentries);
     string actionName = "Action_BridgeTerminal_MPVB";
     Action_BridgeTerminal_MPVB* actionCompute = new Action_BridgeTerminal_MPVB(actionName, this->GetComputeWorker());
     this->GetComputeWorker()->GetActions().push_back(actionCompute);
-    this->AddChildFront(actionCompute);
+    actionCompute->GetChildren().assign(this->GetChildren().begin(), this->GetChildren().end());
+    this->GetChildren().clear();
+    this->AddChild(actionCompute);
 }
 
 vector<TPath*>* Action_BridgeTerminal_MPVB::ComputeKSPWithCache(TNode* srcNode, TNode* dstNode)
