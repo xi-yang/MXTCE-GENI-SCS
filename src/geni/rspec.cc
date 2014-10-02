@@ -1481,7 +1481,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         ComputeResult* result;
         memcpy(&result, tlv->value, sizeof (void*));
         TPath* path = result->GetPathInfo();
-        TPath* graph = result->GetGraphInfo();
+        TGraph* graph = result->GetGraphInfo();
         string errMsg = result->GetErrMessage();
         if (errMsg.size() != 0) 
         {
@@ -1502,14 +1502,16 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         snprintf(str, 1024, "<path id=\"%s\">", result->GetGri().c_str());
         strcat(buf, str);
         list<string> allAggregateUrns;
+        char capacityCstr [16]; capacityCstr[0] = 0;
         if (graph != NULL) 
         {
-            
+           // TODO: collect allAggregateUrns and fill capacityCstr
+           int hopCount = 0;
+           TraverseMPVBGraph(graph, buf, &hopCount); 
         }
         else if (path != NULL)
         {
             list<TLink*>::iterator itL = path->GetPath().begin();
-            char capacityCstr [16]; capacityCstr[0] = 0;
             int i = 1;
             while (itL != path->GetPath().end()) 
             {
@@ -1669,9 +1671,9 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 i++;
                 itL++;
             }
-            snprintf(str, 1024, "</path>");
-            strcat(buf, str);
         }
+        snprintf(str, 1024, "</path>");
+        strcat(buf, str);
         
         // collected allAggregateUrns from above loop -> use these to add component_manager(s) to main body link
         if (allAggregateUrns.size() >= 2)
@@ -1752,10 +1754,17 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         }
         // extract workflow data
         WorkflowData *workflowData = new WorkflowData();
-        workflowData->LoadPath(path);
+        if (graph != NULL)
+        {
+            // TODO: workflowData->LoadGraph(path);
+        }
+	else if (path != NULL) 
+        {
+            workflowData->LoadPath(path);
+        }
         workflowData->ComputeDependency();
         workflowData->GenerateXmlRpcData();
-        this->workflowDataMap[result->GetPathId()] = workflowData;
+        // TODO: this->workflowDataMap[result->GetPathId()] = workflowData;
     }
     sprintf(str, "</stitching>");
     strcat(buf, str);
@@ -1959,7 +1968,7 @@ void GeniManifestRSpec::TraverseMPVB_Recursive(TNode* node, char* buf, int* hopC
         // new hop localLink
         snprintf(str, 1024, "<hop id=\"%d\">", *localLinkHopId);
         strcat(buf, str);
-        string& linkName = previousLink->GetName();
+        string& linkName = localLink->GetName();
         size_t iErase = linkName.find(":link=**");
         if (iErase != string::npos)
         {
@@ -2052,7 +2061,7 @@ void GeniManifestRSpec::TraverseMPVB_Recursive(TNode* node, char* buf, int* hopC
         snprintf(str, 1024, "</hop>");
         strcat(buf, str);
         
-        TraverseMPVB_Recursive(nextNode, buf, hopCount)
+        TraverseMPVB_Recursive(nextNode, buf, hopCount);
     }   
 }
 
