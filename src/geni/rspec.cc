@@ -1827,6 +1827,7 @@ void GeniManifestRSpec::TraverseMPVB_Recursive(TNode* node, char* buf, int* hopC
     {
         // new hop lastLink (previous remoteLink)
         int* previousLinkHopId = (int*)previousLink->GetWorkData()->GetData("HOP_ID");
+        u_int32_t previousLinkSuggestedVlan = *(u_int32_t*)previousLink->GetWorkData()->GetData("SUGGESTED_VLAN");
         snprintf(str, 1024, "<hop id=\"%d\">", *previousLinkHopId);
         strcat(buf, str);
         string& linkName = previousLink->GetName();
@@ -1850,7 +1851,7 @@ void GeniManifestRSpec::TraverseMPVB_Recursive(TNode* node, char* buf, int* hopC
             if (iErase != string::npos)
             {
                 linkName.erase(linkName.begin()+iErase, linkName.end());
-            } 
+            }
         }
         snprintf(str, 1024, "<link id=\"%s\">", (previousLink->GetPort()->GetNode()->GetDomain()->isNestedUrn() ? ConvertLinkUrn_Dnc2Geni(linkName).c_str() : ConvertLinkUrn_Dnc2GeniExt(linkName).c_str()));
         strcat(buf, str);
@@ -1897,7 +1898,7 @@ void GeniManifestRSpec::TraverseMPVB_Recursive(TNode* node, char* buf, int* hopC
                 }
                 snprintf(str, 1024, "<vlanRangeAvailability>%s</vlanRangeAvailability>", newVlanRange.c_str());
                 strcat(buf, str);
-                snprintf(str, 1024, "<suggestedVLANRange>%s</suggestedVLANRange>", ((ISCD_L2SC*)iscd)->suggestedVlanTags.GetRangeString().c_str());
+                snprintf(str, 1024, "<suggestedVLANRange>%d</suggestedVLANRange>", previousLinkSuggestedVlan);
                 strcat(buf, str);
                 snprintf(str, 1024, "<vlanTranslation>%s</vlanTranslation>", ((ISCD_L2SC*)iscd)->vlanTranslation ? "true":"false");
                 strcat(buf, str);
@@ -1944,8 +1945,11 @@ void GeniManifestRSpec::TraverseMPVB_Recursive(TNode* node, char* buf, int* hopC
         int* remoteLinkHopId = (int*)remoteLink->GetWorkData()->GetData("HOP_ID");
         *remoteLinkHopId = ++(*hopCount);
         // add loalLink as nextHop to lastLink
-        snprintf(str, 1024, "<nextHop>%d</nextHop>", *localLinkHopId);
-        strcat(buf, str);
+        if (previousLink != NULL)
+        {
+            snprintf(str, 1024, "<nextHop>%d</nextHop>", *localLinkHopId);
+            strcat(buf, str);
+        }
     }   
 
     if (previousLink != NULL)
@@ -1974,6 +1978,7 @@ void GeniManifestRSpec::TraverseMPVB_Recursive(TNode* node, char* buf, int* hopC
         *visited = true;
         int* localLinkHopId = (int*)localLink->GetWorkData()->GetData("HOP_ID");
         int* remoteLinkHopId = (int*)remoteLink->GetWorkData()->GetData("HOP_ID");
+        u_int32_t localLinkSuggestedVlan = *(u_int32_t*)localLink->GetWorkData()->GetData("SUGGESTED_VLAN");
         // new hop localLink
         snprintf(str, 1024, "<hop id=\"%d\">", *localLinkHopId);
         strcat(buf, str);
@@ -2045,7 +2050,7 @@ void GeniManifestRSpec::TraverseMPVB_Recursive(TNode* node, char* buf, int* hopC
                 }
                 snprintf(str, 1024, "<vlanRangeAvailability>%s</vlanRangeAvailability>", newVlanRange.c_str());
                 strcat(buf, str);
-                snprintf(str, 1024, "<suggestedVLANRange>%s</suggestedVLANRange>", ((ISCD_L2SC*)iscd)->suggestedVlanTags.GetRangeString().c_str());
+                snprintf(str, 1024, "<suggestedVLANRange>%d</suggestedVLANRange>", localLinkSuggestedVlan);
                 strcat(buf, str);
                 snprintf(str, 1024, "<vlanTranslation>%s</vlanTranslation>", ((ISCD_L2SC*)iscd)->vlanTranslation ? "true":"false");
                 strcat(buf, str);
