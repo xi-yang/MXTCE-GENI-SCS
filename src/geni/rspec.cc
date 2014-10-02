@@ -1830,6 +1830,15 @@ void GeniManifestRSpec::TraverseMPVB_Recursive(TNode* node, char* buf, int* hopC
         snprintf(str, 1024, "<hop id=\"%d\">", *previousLinkHopId);
         strcat(buf, str);
         string& linkName = previousLink->GetName();
+        if (strstr(linkName.c_str(), "urn:ogf:network") == NULL)
+        {
+            sprintf(str, "urn:ogf:network:domain=%s:node=%s:port=%s:link=%s",
+                previousLink->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
+                previousLink->GetPort()->GetNode()->GetName().c_str(),
+                previousLink->GetPort()->GetName().c_str(),
+                previousLink->GetName().c_str());
+            linkName = str;
+        }
         size_t iErase = linkName.find(":link=**");
         if (iErase != string::npos)
         {
@@ -1969,6 +1978,15 @@ void GeniManifestRSpec::TraverseMPVB_Recursive(TNode* node, char* buf, int* hopC
         snprintf(str, 1024, "<hop id=\"%d\">", *localLinkHopId);
         strcat(buf, str);
         string& linkName = localLink->GetName();
+        if (strstr(linkName.c_str(), "urn:ogf:network") == NULL)
+        {
+            sprintf(str, "urn:ogf:network:domain=%s:node=%s:port=%s:link=%s",
+                localLink->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
+                localLink->GetPort()->GetNode()->GetName().c_str(),
+                localLink->GetPort()->GetName().c_str(),
+                localLink->GetName().c_str());
+            linkName = str;
+        }
         size_t iErase = linkName.find(":link=**");
         if (iErase != string::npos)
         {
