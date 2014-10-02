@@ -120,6 +120,7 @@ void Action_ProcessRequestTopology_MPVB::Finish()
     list<TLV*> tlvList;
     string* errMsg = (string*)this->GetComputeWorker()->GetWorkflowData("ERROR_MSG");
     ComputeResult* result = new ComputeResult(userConstraint->getGri());
+    result->SetPathId(userConstraint->getPathId());
     if (errMsg != NULL && !errMsg->empty())
     {
         result->SetErrMessage(*errMsg);

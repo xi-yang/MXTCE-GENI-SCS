@@ -107,6 +107,8 @@ public:
 
 class Message;
 class Apimsg_user_constraint;
+class TGraph;
+class TNode;
 class GeniRequestRSpec: public GeniRSpec {
 protected:
     map<string, Apimsg_user_constraint*> cachedUserConstraints;
