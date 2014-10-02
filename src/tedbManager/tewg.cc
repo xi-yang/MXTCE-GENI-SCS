@@ -1256,14 +1256,15 @@ bool TGraph::VerifyMPVBConstraints(TNode* root, ConstraintTagSet& vtagSet, bool 
 
 bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node)
 {
-    //char buf[1024];
-    //sprintf(buf, "node %s:%s start with [%s]\n", node->GetDomain()->GetName().c_str(), node->GetName().c_str(), vtagSet.GetRangeString().c_str());
-    //LOG_DEBUG(buf);
+    char buf[1024];
     
     bool*  visited = (bool*)node->GetWorkData()->GetData("MPVB_VISITED");
     *visited = true;
 
     ConstraintTagSet& vtagSet = *(ConstraintTagSet*)node->GetWorkData()->GetData("MPVB_VLAN");
+
+    sprintf(buf, "node %s:%s start with [%s]\n", node->GetDomain()->GetName().c_str(), node->GetName().c_str(), vtagSet.GetRangeString().c_str());
+    LOG_DEBUG(buf);
 
     list<ConstraintTagSet> listNextVtagSet;
     
@@ -1325,11 +1326,16 @@ bool TGraph::VerifyMPVBConstraints_Recursive(TNode* node)
         if (vtagSet.IsEmpty())
             return false;
     }
+
+    sprintf(buf, "verified VLAN range = [%s]\n", vtagSet.GetRangeString().c_str());
+    LOG_DEBUG(buf);
+    
     return true;
 }
 
 void TGraph::FinalizeMPVBConstraints_Recursive(TNode* node)
 {
+    char buf[1024];
     //sprintf(buf, "node %s:%s [%s]\n", node->GetDomain()->GetName().c_str(), node->GetName().c_str(), vtagSet.GetRangeString().c_str());
     //LOG_DEBUG(buf);
     bool*  visited = (bool*)node->GetWorkData()->GetData("MPVB_VISITED");
@@ -1414,8 +1420,14 @@ void TGraph::FinalizeMPVBConstraints_Recursive(TNode* node)
             suggestedLocalLinkVlan = suggestedRemoteLinkVlan = intersectedLinkVtagSet.RandomTag();
         }
         // $$ else -> exception
+        sprintf(buf, "localLink %s:%s:%s:%s -> suggestedVlan [%d]\n", node->GetDomain()->GetName().c_str(), node->GetName().c_str(), localLink->GetPort()->GetName().c_str(), localLink->GetName().c_str(), suggestedLocalLinkVlan);
+        LOG_DEBUG(buf);
+        sprintf(buf, "remoteLink %s:%s:%s:%s -> suggestedVlan [%d]\n", node->GetDomain()->GetName().c_str(), node->GetName().c_str(), remoteLink->GetPort()->GetName().c_str(), remoteLink->GetName().c_str(), suggestedRemoteLinkVlan);
+        LOG_DEBUG(buf);
         FinalizeMPVBConstraints_Recursive(nextNode);
     }
+    sprintf(buf, "node %s:%s -> suggestedVlan [%d]\n", node->GetDomain()->GetName().c_str(), node->GetName().c_str(), localSuggestedVlan);
+    LOG_DEBUG(buf);
 }
 
 void TGraph::LogDump()

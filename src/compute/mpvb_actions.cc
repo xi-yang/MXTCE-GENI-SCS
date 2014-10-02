@@ -119,21 +119,22 @@ void Action_ProcessRequestTopology_MPVB::Finish()
 
     list<TLV*> tlvList;
     string* errMsg = (string*)this->GetComputeWorker()->GetWorkflowData("ERROR_MSG");
+    ComputeResult* result = new ComputeResult(userConstraint->getGri());
     if (errMsg != NULL && !errMsg->empty())
     {
-        ComputeResult* result = new ComputeResult(userConstraint->getGri());
         result->SetErrMessage(*errMsg);
-        TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
-        tlv->type = MSG_TLV_VOID_PTR;
-        tlv->length = sizeof(void*);
-        memcpy(tlv->value, &result, sizeof(void*));
-        tlvList.push_back(tlv);
     }
     else 
     {
         // TODO: assemble MPVB TGraph into ComputeResult
         TGraph* SMT = (TGraph*)this->GetComputeWorker()->GetWorkflowData("SERVICE_TOPOLOGY");
+        result->SetGraphInfo(SMT);
     }
+    TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
+    tlv->type = MSG_TLV_VOID_PTR;
+    tlv->length = sizeof(void*);
+    memcpy(tlv->value, &result, sizeof(void*));
+    tlvList.push_back(tlv);
     string queue = MxTCE::computeThreadPrefix + this->GetComputeWorker()->GetName();
     string topic = "COMPUTE_REPLY";
     SendMessage(MSG_REPLY, queue, topic, tlvList);
@@ -533,7 +534,7 @@ bool Action_BridgeTerminal_MPVB::VerifyBridgePath(TNode* bridgeNode, TNode* term
     bridgeNode = SMT->LookupSameNode(bridgeNode);   //replace bridgeNode  with same node in SMT
 
     //LOG_DEBUG("VerifyBridgePath:");
-    //bridgePath->LogDump();
+    bridgePath->LogDump();
     //1. verify loopfree: candidatePath should not hit anothe node in SMT besides the bridgeNode
     list<TLink*>& pathLinks = bridgePath->GetPath();
     list<TLink*>::iterator itL = pathLinks.begin();
@@ -661,7 +662,7 @@ void Action_FinalizeServiceTopology_MPVB::Process()
     TServiceSpec terminalTspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, 1, terminalVlan);
     if (!SMT->VerifyMPVBConstraints(firstTerminal, terminalTspec.GetVlanSet(), true)) // finalizeVlan = true
         throw ComputeThreadException((char*)"Action_FinalizeServiceTopology_MPVB::Process Failed to verify final SMT VLANs!");
-    SMT->LogDump();    
+    SMT->LogDump();
 }
 
 bool Action_FinalizeServiceTopology_MPVB::ProcessChildren()

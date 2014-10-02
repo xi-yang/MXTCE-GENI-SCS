@@ -122,10 +122,11 @@ protected:
     TPath* pathInfo;
     list<TPath*> alterPaths;
     list<TPath*> flexAlterPaths;
+    TGraph* graphInfo;
     string errMsg;
 
 public:
-    ComputeResult(string& g): gri(g), pathInfo(NULL) { }
+    ComputeResult(string& g): gri(g), pathInfo(NULL), graphInfo(NULL) { }
     virtual ~ComputeResult() { delete pathInfo; }
     string& GetGri() { return gri; }
     void SetGri(string& g) { gri = g; }
@@ -136,6 +137,8 @@ public:
     list<TPath*>& GetAlterPaths() { return alterPaths; }
     list<TPath*>& GetFlexAlterPaths() { return flexAlterPaths; }
     string& GetErrMessage() { return errMsg; }
+    TGraph* GetGraphInfo() { return graphInfo; }
+    void SetGraphInfo(TGraph* g) { graphInfo = g; }
     void SetErrMessage(string& s) {errMsg = s; }
     static void RegulatePathInfo(TPath* path);
 };
