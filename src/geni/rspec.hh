@@ -133,6 +133,10 @@ public:
     virtual ~GeniManifestRSpec() { }
     void ParseApiReplyMessage(Message* msg);
     map<string, WorkflowData*>& GetWorkflowDataMap() { return workflowDataMap; }
+
+private:
+    void TraverseMPVBGraph(TGraph* graph, char* buf, int* hopCount);
+    void TraverseMPVB_Recursive(TNode * node, char * buf,int * hopCount);
 };
 
 #define GENI_PCS_ERRCODE_NO_ERROR 0x0
