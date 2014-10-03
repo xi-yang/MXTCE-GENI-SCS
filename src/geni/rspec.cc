@@ -1530,7 +1530,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 string& remoteNodeName = tl->GetRemoteEnd()->GetName();
                 if (localNodeName.find("*") == string::npos && remoteNodeName.find("*") == string::npos)
                 {
-                    snprintf(capacityCstr, 16, "%lu", tl->GetMaxBandwidth());
+                    snprintf(capacityCstr, 16, "%lu", tl->GetMaxBandwidth()/1000);
                     break;
                 }
             }
@@ -1602,13 +1602,13 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 strcat(buf, str);
                 if (capacityCstr[0] == 0) 
                 {
-                    snprintf(capacityCstr, 16, "%lu", tl->GetMaxBandwidth());
+                    snprintf(capacityCstr, 16, "%lu", tl->GetMaxBandwidth()/1000);
                 }
                 list<ISCD*>::iterator its = tl->GetSwCapDescriptors().begin();
                 for (; its != tl->GetSwCapDescriptors().end(); its++) 
                 {
                     ISCD *iscd = *its;
-                    snprintf(str, 1024, "<capacity>%lu</capacity>", tl->GetMaxBandwidth());
+                    snprintf(str, 1024, "<capacity>%lu</capacity>", tl->GetMaxBandwidth()/1000);
                     strcat(buf, str);
                     snprintf(str, 1024, "<switchingCapabilityDescriptor>");
                     strcat(buf, str);
@@ -1837,9 +1837,9 @@ void GeniManifestRSpec::TraverseMPVBGraph(TGraph* graph, char* buf)
     MPVB_Nexthop_Recursive(graph->GetNodes().front(), NULL, &hopCount);
     // find the firstHop to start recursive finalize procedure
     TLink* firstHopLink = NULL;
-    for (itL = graph->GetLinks().begin();; itL != graph->GetLinks().end(); itL++)
+    for (itL = graph->GetLinks().begin(); itL != graph->GetLinks().end(); itL++)
     {
-        Link* link = *itL;
+        TLink* link = *itL;
         int hopId = *(int*)link->GetWorkData()->GetData("HOP_ID");
         if (hopId == 1)
             firstHopLink = link;
@@ -1872,10 +1872,10 @@ void GeniManifestRSpec::MPVB_Nexthop_Recursive(TNode* node, TLink* previousLink,
             continue;
         string& nodeName = node->GetName();
         string& nextNodeName = nextNode->GetName();
-        if (nodeName.find("*") == string::npos || nextNodeName.find("*") == string::npos)
+        if (nodeName.find("*") != string::npos || nextNodeName.find("*") != string::npos)
         {
             // carry on to skip both localLink and remoteLink and pass previousLink to nextNode
-            MPVB_Nexthop_Recursive(nextNode, previousLink);
+            MPVB_Nexthop_Recursive(nextNode, previousLink, hopCount);
             continue;
         }
         // add localLink as nextHop of previousLink
@@ -1894,7 +1894,7 @@ void GeniManifestRSpec::MPVB_Nexthop_Recursive(TNode* node, TLink* previousLink,
         if (*remoteLinkHopId == 0)
             *remoteLinkHopId = ++(*hopCount);
         // carry on recursion with preivousLink = remoteLink
-        MPVB_Nexthop_Recursive(nextNode, remoteLink);
+        MPVB_Nexthop_Recursive(nextNode, remoteLink, hopCount);
     }
 }
 
