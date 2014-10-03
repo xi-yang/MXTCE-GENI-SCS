@@ -1371,7 +1371,7 @@ vector<TPath*> TGraph::TreeToPaths(TNode* root)
     return resultPaths;
 }
 
-vector<TPath*> TGraph::TreeToPaths_Recursive(TNode* node)
+void TGraph::TreeToPaths_Recursive(TNode* node)
 {
     list<TLink*>& pathFromRoot = *(list<TLink*>*)node->GetWorkData()->GetData("PATH_FROM_ROOT");
     list<TLink*>::iterator itL = node->GetLocalLinks().begin();

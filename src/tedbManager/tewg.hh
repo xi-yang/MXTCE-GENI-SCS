@@ -272,6 +272,7 @@ public:
 };
 
 
+class TPath;
 class TGraph
 {
 protected:
@@ -308,11 +309,13 @@ public:
     void LoadPath(list<TLink*> path);
     TGraph* Clone();
     bool VerifyMPVBConstraints(TNode* root, ConstraintTagSet& vtagSet, bool finalizeVlan=false);
+    vector<TPath*> TreeToPaths(TNode* root);
     void LogDump();
 
 protected:    
     bool VerifyMPVBConstraints_Recursive(TNode* node);
     void FinalizeMPVBConstraints_Recursive(TNode* node);
+    void TreeToPaths_Recursive(TNode* node);
 };
 
 
