@@ -107,8 +107,6 @@ public:
 
 class Message;
 class Apimsg_user_constraint;
-class TGraph;
-class TNode;
 class GeniRequestRSpec: public GeniRSpec {
 protected:
     map<string, Apimsg_user_constraint*> cachedUserConstraints;
@@ -122,6 +120,9 @@ public:
     Message* CreateApiRequestMessage(map<string, xmlrpc_c::value>& rp);
 };
 
+class TGraph;
+class TNode;
+class TLink;
 class GeniManifestRSpec: public GeniRSpec {
 protected:
     GeniRequestRSpec* pairedRequestRspec;
@@ -137,8 +138,9 @@ public:
     map<string, WorkflowData*>& GetWorkflowDataMap() { return workflowDataMap; }
 
 private:
-    void TraverseMPVBGraph(TGraph* graph, char* buf, int* hopCount);
-    void TraverseMPVB_Recursive(TNode * node, char * buf,int * hopCount);
+    void TraverseMPVBGraph(TGraph* graph, char* buf);
+    void MPVB_Nexthop_Recursive(TNode * node, TLink * previousLin, int* hopCountk);
+    void MPVB_Finalize_Recursive(TNode * node, char * buf);
 };
 
 #define GENI_PCS_ERRCODE_NO_ERROR 0x0
