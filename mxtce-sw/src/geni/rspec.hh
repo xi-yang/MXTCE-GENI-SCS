@@ -139,8 +139,8 @@ public:
 
 private:
     void TraverseMPVBGraph(TGraph* graph, char* buf);
-    void MPVB_Nexthop_Recursive(TNode * node, TLink * previousLin, int* hopCountk);
-    void MPVB_Finalize_Recursive(TNode * node, char * buf);
+    void MPVB_Nexthop_Recursive(TNode * node, TLink * previousLink, int* hopCountk);
+    void MPVB_Finalize_Recursive(TLink * link, char * buf);
 };
 
 #define GENI_PCS_ERRCODE_NO_ERROR 0x0
