@@ -807,7 +807,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
             Port* tp = (Port*)(*itp).second;
             snprintf(str, 1024, "<port id=\"%s\">", tp->GetName().c_str());
             strcat(buf, str);
-            snprintf(str, 1024, "<capacity>%lu</capacity>", tp->GetMaxBandwidth()/1000);
+            snprintf(str, 1024, "<capacity>%lu</capacity>", tp->GetMaxBandwidth());
             strcat(buf, str);
             snprintf(str, 1024, "<maximumReservableCapacity>%lu</maximumReservableCapacity>", tp->GetMaxReservableBandwidth());
             strcat(buf, str);
@@ -825,7 +825,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                 strcat(buf, str);
                 snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", tl->GetMetric());
                 strcat(buf, str);
-                snprintf(str, 1024, "<capacity>%lu</capacity>", tl->GetMaxBandwidth()/1000);
+                snprintf(str, 1024, "<capacity>%lu</capacity>", tl->GetMaxBandwidth());
                 strcat(buf, str);
                 snprintf(str, 1024, "<maximumReservableCapacity>%lu</maximumReservableCapacity>", tl->GetMaxReservableBandwidth());
                 strcat(buf, str);
@@ -1505,9 +1505,35 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         char capacityCstr [16]; capacityCstr[0] = 0;
         if (graph != NULL) 
         {
-           // TODO: collect allAggregateUrns and fill capacityCstr
-           int hopCount = 0;
-           TraverseMPVBGraph(graph, buf, &hopCount); 
+            TraverseMPVBGraph(graph, buf);
+            // collect allAggregateUrns and fill capacityCstr
+            list<TDomain*>::iterator itD = graph->GetDomains().begin();
+            for (; itD != graph->GetDomains().end(); itD++)
+            {                
+                TDomain *td = *itD;
+                string domainId = td->GetName();
+                string aggregateUrn = "";
+                if (!domainId.empty() && GeniAdRSpec::aggregateUrnMap.find(domainId) != GeniAdRSpec::aggregateUrnMap.end())
+                {
+                    aggregateUrn = GeniAdRSpec::aggregateUrnMap[domainId];
+                }
+                if (!aggregateUrn.empty() && aggregateUrn.compare(allAggregateUrns.back()) != 0) 
+                {
+                    allAggregateUrns.push_back(aggregateUrn);
+                }
+            }
+            list<TLink*>::iterator itL = graph->GetLinks().begin();
+            for (; itL != graph->GetLinks().end(); itL++)
+            {
+                TLink *tl = *itL;
+                string& localNodeName = tl->GetLocalEnd()->GetName();
+                string& remoteNodeName = tl->GetRemoteEnd()->GetName();
+                if (localNodeName.find("*") == string::npos && remoteNodeName.find("*") == string::npos)
+                {
+                    snprintf(capacityCstr, 16, "%lu", tl->GetMaxBandwidth());
+                    break;
+                }
+            }
         }
         else if (path != NULL)
         {
@@ -1576,13 +1602,13 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 strcat(buf, str);
                 if (capacityCstr[0] == 0) 
                 {
-                    snprintf(capacityCstr, 16, "%lu", tl->GetMaxBandwidth()/1000);
+                    snprintf(capacityCstr, 16, "%lu", tl->GetMaxBandwidth());
                 }
                 list<ISCD*>::iterator its = tl->GetSwCapDescriptors().begin();
                 for (; its != tl->GetSwCapDescriptors().end(); its++) 
                 {
                     ISCD *iscd = *its;
-                    snprintf(str, 1024, "<capacity>%lu</capacity>", tl->GetMaxBandwidth()/1000);
+                    snprintf(str, 1024, "<capacity>%lu</capacity>", tl->GetMaxBandwidth());
                     strcat(buf, str);
                     snprintf(str, 1024, "<switchingCapabilityDescriptor>");
                     strcat(buf, str);
@@ -1756,13 +1782,16 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         WorkflowData *workflowData = new WorkflowData();
         if (graph != NULL)
         {
-            // TODO: workflowData->LoadGraph(path);
+            // TODO: naive workflow for tree
+            // break graph into multiple paths (starting from common src node)
+            //  LoadPath to create multiple workflows
+            //  merge workflows into single workflowData
         }
 	else if (path != NULL) 
         {
             workflowData->LoadPath(path);
+            workflowData->ComputeDependency();
         }
-        workflowData->ComputeDependency();
         workflowData->GenerateXmlRpcData();
         // TODO: this->workflowDataMap[result->GetPathId()] = workflowData;
     }
@@ -1785,7 +1814,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
     this->DumpRspecXml();
 }
 
-void GeniManifestRSpec::TraverseMPVBGraph(TGraph* graph, char* buf, int* hopCount)
+void GeniManifestRSpec::TraverseMPVBGraph(TGraph* graph, char* buf)
 {
     list<TNode*>::iterator itN = graph->GetNodes().begin();
     for (; itN != graph->GetNodes().end(); itN++)
@@ -1800,292 +1829,210 @@ void GeniManifestRSpec::TraverseMPVBGraph(TGraph* graph, char* buf, int* hopCoun
         Link* link = *itL;
         bool*  visited = (bool*)link->GetWorkData()->GetData("MPVB_VISITED");
         *visited = false;
+        link->GetWorkData()->SetData("NEXT_HOPS", new list<TLink*>);
         link->GetWorkData()->SetData("HOP_ID", new int(0));
     }
-
-    TraverseMPVB_Recursive(graph->GetNodes().front(), buf, hopCount);
+    // create nextHop relationships for links that matter (skip artificial ones)
+    int hopCount = 0;
+    MPVB_Nexthop_Recursive(graph->GetNodes().front(), NULL, &hopCount);
+    // find the firstHop to start recursive finalize procedure
+    TLink* firstHopLink = NULL;
+    for (itL = graph->GetLinks().begin();; itL != graph->GetLinks().end(); itL++)
+    {
+        Link* link = *itL;
+        int hopId = *(int*)link->GetWorkData()->GetData("HOP_ID");
+        if (hopId == 1)
+            firstHopLink = link;
+    }
+    // follow the nextHop relationships to traverse the tree and create path hops XML
+    MPVB_Finalize_Recursive(firstHopLink, buf);
 }
 
-
-void GeniManifestRSpec::TraverseMPVB_Recursive(TNode* node, char* buf, int* hopCount)
+void GeniManifestRSpec::MPVB_Nexthop_Recursive(TNode* node, TLink* previousLink, int* hopCount)
 {
-    char str[1024];
-    char capacityCstr[16];
-    TLink* previousLink = NULL;
     list<TLink*>::iterator itL = node->GetLocalLinks().begin();
     for (itL = node->GetLocalLinks().begin(); itL != node->GetLocalLinks().end(); itL++)
     {
         TLink* localLink = *itL;
+        if (localLink == previousLink)
+            continue;
         bool* visited = (bool*)localLink->GetWorkData()->GetData("MPVB_VISITED");
         if (*visited)
+            continue;
+        *visited = true;
+        TLink* remoteLink = (TLink*)localLink->GetRemoteLink();
+        if (remoteLink == NULL)
+            continue;
+        visited = (bool*)remoteLink->GetWorkData()->GetData("MPVB_VISITED");
+        if (*visited)
+            continue;
+        *visited = true;
+        TNode* nextNode = remoteLink->GetLocalEnd();
+        if (nextNode == NULL)
+            continue;
+        string& nodeName = node->GetName();
+        string& nextNodeName = nextNode->GetName();
+        if (nodeName.find("*") == string::npos || nextNodeName.find("*") == string::npos)
         {
-            previousLink = localLink;
-            break;
+            // carry on to skip both localLink and remoteLink and pass previousLink to nextNode
+            MPVB_Nexthop_Recursive(nextNode, previousLink);
+            continue;
         }
-    }
-    if (previousLink != NULL)
-    {
-        // new hop lastLink (previous remoteLink)
-        int* previousLinkHopId = (int*)previousLink->GetWorkData()->GetData("HOP_ID");
-        u_int32_t previousLinkSuggestedVlan = *(u_int32_t*)previousLink->GetWorkData()->GetData("SUGGESTED_VLAN");
-        snprintf(str, 1024, "<hop id=\"%d\">", *previousLinkHopId);
-        strcat(buf, str);
-        string& linkName = previousLink->GetName();
-        if (strstr(linkName.c_str(), "urn:ogf:network") == NULL)
+        // add localLink as nextHop of previousLink
+        if (previousLink != NULL)
         {
-            sprintf(str, "urn:ogf:network:domain=%s:node=%s:port=%s:link=%s",
+            list<TLink*>& previousLinkNextHops = *(list<TLink*>*)previousLink->GetWorkData()->GetData("NEXT_HOPS");
+            previousLinkNextHops.push_back(localLink);
+        }
+        // add remoteLink as nextHop of localLink
+        list<TLink*>& localLinkNextHops = *(list<TLink*>*)localLink->GetWorkData()->GetData("NEXT_HOPS");
+        localLinkNextHops.push_back(remoteLink);
+        int* localLinkHopId = (int*)localLink->GetWorkData()->GetData("HOP_ID");
+        if (*localLinkHopId == 0)
+            *localLinkHopId = ++(*hopCount);
+        int* remoteLinkHopId = (int*)remoteLink->GetWorkData()->GetData("HOP_ID");
+        if (*remoteLinkHopId == 0)
+            *remoteLinkHopId = ++(*hopCount);
+        // carry on recursion with preivousLink = remoteLink
+        MPVB_Nexthop_Recursive(nextNode, remoteLink);
+    }
+}
+
+void GeniManifestRSpec::MPVB_Finalize_Recursive(TLink* previousLink, char* buf)
+{
+    char str[1024];
+    char capacityCstr[16];
+
+    // create hop XML for previousLink
+    int* previousLinkHopId = (int*) previousLink->GetWorkData()->GetData("HOP_ID");
+    u_int32_t previousLinkSuggestedVlan = *(u_int32_t*) previousLink->GetWorkData()->GetData("SUGGESTED_VLAN");
+    snprintf(str, 1024, "<hop id=\"%d\">", *previousLinkHopId);
+    strcat(buf, str);
+    string& linkName = previousLink->GetName();
+    if (strstr(linkName.c_str(), "urn:ogf:network") == NULL) 
+    {
+        sprintf(str, "urn:ogf:network:domain=%s:node=%s:port=%s:link=%s",
                 previousLink->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
                 previousLink->GetPort()->GetNode()->GetName().c_str(),
                 previousLink->GetPort()->GetName().c_str(),
                 previousLink->GetName().c_str());
-            linkName = str;
+        linkName = str;
+    }
+    size_t iErase = linkName.find(":link=**");
+    if (iErase != string::npos) 
+    {
+        linkName.erase(linkName.begin() + iErase, linkName.end());
+    }
+    else 
+    {
+        iErase = linkName.find(":**");
+        if (iErase != string::npos) {
+            linkName.erase(linkName.begin() + iErase, linkName.end());
         }
-        size_t iErase = linkName.find(":link=**");
-        if (iErase != string::npos)
-        {
-            linkName.erase(linkName.begin()+iErase, linkName.end());
-        } 
-        else 
-        {
-            iErase = linkName.find(":**");
-            if (iErase != string::npos)
-            {
-                linkName.erase(linkName.begin()+iErase, linkName.end());
-            }
-        }
-        snprintf(str, 1024, "<link id=\"%s\">", (previousLink->GetPort()->GetNode()->GetDomain()->isNestedUrn() ? ConvertLinkUrn_Dnc2Geni(linkName).c_str() : ConvertLinkUrn_Dnc2GeniExt(linkName).c_str()));
+    }
+    snprintf(str, 1024, "<link id=\"%s\">", (previousLink->GetPort()->GetNode()->GetDomain()->isNestedUrn() ? ConvertLinkUrn_Dnc2Geni(linkName).c_str() : ConvertLinkUrn_Dnc2GeniExt(linkName).c_str()));
+    strcat(buf, str);
+    snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", previousLink->GetMetric());
+    strcat(buf, str);
+    snprintf(capacityCstr, 16, "%lu", previousLink->GetMaxBandwidth() / 1000);
+    list<ISCD*>::iterator its = previousLink->GetSwCapDescriptors().begin();
+    for (; its != previousLink->GetSwCapDescriptors().end(); its++) 
+    {
+        ISCD *iscd = *its;
+        snprintf(str, 1024, "<capacity>%lu</capacity>", previousLink->GetMaxBandwidth() / 1000);
         strcat(buf, str);
-        snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", previousLink->GetMetric());
+        snprintf(str, 1024, "<switchingCapabilityDescriptor>");
         strcat(buf, str);
-        snprintf(capacityCstr, 16, "%lu", previousLink->GetMaxBandwidth()/1000);
-        list<ISCD*>::iterator its = previousLink->GetSwCapDescriptors().begin();
-        for (; its != previousLink->GetSwCapDescriptors().end(); its++) 
+        if (iscd->switchingType == LINK_IFSWCAP_L2SC)
+            snprintf(str, 1024, "<switchingcapType>l2sc</switchingcapType>");
+        else if (iscd->switchingType == LINK_IFSWCAP_TDM)
+            snprintf(str, 1024, "<switchingcapType>tdm</switchingcapType>");
+        else if (iscd->switchingType == LINK_IFSWCAP_LSC)
+            snprintf(str, 1024, "<switchingcapType>lsc</switchingcapType>");
+        else if (iscd->switchingType >= LINK_IFSWCAP_PSC1 && iscd->switchingType <= LINK_IFSWCAP_PSC4)
+            snprintf(str, 1024, "<switchingcapType>psc</switchingcapType>");
+        strcat(buf, str);
+        if (iscd->switchingType == LINK_IFSWCAP_ENC_ETH)
+            snprintf(str, 1024, "<encodingType>ethernet</encodingType>");
+        else if (iscd->switchingType == LINK_IFSWCAP_ENC_PKT)
+            snprintf(str, 1024, "<encodingType>packet</encodingType>");
+        else if (iscd->switchingType == LINK_IFSWCAP_ENC_LAMBDA)
+            snprintf(str, 1024, "<encodingType>lambda</encodingType>");
+        else //default = ethernet
+            snprintf(str, 1024, "<encodingType>ethernet</encodingType>");
+        strcat(buf, str);
+        snprintf(str, 1024, "<switchingCapabilitySpecificInfo>");
+        strcat(buf, str);
+        string newVlanRange = ((ISCD_L2SC*) iscd)->availableVlanTags.GetRangeString();
+        if (iscd->switchingType == LINK_IFSWCAP_L2SC) 
         {
-            ISCD *iscd = *its;
-            snprintf(str, 1024, "<capacity>%lu</capacity>", previousLink->GetMaxBandwidth()/1000);
+            snprintf(str, 1024, "<switchingCapabilitySpecificInfo_L2sc>");
             strcat(buf, str);
-            snprintf(str, 1024, "<switchingCapabilityDescriptor>");
-            strcat(buf, str);
-            if (iscd->switchingType == LINK_IFSWCAP_L2SC)
-                snprintf(str, 1024, "<switchingcapType>l2sc</switchingcapType>");
-            else if (iscd->switchingType == LINK_IFSWCAP_TDM)
-                snprintf(str, 1024, "<switchingcapType>tdm</switchingcapType>");
-            else if (iscd->switchingType == LINK_IFSWCAP_LSC)
-                snprintf(str, 1024, "<switchingcapType>lsc</switchingcapType>");
-            else if (iscd->switchingType >= LINK_IFSWCAP_PSC1 && iscd->switchingType <= LINK_IFSWCAP_PSC4)
-                snprintf(str, 1024, "<switchingcapType>psc</switchingcapType>");
-            strcat(buf, str);
-            if (iscd->switchingType == LINK_IFSWCAP_ENC_ETH)
-                snprintf(str, 1024, "<encodingType>ethernet</encodingType>");
-            else if (iscd->switchingType == LINK_IFSWCAP_ENC_PKT)
-                snprintf(str, 1024, "<encodingType>packet</encodingType>");
-            else if (iscd->switchingType == LINK_IFSWCAP_ENC_LAMBDA)
-                snprintf(str, 1024, "<encodingType>lambda</encodingType>");
-            else //default = ethernet
-                snprintf(str, 1024, "<encodingType>ethernet</encodingType>");
-            strcat(buf, str);
-            snprintf(str, 1024, "<switchingCapabilitySpecificInfo>");
-            strcat(buf, str);
-            string newVlanRange = ((ISCD_L2SC*)iscd)->availableVlanTags.GetRangeString();
-            if (iscd->switchingType == LINK_IFSWCAP_L2SC)
+            if (((ISCD_L2SC*) iscd)->mtu > 0) 
             {
-                snprintf(str, 1024, "<switchingCapabilitySpecificInfo_L2sc>");
-                strcat(buf, str);
-                if (((ISCD_L2SC*)iscd)->mtu > 0) 
-                {
-                    snprintf(str, 1024, "<interfaceMTU>%d</interfaceMTU>", ((ISCD_L2SC*)iscd)->mtu);
-                    strcat(buf, str);
-                }
-                snprintf(str, 1024, "<vlanRangeAvailability>%s</vlanRangeAvailability>", newVlanRange.c_str());
-                strcat(buf, str);
-                snprintf(str, 1024, "<suggestedVLANRange>%d</suggestedVLANRange>", previousLinkSuggestedVlan);
-                strcat(buf, str);
-                snprintf(str, 1024, "<vlanTranslation>%s</vlanTranslation>", ((ISCD_L2SC*)iscd)->vlanTranslation ? "true":"false");
-                strcat(buf, str);
-                snprintf(str, 1024, "</switchingCapabilitySpecificInfo_L2sc>");
+                snprintf(str, 1024, "<interfaceMTU>%d</interfaceMTU>", ((ISCD_L2SC*) iscd)->mtu);
                 strcat(buf, str);
             }
-            snprintf(str, 1024, "</switchingCapabilitySpecificInfo>");
+            snprintf(str, 1024, "<vlanRangeAvailability>%s</vlanRangeAvailability>", newVlanRange.c_str());
             strcat(buf, str);
-            if (iscd->VendorSpecificInfo() != NULL && !iscd->VendorSpecificInfo()->GetXmlByString().empty())
-                strcat(buf, iscd->VendorSpecificInfo()->GetXmlByString().c_str());
-            snprintf(str, 1024, "</switchingCapabilityDescriptor>");
+            snprintf(str, 1024, "<suggestedVLANRange>%d</suggestedVLANRange>", previousLinkSuggestedVlan);
             strcat(buf, str);
-        }
-        if (!previousLink->GetCapabilities().empty())
-        {
-            snprintf(str, 1024, "<capabilities>");
+            snprintf(str, 1024, "<vlanTranslation>%s</vlanTranslation>", ((ISCD_L2SC*) iscd)->vlanTranslation ? "true" : "false");
             strcat(buf, str);
-            map<string, string, strcmpless>::iterator itc = previousLink->GetCapabilities().begin();
-            for (; itc != previousLink->GetCapabilities().end(); itc++)
-            {
-                snprintf(str, 1024, "<capability>%s</capability>", ((*itc).first).c_str());
-                strcat(buf, str);
-            }
-            snprintf(str, 1024, "</capabilities>");
+            snprintf(str, 1024, "</switchingCapabilitySpecificInfo_L2sc>");
             strcat(buf, str);
         }
-        snprintf(str, 1024, "</link>");
+        snprintf(str, 1024, "</switchingCapabilitySpecificInfo>");
+        strcat(buf, str);
+        if (iscd->VendorSpecificInfo() != NULL && !iscd->VendorSpecificInfo()->GetXmlByString().empty())
+            strcat(buf, iscd->VendorSpecificInfo()->GetXmlByString().c_str());
+        snprintf(str, 1024, "</switchingCapabilityDescriptor>");
         strcat(buf, str);
     }
-
-    bool isLeaf = true;
-    for (itL = node->GetLocalLinks().begin(); itL != node->GetLocalLinks().end(); itL++)
+    if (!previousLink->GetCapabilities().empty()) 
     {
-        TLink* localLink = *itL;
-        bool* visited = (bool*)localLink->GetWorkData()->GetData("MPVB_VISITED");
-        if (*visited)
-            continue;
-        TLink* remoteLink = (TLink*)localLink->GetRemoteLink();
-        if (remoteLink == NULL)
-            continue;
+        snprintf(str, 1024, "<capabilities>");
+        strcat(buf, str);
+        map<string, string, strcmpless>::iterator itc = previousLink->GetCapabilities().begin();
+        for (; itc != previousLink->GetCapabilities().end(); itc++) 
+        {
+            snprintf(str, 1024, "<capability>%s</capability>", ((*itc).first).c_str());
+            strcat(buf, str);
+        }
+        snprintf(str, 1024, "</capabilities>");
+        strcat(buf, str);
+    }
+    snprintf(str, 1024, "</link>");
+    strcat(buf, str);
+    // add nextHops
+    list<TLink*>::iterator itL;
+    list<TLink*>& nextHopLinks = *(list<TLink*>*)previousLink->GetWorkData()->GetData("NEXT_HOPS");
+    bool isLeaf = true;
+    for (itL = nextHopLinks.begin(); itL != nextHopLinks.end(); itL++) 
+    {
+        TLink* nextLink = *itL;
         isLeaf = false;
-        int* localLinkHopId = (int*)localLink->GetWorkData()->GetData("HOP_ID");
-        *localLinkHopId = ++(*hopCount);
-        int* remoteLinkHopId = (int*)remoteLink->GetWorkData()->GetData("HOP_ID");
-        *remoteLinkHopId = ++(*hopCount);
-        // add loalLink as nextHop to lastLink
-        if (previousLink != NULL)
+        int* localLinkHopId = (int*) nextLink->GetWorkData()->GetData("HOP_ID");
+        // add loalLink as nextHop to previousLink
+        if (previousLink != NULL) 
         {
             snprintf(str, 1024, "<nextHop>%d</nextHop>", *localLinkHopId);
             strcat(buf, str);
         }
-    }   
-
-    if (previousLink != NULL)
+    }
+    if (isLeaf) 
     {
-        if (isLeaf)
-        {
-            snprintf(str, 1024, "<nextHop>null</nextHop>");
-            strcat(buf, str);
-        }
-        snprintf(str, 1024, "</hop>");
+        snprintf(str, 1024, "<nextHop>null</nextHop>");
         strcat(buf, str);
     }
-    
-    for (itL = node->GetLocalLinks().begin(); itL != node->GetLocalLinks().end(); itL++)
+    snprintf(str, 1024, "</hop>");
+    strcat(buf, str);
+    // preceed recursively to nextHop Links
+    for (itL = nextHopLinks.begin(); itL != nextHopLinks.end(); itL++) 
     {
-        TLink* localLink = *itL;
-        bool* visited = (bool*)localLink->GetWorkData()->GetData("MPVB_VISITED");
-        if (*visited)
-            continue;
-        *visited = true;
-        TLink* remoteLink = (TLink*)localLink->GetRemoteLink();
-        if (remoteLink == NULL)
-            continue;
-        TNode* nextNode = remoteLink->GetLocalEnd();
-        visited = (bool*)remoteLink->GetWorkData()->GetData("MPVB_VISITED");
-        *visited = true;
-        int* localLinkHopId = (int*)localLink->GetWorkData()->GetData("HOP_ID");
-        int* remoteLinkHopId = (int*)remoteLink->GetWorkData()->GetData("HOP_ID");
-        u_int32_t localLinkSuggestedVlan = *(u_int32_t*)localLink->GetWorkData()->GetData("SUGGESTED_VLAN");
-        // new hop localLink
-        snprintf(str, 1024, "<hop id=\"%d\">", *localLinkHopId);
-        strcat(buf, str);
-        string& linkName = localLink->GetName();
-        if (strstr(linkName.c_str(), "urn:ogf:network") == NULL)
-        {
-            sprintf(str, "urn:ogf:network:domain=%s:node=%s:port=%s:link=%s",
-                localLink->GetPort()->GetNode()->GetDomain()->GetName().c_str(),
-                localLink->GetPort()->GetNode()->GetName().c_str(),
-                localLink->GetPort()->GetName().c_str(),
-                localLink->GetName().c_str());
-            linkName = str;
-        }
-        size_t iErase = linkName.find(":link=**");
-        if (iErase != string::npos)
-        {
-            linkName.erase(linkName.begin()+iErase, linkName.end());
-        } 
-        else 
-        {
-            iErase = linkName.find(":**");
-            if (iErase != string::npos)
-            {
-                linkName.erase(linkName.begin()+iErase, linkName.end());
-            } 
-        }
-        snprintf(str, 1024, "<link id=\"%s\">", (localLink->GetPort()->GetNode()->GetDomain()->isNestedUrn() ? ConvertLinkUrn_Dnc2Geni(linkName).c_str() : ConvertLinkUrn_Dnc2GeniExt(linkName).c_str()));
-        strcat(buf, str);
-        snprintf(str, 1024, "<trafficEngineeringMetric>%d</trafficEngineeringMetric>", localLink->GetMetric());
-        strcat(buf, str);
-        snprintf(capacityCstr, 16, "%lu", localLink->GetMaxBandwidth()/1000);
-        list<ISCD*>::iterator its = localLink->GetSwCapDescriptors().begin();
-        for (; its != localLink->GetSwCapDescriptors().end(); its++) 
-        {
-            ISCD *iscd = *its;
-            snprintf(str, 1024, "<capacity>%lu</capacity>", localLink->GetMaxBandwidth()/1000);
-            strcat(buf, str);
-            snprintf(str, 1024, "<switchingCapabilityDescriptor>");
-            strcat(buf, str);
-            if (iscd->switchingType == LINK_IFSWCAP_L2SC)
-                snprintf(str, 1024, "<switchingcapType>l2sc</switchingcapType>");
-            else if (iscd->switchingType == LINK_IFSWCAP_TDM)
-                snprintf(str, 1024, "<switchingcapType>tdm</switchingcapType>");
-            else if (iscd->switchingType == LINK_IFSWCAP_LSC)
-                snprintf(str, 1024, "<switchingcapType>lsc</switchingcapType>");
-            else if (iscd->switchingType >= LINK_IFSWCAP_PSC1 && iscd->switchingType <= LINK_IFSWCAP_PSC4)
-                snprintf(str, 1024, "<switchingcapType>psc</switchingcapType>");
-            strcat(buf, str);
-            if (iscd->switchingType == LINK_IFSWCAP_ENC_ETH)
-                snprintf(str, 1024, "<encodingType>ethernet</encodingType>");
-            else if (iscd->switchingType == LINK_IFSWCAP_ENC_PKT)
-                snprintf(str, 1024, "<encodingType>packet</encodingType>");
-            else if (iscd->switchingType == LINK_IFSWCAP_ENC_LAMBDA)
-                snprintf(str, 1024, "<encodingType>lambda</encodingType>");
-            else //default = ethernet
-                snprintf(str, 1024, "<encodingType>ethernet</encodingType>");
-            strcat(buf, str);
-            snprintf(str, 1024, "<switchingCapabilitySpecificInfo>");
-            strcat(buf, str);
-            string newVlanRange = ((ISCD_L2SC*)iscd)->availableVlanTags.GetRangeString();
-            if (iscd->switchingType == LINK_IFSWCAP_L2SC)
-            {
-                snprintf(str, 1024, "<switchingCapabilitySpecificInfo_L2sc>");
-                strcat(buf, str);
-                if (((ISCD_L2SC*)iscd)->mtu > 0) 
-                {
-                    snprintf(str, 1024, "<interfaceMTU>%d</interfaceMTU>", ((ISCD_L2SC*)iscd)->mtu);
-                    strcat(buf, str);
-                }
-                snprintf(str, 1024, "<vlanRangeAvailability>%s</vlanRangeAvailability>", newVlanRange.c_str());
-                strcat(buf, str);
-                snprintf(str, 1024, "<suggestedVLANRange>%d</suggestedVLANRange>", localLinkSuggestedVlan);
-                strcat(buf, str);
-                snprintf(str, 1024, "<vlanTranslation>%s</vlanTranslation>", ((ISCD_L2SC*)iscd)->vlanTranslation ? "true":"false");
-                strcat(buf, str);
-                snprintf(str, 1024, "</switchingCapabilitySpecificInfo_L2sc>");
-                strcat(buf, str);
-            }
-            snprintf(str, 1024, "</switchingCapabilitySpecificInfo>");
-            strcat(buf, str);
-            if (iscd->VendorSpecificInfo() != NULL && !iscd->VendorSpecificInfo()->GetXmlByString().empty())
-                strcat(buf, iscd->VendorSpecificInfo()->GetXmlByString().c_str());
-            snprintf(str, 1024, "</switchingCapabilityDescriptor>");
-            strcat(buf, str);
-        }
-        if (!localLink->GetCapabilities().empty())
-        {
-            snprintf(str, 1024, "<capabilities>");
-            strcat(buf, str);
-            map<string, string, strcmpless>::iterator itc = localLink->GetCapabilities().begin();
-            for (; itc != localLink->GetCapabilities().end(); itc++)
-            {
-                snprintf(str, 1024, "<capability>%s</capability>", ((*itc).first).c_str());
-                strcat(buf, str);
-            }
-            snprintf(str, 1024, "</capabilities>");
-            strcat(buf, str);
-        }
-        snprintf(str, 1024, "</link>");
-        strcat(buf, str);
-        snprintf(str, 1024, "<nextHop>%d</nextHop>", *remoteLinkHopId);
-        strcat(buf, str);
-        snprintf(str, 1024, "</hop>");
-        strcat(buf, str);
-        
-        TraverseMPVB_Recursive(nextNode, buf, hopCount);
-    }   
+        TLink* nextLink = *itL;
+        MPVB_Finalize_Recursive(nextLink, buf);
+    }
 }
 
 
