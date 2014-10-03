@@ -1337,6 +1337,71 @@ void TGraph::FinalizeMPVBConstraints_Recursive(TNode* node)
     LOG_DEBUG(buf);
 }
 
+vector<TPath*> TGraph::TreeToPaths(TNode* root)
+{
+    vector<TPath*> resultPaths;
+    list<TNode*>::iterator itN = this->GetNodes().begin();
+    for (; itN != this->GetNodes().end(); itN++)
+    {
+        TNode* node = *itN;
+        if (node->GetWorkData() == NULL)
+        {
+            node->SetWorkData(new WorkData());
+        }
+        if (node->GetWorkData()->GetData("MPVB_VISITED") == NULL)
+            node->GetWorkData()->SetData("MPVB_VISITED", new bool(false));
+        node->GetWorkData()->SetData("PATH_FROM_ROOT", new list<TLink*>);
+        node->GetWorkData()->SetData("TERMINAL_NODE", new bool(false));
+    }    
+    TreeToPaths_Recursive(root);
+    for (itN = this->GetNodes().begin(); itN != this->GetNodes().end(); itN++)
+    {
+        TNode* node = *itN;
+        if (node == root)
+            continue;
+        bool isTerminal = *(bool*)node->GetWorkData()->GetData("TERMINAL_NODE");
+        if (isTerminal)
+        {
+            list<TLink*>& pathFromRoot = *(list<TLink*>*)node->GetWorkData()->GetData("PATH_FROM_ROOT");
+            TPath* tp = new TPath();
+            tp->SetPath(pathFromRoot);
+            resultPaths.push_back(tp);
+        }
+    }
+    return resultPaths;
+}
+
+vector<TPath*> TGraph::TreeToPaths_Recursive(TNode* node)
+{
+    list<TLink*>& pathFromRoot = *(list<TLink*>*)node->GetWorkData()->GetData("PATH_FROM_ROOT");
+    list<TLink*>::iterator itL = node->GetLocalLinks().begin();
+    bool isTerminal = true;
+    for (itL = node->GetLocalLinks().begin(); itL != node->GetLocalLinks().end(); itL++)
+    {
+        TLink* localLink = *itL;
+        TLink* remoteLink = (TLink*)localLink->GetRemoteLink();
+        if (remoteLink == NULL)
+            continue;
+        TNode* nextNode = remoteLink->GetLocalEnd();
+        if (nextNode == NULL)
+            continue;
+        bool* visited = (bool*)nextNode->GetWorkData()->GetData("MPVB_VISITED");
+        if (*visited)
+            continue;
+        *visited = true;
+        list<TLink*>& pathFromRootNext = *(list<TLink*>*)nextNode->GetWorkData()->GetData("PATH_FROM_ROOT");
+        pathFromRootNext.assign(pathFromRoot.begin(), pathFromRoot.end());
+        if (node->GetName().find("*") == string::npos && nextNode->GetName().find("*") == string::npos)
+        {
+            pathFromRootNext.push_back(localLink);
+            pathFromRootNext.push_back(remoteLink);
+        }
+        TreeToPaths_Recursive(nextNode);
+        isTerminal = false;
+    }
+    *(bool*)node->GetWorkData()->GetData("TERMINAL_NODE") = isTerminal;
+}
+
 void TGraph::LogDump()
 {
     char buf[1024000]; //up to 1000K
