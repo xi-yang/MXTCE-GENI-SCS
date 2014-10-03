@@ -1782,18 +1782,31 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
         WorkflowData *workflowData = new WorkflowData();
         if (graph != NULL)
         {
-            // TODO: naive workflow for tree
-            // break graph into multiple paths (starting from common src node)
-            //  LoadPath to create multiple workflows
-            //  merge workflows into single workflowData
+            vector<TPath*> treePaths = graph->TreeToPaths(graph->GetNodes().front());
+            if (treePaths.empty())
+            {
+                snprintf(buf, 1024, "GeniManifestRSpec::ParseApiReplyMessage MPVB TGraph::TreeToPaths returns none.");
+                throw TEDBException(buf);
+            }
+            vector<TPath*>::iterator itP = treePaths.begin();
+            workflowData->LoadPath(*itP);
+            workflowData->ComputeDependency();
+            for (++itP; itP != treePaths.end(); itP++)
+            {
+                TPath* tp = *itP;
+                WorkflowData workflowAdd;
+                workflowAdd.LoadPath(tp);
+                workflowAdd->ComputeDependency();
+                workflowData->MergeDependencies(workflowAdd.GetDependencies());
+            }
         }
-	else if (path != NULL) 
+        else if (path != NULL) 
         {
             workflowData->LoadPath(path);
             workflowData->ComputeDependency();
         }
         workflowData->GenerateXmlRpcData();
-        // TODO: this->workflowDataMap[result->GetPathId()] = workflowData;
+        this->workflowDataMap[result->GetPathId()] = workflowData;
     }
     sprintf(str, "</stitching>");
     strcat(buf, str);
