@@ -1796,7 +1796,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 TPath* tp = *itP;
                 WorkflowData workflowAdd;
                 workflowAdd.LoadPath(tp);
-                workflowAdd->ComputeDependency();
+                workflowAdd.ComputeDependency();
                 workflowData->MergeDependencies(workflowAdd.GetDependencies());
             }
         }
