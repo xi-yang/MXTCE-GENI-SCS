@@ -663,6 +663,12 @@ void Action_FinalizeServiceTopology_MPVB::Process()
     TServiceSpec terminalTspec(LINK_IFSWCAP_L2SC, LINK_IFSWCAP_ENC_ETH, 1, terminalVlan);
     if (!SMT->VerifyMPVBConstraints(firstTerminal, terminalTspec.GetVlanSet(), true)) // finalizeVlan = true
         throw ComputeThreadException((char*)"Action_FinalizeServiceTopology_MPVB::Process Failed to verify final SMT VLANs!");
+    // modify graph bandwidth to service bandwidth
+    Apimsg_user_constraint* userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT");
+    u_int64_t bw = userConstraint->GetReqBandwidth();
+    list<TLink*>::iterator itL = SMT->GetLinks().begin();
+    for (; itL != SMT->GetLinks().end(); itL++)
+        (*itL)->SetMaxBandwidth(bw);
     SMT->LogDump();
 }
 
