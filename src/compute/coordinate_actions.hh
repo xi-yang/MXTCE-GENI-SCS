@@ -75,8 +75,8 @@ class Action_CheckResult_Coordinate: public Action
 class Action_ProcessSubworker_Coordinate: public Action
 {
     protected:
-        list<Apimsg_user_constraint*>* = _userConstraintList;
-        list<ComputeResult*>* = _computeResultList;
+        list<Apimsg_user_constraint*>* _userConstraintList;
+        list<ComputeResult*>* _computeResultList;
         void _Init();
 
     public:
