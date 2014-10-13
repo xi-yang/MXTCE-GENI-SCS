@@ -36,6 +36,7 @@
 #include "simple_worker.hh"
 #include "multip2p_worker.hh"
 #include "mpvb_worker.hh"
+#include "coordinate_worker.hh"
 
 list<ComputeWorker*> ComputeWorkerFactory::workers;
 int ComputeWorkerFactory::serialNum = 0;
@@ -217,6 +218,8 @@ ComputeWorker* ComputeWorkerFactory::CreateComputeWorker(string type)
         worker = new MultiP2PComputeWorker(buf);
     else if (type =="mpvbComputeWorker") 
         worker = new MPVBComputeWorker(buf);
+    else if (type =="coordinateWorker") 
+        worker = new CoordinateWorker(buf);
     else 
     {   
         snprintf(buf, 128, "Unknown computeWorkerThread type: %s", type.c_str());
