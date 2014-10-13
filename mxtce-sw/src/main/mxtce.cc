@@ -178,11 +178,12 @@ void MxTCEMessageHandler::Run()
         {
             // creating computeWorkerThread and pass user request parameters
             string computeWorkerType = MxTCE::defaultComputeWorkerType;
-            if (msg->GetTopic() == "XMLRPC_API_REQUEST_MPVB")
+            if (computeWorkerType.find("coordinateWorker") == string::npos && msg->GetTopic() == "XMLRPC_API_REQUEST_MPVB")
             {
                 computeWorkerType = "mpvbComputeWorker"; // multi-point-vlan-bridge worker
             }
             ComputeWorker* computingThread = ComputeWorkerFactory::CreateComputeWorker(computeWorkerType);
+            computingThread->SetWorkflowData("MXTCE_CORE", this->mxTCE);
             if (computingThread == NULL) 
             {
                 char buf[128];
