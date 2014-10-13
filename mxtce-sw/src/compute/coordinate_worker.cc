@@ -35,13 +35,13 @@
 #include "coordinate_actions.hh"
 #include "coordinate_worker.hh"
 
-CoodinateWorker::~CoodinateWorker()
+CoordinateWorker::~CoordinateWorker()
 {
     // TODO: free common data
 }
 
 // Thread specific logic
-void* CoodinateWorker::hookRun()
+void* CoordinateWorker::hookRun()
 {
     // create workflow with action list (construct relationships)
     string actionName = "Action_ProcessRequestTopology_Coordinate";
@@ -52,7 +52,4 @@ void* CoodinateWorker::hookRun()
     eventMaster->Schedule(actionRoot);
     //## eventMaster->Run() will be called by parent Run() 
 }
-
-
-
 

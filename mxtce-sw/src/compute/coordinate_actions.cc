@@ -89,8 +89,8 @@ void Action_ProcessRequestTopology_Coordinate::Process()
         this->GetComputeWorker()->GetActions().push_back(actionProcSubworker);
         actionCheckResult->AddChild(actionProcSubworker);
         // add userConstraint to ContextActionData of the subworker action
-        list<Apimsg_user_constraint*>* mp2pUserConsList = (list<Apimsg_user_constraint*>*)this->worker->GetContextActionData(contextName, actionName, "USER_CONSTRAINT_LIST");
-        mp2pUserConsList->assign(mp2pUserConsList.begin(), mp2pUserConsList.end());
+        list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->worker->GetContextActionData(contextName, actionName, "USER_CONSTRAINT_LIST");
+        userConsList->assign(mp2pUserConsList.begin(), mp2pUserConsList.end());
     }
 }
 
@@ -205,7 +205,7 @@ void Action_CheckResult_Coordinate::Finish()
 ///////////////////// class Action_ProcessSubworker_Coordinate ///////////////////////////
 
 // Action_ProcessSubworker_Coordinate keeps request and reply data locally as ContextActionData 
-void* Action_ProcessSubworker_Coordinate::_Init()
+void Action_ProcessSubworker_Coordinate::_Init()
 {
     this->_userConstraintList = new list<Apimsg_user_constraint*>;
     this->_computeResultList = new list<ComputeResult*>;
