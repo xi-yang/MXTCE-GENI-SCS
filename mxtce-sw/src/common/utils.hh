@@ -174,7 +174,7 @@ public:
                 int n = sscanf(ptr, "%d-%d", &low, &high);
                 if (n == 1) 
                 {
-                    if (low == 0 && numBits == MAX_VLAN_NUM)
+                    if (low <= 0 && numBits == MAX_VLAN_NUM)
                         AddTag(VTAG_UNTAGGED);
                     else
                         AddTag(low);
