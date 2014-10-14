@@ -32,6 +32,7 @@
  */
 
 #include "mxtce.hh"
+#include "compute_worker.hh"
 #include "compute_actions.hh"
 #include "mpvb_actions.hh"
 #include "coordinate_actions.hh"
@@ -161,9 +162,9 @@ bool Action_CheckResult_Coordinate::ProcessChildren()
     for (; itA != this->children.end(); itA++)
     {
         Action* action = *itA;
-        if (action->GetName().equal("Action_ProcessSubworker_Coordinate") && action->GetState() == _Failed)
+        if (action->GetName().compare("Action_ProcessSubworker_Coordinate") == 0 && action->GetState() == _Failed)
         {
-            hasFiluare = true;
+            hasFailure = true;
             break;
         }
     }
@@ -172,7 +173,7 @@ bool Action_CheckResult_Coordinate::ProcessChildren()
         for (itA = this->children.begin(); itA != this->children.end(); itA++)
         {
             Action* action = *itA;
-            if (action->GetName().equal("Action_ProcessSubworker_Coordinate") 
+            if (action->GetName().compare("Action_ProcessSubworker_Coordinate") == 0
                 && (action->GetState() != _Failed || action->GetState() != _Finished || action->GetState() != _Cancelled))
             {
                 action->SetState(_Cancelled);
@@ -207,11 +208,12 @@ void Action_CheckResult_Coordinate::Finish()
     for (; itA != this->children.end(); itA++)
     {
         Action* action = *itA;
-        if (action->GetState() == _Failed && action->GetName().equal("Action_ProcessSubworker_Coordinate"))
+        if (action->GetState() == _Failed && action->GetName().compare("Action_ProcessSubworker_Coordinate") == 0)
         {
-            list<ComputeResult*>* computeResultList = (list<ComputeResult*>*)((Action_ProcessSubworker_Coordinate*)action)->GetData("COMPUTE_RESULT_LIST");
+            string dataName = "COMPUTE_RESULT_LIST";
+            list<ComputeResult*>* computeResultList = (list<ComputeResult*>*)((Action_ProcessSubworker_Coordinate*)action)->GetData(dataName);
             ComputeResult* errResult = computeResultList->front();
-            char[256] buf;
+            char buf[256];
             snprintf(buf, 255, "Action_CheckResult_Coordinate::Finish() Subworker %s failed with errMsg [%s]\n", action->GetContext().c_str(), errResult->GetErrMessage().c_str());
             LOGF(buf);
             throw ComputeThreadException(buf);
@@ -313,15 +315,15 @@ bool Action_ProcessSubworker_Coordinate::ProcessMessages()
     for (itm = messages.begin(); itm != messages.end(); itm++)
     {
         msg = *itm;
-        if (msg->GetTopic() == "COMPUTE_REPLY") 
+        if (msg->GetTopic().compare("COMPUTE_REPLY") == 0)
         {
-            ComputeResult* CR;
+            ComputeResult* result = NULL;
             list<TLV*>& tlvList = msg->GetTLVList();
             list<TLV*>::iterator itLV = tlvList.begin();
             for (; itLV != tlvList.end(); itLV++)
             {
-                memcpy(&CR, (*itLV)->value, sizeof(CR));
-                this->_computeResultList->push_back(CR);
+                memcpy(&result, (*itLV)->value, sizeof(result));
+                this->_computeResultList->push_back(result);
             }
         }
         //delete msg; //msg consumed 
@@ -351,9 +353,9 @@ void Action_ProcessSubworker_Coordinate::Finish()
 
 void* Action_ProcessSubworker_Coordinate::GetData(string& dataName)
 {
-    if (dataName == "USER_CONSTRAINT_LIST")
+    if (dataName.compare("USER_CONSTRAINT_LIST") == 0)
         return this->_userConstraintList;
-    else if (dataName == "COMPUTE_RESULT_LIST")
+    else if (dataName.compare("COMPUTE_RESULT_LIST") == 0)
         return this->_computeResultList;
     return NULL;
 }
