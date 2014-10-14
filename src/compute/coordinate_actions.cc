@@ -131,30 +131,24 @@ void Action_ProcessRequestTopology_Coordinate::Finish()
     }
     else 
     {
-        // create coordinated compute results and reply message by combining grandchildren (Action_ProcessSubworker_Coordinate)
-        list<Action*>::iterator itA = this->children.begin();
+        // create coordinated compute results by combining grandchildren (Action_ProcessSubworker_Coordinate)
+        list<Action*>::iterator itA = this->worker->GetActions().begin();
         for (; itA != this->children.end(); itA++)
         {
             Action* action = *itA;
-            if (action->GetName().compare("Action_CheckResult_Coordinate") != 0)
+            if (action->GetName().compare("Action_ProcessSubworker_Coordinate") != 0)
                 continue;
-            list<Action*>::iterator itASub = action->GetChildren().begin();
-            for (; itASub != action->GetChildren().end(); itASub++)
+            Action_ProcessSubworker_Coordinate* subworkerAction = (Action_ProcessSubworker_Coordinate*)*itA;
+            list<ComputeResult*>* computeResultList = (list<ComputeResult*>*)this->worker->GetContextActionData(subworkerAction->GetContext(), subworkerAction->GetName(), "COMPUTE_RESULT_LIST");
+            list<ComputeResult*>::iterator itR = computeResultList->begin();
+            for (; itR != computeResultList->end(); itR++)
             {
-                Action* subworkerAction = *itASub;
-                if (subworkerAction->GetName().compare("Action_ProcessSubworker_Coordinate") != 0)
-                    continue;
-                list<ComputeResult*>* computeResultList = (list<ComputeResult*>*)this->worker->GetContextActionData(subworkerAction->GetContext(), subworkerAction->GetName(), "COMPUTE_RESULT_LIST");
-                list<ComputeResult*>::iterator itR = computeResultList->begin();
-                for (; itR != computeResultList->end(); itR++)
-                {
-                    ComputeResult* result = *itR;
-                    TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
-                    tlv->type = MSG_TLV_VOID_PTR;
-                    tlv->length = sizeof(void*);
-                    memcpy(tlv->value, &result, sizeof(void*));
-                    tlvList.push_back(tlv);
-                }
+                ComputeResult* result = *itR;
+                TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
+                tlv->type = MSG_TLV_VOID_PTR;
+                tlv->length = sizeof(void*);
+                memcpy(tlv->value, &result, sizeof(void*));
+                tlvList.push_back(tlv);
             }
         }
     }
@@ -246,7 +240,7 @@ void Action_CheckResult_Coordinate::Finish()
     //$$ if all suscessful, check conflcts 
         // If any conflict, fail naively, no attempt to resolve the conflict for now.
         // TODO: Future improvement will try resolve simple conflicts and  even retry the offending subworkers by reconditioning the requests.
-   
+
     // stop out from event loop
     Action::Finish();
 }
