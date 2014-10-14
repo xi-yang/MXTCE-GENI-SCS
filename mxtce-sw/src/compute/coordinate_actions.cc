@@ -115,33 +115,28 @@ void Action_ProcessRequestTopology_Coordinate::CleanUp()
 
 void Action_ProcessRequestTopology_Coordinate::Finish()
 {
-    // TODO: create coordinated compute results and reply message
-
-    /*
-    list<TLV*> tlvList;
+    list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT_LIST");
     string* errMsg = (string*)this->GetComputeWorker()->GetWorkflowData("ERROR_MSG");
-    ComputeResult* result = new ComputeResult(userConstraint->getGri());
-    result->SetPathId(userConstraint->getPathId());
+    list<TLV*> tlvList;
     if (errMsg != NULL && !errMsg->empty())
     {
+        ComputeResult* result = new ComputeResult(userConsList->front()->getGri());
         result->SetErrMessage(*errMsg);
+        TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
+        tlv->type = MSG_TLV_VOID_PTR;
+        tlv->length = sizeof(void*);
+        memcpy(tlv->value, &result, sizeof(void*));
+        tlvList.push_back(tlv);
+        result->SetErrMessage(*errMsg);
+        string queue = MxTCE::computeThreadPrefix + this->GetComputeWorker()->GetName();
+        string topic = "COMPUTE_REPLY";
+        SendMessage(MSG_REPLY, queue, topic, tlvList);
     }
     else 
     {
-        // TODO: assemble MPVB TGraph into ComputeResult
-        TGraph* SMT = (TGraph*)this->GetComputeWorker()->GetWorkflowData("SERVICE_TOPOLOGY");
-        result->SetGraphInfo(SMT);
+        // TODO: create coordinated compute results and reply message
     }
-    TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
-    tlv->type = MSG_TLV_VOID_PTR;
-    tlv->length = sizeof(void*);
-    memcpy(tlv->value, &result, sizeof(void*));
-    tlvList.push_back(tlv);
-    string queue = MxTCE::computeThreadPrefix + this->GetComputeWorker()->GetName();
-    string topic = "COMPUTE_REPLY";
-    SendMessage(MSG_REPLY, queue, topic, tlvList);
-    */
-    
+
     // stop out from event loop
     Action::Finish();
 }
@@ -158,16 +153,35 @@ bool Action_CheckResult_Coordinate::ProcessChildren()
 {
     LOG(name<<"ProcessChildren() called"<<endl);
 
-    // check for timeout - throw exception if still having child working
-    /*
-    if (!Action::ProcessChildren())
+    //$$ check for timeout - throw exception if still having child working
+
+    // If any subworker has failed, fail naively ajd cancel other processing subworkers
+    bool hasFailure = false;
+    list<Action*>::iterator itA = this->children.begin();
+    for (; itA != this->children.end(); itA++)
     {
-        // throwing exception will lead to Cleanup() that cancels all child actions
-        throw ComputeThreadException((char*)"Action_CheckResult_Coordinate::ProcessChildren() Time out while computation is still in progress!");
+        Action* action = *itA;
+        if (action->GetName().equal("Action_ProcessSubworker_Coordinate") && action->GetState() == _Failed)
+        {
+            hasFiluare = true;
+            break;
+        }
     }
-    return true;
-    */
-    return Action::ProcessChildren();
+    if (hasFailure)
+    {
+        for (itA = this->children.begin(); itA != this->children.end(); itA++)
+        {
+            Action* action = *itA;
+            if (action->GetName().equal("Action_ProcessSubworker_Coordinate") 
+                && (action->GetState() != _Failed || action->GetState() != _Finished || action->GetState() != _Cancelled))
+            {
+                action->SetState(_Cancelled);
+            }
+        }
+        return false;
+    }
+    else
+        return Action::ProcessChildren();
 }
 
 bool Action_CheckResult_Coordinate::ProcessMessages()
@@ -185,15 +199,27 @@ void Action_CheckResult_Coordinate::CleanUp()
 void Action_CheckResult_Coordinate::Finish()
 {
     // Every subworker has finished or failed.
-    
-    Apimsg_user_constraint* userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT");
+    // Examine children / subworkers and retrieve results
 
-    //$$ Examine children / subworkers and retrieve results
-    //$$ If one of the subworkers has failed, fail naively
-        // TODO: Future improvement will retain the succesful ones and retry the failed ones by reconditioning the requests.
+    // If any of the subworkers has failed, fail naively
+        //$$ Future improvement will retain the succesful ones and retry the failed ones by reconditioning the requests.
+    list<Action*>::iterator itA = this->children.begin();
+    for (; itA != this->children.end(); itA++)
+    {
+        Action* action = *itA;
+        if (action->GetState() == _Failed && action->GetName().equal("Action_ProcessSubworker_Coordinate"))
+        {
+            list<ComputeResult*>* computeResultList = (list<ComputeResult*>*)((Action_ProcessSubworker_Coordinate*)action)->GetData("COMPUTE_RESULT_LIST");
+            ComputeResult* errResult = computeResultList->front();
+            char[256] buf;
+            snprintf(buf, 255, "Action_CheckResult_Coordinate::Finish() Subworker %s failed with errMsg [%s]\n", action->GetContext().c_str(), errResult->GetErrMessage().c_str());
+            LOGF(buf);
+            throw ComputeThreadException(buf);
+        }
+    }
     //$$ if all suscessful, check conflcts 
         // If any conflict, fail naively, no attempt to resolve the conflict for now.
-        // TODO: Future improvement will try resolve some simple conflicts or retry the conflicting subworkers by reconditioning the requests.
+        // TODO: Future improvement will try resolve simple conflicts and  even retry the offending subworkers by reconditioning the requests.
    
     // stop out from event loop
     Action::Finish();
@@ -289,8 +315,14 @@ bool Action_ProcessSubworker_Coordinate::ProcessMessages()
         msg = *itm;
         if (msg->GetTopic() == "COMPUTE_REPLY") 
         {
+            ComputeResult* CR;
             list<TLV*>& tlvList = msg->GetTLVList();
-            // TODO: get computeResultList from the reply or error handling
+            list<TLV*>::iterator itLV = tlvList.begin();
+            for (; itLV != tlvList.end(); itLV++)
+            {
+                memcpy(&CR, (*itLV)->value, sizeof(CR));
+                this->_computeResultList->push_back(CR);
+            }
         }
         //delete msg; //msg consumed 
         itm = messages.erase(itm);
