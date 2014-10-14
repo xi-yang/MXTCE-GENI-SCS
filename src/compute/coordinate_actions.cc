@@ -133,7 +133,7 @@ void Action_ProcessRequestTopology_Coordinate::Finish()
     {
         // create coordinated compute results by combining grandchildren (Action_ProcessSubworker_Coordinate)
         list<Action*>::iterator itA = this->worker->GetActions().begin();
-        for (; itA != this->children.end(); itA++)
+        for (; itA != this->worker->GetActions().end(); itA++)
         {
             Action* action = *itA;
             if (action->GetName().compare("Action_ProcessSubworker_Coordinate") != 0)
@@ -361,7 +361,6 @@ void Action_ProcessSubworker_Coordinate::CleanUp()
     LOG(name<<"CleanUp() called"<<endl);
 
     //$$ delete locally kept request / result data
-    
     // Do not delete: the lists are used by other components
     //delete this->_userConstraintList;
     //delete this->_computeResultList;
