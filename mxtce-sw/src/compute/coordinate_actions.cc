@@ -115,8 +115,6 @@ void Action_ProcessRequestTopology_Coordinate::CleanUp()
 
 void Action_ProcessRequestTopology_Coordinate::Finish()
 {
-    Apimsg_user_constraint* userConstraint = (Apimsg_user_constraint*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT");
-
     // TODO: create coordinated compute results and reply message
 
     /*
@@ -225,6 +223,8 @@ void Action_ProcessSubworker_Coordinate::Process()
         LOGF("Action_ProcessSubworker_Coordinate::Process() Cannot create subworker thread of type!");
         throw ComputeThreadException((char*)"Action_ProcessSubworker_Coordinate::Process() Cannot create subworker thread of type!");
     }
+
+    computingThread->SetWorkflowData("USER_CONSTRAINT_LIST", this->_userConstraintList);
 
     // create message routing entries
     string computeThreadPortName = computingThread->GetName();
