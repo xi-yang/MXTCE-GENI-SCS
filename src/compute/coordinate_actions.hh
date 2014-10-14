@@ -61,7 +61,7 @@ class Action_CheckResult_Coordinate: public Action
     
     public:
         Action_CheckResult_Coordinate(): Action(){ }
-        Action_CheckResult_Coordinate(string& cn, string& n, ComputeWorker* w): Action(n, w) { }
+        Action_CheckResult_Coordinate(string& cn, string& n, ComputeWorker* w): Action(cn, n, w) { }
         virtual ~Action_CheckResult_Coordinate() { }
     
         virtual void Process();
@@ -81,7 +81,7 @@ class Action_ProcessSubworker_Coordinate: public Action
 
     public:
         Action_ProcessSubworker_Coordinate(): Action(){ _Init(); }
-        Action_ProcessSubworker_Coordinate(string& cn, string& n, ComputeWorker* w): Action(n, w) { _Init(); }
+        Action_ProcessSubworker_Coordinate(string& cn, string& n, ComputeWorker* w): Action(cn, n, w) { _Init(); }
         virtual ~Action_ProcessSubworker_Coordinate() { }
     
         virtual void Process();
