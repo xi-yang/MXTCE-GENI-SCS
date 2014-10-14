@@ -237,7 +237,7 @@ void Action_CheckResult_Coordinate::Finish()
             throw ComputeThreadException(buf);
         }
     }
-    //$$ if all suscessful, check conflcts 
+    //$$$$ if all suscessful, check conflcts 
         // If any conflict, fail naively, no attempt to resolve the conflict for now.
         // TODO: Future improvement will try resolve simple conflicts and  even retry the offending subworkers by reconditioning the requests.
 
@@ -253,6 +253,7 @@ void Action_ProcessSubworker_Coordinate::_Init()
 {
     this->_userConstraintList = new list<Apimsg_user_constraint*>;
     this->_computeResultList = new list<ComputeResult*>;
+    this->_queueName = "";
 }
 
 void Action_ProcessSubworker_Coordinate::Process()
@@ -299,7 +300,7 @@ void Action_ProcessSubworker_Coordinate::Process()
     computingThread->Start(NULL);
 
     // create and send request message to subworker computing thread
-    string queue = computeThreadQueueName;
+    this->_queueName = computeThreadQueueName; // store queueName for filtering out expectedMessage (COMPUTE_REPLY)
     string topic = "COMPUTE_REQUEST";
     string expectReturnTopic = "COMPUTE_REPLY";
     list<TLV*> TLVs;
@@ -313,7 +314,7 @@ void Action_ProcessSubworker_Coordinate::Process()
         memcpy(tlv->value, &userCons, sizeof(userCons));
         TLVs.push_back(tlv);
     }
-    SendMessage(MSG_REQ, queue, topic, this->context, TLVs, expectReturnTopic);
+    SendMessage(MSG_REQ, this->_queueName, topic, this->context, TLVs, expectReturnTopic);
 }
 
 bool Action_ProcessSubworker_Coordinate::ProcessChildren()
@@ -333,7 +334,7 @@ bool Action_ProcessSubworker_Coordinate::ProcessMessages()
     for (itm = messages.begin(); itm != messages.end(); itm++)
     {
         msg = *itm;
-        if (msg->GetTopic().compare("COMPUTE_REPLY") == 0)
+        if (msg->GetQueue().compare(this->_queueName) == 0 && msg->GetTopic().compare("COMPUTE_REPLY") == 0)
         {
             ComputeResult* result = NULL;
             list<TLV*>& tlvList = msg->GetTLVList();
@@ -380,6 +381,8 @@ void* Action_ProcessSubworker_Coordinate::GetData(string& dataName)
         return this->_userConstraintList;
     else if (dataName.compare("COMPUTE_RESULT_LIST") == 0)
         return this->_computeResultList;
+    else if (dataName.compare("QUEUE_NANE") == 0)
+        return &(this->_queueName);
     return NULL;
 }
 

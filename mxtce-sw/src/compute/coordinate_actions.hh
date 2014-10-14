@@ -77,6 +77,7 @@ class Action_ProcessSubworker_Coordinate: public Action
     protected:
         list<Apimsg_user_constraint*>* _userConstraintList;
         list<ComputeResult*>* _computeResultList;
+        string _queueName;
         void _Init();
 
     public:
