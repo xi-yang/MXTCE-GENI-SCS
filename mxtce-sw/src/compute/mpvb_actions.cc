@@ -55,8 +55,12 @@ void Action_ProcessRequestTopology_MPVB::Process()
     }
     this->GetComputeWorker()->SetWorkflowData("USER_CONSTRAINT", userConstraint);
 
-    // add Action_CreateTEWG
-    string contextName = ""; // none
+    string contextName = "";
+    if (this->GetComputeWorker()->GetWorkflowData("COMPUTE_CONTEXT") != NULL) 
+        contextName = *(string*)this->GetComputeWorker()->GetWorkflowData("COMPUTE_CONTEXT");
+    this->context = contextName;
+
+    // add Action_CreateTEWG 
     string actionName = "Action_CreateTEWG";
     Action_CreateTEWG* actionTewg = new Action_CreateTEWG(contextName, actionName, this->GetComputeWorker());
     this->GetComputeWorker()->GetActions().push_back(actionTewg);
@@ -138,7 +142,7 @@ void Action_ProcessRequestTopology_MPVB::Finish()
     tlvList.push_back(tlv);
     string queue = MxTCE::computeThreadPrefix + this->GetComputeWorker()->GetName();
     string topic = "COMPUTE_REPLY";
-    SendMessage(MSG_REPLY, queue, topic, tlvList);
+    SendMessage(MSG_REPLY, queue, topic, this->context, tlvList);
 
     // stop out from event loop
     Action::Finish();

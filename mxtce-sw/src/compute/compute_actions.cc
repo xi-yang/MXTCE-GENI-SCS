@@ -1328,6 +1328,10 @@ void Action_ProcessRequestTopology_MP2P::Process()
 {
     LOG(name<<"Process() called"<<endl);   
 
+    // set contextName
+    if (this->GetComputeWorker()->GetWorkflowData("COMPUTE_CONTEXT") != NULL) 
+        this->context = *(string*)this->GetComputeWorker()->GetWorkflowData("COMPUTE_CONTEXT");
+
     // retrieve userConstrinat list
     list<Apimsg_user_constraint*>* userConsList = (list<Apimsg_user_constraint*>*)this->GetComputeWorker()->GetWorkflowData("USER_CONSTRAINT_LIST");
     if (userConsList == NULL)
@@ -1521,7 +1525,7 @@ void Action_ProcessRequestTopology_MP2P::Finish()
     // TODO: clean up multip2pResultList
     string queue = MxTCE::computeThreadPrefix + worker->GetName();
     string topic = "COMPUTE_REPLY";
-    SendMessage(MSG_REPLY, queue, topic, tlvList);
+    SendMessage(MSG_REPLY, queue, topic, this->context, tlvList);
 
     // stop out from event loop
     Action::Finish();
