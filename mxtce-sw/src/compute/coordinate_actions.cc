@@ -128,15 +128,39 @@ void Action_ProcessRequestTopology_Coordinate::Finish()
         tlv->length = sizeof(void*);
         memcpy(tlv->value, &result, sizeof(void*));
         tlvList.push_back(tlv);
-        result->SetErrMessage(*errMsg);
-        string queue = MxTCE::computeThreadPrefix + this->GetComputeWorker()->GetName();
-        string topic = "COMPUTE_REPLY";
-        SendMessage(MSG_REPLY, queue, topic, tlvList);
     }
     else 
     {
-        // TODO: create coordinated compute results and reply message
+        // create coordinated compute results and reply message by combining grandchildren (Action_ProcessSubworker_Coordinate)
+        list<Action*>::iterator itA = this->children.begin();
+        for (; itA != this->children.end(); itA++)
+        {
+            Action* action = *itA;
+            if (action->GetName().compare("Action_CheckResult_Coordinate") != 0)
+                continue;
+            list<Action*>::iterator itASub = action->GetChildren().begin();
+            for (; itASub != action->GetChildren().end(); itASub++)
+            {
+                Action* subworkerAction = *itASub;
+                if (subworkerAction->GetName().compare("Action_ProcessSubworker_Coordinate") != 0)
+                    continue;
+                list<ComputeResult*>* computeResultList = (list<ComputeResult*>*)this->worker->GetContextActionData(subworkerAction->GetContext(), subworkerAction->GetName(), "COMPUTE_RESULT_LIST");
+                list<ComputeResult*>::iterator itR = computeResultList->begin();
+                for (; itR != computeResultList->end(); itR++)
+                {
+                    ComputeResult* result = *itR;
+                    TLV* tlv = (TLV*)new char[TLV_HEAD_SIZE + sizeof(void*)];
+                    tlv->type = MSG_TLV_VOID_PTR;
+                    tlv->length = sizeof(void*);
+                    memcpy(tlv->value, &result, sizeof(void*));
+                    tlvList.push_back(tlv);
+                }
+            }
+        }
     }
+    string queue = MxTCE::computeThreadPrefix + this->GetComputeWorker()->GetName();
+    string topic = "COMPUTE_REPLY";
+    SendMessage(MSG_REPLY, queue, topic, tlvList);
 
     // stop out from event loop
     Action::Finish();
@@ -203,7 +227,7 @@ void Action_CheckResult_Coordinate::Finish()
     // Examine children / subworkers and retrieve results
 
     // If any of the subworkers has failed, fail naively
-        //$$ Future improvement will retain the succesful ones and retry the failed ones by reconditioning the requests.
+        // TODO: Future improvement will retain the succesful ones and retry the failed ones by reconditioning the requests.
     list<Action*>::iterator itA = this->children.begin();
     for (; itA != this->children.end(); itA++)
     {
@@ -342,9 +366,10 @@ void Action_ProcessSubworker_Coordinate::CleanUp()
     LOG(name<<"CleanUp() called"<<endl);
 
     //$$ delete locally kept request / result data
-
-    delete this->_userConstraintList;
-    delete this->_computeResultList; //? clean up elements too ?
+    
+    // Do not delete: the lists are used by other components
+    //delete this->_userConstraintList;
+    //delete this->_computeResultList;
     
     Action::CleanUp();
 }
