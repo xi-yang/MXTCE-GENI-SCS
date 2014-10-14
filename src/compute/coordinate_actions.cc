@@ -324,6 +324,10 @@ bool Action_ProcessSubworker_Coordinate::ProcessMessages()
             {
                 memcpy(&result, (*itLV)->value, sizeof(result));
                 this->_computeResultList->push_back(result);
+                if (!result->GetErrMessage().empty())
+                {
+                    throw ComputeThreadException(result->GetErrMessage());
+                }
             }
         }
         //delete msg; //msg consumed 
