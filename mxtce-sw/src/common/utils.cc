@@ -39,6 +39,7 @@
 
 const char* getVersionString()
 {
+
     const char* versionString = "$Revision$ - $Date$";
     return versionString;
 }
