@@ -194,6 +194,9 @@ bool Action_CheckResult_Coordinate::ProcessChildren()
             if (action->GetName().compare("Action_ProcessSubworker_Coordinate") == 0
                 && (action->GetState() != _Failed || action->GetState() != _Finished || action->GetState() != _Cancelled))
             {
+                // TODO: This only stop the pending Action_ProcessSubworker_Coordinate to get quicker turn around.
+                    //The actual worker (ComputingThread) is not stopped yet. Send a "COMPUTE_CANCEL" message.
+                    //The worker thread can catch that message and stop its action workflow.
                 action->SetState(_Cancelled);
             }
         }
