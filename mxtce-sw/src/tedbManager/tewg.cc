@@ -923,6 +923,8 @@ TPort* TGraph::LookupSamePort(TPort* port)
     if (port == NULL)
         return NULL;
     TNode* node = this->LookupSameNode((TNode*)port->GetNode());
+    if (node == NULL)
+        return NULL;
     map<string, Port*, strcmpless>::iterator itp = node->GetPorts().find(port->GetName());
     if (itp == node->GetPorts().end())
         return NULL;
@@ -935,6 +937,8 @@ TLink* TGraph::LookupSameLink(TLink* link)
     if (link == NULL)
         return NULL;
     TPort* port = this->LookupSamePort((TPort*)link->GetPort());
+    if (port == NULL)
+        return NULL;
     map<string, Link*, strcmpless>::iterator itl = port->GetLinks().find(link->GetName());
     if (itl == port->GetLinks().end())
         return NULL;
