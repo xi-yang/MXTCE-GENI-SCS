@@ -1250,6 +1250,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                         {
                             break;
                         }
+                        /*
                         else if (strncasecmp((const char*)xmlIfNode->name, "link_type", 16) == 0)
                         {
                             xmlChar* pBuf = xmlNodeGetContent(xmlIfNode);
@@ -1258,6 +1259,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                             if (linkTypeValue.compare("vlan") != 0)
                                 break;
                         }
+                        */
                     }
                 }
                 // skip shared_vlan links
