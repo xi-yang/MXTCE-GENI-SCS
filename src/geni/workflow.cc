@@ -245,7 +245,7 @@ void WorkflowData::ComputeDependency()
                 if (!loop_d1_d2 
                     && (numSameDomainHops1 < numSameDomainHops2
                         || (numSameDomainHops1 == numSameDomainHops2 && 
-                        availableVlanRange1.Size() > availableVlanRange2.Size())))
+                        availableVlanRange1.Size() >= availableVlanRange2.Size())))
                 {
                     D1->GetLowers().push_back(D2);
                     D2->GetUppers().push_back(D1);
@@ -255,7 +255,7 @@ void WorkflowData::ComputeDependency()
                 else if (!loop_d2_d1 
                     && (numSameDomainHops1 > numSameDomainHops2
                         || (numSameDomainHops1 == numSameDomainHops2 &&
-                        availableVlanRange1.Size() < availableVlanRange2.Size())))
+                        availableVlanRange1.Size() <= availableVlanRange2.Size())))
                 {
                     D2->GetLowers().push_back(D1);
                     D1->GetUppers().push_back(D2);
