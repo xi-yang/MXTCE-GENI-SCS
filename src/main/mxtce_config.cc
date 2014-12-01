@@ -128,7 +128,7 @@ void MxTCEConfig::ParseLevel2Config(char* key1, char* key2, char* val)
         }
         else if (strcasecmp(key2, "timeout") == 0)
         {
-            if (sscanf(val, "%d", &MxTCE::maxApiTimeOutSecs) != 1)
+            if (sscanf(val, "%d", &APIServer::maxApiTimeOutSecs) != 1)
                 throw TCEException((char*)"Error in configuration file (apiServer / timeout)!");
         }
         else if (strcasecmp(key2, "client") == 0)

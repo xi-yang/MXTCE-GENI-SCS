@@ -39,6 +39,7 @@
 #include "event.hh"
 #include "thread.hh"
 #include "resource.hh"
+#include "api.hh"
 
 #include <xmlrpc-c/base.hpp>
 #include <xmlrpc-c/registry.hpp>
@@ -73,7 +74,7 @@ private:
     XMLRPC_TimeoutOrCallback() { }
 
 public:
-    XMLRPC_TimeoutOrCallback(EventMaster* em): Timer((int)MxTCE::maxApiTimeOutSecs, (int)0), evtMaster(em) { }
+    XMLRPC_TimeoutOrCallback(EventMaster* em): Timer((int)APIServer::maxApiTimeOutSecs, (int)0), evtMaster(em) { }
     virtual void Run() {
         if (evtMaster != NULL) {
             evtMaster->Stop();

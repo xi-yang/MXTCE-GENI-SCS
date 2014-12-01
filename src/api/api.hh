@@ -107,6 +107,8 @@ protected:
     APIServer();
 
 public:
+    static int maxApiTimeOutSecs;
+
     APIServer(u_int32_t port_val, EventMaster* em):Reader(0), port(port_val), eventMaster(em) { }
     virtual ~APIServer() {}
     EventMaster* GetEventMaster() { return eventMaster; }

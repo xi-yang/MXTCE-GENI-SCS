@@ -40,6 +40,7 @@
 #include "api.hh"
 
 
+int APIServer::maxApiTimeOutSecs = 30;
 
 // TODO: Exception handling
 
