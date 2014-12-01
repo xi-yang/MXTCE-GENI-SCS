@@ -47,6 +47,7 @@ resvManager:
     pushApiServer:
         port: 2092
         client: 'localhost'
+        timeout: 30
 
 policyManager:
 
