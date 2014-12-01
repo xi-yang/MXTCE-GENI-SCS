@@ -126,6 +126,11 @@ void MxTCEConfig::ParseLevel2Config(char* key1, char* key2, char* val)
             if (sscanf(val, "%d", &MxTCE::apiServerPort) != 1)
                 throw TCEException((char*)"Error in configuration file (apiServer / port)!");
         }
+        else if (strcasecmp(key2, "timeout") == 0)
+        {
+            if (sscanf(val, "%d", &MxTCE::maxApiTimeOutSecs) != 1)
+                throw TCEException((char*)"Error in configuration file (apiServer / timeout)!");
+        }
         else if (strcasecmp(key2, "client") == 0)
         {
             ; // place holder
@@ -136,6 +141,11 @@ void MxTCEConfig::ParseLevel2Config(char* key1, char* key2, char* val)
         if (strcasecmp(key2, "type") == 0)
         {
             MxTCE::defaultComputeWorkerType = val;
+        }
+        if (strcasecmp(key2, "exclusiveConcurrent") == 0)
+        {
+            if (strcasecmp(val, "true") == 0) 
+                MxTCE::exclusiveConcurrentHolding = true;
         }
     }
 }

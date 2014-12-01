@@ -74,6 +74,8 @@ public:
     static list<string> xmlDomainFileList;
     static list<string> rspecAdFileList;
     static bool tempTest;
+    static bool exclusiveConcurrentHolding;
+    static int maxApiTimeOutSecs;
 
 public:
     MxTCE( const string& configFile);

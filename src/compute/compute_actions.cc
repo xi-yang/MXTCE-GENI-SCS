@@ -1688,7 +1688,7 @@ void Action_ReorderPaths_MP2P::Process()
         actionSchedKspR2->SetReqVolume(actionSchedKspR1->GetReqVolume());
         actionSchedKspR2->SetUserConstraint(actionSchedKspR1->GetUserConstraint());
         actionSchedKspR2->SetComputeBAG(true);
-        actionSchedKspR2->SetCommitBestPathToTEWG(true);
+        actionSchedKspR2->SetCommitBestPathToTEWG(MxTCE::exclusiveConcurrentHolding);
         this->GetComputeWorker()->GetActions().push_back(actionSchedKspR2);
         prevAction->AddChild(actionSchedKspR2);
         prevAction = actionSchedKspR2;

@@ -67,15 +67,13 @@ public:
     void fire();
 };
 
-#define MAX_MSG_PORT_POLL_TIME 10 // seconds
-
 class XMLRPC_TimeoutOrCallback: public Timer, public MessagePortCallback {
 private:
     EventMaster* evtMaster;
     XMLRPC_TimeoutOrCallback() { }
 
 public:
-    XMLRPC_TimeoutOrCallback(EventMaster* em): Timer((int)MAX_MSG_PORT_POLL_TIME, (int)0), evtMaster(em) { }
+    XMLRPC_TimeoutOrCallback(EventMaster* em): Timer((int)MxTCE::maxApiTimeOutSecs, (int)0), evtMaster(em) { }
     virtual void Run() {
         if (evtMaster != NULL) {
             evtMaster->Stop();

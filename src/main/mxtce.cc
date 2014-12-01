@@ -44,6 +44,7 @@ int MxTCE::apiServerPort = 2089;
 int MxTCE::xmlrpcApiServerPort = 8081;
 string MxTCE::xmlrpcApiServerPath = "/geni/xmlrpc";
 int MxTCE::resvApiServerPort = 2091;
+bool MxTCE::maxApiTimeOutSecs = 30;
 string MxTCE::apiServerPortName = "MX-TCE_API_SERVER";
 string MxTCE::xmlrpcApiServerPortName = "MX-TCE_XMLRPC_API_SERVER";
 string MxTCE::tedbManPortName = "MX-TCE_TEDB_MANAGER";
@@ -55,6 +56,7 @@ string MxTCE::defaultComputeWorkerType = "simpleComputeWorker";
 list<string> MxTCE::xmlDomainFileList;
 list<string> MxTCE::rspecAdFileList;
 bool MxTCE::tempTest = false;
+bool MxTCE::exclusiveConcurrentHolding = false;
 
 MxTCE::MxTCE( const string& configFile) 
 {
