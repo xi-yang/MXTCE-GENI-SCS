@@ -246,6 +246,10 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
                 *retvalP = xmlrpc_c::value_struct(retMap);
                 goto _final;        
             }
+            else 
+            {
+                XMLRPC_TimeoutOrCallback::getDiscardedContextTags().insert(contextTag);
+            }
         }
     }
 
