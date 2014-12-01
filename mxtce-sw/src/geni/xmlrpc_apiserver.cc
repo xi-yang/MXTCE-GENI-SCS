@@ -41,6 +41,8 @@
 
 Lock XMLRPC_APIServer::xmlrpcApiLock; // lock to assure only one API call is served at a time
 
+list<string> XMLRPC_TimeoutOrCallback::discardedContextTags;
+
 // Base class 
 // TODO: move XMLRPC_BaseMethod::msgPort to thread level (or make class static) if more than one method
 void XMLRPC_BaseMethod::init() 
@@ -71,7 +73,7 @@ void XMLRPC_BaseMethod::init()
 void XMLRPC_BaseMethod::fire()
 {
     // TODO: use callback to stop eventmaster (need to modify MessagePort to hook up extra callback)
-    XMLRPC_TimeoutOrCallback* timeoutOrCallback = new XMLRPC_TimeoutOrCallback(evtMaster);
+    XMLRPC_TimeoutOrCallback* timeoutOrCallback = new XMLRPC_TimeoutOrCallback(evtMaster, msgPort);
     assert(evtMaster);
     msgPort->GetMsgInQueue().clear();
     this->msgPort->SetMessageCallback(timeoutOrCallback);
@@ -80,6 +82,40 @@ void XMLRPC_BaseMethod::fire()
     evtMaster->Remove(timeoutOrCallback);
     delete timeoutOrCallback;
 }
+
+
+// XMLRPC_TimeoutOrCallback hook class
+void XMLRPC_TimeoutOrCallback::Run() 
+{
+    if (evtMaster != NULL) 
+    {
+        evtMaster->Stop();
+    }
+}
+
+void XMLRPC_TimeoutOrCallback::hookRunCallback() 
+{
+    std::unordered_set<string> contextTagSet = XMLRPC_TimeoutOrCallback::getDiscardedContextTags();
+    bool hasValidMessage = false;
+        list<Message*>::iterator itm = msgPort->GetMsgInQueue().begin();
+        for (; itm != msgPort->GetMsgInQueue().end(); itm++) 
+        {
+            Message* msg = *itm;
+            if (contextTagSet.find(msg->GetContextTag()) == contextTagSet.end()) 
+            {        
+                hasValidMessage = true;
+            }
+            else 
+            {
+                contextTagSet.erase(msg->GetContextTag());
+            }
+        }
+    if (evtMaster != NULL && hasValidMessage) 
+    {
+        evtMaster->Stop();
+    }
+}
+
 
 // Actual XMLRPC methods
 void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xmlrpc_c::value* const retvalP) 
@@ -135,6 +171,8 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     // poll MessagePort queue:
     if (msgPort->GetMsgInQueue().size() == 0) 
     {
+        // store discarded context tags
+        XMLRPC_TimeoutOrCallback::getDiscardedContextTags().insert(contextTag);
         ReturnGeniError(retvalP, GENI_PCS_ERRCODE_TIMEOUT, "Timeout: no response received from computing core!");
         // TODO: define error codes
         goto _final;

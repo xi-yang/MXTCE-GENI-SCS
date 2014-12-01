@@ -71,20 +71,15 @@ public:
 class XMLRPC_TimeoutOrCallback: public Timer, public MessagePortCallback {
 private:
     EventMaster* evtMaster;
+    MessagePort* msgPort;
     XMLRPC_TimeoutOrCallback() { }
-
+    static std::unordered_set<string> discardedContextTags;
+    
 public:
-    XMLRPC_TimeoutOrCallback(EventMaster* em): Timer((int)APIServer::maxApiTimeOutSecs, (int)0), evtMaster(em) { }
-    virtual void Run() {
-        if (evtMaster != NULL) {
-            evtMaster->Stop();
-        }
+    XMLRPC_TimeoutOrCallback(EventMaster* em, MessagePort* mp): Timer((int)APIServer::maxApiTimeOutSecs, (int)0), evtMaster(em), msgPort(mp){ }
+    static std::unordered_set<string>& getDiscardedContextTags () {
+        return discardedContextTags;
     }
-    virtual void hookRunCallback() {
-        if (evtMaster != NULL) {
-            evtMaster->Stop();
-        }
-    }    
 };
 
 class XMLRPC_ComputePathMethod: public XMLRPC_BaseMethod {    
