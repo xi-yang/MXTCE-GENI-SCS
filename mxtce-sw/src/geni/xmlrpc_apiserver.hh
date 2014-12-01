@@ -44,7 +44,8 @@
 #include <xmlrpc-c/base.hpp>
 #include <xmlrpc-c/registry.hpp>
 #include <xmlrpc-c/server_abyss.hpp>
- 
+
+#include <set>
 
 using namespace std;
 
@@ -73,11 +74,13 @@ private:
     EventMaster* evtMaster;
     MessagePort* msgPort;
     XMLRPC_TimeoutOrCallback() { }
-    static std::unordered_set<string> discardedContextTags;
+    static set<string> discardedContextTags;
     
 public:
     XMLRPC_TimeoutOrCallback(EventMaster* em, MessagePort* mp): Timer((int)APIServer::maxApiTimeOutSecs, (int)0), evtMaster(em), msgPort(mp){ }
-    static std::unordered_set<string>& getDiscardedContextTags () {
+    virtual void Run();
+    virtual void hookRunCallback();
+    static set<string>& getDiscardedContextTags () {
         return discardedContextTags;
     }
 };

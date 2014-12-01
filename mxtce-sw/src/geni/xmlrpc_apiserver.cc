@@ -41,7 +41,7 @@
 
 Lock XMLRPC_APIServer::xmlrpcApiLock; // lock to assure only one API call is served at a time
 
-list<string> XMLRPC_TimeoutOrCallback::discardedContextTags;
+set<string> XMLRPC_TimeoutOrCallback::discardedContextTags;
 
 // Base class 
 // TODO: move XMLRPC_BaseMethod::msgPort to thread level (or make class static) if more than one method
@@ -95,7 +95,7 @@ void XMLRPC_TimeoutOrCallback::Run()
 
 void XMLRPC_TimeoutOrCallback::hookRunCallback() 
 {
-    std::unordered_set<string> contextTagSet = XMLRPC_TimeoutOrCallback::getDiscardedContextTags();
+    set<string> contextTagSet = XMLRPC_TimeoutOrCallback::getDiscardedContextTags();
     bool hasValidMessage = false;
         list<Message*>::iterator itm = msgPort->GetMsgInQueue().begin();
         for (; itm != msgPort->GetMsgInQueue().end(); itm++) 
