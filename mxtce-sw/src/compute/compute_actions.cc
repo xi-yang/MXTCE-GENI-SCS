@@ -1006,8 +1006,16 @@ void Action_ComputeSchedulesWithKSP::Process()
             for (; itH != this->_userConstraint->getHopExclusionList()->end(); itH++)
             {
                 string& hopUrn = *itH;
-                tewg->PruneByExclusionUrn(hopUrn);
-            }
+                size_t delim = hopUrn.find("=");
+                if (delim == string::npos) // excluding hop link(s)
+                    tewg->PruneByExclusionUrn(hopUrn);
+                else // excluding vlans on the hop link(s)
+                {
+                    string aUrn = hopUrn.substr(0, delim);
+                    string vlanRange = hopUrn.substr(delim+1);
+                    tewg->PruneHopVlans(aUrn, vlanRange);
+                }
+            }        
         }
         // applying reservation data
         time_t startTime = (*itT);
