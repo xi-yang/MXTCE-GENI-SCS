@@ -979,40 +979,21 @@ void TEDB::PopulateXmlTrees()
     assert(xmlDomainTrees.size() > 0);
 
     // cleanup everything 
+    //$$ TODO: investigate how to properly release memory for these lists
     list<DBDomain*>::iterator itd = dbDomains.begin();
     for (; itd != dbDomains.end(); itd++) 
     {
         (*itd)->GetNodes().clear();
     }
     // clean up dbNodes, dbPorts and dbLinks lists
-    list<DBNode*>::iterator itn = dbNodes.begin();
-    for (; itn != dbNodes.end(); itn++) 
-    {
-        delete (*itn);
-    }
     dbNodes.clear();
-    list<DBPort*>::iterator itp = dbPorts.begin();
-    for (; itp != dbPorts.end(); itp++) 
-    {
-        delete (*itp);
-    }
     dbPorts.clear();
     list<DBLink*>::iterator itl = dbLinks.begin();
     for (; itl != dbLinks.end(); itl++) 
     {
         // clean up ISAD, ISCD lists
-        DBLink* L = (*itl);
-        list<ISCD*>::iterator itcd1 = L->GetSwCapDescriptors().begin();
-        for (; itcd1 != L->GetSwCapDescriptors().end(); itcd1++) 
-        {
-            delete (*itcd1);
-        }
-        list<IACD*>::iterator itcd2 = L->GetAdjCapDescriptors().begin();
-        for (; itcd2 != L->GetAdjCapDescriptors().end(); itcd2++) 
-        {
-            delete (*itcd2);
-        }
-        delete L;
+        (*itl)->GetSwCapDescriptors().clear();
+        (*itl)->GetAdjCapDescriptors().clear();
     }
     dbLinks.clear();
 
