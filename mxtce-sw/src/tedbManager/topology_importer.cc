@@ -89,8 +89,9 @@ void TopologyXMLImporter::Run()
         tedb->ClearXmlTrees();
         tedb->PopulateXmlTrees();
         tedb->UnlockDB();
+        tedb->LogDump();
     }
-};
+}
 
 string TopologyXMLImporter::CheckFileType(xmlDocPtr xmlDoc)
 {
