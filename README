@@ -1,12 +1,7 @@
 1. Pre-compile
-- Download and install
-http://pyyaml.org/download/libyaml/yaml-0.1.4.tar.gz
 
-- Download and install
-http://sourceforge.net/projects/xmlrpc-c/files/Xmlrpc-c%20Super%20Stable/
-
-- Also
-sudo yum install libxml2-devel
+- Install dependencies
+sudo yum install libyaml-devel libxml2-devel xmlrpc-c-devel
 
 - On Ubuntu
 sudo apt-get install libyaml-dev  libxmlrpc-c-dev libxml2-dev libxmlrpc-c++4-dev
@@ -17,7 +12,6 @@ cp -rf /usr/local/lib/libxmlrpc* /usr/lib64/
 
 - ulimit -s 65536
 
-
 2. To compile
 ./configure
 make
@@ -27,9 +21,12 @@ make
 cat > /usr/local/etc/mxtce.config.yaml
 
 ---
+mxtceDir: '/usr/local/geni-scs'
+
 apiServer:
-    'client': 'localhost'
+    client: 'localhost'
     port: 2089
+    timeout: 30
 
 tedbManager:
     domains:
@@ -47,7 +44,6 @@ resvManager:
     pushApiServer:
         port: 2092
         client: 'localhost'
-        timeout: 30
 
 policyManager:
 
@@ -57,7 +53,7 @@ computeWorker:
 
 4. To run
 cd the_directory_with_topology_ad_files
-/usr/local/mxtce-sw/src/main/mxtce -d
+/usr/local/geni-scs/src/main/mxtce -d
 
 
 5. To test:
@@ -65,3 +61,25 @@ cat  pcs-request1.xml | curl -X POST -H 'Content-type: text/xml' -d @-  http://o
 
 6. Watch log
 tail -f /var/log/mxtce.log
+
+
+----------------
+Optional 7. Setup SSL wrapper with client authentication using stunnel
+
+7.1. yum (or apt-get) install stunnel
+
+7.2. put these two files into /usr/local/etc/stunnel/
+ca-all.pem: the files that contains all the trusted SSL CA certs: GPO-CH, Emulab, Planetlab etc. You can update or recreate this file.
+stunnel.conf: the configuration that tells stunnel to get certs from a file ca-all.pem and map HTTPS port 8443 into HTTP port 8081.
+# some important lines in stunnel.conf:
+	output = /tmp/stunnel.log
+	CAfile = /usr/local/etc/stunnel/ca-all.pem
+	[geni-scs]
+	accept  = 8443
+	connect = 8081
+
+7.3. creates /usr/local/etc/stunnel/stunnel.pem which contains the SCS server CA private-key/CA cert pair.
+
+7.4. run to start the SSL wrapper
+stunnel /usr/local/etc/stunnel/stunnel.conf
+
