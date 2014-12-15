@@ -44,10 +44,10 @@ void* TEDBManThread::hookRun()
     // thread specific init
     string tedbName = "Master-TEDB";
     tedb = new TEDB(tedbName);
+    // check topology change every 60 seconds
     xmlImporter = new TopologyXMLImporter(tedb, MxTCE::xmlDomainFileList, 60);
     xmlImporter->Run();
     eventMaster->Schedule(xmlImporter);
-    tedb->LogDump();
     // start event loop. eventMaster has been initiated in ThreadPortScheduler::Run()
     eventMaster->Run();
 }
@@ -65,7 +65,9 @@ void TEDBManThread::hookHandleMessage()
             Message* fwdMsg = msg->Duplicate();
             fwdMsg->SetType(MSG_REQ);
             // get TEWG simply by taking full snapshot copy
+            tedb->LockDB();
             TEWG* tewg = tedb->GetSnapshot(msg->GetQueue());
+            tedb->UnlockDB();
             string topic = "TEWG_RESV_REQUEST";
             fwdMsg->SetTopic(topic);
             // use the same queue that is dedicated to computeThread

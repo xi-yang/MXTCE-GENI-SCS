@@ -868,7 +868,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
     strcat(buf, "</domain></topology>");
     int sizeBuf=strlen(buf);
     xmlDocPtr xmlDoc = xmlParseMemory(buf, sizeBuf);
-    LOG("$$$ Topology Dump:\n"<<buf<<endl);
+    //LOG("$$$ Topology Dump:\n"<<buf<<endl);
     delete buf;
     return xmlDoc;
 }

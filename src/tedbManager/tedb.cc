@@ -978,21 +978,39 @@ void TEDB::PopulateXmlTrees()
 {
     assert(xmlDomainTrees.size() > 0);
 
+    // cleanup everything 
+    //$$ TODO: investigate how to properly release memory for these lists
+    list<DBDomain*>::iterator itd = dbDomains.begin();
+    for (; itd != dbDomains.end(); itd++) 
+    {
+        (*itd)->GetNodes().clear();
+    }
+    // clean up dbNodes, dbPorts and dbLinks lists
+    dbNodes.clear();
+    dbPorts.clear();
+    list<DBLink*>::iterator itl = dbLinks.begin();
+    for (; itl != dbLinks.end(); itl++) 
+    {
+        // clean up ISAD, ISCD lists
+        (*itl)->GetSwCapDescriptors().clear();
+        (*itl)->GetAdjCapDescriptors().clear();
+    }
+    dbLinks.clear();
+
+    // update topologies into TEDB
     xmlNodePtr node;
     xmlNodePtr rootLevel;
     xmlNodePtr domainLevel;
     xmlDocPtr xmlTree;
     list<xmlDocPtr>::iterator itX = xmlDomainTrees.begin();
-    for (; itX != xmlDomainTrees.end(); itX++)
-    {
+    for (; itX != xmlDomainTrees.end(); itX++) {
         xmlTree = *itX;
         rootLevel = xmlDocGetRootElement(xmlTree);
-        if (rootLevel->type != XML_ELEMENT_NODE || strncasecmp((const char*)rootLevel->name, "topology", 8) != 0)
-        {
-            throw TEDBException((char*)"TEDB::PopulateXmlTree failed to locate root <topology> element");
+        if (rootLevel->type != XML_ELEMENT_NODE || strncasecmp((const char*) rootLevel->name, "topology", 8) != 0) {
+            throw TEDBException((char*) "TEDB::PopulateXmlTree failed to locate root <topology> element");
         }
 
-        //match up Domain level elements
+        //update Domain level elements
         for (domainLevel = rootLevel->children; domainLevel != NULL; domainLevel = domainLevel->next)
         {
             if (domainLevel->type != XML_ELEMENT_NODE || strncasecmp((const char*)domainLevel->name, "domain", 6) != 0)
@@ -1013,7 +1031,7 @@ void TEDB::PopulateXmlTrees()
             domain->UpdateFromXML(true);
         }
 
-        // cleanup domains that no longer exist in XML
+        // remove domains that no longer exist in XML
         list<DBDomain*>::iterator itd = dbDomains.begin();
         for (; itd != dbDomains.end(); itd++)
         {
@@ -1024,12 +1042,8 @@ void TEDB::PopulateXmlTrees()
             }
         }
 
-        // clean up dbNodes, dbPorts and dbLinks lists
-        dbNodes.clear();
-        dbPorts.clear();
-        dbLinks.clear();    
-        // then re-add the updated elements to the lists
-        for (; itd != dbDomains.end(); itd++)
+        // add back updated elements from dbDomains to the dbNodes, dbPorts and dbLinks lists
+        for (itd = dbDomains.begin(); itd != dbDomains.end(); itd++)
         {
             map<string, Node*, strcmpless>::iterator itn = (*itd)->GetNodes().begin();
             for (; itn != (*itd)->GetNodes().end(); itn++)
