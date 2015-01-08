@@ -117,7 +117,7 @@ public:
     GeniRequestRSpec(xmlDocPtr doc): GeniRSpec(doc) { }
     virtual ~GeniRequestRSpec();
     Apimsg_user_constraint* GetUserConstraintByPathId(string& id);
-    Message* CreateApiRequestMessage(map<string, xmlrpc_c::value>& rp);
+    Message* CreateApiRequestMessage(map<string, xmlrpc_c::value>& rp, bool attempt_path_finding);
 };
 
 class TGraph;
