@@ -738,7 +738,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                         {
                             string trueShortDomainName = GetUrnField(aNode->GetName(), "domain");
                             string trueShortNodeName = GetUrnField(aNode->GetName(), "node");
-                            if (trueShortNodeName.compare("*") == 0)
+                            if (trueShortNodeName.compare("orca-vm-cloud") != 0)
                                 continue;
                             sprintf(buf, "urn:publicid:IDN+%s+stitchport+%s:*", trueShortDomainName.c_str(), trueShortNodeName.c_str());
                             string aPortId = buf;
