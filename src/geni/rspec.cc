@@ -1323,6 +1323,14 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 string domainZ = GetUrnField(ifRefs.back(), "domain");
                 if (domainA == domainZ)
                     continue;
+                xmlChar* xmlLinkId = xmlGetProp(xmlNode,  (const xmlChar*)"client_id");
+                if (xmlLinkId == NULL)
+                    continue;
+                string pathId = (const char*)xmlLinkId;
+                string pathType = "strict";
+                string layer = "2";
+                string srcVlan = "any";//?
+                string dstVlan = "any";//?
                 // explicit routing_profile for multi-aggregate links
                 list<string>* hopInclusionList = NULL;
                 list<string>* hopExclusionList = NULL;
@@ -1371,14 +1379,6 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 if (!attempt_all_paths && !attempt_path && domainA.find("exogeni.net") != string::npos && domainZ.find("exogeni.net") != string::npos )
                     continue;
                 Apimsg_user_constraint* userCons = new Apimsg_user_constraint();
-                xmlChar* xmlLinkId = xmlGetProp(xmlNode,  (const xmlChar*)"client_id");
-                if (xmlLinkId == NULL)
-                    continue;
-                string pathId = (const char*)xmlLinkId;
-                string pathType = "strict";
-                string layer = "2";
-                string srcVlan = "any";//?
-                string dstVlan = "any";//?
                 userCons->setGri(pathId);
                 userCons->setPathId(pathId);
                 userCons->setStarttime(time(NULL));
