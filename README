@@ -1,7 +1,18 @@
 1. Pre-compile
+<<<<<<< HEAD
 
 - Install dependencies
 sudo yum install libyaml-devel libxml2-devel xmlrpc-c-devel
+=======
+- Download and install
+http://pyyaml.org/download/libyaml/yaml-0.1.4.tar.gz
+
+- Download and install
+http://sourceforge.net/projects/xmlrpc-c/files/Xmlrpc-c%20Super%20Stable/
+
+- Also
+sudo yum install libxml2-devel
+>>>>>>> master
 
 - On Ubuntu
 sudo apt-get install libyaml-dev  libxmlrpc-c-dev libxml2-dev libxmlrpc-c++4-dev
@@ -12,6 +23,10 @@ cp -rf /usr/local/lib/libxmlrpc* /usr/lib64/
 
 - ulimit -s 65536
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
 2. To compile
 ./configure
 make
@@ -21,12 +36,18 @@ make
 cat > /usr/local/etc/mxtce.config.yaml
 
 ---
+<<<<<<< HEAD
 mxtceDir: '/usr/local/geni-scs'
 
 apiServer:
     client: 'localhost'
     port: 2089
     timeout: 30
+=======
+apiServer:
+    'client': 'localhost'
+    port: 2089
+>>>>>>> master
 
 tedbManager:
     domains:
@@ -53,7 +74,11 @@ computeWorker:
 
 4. To run
 cd the_directory_with_topology_ad_files
+<<<<<<< HEAD
 /usr/local/geni-scs/src/main/mxtce -d
+=======
+/usr/local/mxtce-sw/src/main/mxtce -d
+>>>>>>> master
 
 
 5. To test:
@@ -61,6 +86,7 @@ cat  pcs-request1.xml | curl -X POST -H 'Content-type: text/xml' -d @-  http://o
 
 6. Watch log
 tail -f /var/log/mxtce.log
+<<<<<<< HEAD
 
 
 ----------------
@@ -83,3 +109,5 @@ stunnel.conf: the configuration that tells stunnel to get certs from a file ca-a
 7.4. run to start the SSL wrapper
 stunnel /usr/local/etc/stunnel/stunnel.conf
 
+=======
+>>>>>>> master

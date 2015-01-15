@@ -133,6 +133,7 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     map<string, xmlrpc_c::value> options = xmlrpc_c::value_struct(reqStruct["request_options"]);
     bool hold_path = false;
     bool workflow_paths_merged = false;
+    bool attempt_path_finding = false;
     map<string, xmlrpc_c::value> routing_profile;
     u_int32_t start_time = 0, end_time = 0;
     if (options.find("geni_hold_path") != options.end()) {
@@ -150,12 +151,15 @@ void XMLRPC_ComputePathMethod::execute(xmlrpc_c::paramList const& paramList, xml
     if (options.find("geni_workflow_paths_merged") != options.end()) {
         workflow_paths_merged = xmlrpc_c::value_boolean(options["geni_workflow_paths_merged"]);
     }
+    if (options.find("attempt_path_finding") != options.end()) {
+        attempt_path_finding = xmlrpc_c::value_boolean(options["attempt_path_finding"]);
+    }
     
     GeniRequestRSpec reqRspec(rspec);
     string contextTag = "";
     Message* reqMsg = NULL;
     try {
-        reqMsg = reqRspec.CreateApiRequestMessage(routing_profile);
+        reqMsg = reqRspec.CreateApiRequestMessage(routing_profile, attempt_path_finding);
     } catch (TEDBException ex) {
             ReturnGeniError(retvalP, GENI_PCS_ERRCODE_MAILFORMED_REQUEST, ex.GetMessage().c_str());
             goto _final;        
