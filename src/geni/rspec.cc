@@ -1250,16 +1250,14 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                         {
                             break;
                         }
-                        /*
-                        else if (strncasecmp((const char*)xmlIfNode->name, "link_type", 16) == 0)
+                        else if (strncasecmp((const char*)xmlIfNode->name, "link_type", 9) == 0)
                         {
-                            xmlChar* pBuf = xmlNodeGetContent(xmlIfNode);
+                            xmlChar* pBuf =  xmlGetProp(xmlIfNode,  (const xmlChar*)"name");
                             string linkTypeValue;
                             StripXmlString(linkTypeValue, pBuf);
-                            if (linkTypeValue.compare("vlan") != 0)
+                            if (linkTypeValue.compare("egre-tunnel") == 0)
                                 break;
                         }
-                        */
                     }
                 }
                 // skip shared_vlan links
@@ -2049,5 +2047,4 @@ void GeniManifestRSpec::MPVB_Finalize_Recursive(TLink* previousLink, char* buf)
         MPVB_Finalize_Recursive(nextLink, buf);
     }
 }
-
 
