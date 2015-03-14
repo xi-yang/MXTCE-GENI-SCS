@@ -288,6 +288,29 @@ void CleanupXmlString(string& str)
     }
 }
 
+void RemoveXmlNsPrefix(string& str)
+{
+    string::size_type pos1 = 0;
+    string::size_type pos2 = string::npos;
+    string subopen = "<";
+    string subclose = "</";
+    pos1 = str.find("<", pos1);
+    if (pos1 != string::npos)
+        pos2 = str.find(":", pos1);
+    while (pos2 != string::npos)
+    {
+        if (str.find("</", pos1) == pos1)
+            str.replace(pos1, pos2-pos1+1, subclose);
+        else
+            str.replace(pos1, pos2-pos1+1, subopen);
+        pos1 = str.find("<", pos2);
+        if (pos1 != string::npos)
+            pos2 = str.find(":", pos1);
+        if (pos1 == string::npos || pos2 == string::npos)
+            break;
+    }
+}
+
 u_int64_t StringToBandwidth(string& strBandwidth, u_int64_t defaultFactor) 
 {
     u_int64_t bandwidth = 0LLU;

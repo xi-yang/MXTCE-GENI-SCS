@@ -324,6 +324,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                                     xmlBufferPtr buffer = xmlBufferCreate();
                                                     xmlNodeDump( buffer, rspecDoc,xmlParamNode, 0, 0);
                                                     string swcapXml = (const char*)xmlBufferContent(buffer);
+                                                    RemoveXmlNsPrefix( swcapXml );
                                                     aRLink->SetSwcapXmlString(swcapXml);                                                    
                                                 }
                                             }
