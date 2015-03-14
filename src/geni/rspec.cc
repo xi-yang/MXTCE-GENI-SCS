@@ -902,7 +902,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
     map<string, string> rspecNs;
     rspecNs["ns"] = "http://www.geni.net/resources/rspec/3";
     rspecNs["stitch"] = "http://hpn.east.isi.edu/rspec/ext/stitch/0.1/";
-    bool hasStitchingExt = (NULL != GetXpathNode(rspecDoc, "//ns:rspec//stitch:stitching//stitch:path", &rspecNs));
+    set<string> stitchingPaths;
 
     string queueName="CORE";
     string topicName="XMLRPC_API_REQUEST";
@@ -968,6 +968,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                             snprintf(buf, 256, "GeniRSpec::CreateApiRequestMessage - Failed to parse request RSpec (path id=%s)", pathId.c_str());
                             throw TEDBException(buf);
                         }
+			stitchingPaths.insert(pathId);
                         Apimsg_user_constraint* userCons = new Apimsg_user_constraint();
                         userCons->setGri(pathId);
                         userCons->setPathId(pathId);
@@ -1193,7 +1194,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 break;
             }
             // parse node info and store client_id references
-            else if (!hasStitchingExt && strncasecmp((const char*)xmlNode->name, "node", 4) == 0)
+            if (strncasecmp((const char*)xmlNode->name, "node", 4) == 0)
             {
                 xmlChar* xmlAggrId = xmlGetProp(xmlNode, (const xmlChar*) "component_manager_id");
                 string aggrName = (const char*) xmlAggrId;
@@ -1237,8 +1238,13 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 }
             }
             // without stitching extension, use links that spans multiple aggregates
-            else if (!hasStitchingExt && strncasecmp((const char*)xmlNode->name, "link", 4) == 0)
+            else if (strncasecmp((const char*)xmlNode->name, "link", 4) == 0)
             {
+		xmlChar* pBuf =  xmlGetProp(xmlNode,  (const xmlChar*)"client_id");
+		string linkClientId;
+                StripXmlString(linkClientId, pBuf);
+                if (stitchingPaths.find(linkClientId) != stitchingPaths.end())
+                    continue;
                 list<string> ifRefs;
                 u_int64_t bw = 100000000; //100m by default
                 xmlNodePtr xmlIfNode;
