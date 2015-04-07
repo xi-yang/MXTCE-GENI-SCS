@@ -324,6 +324,7 @@ xmlDocPtr GeniAdRSpec::TranslateToNML()
                                                     xmlBufferPtr buffer = xmlBufferCreate();
                                                     xmlNodeDump( buffer, rspecDoc,xmlParamNode, 0, 0);
                                                     string swcapXml = (const char*)xmlBufferContent(buffer);
+                                                    RemoveXmlNsPrefix( swcapXml );
                                                     aRLink->SetSwcapXmlString(swcapXml);                                                    
                                                 }
                                             }
@@ -892,7 +893,7 @@ Apimsg_user_constraint* GeniRequestRSpec::GetUserConstraintByPathId(string& id)
     return NULL;
 }
 
-Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>& routingProfile)
+Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>& routingProfile, bool attempt_all_paths)
 {
     if (rspecDoc == NULL)
     {
@@ -902,7 +903,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
     map<string, string> rspecNs;
     rspecNs["ns"] = "http://www.geni.net/resources/rspec/3";
     rspecNs["stitch"] = "http://hpn.east.isi.edu/rspec/ext/stitch/0.1/";
-    bool hasStitchingExt = (NULL != GetXpathNode(rspecDoc, "//ns:rspec//stitch:stitching//stitch:path", &rspecNs));
+    set<string> stitchingPaths;
 
     string queueName="CORE";
     string topicName="XMLRPC_API_REQUEST";
@@ -968,6 +969,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                             snprintf(buf, 256, "GeniRSpec::CreateApiRequestMessage - Failed to parse request RSpec (path id=%s)", pathId.c_str());
                             throw TEDBException(buf);
                         }
+			stitchingPaths.insert(pathId);
                         Apimsg_user_constraint* userCons = new Apimsg_user_constraint();
                         userCons->setGri(pathId);
                         userCons->setPathId(pathId);
@@ -1193,7 +1195,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 break;
             }
             // parse node info and store client_id references
-            else if (!hasStitchingExt && strncasecmp((const char*)xmlNode->name, "node", 4) == 0)
+            if (strncasecmp((const char*)xmlNode->name, "node", 4) == 0)
             {
                 xmlChar* xmlAggrId = xmlGetProp(xmlNode, (const xmlChar*) "component_manager_id");
                 string aggrName = (const char*) xmlAggrId;
@@ -1237,8 +1239,13 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 }
             }
             // without stitching extension, use links that spans multiple aggregates
-            else if (!hasStitchingExt && strncasecmp((const char*)xmlNode->name, "link", 4) == 0)
+            else if (strncasecmp((const char*)xmlNode->name, "link", 4) == 0)
             {
+		xmlChar* pBuf =  xmlGetProp(xmlNode,  (const xmlChar*)"client_id");
+		string linkClientId;
+                StripXmlString(linkClientId, pBuf);
+                if (stitchingPaths.find(linkClientId) != stitchingPaths.end())
+                    continue;
                 list<string> ifRefs;
                 u_int64_t bw = 100000000; //100m by default
                 xmlNodePtr xmlIfNode;
@@ -1250,16 +1257,14 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                         {
                             break;
                         }
-                        /*
-                        else if (strncasecmp((const char*)xmlIfNode->name, "link_type", 16) == 0)
+                        else if (strncasecmp((const char*)xmlIfNode->name, "link_type", 9) == 0)
                         {
-                            xmlChar* pBuf = xmlNodeGetContent(xmlIfNode);
+                            xmlChar* pBuf =  xmlGetProp(xmlIfNode,  (const xmlChar*)"name");
                             string linkTypeValue;
                             StripXmlString(linkTypeValue, pBuf);
-                            if (linkTypeValue.compare("vlan") != 0)
+                            if (linkTypeValue.compare("egre-tunnel") == 0)
                                 break;
                         }
-                        */
                     }
                 }
                 // skip shared_vlan links
@@ -1323,10 +1328,6 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 string domainZ = GetUrnField(ifRefs.back(), "domain");
                 if (domainA == domainZ)
                     continue;
-                // No stitching between two ExoGENI sites
-                if (domainA.find("exogeni.net") != string::npos && domainZ.find("exogeni.net") != string::npos )
-                    continue;
-                Apimsg_user_constraint* userCons = new Apimsg_user_constraint();
                 xmlChar* xmlLinkId = xmlGetProp(xmlNode,  (const xmlChar*)"client_id");
                 if (xmlLinkId == NULL)
                     continue;
@@ -1335,26 +1336,11 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                 string layer = "2";
                 string srcVlan = "any";//?
                 string dstVlan = "any";//?
-                userCons->setGri(pathId);
-                userCons->setPathId(pathId);
-                userCons->setStarttime(time(NULL));
-                userCons->setEndtime(time(NULL) + 3600 * 24); // scheduling attributes TBD
-                userCons->setSrcendpoint(ifRefs.front());
-                userCons->setDestendpoint(ifRefs.back());
-                userCons->setLayer(layer);
-                userCons->setPathtype(pathType);
-                userCons->setBandwidth(bw);
-                list<TSchedule*>* flexSchedules = new list<TSchedule*>;
-                TSchedule* aSchedule = new TSchedule(userCons->getStarttime(), userCons->getEndtime());
-                flexSchedules->push_back(aSchedule);
-                userCons->setFlexSchedules(flexSchedules);
-                userCons->setSrcvlantag(srcVlan);
-                userCons->setDestvlantag(dstVlan);
-                userCons->setPreserveVlanAvailabilityRange(true);
-                // adding explicit routing_profile for multi-aggregate link
+                // explicit routing_profile for multi-aggregate links
                 list<string>* hopInclusionList = NULL;
                 list<string>* hopExclusionList = NULL;
                 list<string>* designatedBridgeAggrList = NULL;
+                bool attempt_path = false;
                 if (routingProfile.find(pathId) != routingProfile.end()) 
                 {
                     map<string, xmlrpc_c::value> anRP = xmlrpc_c::value_struct(routingProfile[pathId]);
@@ -1390,7 +1376,30 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
                             designatedBridgeAggrList->push_back(bridgeAggrUrn);
                         }
                     }
+                    if (anRP.find("attempt_path_finding") != anRP.end()) {
+                        attempt_path = xmlrpc_c::value_boolean(anRP["attempt_path_finding"]);
+                    }
                 }
+                // No stitching between two ExoGENI sites unless explict attemp_path_finding options (at top level or in routing_profile)
+                if (!attempt_all_paths && !attempt_path && domainA.find("exogeni.net") != string::npos && domainZ.find("exogeni.net") != string::npos )
+                    continue;
+                Apimsg_user_constraint* userCons = new Apimsg_user_constraint();
+                userCons->setGri(pathId);
+                userCons->setPathId(pathId);
+                userCons->setStarttime(time(NULL));
+                userCons->setEndtime(time(NULL) + 3600 * 24); // scheduling attributes TBD
+                userCons->setSrcendpoint(ifRefs.front());
+                userCons->setDestendpoint(ifRefs.back());
+                userCons->setLayer(layer);
+                userCons->setPathtype(pathType);
+                userCons->setBandwidth(bw);
+                list<TSchedule*>* flexSchedules = new list<TSchedule*>;
+                TSchedule* aSchedule = new TSchedule(userCons->getStarttime(), userCons->getEndtime());
+                flexSchedules->push_back(aSchedule);
+                userCons->setFlexSchedules(flexSchedules);
+                userCons->setSrcvlantag(srcVlan);
+                userCons->setDestvlantag(dstVlan);
+                userCons->setPreserveVlanAvailabilityRange(true);
                 if (hopInclusionList != NULL)
                     userCons->setHopInclusionList(hopInclusionList);
                 if (hopExclusionList != NULL)
@@ -2049,5 +2058,4 @@ void GeniManifestRSpec::MPVB_Finalize_Recursive(TLink* previousLink, char* buf)
         MPVB_Finalize_Recursive(nextLink, buf);
     }
 }
-
 

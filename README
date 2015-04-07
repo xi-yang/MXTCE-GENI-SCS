@@ -21,12 +21,9 @@ make
 cat > /usr/local/etc/mxtce.config.yaml
 
 ---
-mxtceDir: '/usr/local/geni-scs'
-
 apiServer:
-    client: 'localhost'
+    'client': 'localhost'
     port: 2089
-    timeout: 30
 
 tedbManager:
     domains:
@@ -53,7 +50,7 @@ computeWorker:
 
 4. To run
 cd the_directory_with_topology_ad_files
-/usr/local/geni-scs/src/main/mxtce -d
+/usr/local/mxtce-sw/src/main/mxtce -d
 
 
 5. To test:
@@ -82,4 +79,3 @@ stunnel.conf: the configuration that tells stunnel to get certs from a file ca-a
 
 7.4. run to start the SSL wrapper
 stunnel /usr/local/etc/stunnel/stunnel.conf
-
