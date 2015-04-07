@@ -417,7 +417,7 @@ void Action_ComputeKSP::Process()
     // last resort to match an abstract node in the domain/aggregate
     if (!egressLink)
     {
-        TDomain* dstDomain = tewg->LookupDomainByURN(this->_userConstraint->getSrcendpoint());
+        TDomain* dstDomain = tewg->LookupDomainByURN(this->_userConstraint->getDestendpoint());
         if (dstDomain->GetNodes().find("*") != dstDomain->GetNodes().end())
         {
             dstNode = (TNode*) dstDomain->GetNodes()["*"];
@@ -1150,7 +1150,7 @@ void Action_ComputeSchedulesWithKSP::Process()
         // last resort to match an abstract node in the domain/aggregate
         if (!egressLink)
         {
-            TDomain* dstDomain = tewg->LookupDomainByURN(this->_userConstraint->getSrcendpoint());
+            TDomain* dstDomain = tewg->LookupDomainByURN(this->_userConstraint->getDestendpoint());
             if (dstDomain->GetNodes().find("*") != dstDomain->GetNodes().end())
             {
                 dstNode = (TNode*) dstDomain->GetNodes()["*"];
@@ -1170,7 +1170,7 @@ void Action_ComputeSchedulesWithKSP::Process()
         }
         if (!egressLink)
             throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() Cannot map destination URN to an Egress Edge Link!");
-        if (!egressLink || !egressLink->IsAvailableForTspec(tspec))
+        if (!egressLink->IsAvailableForTspec(tspec))
             throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() Egress Edge Link is not available for requested TSpec!");
         
         // compute KSP
