@@ -361,8 +361,8 @@ void Action_ComputeKSP::Process()
                 ingressPort = (TPort*) srcNode->GetPorts()["*"];
             else if (srcNode->GetPorts().find("**") != srcNode->GetPorts().end())
                 ingressPort = (TPort*) srcNode->GetPorts()["**"];
-        }
-        if (ingressPort != NULL)
+        } 
+        if (ingressPort != NULL) 
         {
             if (ingressPort->GetLinks().find("**") != ingressPort->GetLinks().end())
                 ingressLink = (TLink*)ingressPort->GetLinks()["**"];
@@ -370,7 +370,30 @@ void Action_ComputeKSP::Process()
                 ingressLink = (TLink*)ingressPort->GetLinks()["*"];
         }
     }
-    if (!ingressLink || !ingressLink->IsAvailableForTspec(tspec))
+    // last resort to match an abstract node in the domain/aggregate
+    if (!ingressLink)
+    {
+        TDomain* srcDomain = tewg->LookupDomainByURN(this->_userConstraint->getSrcendpoint());
+        if (srcDomain->GetNodes().find("*") != srcDomain->GetNodes().end())
+        {
+            srcNode = (TNode*) srcDomain->GetNodes()["*"];
+            TPort* ingressPort = NULL;
+            if (srcNode->GetPorts().find("*") != srcNode->GetPorts().end())
+                ingressPort = (TPort*) srcNode->GetPorts()["*"];
+            else if (srcNode->GetPorts().find("**") != srcNode->GetPorts().end())
+                ingressPort = (TPort*) srcNode->GetPorts()["**"];
+            if (ingressPort != NULL) 
+            {
+                if (ingressPort->GetLinks().find("**") != ingressPort->GetLinks().end())
+                    ingressLink = (TLink*)ingressPort->GetLinks()["**"];
+                else if (ingressPort->GetLinks().find("*") != ingressPort->GetLinks().end())
+                    ingressLink = (TLink*)ingressPort->GetLinks()["*"];
+            }            
+        }        
+    }
+    if (!ingressLink)
+        throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Cannot map source URN to an Ingress Edge Link!");
+    if (!ingressLink->IsAvailableForTspec(tspec))
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Ingress Edge Link is not available for requested TSpec!");
     TLink* egressLink = tewg->LookupLinkByURN(this->_userConstraint->getDestendpoint());
     if (egressLink == NULL)
@@ -391,7 +414,30 @@ void Action_ComputeKSP::Process()
                 egressLink = (TLink*)egressPort->GetLinks()["*"];
         }
     }
-    if (!egressLink || !egressLink->IsAvailableForTspec(tspec))
+    // last resort to match an abstract node in the domain/aggregate
+    if (!egressLink)
+    {
+        TDomain* dstDomain = tewg->LookupDomainByURN(this->_userConstraint->getSrcendpoint());
+        if (dstDomain->GetNodes().find("*") != dstDomain->GetNodes().end())
+        {
+            dstNode = (TNode*) dstDomain->GetNodes()["*"];
+            TPort* egressPort = NULL;
+            if (dstNode->GetPorts().find("*") != dstNode->GetPorts().end())
+                egressPort = (TPort*) dstNode->GetPorts()["*"];
+            else if (dstNode->GetPorts().find("**") != dstNode->GetPorts().end())
+                egressPort = (TPort*) dstNode->GetPorts()["**"];
+            if (egressPort != NULL) 
+            {
+                if (egressPort->GetLinks().find("**") != egressPort->GetLinks().end())
+                    egressLink = (TLink*)egressPort->GetLinks()["**"];
+                else if (egressPort->GetLinks().find("*") != egressPort->GetLinks().end())
+                    egressLink = (TLink*)egressPort->GetLinks()["*"];
+            }            
+        }        
+    }
+    if (!egressLink)
+        throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Cannot map destination URN to an Egress Edge Link!");
+    if (!egressLink->IsAvailableForTspec(tspec))
         throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Egress Edge Link is not available for requested TSpec!");
 
     // compute KSP
@@ -1057,8 +1103,31 @@ void Action_ComputeSchedulesWithKSP::Process()
                     ingressLink = (TLink*)ingressPort->GetLinks()["*"];
             }
         }
-        if (!ingressLink || !ingressLink->IsAvailableForTspec(tspec))
-            throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Ingress Edge Link is not available for requested TSpec!");
+        // last resort to match an abstract node in the domain/aggregate
+        if (!ingressLink)
+        {
+            TDomain* srcDomain = tewg->LookupDomainByURN(this->_userConstraint->getSrcendpoint());
+            if (srcDomain->GetNodes().find("*") != srcDomain->GetNodes().end())
+            {
+                srcNode = (TNode*) srcDomain->GetNodes()["*"];
+                TPort* ingressPort = NULL;
+                if (srcNode->GetPorts().find("*") != srcNode->GetPorts().end())
+                    ingressPort = (TPort*) srcNode->GetPorts()["*"];
+                else if (srcNode->GetPorts().find("**") != srcNode->GetPorts().end())
+                    ingressPort = (TPort*) srcNode->GetPorts()["**"];
+                if (ingressPort != NULL) 
+                {
+                    if (ingressPort->GetLinks().find("**") != ingressPort->GetLinks().end())
+                        ingressLink = (TLink*)ingressPort->GetLinks()["**"];
+                    else if (ingressPort->GetLinks().find("*") != ingressPort->GetLinks().end())
+                        ingressLink = (TLink*)ingressPort->GetLinks()["*"];
+                }            
+            }        
+        }
+        if (!ingressLink)
+            throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() Cannot map source URN to an Ingress Edge Link!");
+        if (!ingressLink->IsAvailableForTspec(tspec))
+            throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() Ingress Edge Link is not available for requested TSpec!");
         TLink* egressLink = tewg->LookupLinkByURN(_userConstraint->getDestendpoint());
         if (egressLink == NULL)
         {
@@ -1078,8 +1147,31 @@ void Action_ComputeSchedulesWithKSP::Process()
                     egressLink = (TLink*)egressPort->GetLinks()["*"];
             }
         }
+        // last resort to match an abstract node in the domain/aggregate
+        if (!egressLink)
+        {
+            TDomain* dstDomain = tewg->LookupDomainByURN(this->_userConstraint->getSrcendpoint());
+            if (dstDomain->GetNodes().find("*") != dstDomain->GetNodes().end())
+            {
+                dstNode = (TNode*) dstDomain->GetNodes()["*"];
+                TPort* egressPort = NULL;
+                if (dstNode->GetPorts().find("*") != dstNode->GetPorts().end())
+                    egressPort = (TPort*) dstNode->GetPorts()["*"];
+                else if (dstNode->GetPorts().find("**") != dstNode->GetPorts().end())
+                    egressPort = (TPort*) dstNode->GetPorts()["**"];
+                if (egressPort != NULL) 
+                {
+                    if (egressPort->GetLinks().find("**") != egressPort->GetLinks().end())
+                        egressLink = (TLink*)egressPort->GetLinks()["**"];
+                    else if (egressPort->GetLinks().find("*") != egressPort->GetLinks().end())
+                        egressLink = (TLink*)egressPort->GetLinks()["*"];
+                }            
+            }        
+        }
+        if (!egressLink)
+            throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() Cannot map destination URN to an Egress Edge Link!");
         if (!egressLink || !egressLink->IsAvailableForTspec(tspec))
-            throw ComputeThreadException((char*)"Action_ComputeKSP::Process() Egress Edge Link is not available for requested TSpec!");
+            throw ComputeThreadException((char*)"Action_ComputeSchedulesWithKSP::Process() Egress Edge Link is not available for requested TSpec!");
         
         // compute KSP
         KSP.clear();
