@@ -39,7 +39,7 @@
 
 const char* getVersionString()
 { 
-    const char* versionString = "Release-2.5 - TAG::I2NOC:01-15-2015";
+    const char* versionString = "Release-2.5 - TAG::I2NOC:04-27-2015 @a85c663c767857f77251cc7f0b6424a3da400a46";
     return versionString;
 }
 
