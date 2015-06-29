@@ -142,6 +142,23 @@ void Port::AddLink(Link* link)
     this->links[link->GetName()] = link;
 }
 
+Link::~Link() 
+{ 
+    list<ISCD*>::iterator it_iscd = swCapDescriptors.begin();
+    for (; it_iscd != swCapDescriptors.end(); it_iscd++)
+    {
+        if (*it_iscd)
+            delete (*it_iscd);
+    }
+    
+    list<IACD*>::iterator it_iacd = adjCapDescriptors.begin();
+    for (; it_iacd != adjCapDescriptors.end(); it_iacd++)
+    {
+        if (*it_iacd)
+            delete (*it_iacd);
+    }
+}
+
 
 list<Port*> NodeIfAdaptMatrix::GetAdaptToPorts(Port* fromPort, u_int64_t bw)
 {
