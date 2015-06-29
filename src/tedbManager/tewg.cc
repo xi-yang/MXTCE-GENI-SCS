@@ -174,7 +174,7 @@ TPort::~TPort()
     for (; itl != this->links.end(); itl++)
     {
         if ((*itl).second)
-            delete (*itl);
+            delete (*itl).second;
     }
     this->links.clear();
 }
@@ -2275,12 +2275,6 @@ void TPath::LogDump()
 
 
 // free memory of resources (cloned from TEDB) and deltas's (cloned from RDatabase) 
-
-TEWG::~TEWG() 
-{
-    this->
-
-} 
 
 
 void TEWG::AddResvDeltas(TReservation* resv)

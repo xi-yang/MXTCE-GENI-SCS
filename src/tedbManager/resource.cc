@@ -44,7 +44,7 @@ Resource::~Resource()
     for ( ; itd != deltaList.end(); itd++)
     {
         if (*itd)
-            delete (*itd)
+            delete (*itd);
     }
     deltaList.clear();
 }

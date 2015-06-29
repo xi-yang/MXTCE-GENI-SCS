@@ -402,7 +402,7 @@ protected:
 
 public:
     TEWG(string& name): TGraph(name) {}
-    virtual ~TEWG();
+    virtual ~TEWG() { }
     list<TDelta*>& GetDeltaList() { return deltaList; }
     void AddResvDeltas(TReservation* resv);
     void RemoveResvDeltas(string& resvName);

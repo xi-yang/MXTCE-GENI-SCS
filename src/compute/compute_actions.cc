@@ -1414,10 +1414,10 @@ void Action_ComputeSchedulesWithKSP::Finish()
 {
     LOG(name<<"Finish() called"<<endl);
     //release mem for TEWG
-    TEWG tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
+    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
     if (tewg != NULL)
         delete tewg;
-    (TEWG*)this->GetComputeWorker()->SetWorkflowData("TEWG", NULL);
+    this->GetComputeWorker()->SetWorkflowData("TEWG", NULL);
     // stop out from event loop
     Action::Finish();
 }
