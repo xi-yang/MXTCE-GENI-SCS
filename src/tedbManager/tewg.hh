@@ -143,7 +143,7 @@ protected:
 public:
     TDomain(u_int32_t id, string& name): Domain(id, name), disabled(false) { }
     TDomain(u_int32_t id, string& name, string& address): Domain(id, name, address), disabled(false) { }
-    virtual ~TDomain() { }
+    virtual ~TDomain();
     bool IsDisabled() { return disabled; }
     void SetDisabled(bool d) { disabled = d; }
     TDomain* Clone(bool newSubLevels=true);
@@ -164,7 +164,7 @@ protected:
 public:
     TNode(u_int32_t id, string& name): Node(id, name), disabled(false), visited(false) { }
     TNode(u_int32_t id, string& name, string& address): Node(id, name, address), disabled(false) { }
-    virtual ~TNode() { }
+    virtual ~TNode();
     bool IsDisabled() { return disabled; }
     void SetDisabled(bool d) { disabled = d; }
     list<TLink*>& GetLocalLinks() { return lclLinks; }
@@ -199,7 +199,7 @@ protected:
 public:
     TPort(u_int32_t id, string& name): Port(id, name), disabled(false), visited(false) { }
     TPort(u_int32_t id, string& name, string& address): Port(id, name, address), disabled(false) { }
-    virtual ~TPort() { }
+    virtual ~TPort();
     bool IsDisabled() { return disabled; }
     void SetDisabled(bool d) { disabled = d; }
     bool HasLink();
@@ -284,7 +284,7 @@ protected:
 
 public:
     TGraph(string& n): name(n) { }
-    virtual ~TGraph() { }
+    virtual ~TGraph();
     list<TDomain*>& GetDomains() { return tDomains; }
     list<TNode*>& GetNodes() { return tNodes; }
     list<TPort*>& GetPorts() { return tPorts; }
@@ -402,7 +402,7 @@ protected:
 
 public:
     TEWG(string& name): TGraph(name) {}
-    virtual ~TEWG() {} // TODO: free memory of resources (cloned from TEDB) and deltas's (cloned from RDatabase) 
+    virtual ~TEWG();
     list<TDelta*>& GetDeltaList() { return deltaList; }
     void AddResvDeltas(TReservation* resv);
     void RemoveResvDeltas(string& resvName);

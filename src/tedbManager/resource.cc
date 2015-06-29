@@ -36,6 +36,19 @@
 #include "reservation.hh"
 
 
+Resource::~Resource() 
+{
+    if (workData != NULL)
+        delete workData;
+    list<TDelta*>::iterator itd = deltaList.begin();
+    for ( ; itd != deltaList.end(); itd++)
+    {
+        if (*itd)
+            delete (*itd)
+    }
+    deltaList.clear();
+}
+
 void Resource::AddDelta(TDelta* delta) 
 { 
     deltaList.push_back(delta); delta->SetTargetResource(this); 
