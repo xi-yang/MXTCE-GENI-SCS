@@ -1413,9 +1413,7 @@ void Action_ComputeSchedulesWithKSP::CleanUp()
 void Action_ComputeSchedulesWithKSP::Finish()
 {
     LOG(name<<"Finish() called"<<endl);
-    //$$$$ finish logic for current action
-
-    // stop out from event loop
+    //$$$$ finish logic 
     Action::Finish();
 }
 
@@ -1549,8 +1547,13 @@ bool Action_ProcessRequestTopology_MP2P::ProcessMessages()
 void Action_ProcessRequestTopology_MP2P::CleanUp()
 {
     LOG(name<<"CleanUp() called"<<endl);
-    //$$$$ cleanup logic for current action
-
+    //release TEWG
+    TEWG* tewg = (TEWG*)this->GetComputeWorker()->GetWorkflowData("TEWG");
+    if (tewg)
+    {
+        delete tewg;
+        this->GetComputeWorker()->SetWorkflowData("TEWG", NULL);
+    }
     // cancel and cleanup children
     Action::CleanUp();
 }

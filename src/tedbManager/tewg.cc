@@ -38,6 +38,17 @@
 #include "scheduling.hh"
 #include <algorithm> 
 
+TDomain::~TDomain()
+{
+    map<string, Node*, strcmpless>::iterator itn = this->nodes.begin();
+    for (; itn != this->nodes.end(); itn++)
+    {
+        if ((*itn).second)
+            delete (*itn).second;
+    }
+    this->nodes.clear();
+}
+
 TDomain* TDomain::Clone(bool newSubLevels)
 {
     TDomain* td = new TDomain(this->_id, this->name, this->address);
@@ -54,6 +65,17 @@ TDomain* TDomain::Clone(bool newSubLevels)
     return td;            
 }
 
+
+TNode::~TNode()
+{
+    map<string, Port*, strcmpless>::iterator itp = this->ports.begin();
+    for (; itp != this->ports.end(); itp++)
+    {
+        if ((*itp).second)
+            delete (*itp).second;
+    }
+    this->ports.clear();
+}
 
 void TNode::AddLocalLink(TLink* link)
 {
@@ -146,6 +168,18 @@ TNode* TNode::Clone(bool newSubLevels)
 }
 
 
+TPort::~TPort()
+{
+    map<string, Link*, strcmpless>::iterator itl = this->links.begin();
+    for (; itl != this->links.end(); itl++)
+    {
+        if ((*itl).second)
+            delete (*itl).second;
+    }
+    this->links.clear();
+}
+
+
 TPort* TPort::Clone(bool newSubLevels)
 {
     TPort* tp = new TPort(this->_id, this->name, this->address);
@@ -169,7 +203,6 @@ TPort* TPort::Clone(bool newSubLevels)
     return tp;
 }
 
-
 bool TLink::VerifyEdgeLink() 
 {
     if (!edgeOnly || rmtEnd != NULL)
@@ -177,7 +210,6 @@ bool TLink::VerifyEdgeLink()
     return (lclEnd != NULL && lclEnd->HasLocalLink(this));
     
 }
-
 
 bool TLink::VerifyRemoteLink() 
 {
@@ -702,6 +734,15 @@ void TLink::InitNextRegionTagSet(TSpec& tspec, ConstraintTagSet &head_waveset)
     head_waveset.AddTag(ANY_TAG);
 }
 
+TGraph::~TGraph()
+{
+    list<TDomain*>::iterator itd = tDomains.begin();
+    for (; itd != tDomains.end(); itd++) 
+    {
+        delete (*itd);
+    }
+    tDomains.clear();
+}
 
 void TGraph::AddDomain(TDomain* domain)
 {
@@ -2231,6 +2272,9 @@ void TPath::LogDump()
     strcat(buf, "\n");
     LOG_DEBUG(buf);
 }
+
+
+// free memory of resources (cloned from TEDB) and deltas's (cloned from RDatabase) 
 
 
 void TEWG::AddResvDeltas(TReservation* resv)
