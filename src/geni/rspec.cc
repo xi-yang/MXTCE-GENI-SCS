@@ -1559,7 +1559,9 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
                 {
                     aggregateUrn = GeniAdRSpec::aggregateUrnMap[domainId];
                 }
-                if (!aggregateUrn.empty() && aggregateUrn.compare(allAggregateUrns.back()) != 0) 
+                if (!aggregateUrn.empty() &&
+    		    (allAggregateUrns.empty() ||
+		     aggregateUrn.compare(allAggregateUrns.back()) != 0))
                 {
                     allAggregateUrns.push_back(aggregateUrn);
                 }
