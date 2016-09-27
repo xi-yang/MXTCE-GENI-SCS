@@ -562,6 +562,7 @@ void SplitString(string& str, vector<string>& tokens, const string& delim=" ", b
 
 void StripXmlString(string& str, xmlChar* val);
 void CleanupXmlString(string& str);
+void RemoveXmlNsPrefix(string& str);
 
 u_int64_t StringToBandwidth(string& strBandwidth, u_int64_t defaultFactor=1LLU);
 

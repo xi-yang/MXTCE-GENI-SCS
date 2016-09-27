@@ -38,9 +38,8 @@
 #include <libxml2/libxml/xpathInternals.h>
 
 const char* getVersionString()
-{
-    
-    const char* versionString = "$Revision$ - $Date$";
+{ 
+    const char* versionString = "Release-2.5 - TAG::I2NOC:04-27-2015 @a85c663c767857f77251cc7f0b6424a3da400a46";
     return versionString;
 }
 
@@ -286,6 +285,29 @@ void CleanupXmlString(string& str)
     {
         str.replace( pos, str1.size(), str2 );
         pos++;
+    }
+}
+
+void RemoveXmlNsPrefix(string& str)
+{
+    string::size_type pos1 = 0;
+    string::size_type pos2 = string::npos;
+    string subopen = "<";
+    string subclose = "</";
+    pos1 = str.find("<", pos1);
+    if (pos1 != string::npos)
+        pos2 = str.find(":", pos1);
+    while (pos2 != string::npos)
+    {
+        if (str.find("</", pos1) == pos1)
+            str.replace(pos1, pos2-pos1+1, subclose);
+        else
+            str.replace(pos1, pos2-pos1+1, subopen);
+        pos1 = str.find("<", pos2);
+        if (pos1 != string::npos)
+            pos2 = str.find(":", pos1);
+        if (pos1 == string::npos || pos2 == string::npos)
+            break;
     }
 }
 

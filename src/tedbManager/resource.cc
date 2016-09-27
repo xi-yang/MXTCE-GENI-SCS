@@ -36,6 +36,19 @@
 #include "reservation.hh"
 
 
+Resource::~Resource() 
+{
+    if (workData != NULL)
+        delete workData;
+    list<TDelta*>::iterator itd = deltaList.begin();
+    for ( ; itd != deltaList.end(); itd++)
+    {
+        if (*itd)
+            delete (*itd);
+    }
+    deltaList.clear();
+}
+
 void Resource::AddDelta(TDelta* delta) 
 { 
     deltaList.push_back(delta); delta->SetTargetResource(this); 
@@ -127,6 +140,23 @@ void Port::AddLink(Link* link)
         throw TEDBException(buf);
     }
     this->links[link->GetName()] = link;
+}
+
+Link::~Link() 
+{ 
+    list<ISCD*>::iterator it_iscd = swCapDescriptors.begin();
+    for (; it_iscd != swCapDescriptors.end(); it_iscd++)
+    {
+        if (*it_iscd)
+            delete (*it_iscd);
+    }
+    
+    list<IACD*>::iterator it_iacd = adjCapDescriptors.begin();
+    for (; it_iacd != adjCapDescriptors.end(); it_iacd++)
+    {
+        if (*it_iacd)
+            delete (*it_iacd);
+    }
 }
 
 
