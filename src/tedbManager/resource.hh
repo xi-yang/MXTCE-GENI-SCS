@@ -95,7 +95,7 @@ public:
     Resource(ResourceType t, u_int32_t i, string& n, string& a): type(t), _id(i), name(n), address(a), workData(NULL) { }
     Resource(ResourceType t, u_int32_t i, string& n): type(t), _id(i), name(n), workData(NULL)  { address = ""; }
     Resource(ResourceType t, u_int32_t i): type(t), _id(i), workData(NULL)  { name= ""; address = ""; }
-    virtual ~Resource() { if (workData != NULL) delete workData; }
+    virtual ~Resource();
     ResourceType GetType() {return type;}
     void SetType(ResourceType t) { type = t;}
     u_int32_t GetId() { return _id; }
@@ -261,7 +261,7 @@ protected:
 public:
     Link(u_int32_t id, string& name): Resource(RTYPE_LINK, id, name) { _Init(); }
     Link(u_int32_t id, string& name, string& address): Resource(RTYPE_LINK, id, name, address) { _Init(); }
-    virtual ~Link() { } // TODO: clean up swCapDescriptors, adjCapDescriptors
+    virtual ~Link();
     Port* GetPort() { return port; }
     void SetPort(Port* p) { port = p; }
     int GetMetric() {return metric;}
