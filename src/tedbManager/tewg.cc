@@ -1736,9 +1736,11 @@ bool TPath::VerifyLoopFree()
         iterN++;
         if (iterN == path.end())
             break;
+        /*@@ uncomment if hairpin is allowed
         iterN++;
         if (iterN == path.end())
             break;
+        */
         while (iterN != path.end())
         {
             TLink* LN = *iterN;
