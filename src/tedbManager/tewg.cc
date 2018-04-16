@@ -1777,14 +1777,16 @@ bool TPath::VerifyLoopFree()
         iterN++;
         if (iterN == path.end())
             break;
-        /*@@ uncomment if hairpin is allowed
-        iterN++;
-        if (iterN == path.end())
-            break;
-        */
+        TLink* LN = *iterN;
+        //  dissable hairpin bridge
+        if (L->GetPort() != LN->GetPort()) {
+            iterN++;
+            if (iterN == path.end())
+                break;
+        }
         while (iterN != path.end())
         {
-            TLink* LN = *iterN;
+            LN = *iterN;
             if (LN == NULL) {
                 iterN++;
                 continue;
