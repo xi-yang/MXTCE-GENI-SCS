@@ -45,7 +45,7 @@ void GeniRSpec::ParseRspecXml()
     if (rspecDoc == NULL)
     {
         char buf[1024*64];
-        snprintf(buf, 1024*16, "GeniRSpec::ParseXML - Failed to parse RSpec XML string: %s", rspecXml.c_str());
+        snprintf(buf, 1024*64, "GeniRSpec::ParseXML - Failed to parse RSpec XML string: %s", rspecXml.c_str());
         throw TEDBException(buf);
     }
 }
@@ -1450,7 +1450,7 @@ Message* GeniRequestRSpec::CreateApiRequestMessage(map<string, xmlrpc_c::value>&
     
 void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
 {
-    char buf[1024*64];
+    char* buf = new char[1024*1024];
     if (msg->GetTopic() != "XMLRPC_API_REPLY")
     {
         snprintf(buf, 1024, "GeniManifestRSpec::ParseApiReplyMessage - Expecting core msg type XMLRPC_API_REPLY, not %s.", msg->GetTopic().c_str());
