@@ -1836,7 +1836,7 @@ void GeniManifestRSpec::ParseApiReplyMessage(Message* msg)
     else
         xmlAddChild(rspecRoot, newStitchingNode);
     
-    
+    delete buf;
     this->DumpRspecXml();
 }
 
